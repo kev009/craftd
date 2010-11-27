@@ -37,42 +37,9 @@
 
 #include "config.h"
 #ifdef HAVE_ENDIAN_H
-#include <endian.h>
+	#include <endian.h>
 #endif
 
-#ifdef WORDS_BIGENDIAN
-/* If big-endian, macro out ntoh64/hton4 */
-#define CD_ntoh64(ll) (ll)
-#define CD_hton64(ll) (ll)
-#else
-/* Otherwise, check if BSD-style endian functions exist */
-#ifdef HAVE_DECL_BE64TOH
-#define CD_ntoh64(ll) be64toh(ll)
-#else
-// TODO Define a public CD_hton64() signature and implement it!
-#endif
+void swapBytes(void *data, int length);
 
-#ifdef HAVE_DECL_HTOBE64
-#define CD_hton64(ll) htobe64(ll)
-#else
-// TODO Define a public CD_hton64() signature and implement it!
-#endif
-
-#endif
-
-
-#ifdef FLOAT_WORDS_BIGENDIAN
-/* Floating point types are big-endian, macro out conversion */
-#define ntohd(d) (d)
-#define htond(d) (d)
-#define ntohf(f) (f)
-#define htonf(f) (f)
-#else
-/* We need to convert native floating-point types */
-double ntohd(double d);
-double htond(double d);
-float ntohf(float f);
-float htonf(float f);
-#endif
-
-#endif
+#endif // CRAFTD_JAVAENDIAN_H

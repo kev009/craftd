@@ -27,61 +27,26 @@
 
 #include "javaendian.h"
 
-/*
- * Don't conditionally compile these functions so we get compiler feedback even
- * if they are not used.  Access control is provided by the header.
- */
-
-#ifndef WORDS_BIGENDIAN
-// TODO add function for CD_ntoh64()
-
-// TODO Add function for CD_hton64()
-#endif
-
-/* TODO these functions are aweful and may result in undefined behavior
- * FIXME!!!
- */
-
-#ifndef FLOAT_WORDS_BIGENDIAN
-double ntohd(double d)
+// for example... swapBytes(&myFloat, sizeof(myFloat))
+void swapBytes(void *data, int length)
 {
-  int *overlay;
-  int buffer;
-  
-  overlay = (int*)&d;
-  buffer = overlay[0];
-  
-  overlay[0] = ntohl(overlay[1]);
-  overlay[1] = ntohl(buffer);
-  
-  return *overlay;
+	#ifdef WORDS_BIGENDIAN
+		return;
+	#else
+		int c=0;
+		char out[length];
+		char *in = (char *)data;
+		while(c<length)
+		{
+			out[c] = in[length-c-1];
+			c++;
+		}
+		
+		c=0;
+		while(c<length)
+		{
+			in[c] = out[c];
+			c++;
+		}
+	#endif
 }
-
-double htond(double d)
-{
-  int *overlay;
-  int buffer;
-  
-  overlay = (int*)&d;
-  buffer = overlay[0];
-  
-  overlay[0] = htonl(overlay[1]);
-  overlay[1] = htonl(buffer);
-  
-  return *overlay;
-}
-
-float ntohf(float f)
-{
-  int *ptr = (int*)&f;
-  int nf = ntohl (*ptr);
-  return *(float *)&nf;
-}
-
-float htonf(float f)
-{  
-  int *ptr = (int*)&f;
-  int hf = htonl (*ptr);
-  return *(float *)&hf;  
-}
-#endif

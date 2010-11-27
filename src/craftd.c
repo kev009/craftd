@@ -270,7 +270,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx)
 	u_login->password[u_login->plen] = '\0';
 	
 	evbuffer_remove(input, &u_login->mapseed, sizeof(u_login->mapseed));
-	u_login->mapseed = CD_ntoh64(u_login->mapseed);
+	swapBytes(&u_login->mapseed, sizeof(u_login->mapseed));
 	
 	evbuffer_remove(input, &u_login->dimension, sizeof(u_login->dimension));
 
@@ -444,7 +444,6 @@ readcb(struct bufferevent *bev, void *ctx)
     struct evbuffer *input, *output;
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
-    struct PL_entry *player = ctx;
 
     /* TODO: use ev_addbuffer/removebuffer for efficiency!
      * Use more zero copy I/O and peeks if possible
@@ -527,13 +526,14 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 {
     int finished = 0;
     
-    // Get player context from linked list 
+    // Get player context from linked list
     struct PL_entry *player = ctx;
     
     if (error & BEV_EVENT_EOF)
     {
         /* Connection closed, remove client from tables here */
         if( player->username.valid == 1)
+          //mcstring_t uname = player->username;
           printf("Connection closed for: %s\n", player->username.str);
         else
           printf("Connection closed ip: %s\n", player->ip);
@@ -554,10 +554,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     }
     if (finished)
     {
-        // Convert this to a SLIST_WHILE
-        // Grab a rdlock until player is found, wrlock delete, free
         SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
-        --PL_count;
         free(ctx);
         bufferevent_free(bev);
     }
@@ -615,14 +612,8 @@ do_accept(evutil_socket_t listener, short event, void *arg)
           return;
         }
 
-        /* Initialize the player's internal rwlock */
-        pthread_rwlock_init(&player->rwlock, NULL);
-        
-        /* Lock for the list ptr update and add them to the Player List */
-        pthread_rwlock_wrlock(&PL_rwlock);
+        /* Add them to the list! */
         SLIST_INSERT_HEAD(&PL_head, player, PL_entries);
-        ++PL_count;
-        pthread_rwlock_unlock(&PL_rwlock);
 
         evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
@@ -703,9 +694,7 @@ main(int argc, char **argv)
   /* Player List singly linked-list setup */
   // hsearch w/direct ptr hashtable for name lookup if we need faster direct
   // access (keep two ADTs and entries for each player)
-  pthread_rwlock_init(&PL_rwlock, NULL);
   SLIST_INIT(&PL_head);
-  PL_count = 0;
 
   /* Print startup message */
   craftd_version(argv[0]); // LOG
