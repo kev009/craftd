@@ -16,7 +16,7 @@ m4_defun([AC_PROG_F77],[])
 AC_PROG_CC_C99
 
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile])
 AC_CONFIG_SRCDIR([src/mapchunk.h])
 
 # Checks for libraries.
