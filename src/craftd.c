@@ -444,6 +444,7 @@ readcb(struct bufferevent *bev, void *ctx)
     struct evbuffer *input, *output;
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
+    struct PL_entry *player = ctx;
 
     /* TODO: use ev_addbuffer/removebuffer for efficiency!
      * Use more zero copy I/O and peeks if possible
@@ -526,8 +527,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 {
     int finished = 0;
     
-    // Get player context from linked list
-    
+    // Get player context from linked list 
     struct PL_entry *player = ctx;
     
     if (error & BEV_EVENT_EOF)
@@ -556,7 +556,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     {
         // Convert this to a SLIST_WHILE
         // Grab a rdlock until player is found, wrlock delete, free
-        // SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
+        SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
         free(ctx);
         bufferevent_free(bev);

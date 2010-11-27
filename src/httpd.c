@@ -96,6 +96,37 @@ not_found:
 }
 
 /**
+ * JSON test buffer
+ */
+static void
+json_request_cb(struct evhttp_request *req, void *arg)
+{
+  struct evbuffer *bout;
+
+  bout = evbuffer_new();
+
+  evbuffer_add_printf(bout, "<html>\n <head>\n  <title>JSON</title>\n   <body>");
+
+  struct PL_entry *player;
+  pthread_rwlock_rdlock(&PL_rwlock);
+  SLIST_FOREACH(player, &PL_head, PL_entries)
+  {
+    evbuffer_add_printf(bout, "    %s - %s<br>\n", player->username.str, 
+        player->ip);
+  }
+  pthread_rwlock_unlock(&PL_rwlock);
+
+  evbuffer_add_printf(bout, "\n   </body></html>");
+  evhttp_add_header(evhttp_request_get_output_headers(req),
+      "Content-Type", "text/html");
+
+
+  evhttp_send_reply(req, HTTP_OK, "OK", bout);
+  evbuffer_free(bout);
+  return;
+}
+
+/**
  * This is the default static document callback
  */
 static void
@@ -256,7 +287,7 @@ void *run_httpd(void *arg)
     }
 
     /* Set dynamic callbacks */
-    //evhttp_set_cb(httpd, "/json", json_request_cb, NULL);
+    evhttp_set_cb(httpd, "/json", json_request_cb, NULL);
     //evhttp_set_cb(httpd, "/admin", admin_request_cb, NULL);
 
     /* Default static content handler */
