@@ -36,6 +36,8 @@
 /**
  * Declare the player list as a singly linked list 
  */
+pthread_rwlock_t PL_rwlock;
+int PL_count;
 SLIST_HEAD(PL_slisthead, PL_entry) PL_head;
 
 
