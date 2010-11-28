@@ -28,11 +28,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 
+#include "craftd.h"
 #include "packets.h"
 #include "javaendian.h"
 
@@ -48,8 +50,12 @@ void *run_worker(void *arg)
 
   for(;;)
   {
-     
-    //sem_post(&worker_sem);
+    pthread_cond_wait(&worker_cond[id], &worker_condmutex[id]);
+
+    // Do work
+
+    pthread_mutex_unlock(&worker_condmutex[id]);
+    sem_post(&worker_sem);
   }
 
   return NULL;

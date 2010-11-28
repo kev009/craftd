@@ -58,10 +58,13 @@ readcb(struct bufferevent *bev, void *ctx)
     struct PL_entry *player = ctx;
 
     /* Decrement the worker poll semaphore or block */
-    //sem_wait(&worker_sem);
-    //int value; 
-    //sem_getvalue(&worker_sem, &value); 
-    //printf("The value of the semaphore is %d\n", value);
+    sem_wait(&worker_sem);
+    int worker_value; 
+    sem_getvalue(&worker_sem, &worker_value); 
+    printf("The value of the semaphore is %d\n", worker_value);
+    
+    /* Dispatch the worker CV */
+    pthread_cond_signal(&worker_cond[worker_value]);
 
     /* TODO: use ev_addbuffer/removebuffer for efficiency!
      * Use more zero copy I/O and peeks if possible
@@ -383,6 +386,13 @@ main(int argc, char **argv)
         run_worker, (void *)i);
     if(status != 0)
       puts("Worker pool startup failed!"); //LOG
+
+    status = pthread_cond_init(&worker_cond[i], NULL);
+    if(status !=0)
+      puts("Worker condition var init failed!"); // LOG
+
+    pthread_mutex_init(&worker_condmutex[i], NULL);
+    pthread_mutex_lock(&worker_condmutex[i]);
   }
 
   /* Start inbound game server*/
