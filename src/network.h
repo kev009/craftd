@@ -1,5 +1,5 @@
-#ifndef CRAFTD_UTIL_H
-#define CRAFTD_UTIL_H
+#ifndef CRAFTD_NETWORK_H
+#define CRAFTD_NETWORK_H
 
 /*
  * Copyright (c) 2010 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
@@ -26,35 +26,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#endif
+
 #include <config.h>
 
-/**
- * Public and exposed mcstring structure interface
- * It is not advised to directly build strings but instead use the public
- * methods below.
- */
-typedef struct _mcstring
-{
-  int16_t slen;
-  char *str;
-  int valid;
-} mcstring_t;
+#include <stdint.h>
 
-/* Public mcstring functiions */
-int ismc_utf8(const char const* str);
-mcstring_t *mcstring_allocate(int16_t slen);
-mcstring_t *mcstring_create(int16_t slen, const char *strptr);
-mcstring_t *mcstring_ncat(mcstring_t *dest, const char *src, size_t size);
-mcstring_t *mcstring_mccat(mcstring_t *dest, mcstring_t *src);
-int mcstring_valid(mcstring_t *mcstring);
-void mcstring_free(mcstring_t *mcstring);
+#include <event2/buffer.h>
+#include <event2/bufferevent.h>
 
-/* Public memory management wrappers */
-void *Malloc(size_t size);
-void *Calloc(size_t num, size_t size);
+#include "craftd.h" 
 
-/* Public evbuffer utility */
-int CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
-                             size_t len, struct evbuffer_ptr *ptr);
+/* Public methods */
+int len_statemachine(uint8_t pkttype, struct evbuffer* input);
+int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx);
 
-#endif

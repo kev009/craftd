@@ -35,7 +35,8 @@
  * Also define 64-bit integer routines since they don't always exist
  */
 
-#include "config.h"
+#include <config.h>
+
 #ifdef HAVE_ENDIAN_H
 	#include <endian.h>
 #endif

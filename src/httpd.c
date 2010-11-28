@@ -23,8 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <config.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,6 +107,7 @@ json_request_cb(struct evhttp_request *req, void *arg)
 
   struct PL_entry *player;
   pthread_rwlock_rdlock(&PL_rwlock);
+  evbuffer_add_printf(bout, "\n    <h2>%d users online</h2>\n", PL_count);
   SLIST_FOREACH(player, &PL_head, PL_entries)
   {
     evbuffer_add_printf(bout, "    %s - %s<br>\n", player->username.str, 
