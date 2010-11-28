@@ -270,15 +270,18 @@ int
 CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
                              size_t len, struct evbuffer_ptr *ptr)
 {
-    /* FIXME locking is left as an exercise for the reader */
     struct evbuffer_iovec *v;
     int nvecs, i;
     char *cp = buf;
     int status;
 
+    evbuffer_enable_locking(b, NULL);
+    evbuffer_lock(b);
+
     if (!ptr)
     {
         status = evbuffer_copyout(b, buf, len);
+        evbuffer_unlock(b);
         if (status < 0)
           return status;
         return 0;
@@ -286,7 +289,7 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
 
     if (evbuffer_get_length(b) < ptr->pos + len)
     {
-      
+      evbuffer_unlock(b); 
       return EAGAIN;  /* not enough data */
     }
 
@@ -295,18 +298,27 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
         char tmp[128];
         evbuffer_copyout(b, tmp, ptr->pos + len);
         memcpy(buf, tmp+ptr->pos, len);
+        evbuffer_unlock(b);
         return 0;
     }
 
     /* determine how many vecs we need */
     nvecs = evbuffer_peek(b, len, ptr, NULL, 0);
     if (nvecs < 1)
+    {
+        evbuffer_unlock(b);
         return ENOBUFS;
+    }
     v = calloc(sizeof(struct evbuffer_iovec), nvecs);
     if (v == NULL)
+    {
+        evbuffer_unlock(b);
         return ENOBUFS;
+    }
 
-    if (evbuffer_peek(b, len, ptr, v, nvecs) < 0) {
+    if (evbuffer_peek(b, len, ptr, v, nvecs) < 0)
+    {
+        evbuffer_unlock(b);
         free(v);
         return ENOBUFS; /* should be impossible, but let's take no chances */
     }
@@ -321,6 +333,8 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
             break;
         }
     }
+
+    evbuffer_unlock(b);
     free(v);
     return 0;
 }
