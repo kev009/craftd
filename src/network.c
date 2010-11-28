@@ -41,6 +41,21 @@
  * pointers?  Might have advantages for threading.
  */
 
+void *run_worker(void *arg)
+{
+  int id = (int)arg;
+  printf("Worker %d started!\n", id);
+
+  for(;;)
+  {
+     
+    //sem_post(&worker_sem);
+  }
+
+  return NULL;
+}
+
+
 /** 
  * Get and return length of full packet.
  * Otherwise EAGAIN EILSEQ on exception (need more data or bad input)

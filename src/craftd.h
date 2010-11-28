@@ -28,6 +28,7 @@
 
 #include <config.h>
 
+#include <semaphore.h>
 #include <pthread.h>
 #include <sys/queue.h>
 
@@ -36,17 +37,15 @@
 /* Public data */
 
 /**
- * Declare the player list as a singly linked list 
+ * Declare the player list as a singly-linked list 
  */
 pthread_rwlock_t PL_rwlock;
 int PL_count;
 SLIST_HEAD(PL_slisthead, PL_entry) PL_head;
 
-
 /**
- * This is a player entry in the singly linked list
+ * This is a player entry in the singly-linked list
  */
-
 struct PL_entry
 {
     pthread_rwlock_t rwlock;
@@ -57,6 +56,30 @@ struct PL_entry
     uint8_t dimension;
     mcstring_t username;
     SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
+};
+
+/**
+ * The worker pool semaphore keeps track of the available threads
+ */
+sem_t worker_sem;
+
+
+/**
+ * Declare a Work Queue as a singly-linked tail queue for player work reqs
+ */
+pthread_rwlock_t WQ_rwlock;
+int WQ_count;
+STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
+
+/**
+ * This is a work queue entry in the singly-linked tail queue
+ */
+struct WQ_entry
+{
+  int worktype;
+  struct PL_entry *player;
+  void *workdata;
+  STAILQ_ENTRY(WQ_entry) WQ_entries; // Pointer to next work item
 };
 
 /* Public methods */

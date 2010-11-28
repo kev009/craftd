@@ -33,5 +33,6 @@
 #define MAX_LISTENBACKLOG (16)
 #define MAX_BUF (8096)
 #define MC_MAXSTRING (200)
+#define WORKER_POOL (2)
 
 #endif

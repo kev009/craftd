@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <semaphore.h>
 #include <pthread.h>
 
 #include <event2/event.h>
@@ -55,6 +56,12 @@ readcb(struct bufferevent *bev, void *ctx)
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
     struct PL_entry *player = ctx;
+
+    /* Decrement the worker poll semaphore or block */
+    //sem_wait(&worker_sem);
+    //int value; 
+    //sem_getvalue(&worker_sem, &value); 
+    //printf("The value of the semaphore is %d\n", value);
 
     /* TODO: use ev_addbuffer/removebuffer for efficiency!
      * Use more zero copy I/O and peeks if possible
@@ -254,6 +261,14 @@ run_server(void)
     struct event_base* base;
     struct event *listener_event;
 
+    /* Initialize the worker pool semaphore */
+    if(sem_init(&worker_sem, 0, WORKER_POOL) < 0)
+    {
+        perror("Couldn't create work pool semaphore");
+        return;
+    }
+
+
     base = event_base_new();
     if (!base)
     {
@@ -308,19 +323,28 @@ main(int argc, char **argv)
   pthread_attr_t httpd_thread_attr;
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
+  pthread_t WP_thread_id[WORKER_POOL];
+  pthread_attr_t WP_thread_attr;
   int status = 0;
 
-  /* Player List singly linked-list setup */
+  /* Player List singly-linked list setup */
   // hsearch w/direct ptr hashtable for name lookup if we need faster direct
   // access (keep two ADTs and entries for each player)
   pthread_rwlock_init(&PL_rwlock, NULL);
   SLIST_INIT(&PL_head);
   PL_count = 0;
 
+  /* Work Queue is a singly-linked tail queue for player work requests */
+  pthread_rwlock_init(&WQ_rwlock, NULL);
+  STAILQ_INIT(&WQ_head);
+  WQ_count = 0;
+    
   /* Print startup message */
   craftd_version(argv[0]); // LOG
   puts("Server starting!"); // LOG
-  
+
+  //daemon(1,1);
+
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
 
 #ifdef WIN32
@@ -348,6 +372,18 @@ main(int argc, char **argv)
   
   if(status != 0)
     perror("Cannot start httpd");
+
+  /* Start packet handler pool */
+  pthread_attr_init(&WP_thread_attr);
+  pthread_attr_setdetachstate(&WP_thread_attr, PTHREAD_CREATE_DETACHED);
+  int i;
+  for (i = 0; i < WORKER_POOL; ++i)
+  {
+    status = pthread_create(&WP_thread_id[i], &WP_thread_attr,
+        run_worker, (void *)i);
+    if(status != 0)
+      puts("Worker pool startup failed!"); //LOG
+  }
 
   /* Start inbound game server*/
   run_server();

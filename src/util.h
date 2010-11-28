@@ -28,6 +28,16 @@
 
 #include <config.h>
 
+#include <errno.h>
+
+/**
+ * Global error handling macros
+ */
+#define PERR(msg) \
+  do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+//TODO LOG, ELOG, ERR, etc
+
 /**
  * Public and exposed mcstring structure interface
  * It is not advised to directly build strings but instead use the public
