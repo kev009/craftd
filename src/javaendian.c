@@ -23,65 +23,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <arpa/inet.h>
+#include <config.h>
+
+#include <string.h>
 
 #include "javaendian.h"
 
-/*
- * Don't conditionally compile these functions so we get compiler feedback even
- * if they are not used.  Access control is provided by the header.
- */
-
-#ifndef WORDS_BIGENDIAN
-// TODO add function for CD_ntoh64()
-
-// TODO Add function for CD_hton64()
-#endif
-
-/* TODO these functions are aweful and may result in undefined behavior
- * FIXME!!!
- */
-
 #ifndef FLOAT_WORDS_BIGENDIAN
-double ntohd(double d)
+inline double Cswapd(double d)
 {
-  int *overlay;
-  int buffer;
-  
-  overlay = (int*)&d;
-  buffer = overlay[0];
-  
-  overlay[0] = ntohl(overlay[1]);
-  overlay[1] = ntohl(buffer);
-  
-  return *overlay;
+  static uint64_t tmp = 0;
+  static double out = 0;
+  memcpy(&d, &tmp, sizeof(tmp));
+  tmp = ntohll(tmp);
+  memcpy(&tmp, &out, sizeof(tmp));
+  return out;
 }
 
-double htond(double d)
+inline float Cswapf(float f)
 {
-  int *overlay;
-  int buffer;
-  
-  overlay = (int*)&d;
-  buffer = overlay[0];
-  
-  overlay[0] = htonl(overlay[1]);
-  overlay[1] = htonl(buffer);
-  
-  return *overlay;
-}
-
-float ntohf(float f)
-{
-  int *ptr = (int*)&f;
-  int nf = ntohl (*ptr);
-  return *(float *)&nf;
-}
-
-float htonf(float f)
-{  
-  int *ptr = (int*)&f;
-  int hf = htonl (*ptr);
-  return *(float *)&hf;  
+  static int32_t tmp = 0;
+  static float out = 0;
+  memcpy(&f, &tmp, sizeof(tmp));
+  tmp = ntohl(tmp);
+  memcpy(&tmp, &out, sizeof(tmp));
+  return tmp;
 }
 #endif

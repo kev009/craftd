@@ -39,7 +39,8 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
 #CC="$PTHREAD_CC"
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h unistd.h endian.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
+                  sys/socket.h unistd.h endian.h sys/endian.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -53,7 +54,7 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
 
 AC_C_BIGENDIAN
-AC_CHECK_DECLS([be64toh, htobe64], [], [],[#include <endian.h>])
+AC_CHECK_DECLS([be64toh,htobe64], [], [],[#include <endian.h>, #include <sys/endian.h>])
 # Check if we need to reorder float and double types
 AX_C_FLOAT_WORDS_BIGENDIAN
 

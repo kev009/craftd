@@ -260,7 +260,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx)
 	u_login->password[u_login->plen] = '\0';
 	
 	evbuffer_remove(input, &u_login->mapseed, sizeof(u_login->mapseed));
-	u_login->mapseed = CD_ntoh64(u_login->mapseed);
+	u_login->mapseed = ntohll(u_login->mapseed);
 	
 	evbuffer_remove(input, &u_login->dimension, sizeof(u_login->dimension));
 
