@@ -37,6 +37,8 @@
 
 #include <config.h>
 
+#include <string.h>
+
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
 #endif
@@ -94,8 +96,28 @@
 #define Cswapf(f) (f)
 #else
 /* We need to convert native floating-point types */
-inline double Cswapd(double d);
-inline float Cswapf(float f);
+static inline double 
+Cswapd(double d)
+{
+  uint64_t tmp = 0;
+  double out = 0;
+  memcpy(&d, &tmp, sizeof(tmp));
+  tmp = ntohll(tmp);
+  memcpy(&tmp, &out, sizeof(tmp));
+  return out;
+}
+
+static inline float
+Cswapf(float f)
+{
+  int32_t tmp = 0;
+  float out = 0;
+  memcpy(&f, &tmp, sizeof(tmp));
+  tmp = ntohl(tmp);
+  memcpy(&tmp, &out, sizeof(tmp));
+  return tmp;
+}
+
 #endif
 
 #endif /* FLOAT_WORDS_BIGENDIAN */
