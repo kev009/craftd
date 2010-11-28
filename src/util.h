@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 /**
  * Public and exposed mcstring structure interface
  * It is not advised to directly build strings but instead use the public
