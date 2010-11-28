@@ -45,6 +45,7 @@
 #include "craftd.h"
 #include "util.h"
 #include "network.h"
+#include "timeloop.h"
 #include "httpd.h"
 
 void
@@ -334,8 +335,8 @@ main(int argc, char **argv)
   /* Start timeloop */
   pthread_attr_init(&timeloop_thread_attr);
   pthread_attr_setdetachstate(&timeloop_thread_attr, PTHREAD_CREATE_DETACHED);
-  //status = pthread_create(&timeloop_thread_id, &timeloop_thread_attr, 
-  //    run_timeloop, NULL);
+  status = pthread_create(&timeloop_thread_id, &timeloop_thread_attr, 
+      run_timeloop, NULL);
   if(status != 0)
     perror("Cannot start timeloop");
   
