@@ -44,6 +44,15 @@ void *run_timeloop(void *arg)
     exit(1);
   }
 
+  /* Initialize the time loop tail queue.  Work items are added on to the end
+   * and a void pointer provides access to heap data
+   */
+  pthread_rwlock_init(&TLQ_rwlock, NULL);
+  TAILQ_INIT(&TLQ_head);
+  TLQ_count = 0;
+
+  //TODO will need various timer events w/ different reoccuring time intervals
+
   puts("Time event loop started!"); // LOG
 
   event_base_dispatch(tlbase);

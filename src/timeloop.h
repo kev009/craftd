@@ -28,7 +28,25 @@
 
 #include <config.h>
 
+#include <sys/queue.h>
+#include <pthread.h>
+
+/* Public data */
+pthread_rwlock_t TLQ_rwlock;
+int TLQ_count;
+TAILQ_HEAD(TLQ_tailhead, TLQ_entry) TLQ_head;
+
+/**
+ * A work item for the time loop
+ */
+struct TLQ_entry
+{
+  int worktype;
+  void *workdata;
+};
+
 /* Public interfaces */
 void *run_timeloop(void *arg);
 
 #endif
+
