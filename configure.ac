@@ -29,7 +29,7 @@ PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.0],
 AC_MSG_ERROR([System libevent2_pthreads not found.  Install it and specify the PKG_CONFIG_PATH. ]))
 
 # Establish default CFLAGS and pthread portability
-CFLAGS="$CFLAGS -Wall"
+AX_CFLAGS_WARN_ALL
 CC="$PTHREAD_CC"
 PTHREAD_LIBS="$PTHREAD_LIBS"
 PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
