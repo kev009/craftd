@@ -94,8 +94,8 @@
 #define Cswapf(f) (f)
 #else
 /* We need to convert native floating-point types */
-double Cswapd(double d);
-float Cswapf(float f);
+inline double Cswapd(double d);
+inline float Cswapf(float f);
 #endif
 
 #endif /* FLOAT_WORDS_BIGENDIAN */
