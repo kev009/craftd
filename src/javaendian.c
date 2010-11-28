@@ -32,8 +32,8 @@
 #ifndef FLOAT_WORDS_BIGENDIAN
 inline double Cswapd(double d)
 {
-  static uint64_t tmp = 0;
-  static double out = 0;
+  uint64_t tmp = 0;
+  double out = 0;
   memcpy(&d, &tmp, sizeof(tmp));
   tmp = ntohll(tmp);
   memcpy(&tmp, &out, sizeof(tmp));
@@ -42,8 +42,8 @@ inline double Cswapd(double d)
 
 inline float Cswapf(float f)
 {
-  static int32_t tmp = 0;
-  static float out = 0;
+  int32_t tmp = 0;
+  float out = 0;
   memcpy(&f, &tmp, sizeof(tmp));
   tmp = ntohl(tmp);
   memcpy(&tmp, &out, sizeof(tmp));
