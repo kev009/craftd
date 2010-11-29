@@ -67,7 +67,6 @@
 
 /* Add generic ntohll/htonll routine if needed */
 #if defined(HAVE_DECL_BE64TOH) && !defined(ntohll)
-
 #define ntohll(ll) be64toh(ll)
 #ifdef HAVE_DECL_HTOBE64
 #define htonll(ll) htobe64(ll)
@@ -77,10 +76,9 @@
 
 #else /* Don't have be64toh */
 
-#ifndef(ntohll)
+#ifndef ntohll
 #define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl(x >> 32))
 #endif
-
 #ifndef htonll
 #define htonll(x) ((((uint64_t)htonl(x)) << 32) + htonl(x >> 32))
 #endif
@@ -110,14 +108,13 @@ Cswapd(double d)
 static inline float
 Cswapf(float f)
 {
-  int32_t tmp = 0;
+  uint32_t tmp = 0;
   float out = 0;
   memcpy(&f, &tmp, sizeof(tmp));
   tmp = ntohl(tmp);
   memcpy(&tmp, &out, sizeof(tmp));
   return tmp;
 }
-
-#endif
-
 #endif /* FLOAT_WORDS_BIGENDIAN */
+
+#endif /* CRAFTD_JAVAENDIAN_H */
