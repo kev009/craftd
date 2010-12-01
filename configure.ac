@@ -24,7 +24,7 @@ AX_LIB_SOCKET_NSL
 AX_CHECK_ZLIB
 AX_PTHREAD([], AC_MSG_ERROR([pthreads is required]))
 
-PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.0],
+PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.9],
 , ,
 AC_MSG_ERROR([System libevent2_pthreads not found.  Install it and specify the PKG_CONFIG_PATH. ]))
 
