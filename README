@@ -3,8 +3,17 @@ Welcome to craftd!
 This is early, pre-alpha software.  If you aren't familiar with autotools, 
 please wait until binary packages are available or at least source tarballs.
 
-You need libevent-2 from git for the time being.
-git clone git://github.com/nmathewson/Libevent.git
+Dependencies:
+libevent 2.0.9+ - http://monkey.org/~provos/libevent/
+zlib 1.2.3+ - http://zlib.net/
+Pthreads
+
+Successfully built on:
+Linux - GCC, LLVM/clang
+FreeBSD - GCC
+IRIX - MIPSpro (Big-Endian functionality verified)
+AIX - xlC, GCC (Big-Endian functionality verified)
+Windows - MinGW - Needs rework.  Priority is getting basics working on UNIX.
 
 == Users ==
 Wait for a release tarball.  The git repo does not track the generated configure
@@ -17,8 +26,7 @@ script.
 Please contact me and let me know what parts you intend to work on first.
 
 Generating ./configure:
-autoreconf
-automake --add-missing
+autoreconf -i
 
 You should have a good understanding of libevent-2.
 http://www.wangafu.net/~nickm/libevent-book/
