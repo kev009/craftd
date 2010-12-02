@@ -48,14 +48,14 @@ SLIST_HEAD(PL_slisthead, PL_entry) PL_head;
  */
 struct PL_entry
 {
-    pthread_rwlock_t rwlock;
-    evutil_socket_t fd;
-    char ip[128];
-    uint32_t clientver;
-    uint64_t mapseed;
-    uint8_t dimension;
-    mcstring_t username;
-    SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
+  pthread_rwlock_t rwlock;
+  evutil_socket_t fd;
+  char ip[128];
+  uint32_t clientver;
+  uint64_t mapseed;
+  uint8_t dimension;
+  mcstring_t username;
+  SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
 };
 
 /**
@@ -84,9 +84,5 @@ struct WQ_entry
 
 /* Public methods */
 void craftd_version(const char *progname);
-
-/* Private */
-//static void do_read(evutil_socket_t fd, short events, void *arg);
-//static void do_write(evutil_socket_t fd, short evets, void *arg);
 
 #endif

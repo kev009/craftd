@@ -65,7 +65,9 @@ readcb(struct bufferevent *bev, void *ctx)
   pthread_mutex_unlock(&WQ_mutex);
   
   /* Dispatch to an open worker */
+  //pthread_mutex_lock(&worker_cvmutex);
   pthread_cond_signal(&worker_cv);
+  //pthread_mutex_unlock(&worker_cvmutex);
 
   return; // Good read
 }
@@ -102,12 +104,30 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     }
     if (finished)
     {
-        //TODO: Convert this to a SLIST_WHILE
+        //TODO: Convert this to a SLIST_FOREACH
         //XXXX Grab a rdlock until player is found, wrlock delete, free
-        SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
+        pthread_rwlock_wrlock(&PL_rwlock);
+	SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
-        free(ctx);
-        bufferevent_free(bev);
+	pthread_rwlock_unlock(&PL_rwlock);
+	
+	/* If the client disconnects, remove any pending WP buffer events */
+	struct WQ_entry *workitem, *workitemtmp;
+	pthread_mutex_lock(&WQ_mutex);
+	STAILQ_FOREACH_SAFE(workitem, &WQ_head, WQ_entries, workitemtmp)
+	{
+	  if(workitem->bev == bev)
+	  {
+	    STAILQ_REMOVE(&WQ_head, workitem, WQ_entry, WQ_entries);
+	    puts("bev removed from workerpool by errorcb");
+	  }
+	}
+	pthread_mutex_unlock(&WQ_mutex);
+	
+	if (ctx)
+	  free(ctx);
+	if (bev)
+	  bufferevent_free(bev);
     }
 }
 
@@ -276,6 +296,8 @@ main(int argc, char **argv)
 #else
   status = evthread_use_pthreads();
 #endif
+  
+  evthread_enable_lock_debuging(); // TODO: DEBUG flag
 
   if(status != 0)
     perror("Cannot initialize libevent threading");
@@ -302,6 +324,7 @@ main(int argc, char **argv)
   pthread_attr_setdetachstate(&WP_thread_attr, PTHREAD_CREATE_DETACHED);
   
   pthread_mutex_init(&worker_cvmutex, NULL);
+  pthread_mutex_lock(&worker_cvmutex);
   status = pthread_cond_init(&worker_cv, NULL);
   if(status !=0)
     puts("Worker condition var init failed!"); // LOG

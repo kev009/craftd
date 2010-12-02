@@ -65,18 +65,36 @@ void *run_worker(void *arg)
   uint8_t pkttype;
   
   for(;;)
-  { 
-    pthread_mutex_lock(&worker_cvmutex);
+  {
+    //pthread_mutex_lock(&worker_cvmutex);
     pthread_cond_wait(&worker_cv, &worker_cvmutex);
+    //pthread_mutex_unlock(&worker_cvmutex);
     printf("in worker: %d\n", id);
     
     /* Pull work item */
     pthread_mutex_lock(&WQ_mutex);
+    /* Prevent a nasty race condition if the client disconnects
+     * Works in tandem with errorcb FOREACH bev removal loop
+     */
+    if(STAILQ_EMPTY(&WQ_head))
+    {
+      puts("Race+deadlock avoidance in workerpool");
+      pthread_mutex_unlock(&WQ_mutex);
+      //pthread_mutex_unlock(&worker_cvmutex);
+      continue;
+    }
     workitem = STAILQ_FIRST(&WQ_head);
+    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
     pthread_mutex_unlock(&WQ_mutex);
     
     bev = workitem->bev;
     player = workitem->player;
+    
+    if (bev == NULL || player == NULL)
+    {
+      puts("Aaack, null bev or ctx in worker?");
+      goto readerr;
+    }
 
     /* Do work */
     input = bufferevent_get_input(bev);
@@ -119,24 +137,18 @@ void *run_worker(void *arg)
     }
     
     /* On success, wait for next item and unlock the mutex */
-    pthread_mutex_lock(&WQ_mutex);
-    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
-    pthread_mutex_unlock(&WQ_mutex);
-    
     free(workitem);
     
-    pthread_mutex_unlock(&worker_cvmutex);
+    sleep(2);
+    
+    //pthread_mutex_unlock(&worker_cvmutex);
     continue;
 
     /* On EAGAIN, clear the work item and clear the worker cv */
-readagain:
-    pthread_mutex_lock(&WQ_mutex);
-    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
-    pthread_mutex_unlock(&WQ_mutex);
-    
+readagain:    
     free(workitem);
     
-    pthread_mutex_unlock(&worker_cvmutex);
+    //pthread_mutex_unlock(&worker_cvmutex);
     continue;
     
     /* On exception, remove all client allocations in correct order */
@@ -144,15 +156,14 @@ readerr:
     /* TODO: Code a function to remove the player from playerlist with
      * correct locking semantics and share this code with errorcb() in craftd.c
      */
-    pthread_mutex_lock(&WQ_mutex);
-    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
-    pthread_mutex_unlock(&WQ_mutex);
-
-    free(workitem);
-    free(player);
-    bufferevent_free(bev);
     
-    pthread_mutex_unlock(&worker_cvmutex);
+    free(workitem);
+    if (player)
+      free(player);
+    if (bev)
+      bufferevent_free(bev);
+    
+    //pthread_mutex_unlock(&worker_cvmutex);
     continue;
   }
 
