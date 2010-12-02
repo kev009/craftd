@@ -51,77 +51,30 @@
 void
 readcb(struct bufferevent *bev, void *ctx)
 {
-    struct evbuffer *input, *output;
-    input = bufferevent_get_input(bev);
-    output = bufferevent_get_output(bev);
-    struct PL_entry *player = ctx;
+  struct WQ_entry *workitem;
+  struct PL_entry *player = ctx;
 
-    /* Dispatch to an open worker */
-    pthread_mutex_lock(&worker_cvmutex);
-    // TODO: add to queue
-    pthread_mutex_unlock(&worker_cvmutex);
-    pthread_cond_signal(&worker_cv);
+  /* TODO: use ev_addbuffer/removebuffer for efficiency!
+   * Use more zero copy I/O and peeks if possible
+   */
+  
+  workitem = Malloc(sizeof(struct WQ_entry));
+  workitem->bev = bev;
+  workitem->player = player;
+  
+  /* Dispatch to an open worker */
+  //pthread_mutex_lock(&worker_cvmutex);
+  
+  pthread_mutex_lock(&WQ_mutex);
+  STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
+  pthread_mutex_unlock(&WQ_mutex);
+  
+  //pthread_mutex_unlock(&worker_cvmutex);
+  pthread_cond_signal(&worker_cv);
 
-    /* TODO: use ev_addbuffer/removebuffer for efficiency!
-     * Use more zero copy I/O and peeks if possible
-     */
+  return; // Good read
 
-    size_t inlen;
-    int status;
-    int pktlen;
-    uint8_t pkttype;
-
-    inlen = evbuffer_get_length(input);
-
-    evbuffer_copyout(input, &pkttype, 1);
-
-    pktlen = len_statemachine(pkttype, input);
-    
-    /* On exception conditions, negate the return value to get correct errno */
-    if (pktlen < 0)
-    {
-        pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
-        if (pktlen == EAGAIN)
-        {
-            /* recvd a fragment, wait for another event */
-            puts("EAGAIN\n");
-            return;
-        }
-        else if (pktlen == EILSEQ)
-        {
-            /* recvd an packet that does not match known parameters
-             * Punt the client and perform cleanup
-             */
-            printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
-            goto readcberr;
-        }
-      perror("unhandled readcb error");
-    }
-    
-    /* Invariant: else we recieved a full packet of pktlen */
-
-    /* XXX add round-robin to packet worker pool here */
-    /* Use a counting semaphore to keep only fewest required num threads 
-     * cache hot */
-
-    status = packetdecoder(pkttype, pktlen, bev, ctx);
-
-    /* On decoding errors, punt the client for now */
-    if(status != 0)
-    {
-      printf("Decode error, punting client.  errno: %d\n", status);
-      goto readcberr;
-    }
-
-    return; // Good read, no exception handling
-
-/* On exception, remove all client allocations in correct order */
-readcberr:
-    free(ctx);
-    bufferevent_free(bev);
-    return;
-
-    /* DEBUG to print hex and ASCII
+  /* DEBUG to print hex and ASCII
     uint8_t *fullpkt;
     fullpkt = malloc(pktlen);
     //evbuffer_remove(input, fullpkt, pktlen); // or evbuffer_copyout
@@ -135,7 +88,7 @@ readcberr:
     printf("\n");
     
     free(fullpkt);
-    */
+   */
 }
 
 void
@@ -327,7 +280,7 @@ main(int argc, char **argv)
   PL_count = 0;
 
   /* Work Queue is a singly-linked tail queue for player work requests */
-  pthread_rwlock_init(&WQ_rwlock, NULL);
+  pthread_mutex_init(&WQ_mutex, NULL);
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
     

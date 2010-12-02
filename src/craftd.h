@@ -68,7 +68,7 @@ pthread_mutex_t worker_cvmutex;
 /**
  * Declare a Work Queue as a singly-linked tail queue for player work reqs
  */
-pthread_rwlock_t WQ_rwlock;
+pthread_mutex_t WQ_mutex;
 int WQ_count;
 STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
 
@@ -77,9 +77,8 @@ STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
  */
 struct WQ_entry
 {
-  int worktype;
+  struct bufferevent *bev;
   struct PL_entry *player;
-  void *workdata;
   STAILQ_ENTRY(WQ_entry) WQ_entries; // Pointer to next work item
 };
 

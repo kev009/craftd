@@ -39,6 +39,4 @@
 
 /* Public methods */
 void *run_worker(void *arg);
-int len_statemachine(uint8_t pkttype, struct evbuffer* input);
-int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx);
 

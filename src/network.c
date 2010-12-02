@@ -43,21 +43,108 @@
  * pointers?  Might have advantages for threading.
  */
 
+int len_statemachine(uint8_t pkttype, struct evbuffer* input);
+int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev);
+
 void *run_worker(void *arg)
 {
   int id = *(int *)arg;
   printf("Worker %d started!\n", id);
   
+  struct bufferevent *bev;
+  struct evbuffer *input, *output;
+  struct WQ_entry *workitem;
+  struct PL_entry *player;
+  size_t inlen;
+  int status;
+  int pktlen;
+  uint8_t pkttype;
+  
   for(;;)
   { 
-    pthread_mutex_lock(&worker_cvmutex);
+    //pthread_mutex_lock(&worker_cvmutex);
     pthread_cond_wait(&worker_cv, &worker_cvmutex);
+    printf("in worker: %d\n", id);
     
-    // printf("in worker: %d\n", id);
+    // Pull work item
+    pthread_mutex_lock(&WQ_mutex);
+    workitem = STAILQ_FIRST(&WQ_head);
+    pthread_mutex_unlock(&WQ_mutex);
+    
+    bev = workitem->bev;
+    player = workitem->player;
 
     // Do work
-
+    input = bufferevent_get_input(bev);
+    output = bufferevent_get_output(bev);
+    
+    inlen = evbuffer_get_length(input);
+    evbuffer_copyout(input, &pkttype, 1);
+    pktlen = len_statemachine(pkttype, input);
+    
+    /* On exception conditions, negate the return value to get correct errno */
+    if (pktlen < 0)
+    {
+      pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
+      if (pktlen == EAGAIN)
+      {
+	/* recvd a fragment, wait for another event */
+	puts("EAGAIN\n");
+	goto readagain;
+      }
+      else if (pktlen == EILSEQ)
+      {
+        /* recvd an packet that does not match known parameters
+         * Punt the client and perform cleanup
+         */
+        printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
+        goto readerr;
+      }
+      perror("unhandled readcb error");
+    }
+    
+    /* Invariant: else we received a full packet of pktlen */
+    
+    status = packetdecoder(pkttype, pktlen, bev);
+    
+    /* On decoding errors, punt the client for now */
+    if(status != 0)
+    {
+      printf("Decode error, punting client.  errno: %d\n", status);
+      goto readerr;
+    }
+    
+    /* On success, wait for next item and unlock the mutex */
+    pthread_mutex_lock(&WQ_mutex);
+    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
+    pthread_mutex_unlock(&WQ_mutex);
+    free(workitem);
     pthread_mutex_unlock(&worker_cvmutex);
+    continue;
+
+readagain:
+    pthread_mutex_lock(&WQ_mutex);
+    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
+    pthread_mutex_unlock(&WQ_mutex);
+    free(workitem);
+    pthread_mutex_unlock(&worker_cvmutex);
+    continue;
+    
+    /* On exception, remove all client allocations in correct order */
+readerr:
+    /* Convert this to a SLIST_WHILE
+     * Grab a rdlock until player is found, wrlock delete, free */
+    /* SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
+     * --PL_count;
+     */
+    pthread_mutex_lock(&WQ_mutex);
+    STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
+    pthread_mutex_unlock(&WQ_mutex);
+    free(workitem);
+    free(player);
+    bufferevent_free(bev);
+    pthread_mutex_unlock(&worker_cvmutex);
+    continue;
   }
 
   return NULL;
@@ -234,7 +321,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
  * Invariant: packet is of correct length from len state machine
  */
 int
-packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx)
+packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 {
   struct evbuffer *input, *output;
   input = bufferevent_get_input(bev);
