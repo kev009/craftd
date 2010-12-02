@@ -53,42 +53,21 @@ readcb(struct bufferevent *bev, void *ctx)
 {
   struct WQ_entry *workitem;
   struct PL_entry *player = ctx;
-
-  /* TODO: use ev_addbuffer/removebuffer for efficiency!
-   * Use more zero copy I/O and peeks if possible
-   */
   
+  /* Allocate and construct new work item */
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
   workitem->player = player;
   
-  /* Dispatch to an open worker */
-  //pthread_mutex_lock(&worker_cvmutex);
-  
+  /* Add item to work queue */
   pthread_mutex_lock(&WQ_mutex);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
   pthread_mutex_unlock(&WQ_mutex);
   
-  //pthread_mutex_unlock(&worker_cvmutex);
+  /* Dispatch to an open worker */
   pthread_cond_signal(&worker_cv);
 
   return; // Good read
-
-  /* DEBUG to print hex and ASCII
-    uint8_t *fullpkt;
-    fullpkt = malloc(pktlen);
-    //evbuffer_remove(input, fullpkt, pktlen); // or evbuffer_copyout
-
-    printf("input buf is: %d\n", pktlen);
-    for(int i=0; i < pktlen; i++)
-      printf("%.2x ", (uint8_t) fullpkt[i]);
-    printf("\n");
-    for(int i=0; i < pktlen; i++)
-      printf("%c", fullpkt[i]);
-    printf("\n");
-    
-    free(fullpkt);
-   */
 }
 
 void
@@ -123,8 +102,8 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     }
     if (finished)
     {
-        // Convert this to a SLIST_WHILE
-        // Grab a rdlock until player is found, wrlock delete, free
+        //TODO: Convert this to a SLIST_WHILE
+        //XXXX Grab a rdlock until player is found, wrlock delete, free
         SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
         free(ctx);

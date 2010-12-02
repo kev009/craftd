@@ -43,6 +43,10 @@
  * pointers?  Might have advantages for threading.
  */
 
+/* TODO: use ev_addbuffer/removebuffer for efficiency!
+ * Use more zero copy I/O and peeks if possible
+ */
+
 int len_statemachine(uint8_t pkttype, struct evbuffer* input);
 int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev);
 
@@ -62,11 +66,11 @@ void *run_worker(void *arg)
   
   for(;;)
   { 
-    //pthread_mutex_lock(&worker_cvmutex);
+    pthread_mutex_lock(&worker_cvmutex);
     pthread_cond_wait(&worker_cv, &worker_cvmutex);
     printf("in worker: %d\n", id);
     
-    // Pull work item
+    /* Pull work item */
     pthread_mutex_lock(&WQ_mutex);
     workitem = STAILQ_FIRST(&WQ_head);
     pthread_mutex_unlock(&WQ_mutex);
@@ -74,7 +78,7 @@ void *run_worker(void *arg)
     bev = workitem->bev;
     player = workitem->player;
 
-    // Do work
+    /* Do work */
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
     
@@ -89,7 +93,7 @@ void *run_worker(void *arg)
       if (pktlen == EAGAIN)
       {
 	/* recvd a fragment, wait for another event */
-	puts("EAGAIN\n");
+	puts("EAGAIN");
 	goto readagain;
       }
       else if (pktlen == EILSEQ)
@@ -118,31 +122,36 @@ void *run_worker(void *arg)
     pthread_mutex_lock(&WQ_mutex);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
     pthread_mutex_unlock(&WQ_mutex);
+    
     free(workitem);
+    
     pthread_mutex_unlock(&worker_cvmutex);
     continue;
 
+    /* On EAGAIN, clear the work item and clear the worker cv */
 readagain:
     pthread_mutex_lock(&WQ_mutex);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
     pthread_mutex_unlock(&WQ_mutex);
+    
     free(workitem);
+    
     pthread_mutex_unlock(&worker_cvmutex);
     continue;
     
     /* On exception, remove all client allocations in correct order */
 readerr:
-    /* Convert this to a SLIST_WHILE
-     * Grab a rdlock until player is found, wrlock delete, free */
-    /* SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
-     * --PL_count;
+    /* TODO: Code a function to remove the player from playerlist with
+     * correct locking semantics and share this code with errorcb() in craftd.c
      */
     pthread_mutex_lock(&WQ_mutex);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
     pthread_mutex_unlock(&WQ_mutex);
+
     free(workitem);
     free(player);
     bufferevent_free(bev);
+    
     pthread_mutex_unlock(&worker_cvmutex);
     continue;
   }
