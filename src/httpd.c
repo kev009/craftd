@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -49,7 +50,7 @@
 /* This HTTP server borrows heavily from Nick Mathewson's example in libevent */
 
 // TODO pull docroot from runtime config
-const char *docroot = "/home/kev009/craftd/htdocs";
+const char *docroot = "/home/kev009/c/009mc/craftd/htdocs";
 
 char uri_root[512];
 

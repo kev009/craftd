@@ -34,7 +34,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <semaphore.h>
 #include <pthread.h>
 
 #include <event2/event.h>
@@ -57,14 +56,11 @@ readcb(struct bufferevent *bev, void *ctx)
     output = bufferevent_get_output(bev);
     struct PL_entry *player = ctx;
 
-    /* Decrement the worker poll semaphore or block */
-    sem_wait(&worker_sem);
-    int worker_value; 
-    sem_getvalue(&worker_sem, &worker_value); 
-    printf("The value of the semaphore is %d\n", worker_value);
-    
-    /* Dispatch the worker CV */
-    pthread_cond_signal(&worker_cond[worker_value]);
+    /* Dispatch to an open worker */
+    pthread_mutex_lock(&worker_cvmutex);
+    // TODO: add to queue
+    pthread_mutex_unlock(&worker_cvmutex);
+    pthread_cond_signal(&worker_cv);
 
     /* TODO: use ev_addbuffer/removebuffer for efficiency!
      * Use more zero copy I/O and peeks if possible
@@ -264,14 +260,6 @@ run_server(void)
     struct event_base* base;
     struct event *listener_event;
 
-    /* Initialize the worker pool semaphore */
-    if(sem_init(&worker_sem, 0, WORKER_POOL) < 0)
-    {
-        perror("Couldn't create work pool semaphore");
-        return;
-    }
-
-
     base = event_base_new();
     if (!base)
     {
@@ -328,6 +316,7 @@ main(int argc, char **argv)
   pthread_attr_t timeloop_thread_attr;
   pthread_t WP_thread_id[WORKER_POOL];
   pthread_attr_t WP_thread_attr;
+  int WP_id[WORKER_POOL];
   int status = 0;
 
   /* Player List singly-linked list setup */
@@ -379,20 +368,19 @@ main(int argc, char **argv)
   /* Start packet handler pool */
   pthread_attr_init(&WP_thread_attr);
   pthread_attr_setdetachstate(&WP_thread_attr, PTHREAD_CREATE_DETACHED);
-  int i;
-  for (i = 0; i < WORKER_POOL; ++i)
+  
+  pthread_mutex_init(&worker_cvmutex, NULL);
+  status = pthread_cond_init(&worker_cv, NULL);
+  if(status !=0)
+    puts("Worker condition var init failed!"); // LOG
+  
+  for (int i = 0; i < WORKER_POOL; ++i)
   {
+    WP_id[i] = i;
     status = pthread_create(&WP_thread_id[i], &WP_thread_attr,
-        run_worker, (void *)i);
+        run_worker, (void *) &WP_id[i]);
     if(status != 0)
       puts("Worker pool startup failed!"); //LOG
-
-    status = pthread_cond_init(&worker_cond[i], NULL);
-    if(status !=0)
-      puts("Worker condition var init failed!"); // LOG
-
-    pthread_mutex_init(&worker_condmutex[i], NULL);
-    pthread_mutex_lock(&worker_condmutex[i]);
   }
 
   /* Start inbound game server*/

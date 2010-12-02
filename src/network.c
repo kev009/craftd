@@ -45,17 +45,19 @@
 
 void *run_worker(void *arg)
 {
-  int id = (int)arg;
+  int id = *(int *)arg;
   printf("Worker %d started!\n", id);
-
+  
   for(;;)
-  {
-    pthread_cond_wait(&worker_cond[id], &worker_condmutex[id]);
+  { 
+    pthread_mutex_lock(&worker_cvmutex);
+    pthread_cond_wait(&worker_cv, &worker_cvmutex);
+    
+    // printf("in worker: %d\n", id);
 
     // Do work
 
-    pthread_mutex_unlock(&worker_condmutex[id]);
-    sem_post(&worker_sem);
+    pthread_mutex_unlock(&worker_cvmutex);
   }
 
   return NULL;
@@ -289,7 +291,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, void *ctx)
 	  exit(-1); // Add a punt here
 	
 	
-	printf("recvd login from: %s client ver: %d seed: %llu dim: %d\n", 
+	printf("recvd login from: %s client ver: %d seed: %lu dim: %d\n", 
 	       u_login->username, u_login->version, u_login->mapseed, 
 	       u_login->dimension); // LOG
 	

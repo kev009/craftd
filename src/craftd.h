@@ -28,7 +28,6 @@
 
 #include <config.h>
 
-#include <semaphore.h>
 #include <pthread.h>
 #include <sys/queue.h>
 
@@ -60,12 +59,11 @@ struct PL_entry
 };
 
 /**
- * The worker pool semaphore keeps track of the available threads
- * The condition variables tell the workers when they have something to do
+ * The worker pool condition variable notifies available workers
+ * The cv mutex protects the shared data access
  */
-sem_t worker_sem;
-pthread_cond_t worker_cond[WORKER_POOL];
-pthread_mutex_t worker_condmutex[WORKER_POOL];
+pthread_cond_t worker_cv;
+pthread_mutex_t worker_cvmutex;
 
 /**
  * Declare a Work Queue as a singly-linked tail queue for player work reqs
