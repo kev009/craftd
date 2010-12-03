@@ -73,7 +73,8 @@ void *run_worker(void *arg)
     
     /* Pull work item */
     pthread_mutex_lock(&WQ_mutex);
-    /* Prevent a nasty race condition if the client disconnects
+    /* Check our predicate again:  The WQ is not empty
+     * Prevent a nasty race condition if the client disconnects
      * Works in tandem with errorcb FOREACH bev removal loop
      */
     if(STAILQ_EMPTY(&WQ_head))
@@ -93,7 +94,7 @@ void *run_worker(void *arg)
     if (bev == NULL || player == NULL)
     {
       puts("Aaack, null bev or ctx in worker?");
-      goto readerr;
+      goto WORKER_ERR;
     }
 
     /* Do work */
@@ -112,7 +113,7 @@ void *run_worker(void *arg)
       {
 	/* recvd a fragment, wait for another event */
 	puts("EAGAIN");
-	goto readagain;
+	goto WORKER_DONE;
       }
       else if (pktlen == EILSEQ)
       {
@@ -120,7 +121,7 @@ void *run_worker(void *arg)
          * Punt the client and perform cleanup
          */
         printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
-        goto readerr;
+        goto WORKER_ERR;
       }
       perror("unhandled readcb error");
     }
@@ -133,26 +134,21 @@ void *run_worker(void *arg)
     if(status != 0)
     {
       printf("Decode error, punting client.  errno: %d\n", status);
-      goto readerr;
+      goto WORKER_ERR;
     }
-    
-    /* On success, wait for next item and unlock the mutex */
+
+WORKER_DONE:
+    /* On success or EAGAIN, free the work item and clear the worker */
     free(workitem);
     
-    sleep(2);
+    //sleep(2); // Test for WQ distribution
     
     //pthread_mutex_unlock(&worker_cvmutex);
     continue;
 
-    /* On EAGAIN, clear the work item and clear the worker cv */
-readagain:    
-    free(workitem);
-    
-    //pthread_mutex_unlock(&worker_cvmutex);
-    continue;
-    
+WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
-readerr:
+
     /* TODO: Code a function to remove the player from playerlist with
      * correct locking semantics and share this code with errorcb() in craftd.c
      */
