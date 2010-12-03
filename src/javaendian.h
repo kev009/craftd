@@ -113,7 +113,7 @@ Cswapf(float f)
   memcpy(&f, &tmp, sizeof(tmp));
   tmp = ntohl(tmp);
   memcpy(&tmp, &out, sizeof(tmp));
-  return tmp;
+  return out;
 }
 #endif /* FLOAT_WORDS_BIGENDIAN */
 

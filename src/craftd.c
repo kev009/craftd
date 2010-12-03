@@ -157,6 +157,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
         /* Allocate space for a new player */
         player = Malloc(sizeof(struct PL_entry));
         player->fd = fd;
+	player->username.valid = 0;
 
         /* Get the IPv4 or IPv6 address and store it */
         if (getpeername(fd, (struct sockaddr *)&ss, &slen))
