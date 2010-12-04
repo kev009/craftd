@@ -92,31 +92,54 @@ struct packet_login
 {
   uint8_t pid;
   uint32_t version;
-  uint16_t ulen;
-  char *username;
-  uint16_t plen;
-  char *password;
-  //mcstring_t *username;
-  //mcstring_t *password;
+  mcstring_t *username;
+  mcstring_t *password;
   uint64_t mapseed;
   uint8_t dimension;
+};
+// Login size/offset information (C99 initialized struct)
+struct
+{
+  const int base;
+  const int str1offset;
+  const int str2offset;
+} packet_loginsz = {
+  .base       = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
+	      + sizeof(uint16_t) + sizeof(uint64_t) + sizeof(uint8_t),
+  .str1offset = sizeof(uint8_t) + sizeof(uint32_t),
+  .str2offset = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
 };
 
 /* pid 0x02 */
 struct packet_handshake
 {
   uint8_t pid;
-  //int16_t ulen;
-  //char *username;
   mcstring_t *username;
+};
+// Handshake size/offset information (C99 initialized struct)
+struct
+{
+  const int base;
+  const int str1offset;
+} packet_handshakesz = {
+  .base       = sizeof(uint8_t) + sizeof(uint16_t),
+  .str1offset = sizeof(uint8_t)
 };
 
 /* pid 0x03 */
 struct packet_chat
 {
   uint8_t pid;
-  uint16_t mlen;
-  char *message;
+  mcstring_t *message;
+};
+// Chat size/offset information (C99 initialized struct)
+struct
+{
+  const int base;
+  const int str1offset;
+} packet_chatsz = {
+  .base       = sizeof(uint8_t),
+  .str1offset = sizeof(uint8_t)
 };
 
 /* pid 0x04 */

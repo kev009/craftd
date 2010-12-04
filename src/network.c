@@ -198,64 +198,60 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_LOGIN: // Login packet 0x01
     {
-        puts("recvd login packet\n"); // LOG
-        uint16_t ulen;
-        uint16_t plen;
-        struct evbuffer_ptr ptr;
-        const int basesize = sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint16_t)
-                             +sizeof(uint16_t)+sizeof(uint64_t)+sizeof(uint8_t);
-        const int stroffset1 = sizeof(uint8_t)+sizeof(uint32_t);
-        int totalsize;
-	int status;
+      struct evbuffer_ptr ptr;
+      uint16_t ulen;  // Size of the username string
+      uint16_t plen; // Size of the password string
+      int totalsize;
+      int status;
 
-        evbuffer_ptr_set(input, &ptr, stroffset1, EVBUFFER_PTR_SET);
-        status = CRAFTD_evbuffer_copyout_from(input, &ulen, sizeof(uint16_t), &ptr);
-	if (status != 0)
-	  return -status;
-        ulen = ntohs(ulen);
+      evbuffer_ptr_set(input, &ptr, packet_loginsz.str1offset, 
+		       EVBUFFER_PTR_SET);
+      status = CRAFTD_evbuffer_copyout_from(input, &ulen, sizeof(ulen), &ptr);
+      if (status != 0)
+	return -status;
+      ulen = ntohs(ulen);
 
-        evbuffer_ptr_set(input, &ptr, stroffset1+sizeof(uint16_t)
-				  +ulen, EVBUFFER_PTR_SET);
+      evbuffer_ptr_set(input, &ptr, packet_loginsz.str2offset
+				  + ulen, EVBUFFER_PTR_SET);
 	
-        status = CRAFTD_evbuffer_copyout_from(input, &plen, sizeof(uint16_t), &ptr);
-	if (status != 0)
-	  return -status;
-        plen = ntohs(plen);
+      status = CRAFTD_evbuffer_copyout_from(input, &plen, sizeof(plen), &ptr);
+      if (status != 0)
+	return -status;
+      plen = ntohs(plen);
 
-        // Packet type + 2(strlen + varstring) + etc
-        totalsize = basesize + ulen + plen;
-        if (inlen == totalsize)
-            return totalsize;
-        else if (inlen < totalsize + ulen + plen)
-            return -EAGAIN;
-        else
-            return -EILSEQ;
-
+      // Packet type + 2(strlen + varstring) + etc
+      totalsize = packet_loginsz.base + ulen + plen;
+      if (inlen == totalsize)
+	return totalsize;
+      else if (inlen < totalsize + ulen + plen)
+        return -EAGAIN;
+      else
+        return -EILSEQ;
     }
     case PID_HANDSHAKE: // Handshake packet 0x02
     {
-        uint16_t ulen;
-        struct evbuffer_ptr ptr;
-        const int basesize = (sizeof(uint8_t)+sizeof(uint16_t));
-        int totalsize;
-	int status;
+      struct evbuffer_ptr ptr;
+      uint16_t ulen;
+      int totalsize;
+      int status;
 
-        evbuffer_ptr_set(input, &ptr, sizeof(uint8_t), EVBUFFER_PTR_SET);
+      evbuffer_ptr_set(input, &ptr, packet_handshakesz.str1offset, 
+		       EVBUFFER_PTR_SET);
 	
-        status = CRAFTD_evbuffer_copyout_from(input, &ulen, sizeof(uint16_t), &ptr);
-	if (status != 0)
-	  return -status;
+      status = CRAFTD_evbuffer_copyout_from(input, &ulen, sizeof(ulen), &ptr);
+      if (status != 0)
+	return -status;
 
-        ulen = ntohs(ulen);
+      ulen = ntohs(ulen);
 
-        // Packet type + short string len + string
-        totalsize = basesize + ulen;
-        if (inlen == totalsize)
-            return totalsize;
-        else if (inlen < totalsize)
-            return -EAGAIN;
-        else
-            return -EILSEQ;
+      // Packet type + short string len + string
+      totalsize = packet_handshakesz.base + ulen;
+      if (inlen == totalsize)
+	return totalsize;
+      else if (inlen < totalsize)
+        return -EAGAIN;
+      else
+        return -EILSEQ;
     }
     case PID_CHAT: // Chat packet 0x03
     {
@@ -351,52 +347,59 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
          * We handle keepalives in timebound event loop.
          * Hopefully this useless packet goes away.
          */
-        puts("decoded keepalive!\n");
+        puts("decoded keepalive!");
         evbuffer_drain(input, 1);
-	// evbuffer_add(output, 0x00, 1);
 
         return 0;
     }
     case PID_LOGIN: // Login packet 0x01
     {
-        puts("decoded login packet\n");
+        puts("decoded login packet");
 	
-	struct packet_login *u_login;
-	u_login = Malloc(sizeof(struct packet_login));
-	bzero(u_login, sizeof(struct packet_login));
+	struct packet_login u_login;
+	int16_t ulen;
+	int16_t plen;
 	
-	evbuffer_remove(input, &u_login->pid, sizeof(u_login->pid));
-	evbuffer_remove(input, &u_login->version, sizeof(u_login->version));
-	u_login->version = ntohl(u_login->version);
+	/* Get the version */
+	evbuffer_remove(input, &u_login.pid, sizeof(u_login.pid));
+	evbuffer_remove(input, &u_login.version, sizeof(u_login.version));
+	u_login.version = ntohl(u_login.version);
 	
-	evbuffer_remove(input, &u_login->ulen, sizeof(u_login->ulen));
-	u_login->ulen = ntohs(u_login->ulen);
+	/* Get the username */
+	evbuffer_remove(input, &ulen, sizeof(ulen));
+	ulen = ntohs(ulen);
 	
-	u_login->username = (char *) Malloc((u_login->ulen)+1);
-	bzero(u_login->username, (u_login->ulen) +1);
-	evbuffer_remove(input, u_login->username, u_login->ulen);
-	u_login->username[u_login->ulen] = '\0';
+	u_login.username = mcstring_allocate(ulen);
+	if (u_login.username == NULL)
+          exit(3); // LOG bad allocate, punt
 	
-	evbuffer_remove(input, &u_login->plen, sizeof(u_login->plen));
-	u_login->plen = ntohs(u_login->plen);
+	evbuffer_remove(input, u_login.username->str, u_login.username->slen);
+	if (!mcstring_valid(u_login.username))
+          exit(4); // LOG bad str, punt client
+	  
+	/* Get the password */
+	evbuffer_remove(input, &plen, sizeof(plen));
+	plen = ntohs(plen);
 	
-	u_login->password = (char *) Malloc((u_login->plen)+1);
-	bzero(u_login->password, (u_login->plen) +1);
-	evbuffer_remove(input, u_login->password, u_login->plen);
-	u_login->password[u_login->plen] = '\0';
+	u_login.password = mcstring_allocate(plen);
+	if (u_login.password == NULL)
+	  exit(3); // LOG bad allocate, punt
+	  
+	evbuffer_remove(input, u_login.password->str, u_login.password->slen);
+	if (!mcstring_valid(u_login.password))
+	  exit(4);
 	
-	evbuffer_remove(input, &u_login->mapseed, sizeof(u_login->mapseed));
-	u_login->mapseed = ntohll(u_login->mapseed);
+	/* Get the mapseed */
+	evbuffer_remove(input, &u_login.mapseed, sizeof(u_login.mapseed));
+	u_login.mapseed = ntohll(u_login.mapseed);
 	
-	evbuffer_remove(input, &u_login->dimension, sizeof(u_login->dimension));
-
-	if(!ismc_utf8(u_login->username) || !ismc_utf8(u_login->password))
-	  exit(-1); // Add a punt here
+	/* Get the dimension */
+	evbuffer_remove(input, &u_login.dimension, sizeof(u_login.dimension));
 	
 	
 	printf("recvd login from: %s client ver: %d seed: %lu dim: %d\n", 
-	       u_login->username, u_login->version, u_login->mapseed, 
-	       u_login->dimension); // LOG
+	       u_login.username->str, u_login.version, u_login.mapseed, 
+	       u_login.dimension); // LOG*/
 	
 	/*struct packet_login slog;
 	slog.pid = 0x01;
@@ -413,25 +416,24 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 	
 	struct packet_disconnect dcon;
 	dcon.pid = 0xFF;
-	dcon.slen = htons(11+u_login->ulen);
-	dcon.message = (char *) Malloc(11+u_login->ulen);
+	dcon.slen = htons(11+u_login.username->slen);
+	dcon.message = (char *) Malloc(11+u_login.username->slen);
 	strncpy(dcon.message, "FFFFFUUUUU ", 11);
-	memmove(dcon.message+11, u_login->username, u_login->ulen);
+	memmove(dcon.message+11, u_login.username->str, u_login.username->slen);
 	evbuffer_add(output, &dcon.pid, sizeof(dcon.pid));
         evbuffer_add(output, &dcon.slen, sizeof(dcon.slen));
-        evbuffer_add(output, dcon.message, 11+u_login->ulen);
+        evbuffer_add(output, dcon.message, 11+u_login.username->slen);
 	
 	free(dcon.message);
 	
-	free(u_login->username);
-	free(u_login->password);
-	free(u_login);
+	mcstring_free(u_login.username);
+	mcstring_free(u_login.password);
 	
 	return 0;
     }
     case PID_HANDSHAKE: // Handshake packet 0x02
     {
-        puts("decoded handshake packet\n");
+        puts("decoded handshake packet");
 	
         struct packet_handshake u_hs;
         int16_t ulen;
