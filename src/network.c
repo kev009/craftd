@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <pthread.h>
 
 #include <event2/event.h>
@@ -54,7 +55,10 @@ int len_statemachine(uint8_t pkttype, struct evbuffer *input);
 int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
 		  struct PL_entry *player);
 
+void process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver);
 void send_kick(struct PL_entry *player, mcstring_t *dconmsg);
+void send_loginresp(struct PL_entry *player);
+void send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode);
 
 void 
 *run_worker(void *arg)
@@ -192,27 +196,48 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   mcstring_copy(&player->username, username);
   pthread_rwlock_unlock(&player->rwlock);
   
-  //const char *msg = "not yet";
-  //send_kick(player, mcstring_create( strlen(msg), msg) );
+  send_loginresp(player);
+  send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
   
   return;
 }
 
 void
-send_loginresp()
+send_loginresp(struct PL_entry *player)
 {
-  	/*struct packet_login slog;
-	slog.pid = 0x01;
-	slog.version = htonl(0);
-	slog.ulen = htons(0);
-	slog.username = NULL;
-	slog.plen = htons(0);
-	slog.password = NULL;
-	slog.mapseed = CD_hton64(0);
-	slog.dimension = 0;
-	evbuffer_add(output, &slog, 18);
-	
-        bufferevent_flush(bev, EV_WRITE, BEV_FLUSH);*/
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  uint8_t pid = PID_LOGIN;
+  int32_t entityid = htonl(1); // TODO generate player entity IDs
+  int16_t unused1 = htons(0); // Future server name? mcstring.
+  int16_t unused2 = htons(0); // Future MOTD? mcstring.
+  int64_t mapseed = htonll(0);
+  int8_t dimension = 0;
+  
+  evbuffer_add(output, &pid, sizeof(pid));
+  evbuffer_add(output, &entityid, sizeof(entityid));
+  evbuffer_add(output, &unused1, sizeof(unused1));
+  evbuffer_add(output, &unused2, sizeof(unused2));
+  evbuffer_add(output, &mapseed, sizeof(mapseed));
+  evbuffer_add(output, &dimension, sizeof(dimension));
+
+  return;
+}
+
+void
+send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  uint8_t pid = PID_PRECHUNK;
+  int32_t n_x = htonl(x);
+  int32_t n_z = htonl(z);
+  uint8_t n_mode = mode;
+  
+  evbuffer_add(output, &pid, sizeof(pid));
+  evbuffer_add(output, &n_x, sizeof(n_x));
+  evbuffer_add(output, &n_z, sizeof(n_z));
+  evbuffer_add(output, &n_mode, sizeof(n_mode));
+  
+  return;
 }
 
 void
@@ -220,7 +245,7 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
   uint8_t pid = PID_DISCONNECT;
-  uint16_t slen = htons(dconmsg->slen);
+  int16_t slen = htons(dconmsg->slen);
 
   evbuffer_add(output, &pid, sizeof(pid));
   evbuffer_add(output, &slen, sizeof(slen));
@@ -250,7 +275,7 @@ len_returncode(int inlen, int totalsize)
     return -EAGAIN;
   else
     return -EILSEQ;
-}
+}	
 
 /** 
  * Get and return length of full packet.
