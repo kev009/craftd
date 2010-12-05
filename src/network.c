@@ -22,7 +22,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
+#include <config.h>
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +36,7 @@
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 
+#include "craftd-config.h"
 #include "craftd.h"
 #include "packets.h"
 #include "javaendian.h"
@@ -47,10 +50,14 @@
  * Use more zero copy I/O and peeks if possible
  */
 
-int len_statemachine(uint8_t pkttype, struct evbuffer* input);
-int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev);
+int len_statemachine(uint8_t pkttype, struct evbuffer *input);
+int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
+		  struct PL_entry *player);
 
-void *run_worker(void *arg)
+void send_kick(struct PL_entry *player, mcstring_t *dconmsg);
+
+void 
+*run_worker(void *arg)
 {
   int id = *(int *)arg;
   printf("Worker %d started!\n", id);
@@ -128,7 +135,7 @@ void *run_worker(void *arg)
     
     /* Invariant: else we received a full packet of pktlen */
     
-    status = packetdecoder(pkttype, pktlen, bev);
+    status = packetdecoder(pkttype, pktlen, bev, player);
     
     /* On decoding errors, punt the client for now */
     if(status != 0)
@@ -166,6 +173,84 @@ WORKER_ERR:
   return NULL;
 }
 
+void
+process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
+{
+  // TODO: Future, async check of minecraft.net for user validity
+  // TODO: Future, check against local ACL
+  
+  /* Check if the client version is compatible with the craftd version */
+  if (ver != PROTOCOL_VERSION)
+  {
+    const char *dconmsg = "Client version is incompatible with this server.";
+    send_kick(player, mcstring_create(strlen(dconmsg), dconmsg) );
+    return;
+  }
+  
+  /* Otherwise, finish populating their Player List entry */
+  pthread_rwlock_wrlock(&player->rwlock);
+  mcstring_copy(&player->username, username);
+  pthread_rwlock_unlock(&player->rwlock);
+  
+  //const char *msg = "not yet";
+  //send_kick(player, mcstring_create( strlen(msg), msg) );
+  
+  return;
+}
+
+void
+send_loginresp()
+{
+  	/*struct packet_login slog;
+	slog.pid = 0x01;
+	slog.version = htonl(0);
+	slog.ulen = htons(0);
+	slog.username = NULL;
+	slog.plen = htons(0);
+	slog.password = NULL;
+	slog.mapseed = CD_hton64(0);
+	slog.dimension = 0;
+	evbuffer_add(output, &slog, 18);
+	
+        bufferevent_flush(bev, EV_WRITE, BEV_FLUSH);*/
+}
+
+void
+send_kick(struct PL_entry *player, mcstring_t *dconmsg)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  uint8_t pid = PID_DISCONNECT;
+  uint16_t slen = htons(dconmsg->slen);
+
+  evbuffer_add(output, &pid, sizeof(pid));
+  evbuffer_add(output, &slen, sizeof(slen));
+  evbuffer_add(output, dconmsg->str, dconmsg->slen);
+  
+  mcstring_free(dconmsg);
+  
+  /* TODO forcefully close the socket and perform manual cleanup if the client
+   * doesn't voluntarily disconnect
+   */
+}
+
+/**
+ * A utility function for the length state machine to return the correct length
+ * or exception value.
+ * 
+ * @param inlen length of the packet received so far
+ * @param totalsize size of the entire packet
+ * @return totalsize on good read, -EAGAIN on incomplete data, else -EILSEQ
+ */
+static inline int
+len_returncode(int inlen, int totalsize)
+{
+  if (inlen == totalsize)
+    return totalsize;
+  else if (inlen < totalsize)
+    return -EAGAIN;
+  else
+    return -EILSEQ;
+}
 
 /** 
  * Get and return length of full packet.
@@ -181,7 +266,7 @@ WORKER_ERR:
  *
  * @param pkttype packet type byte
  * @param input input evbuffer
- * @return int total length or -EAGAIN, -EILSEQ on exception
+ * @return total length or -EAGAIN, -EILSEQ on exception
 */
 int
 len_statemachine(uint8_t pkttype, struct evbuffer* input)
@@ -221,12 +306,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 
       // Packet type + 2(strlen + varstring) + etc
       totalsize = packet_loginsz.base + ulen + plen;
-      if (inlen == totalsize)
-	return totalsize;
-      else if (inlen < totalsize + ulen + plen)
-        return -EAGAIN;
-      else
-        return -EILSEQ;
+      return len_returncode(inlen, totalsize);
     }
     case PID_HANDSHAKE: // Handshake packet 0x02
     {
@@ -246,17 +326,26 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 
       // Packet type + short string len + string
       totalsize = packet_handshakesz.base + ulen;
-      if (inlen == totalsize)
-	return totalsize;
-      else if (inlen < totalsize)
-        return -EAGAIN;
-      else
-        return -EILSEQ;
+      return len_returncode(inlen, totalsize);
     }
     case PID_CHAT: // Chat packet 0x03
     {
-        puts("recvd chat packet\n");
-        break;
+        struct evbuffer_ptr ptr;
+	uint16_t mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_chatsz.str1offset, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohs(mlen);
+	
+	totalsize = packet_chatsz.base + mlen;
+	return len_returncode(inlen, totalsize);
     }
     case PID_PINVENTORY: // Update inventory packet 0x05
     {
@@ -329,11 +418,20 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     return -EILSEQ; // Temporary
 }
 
-/* Pass the packet off to a worker
- * Invariant: packet is of correct length from len state machine
+/**
+ * The decoder pulls data out of the buffer and populates a packet struct
+ * with native data types.  Smaller packets are also handled here.
+ * 
+ * @remarks Invariant: packet is of correct length from len state machine
+ * 
+ * @param pkttype packet type header enum
+ * @param pktlen length of entire packet
+ * @param bev buffer event
+ * @param player Player List entry (buffer event context)
  */
 int
-packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
+packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
+	     struct PL_entry *player)
 {
   struct evbuffer *input, *output;
   input = bufferevent_get_input(bev);
@@ -387,7 +485,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 	  
 	evbuffer_remove(input, u_login.password->str, u_login.password->slen);
 	if (!mcstring_valid(u_login.password))
-	  exit(4);
+	  exit(4); // LOG, punt
 	
 	/* Get the mapseed */
 	evbuffer_remove(input, &u_login.mapseed, sizeof(u_login.mapseed));
@@ -395,36 +493,13 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 	
 	/* Get the dimension */
 	evbuffer_remove(input, &u_login.dimension, sizeof(u_login.dimension));
-	
-	
+
 	printf("recvd login from: %s client ver: %d seed: %lu dim: %d\n", 
 	       u_login.username->str, u_login.version, u_login.mapseed, 
-	       u_login.dimension); // LOG*/
+	       u_login.dimension); // LOG
 	
-	/*struct packet_login slog;
-	slog.pid = 0x01;
-	slog.version = htonl(0);
-	slog.ulen = htons(0);
-	slog.username = NULL;
-	slog.plen = htons(0);
-	slog.password = NULL;
-	slog.mapseed = CD_hton64(0);
-	slog.dimension = 0;
-	evbuffer_add(output, &slog, 18);
-	
-        bufferevent_flush(bev, EV_WRITE, BEV_FLUSH);*/
-	
-	struct packet_disconnect dcon;
-	dcon.pid = 0xFF;
-	dcon.slen = htons(11+u_login.username->slen);
-	dcon.message = (char *) Malloc(11+u_login.username->slen);
-	strncpy(dcon.message, "FFFFFUUUUU ", 11);
-	memmove(dcon.message+11, u_login.username->str, u_login.username->slen);
-	evbuffer_add(output, &dcon.pid, sizeof(dcon.pid));
-        evbuffer_add(output, &dcon.slen, sizeof(dcon.slen));
-        evbuffer_add(output, dcon.message, 11+u_login.username->slen);
-	
-	free(dcon.message);
+	/* Process the login */
+	process_login(player, u_login.username, u_login.version);
 	
 	mcstring_free(u_login.username);
 	mcstring_free(u_login.password);

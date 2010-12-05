@@ -50,10 +50,10 @@ struct PL_entry
 {
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
+  struct bufferevent *bev;
   char ip[128];
-  uint32_t clientver;
-  uint64_t mapseed;
-  uint8_t dimension;
+  //uint64_t mapseed;
+  //uint8_t dimension;
   mcstring_t username;
   SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
 };

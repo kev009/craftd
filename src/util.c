@@ -42,8 +42,8 @@ int
 ismc_utf8(const char *str)
 { 
   const char *MC_UTF8 = 
-  "\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefgh"
-  "ijklmnopqrstuvwxyz{|}~.ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×.áíóúñÑªº¿®¬½¼¡«»";
+  "\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghi"
+  " jklmnopqrstuvwxyz{|}~.ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×.áíóúñÑªº¿®¬½¼¡«»";
 
   if( strspn(str, MC_UTF8) == strlen(str) )
     return 1; // Valid
@@ -74,7 +74,7 @@ mcstring_create(int16_t slen, const char *strp)
   char *strin = NULL;
 
   if (slen > MC_MAXSTRING)
-    goto err; // LOG bad string
+    goto MCSTRING_CREATE_ERR; // LOG bad string
 
   strin = (char *)Malloc(slen+1);
   /* NUL terminate the end.  If strnlen doesn't match slen, something
@@ -84,10 +84,10 @@ mcstring_create(int16_t slen, const char *strp)
   memcpy(strin, strp, slen);
 
   if (strlen(strin) != slen)
-    goto err; // LOG bad string
+    goto MCSTRING_CREATE_ERR; // LOG bad string
 
   if (!ismc_utf8(strin))
-    goto err; // LOG bad string
+    goto MCSTRING_CREATE_ERR; // LOG bad string
 
   mcstring_t *mcstring;
   mcstring = (mcstring_t *)Malloc(sizeof(mcstring_t));
@@ -98,11 +98,35 @@ mcstring_create(int16_t slen, const char *strp)
   /* return a valid mcstring construction */
   return mcstring;
 
-err:
+MCSTRING_CREATE_ERR:
   if(strin)
     free(strin);
 
   return NULL;
+}
+
+/**
+ * Copy an allocated mcstring to another.  Resizes the string buffer according
+ * to the source's size.
+ * 
+ * @param dest destination mcstring
+ * @param src source mcstring
+ * @return pointer to destination mcstring
+ */
+mcstring_t *
+mcstring_copy(mcstring_t *dest, mcstring_t *src)
+{
+  if (dest->slen != src->slen)
+  {
+    dest->str = Realloc(dest->str, src->slen);
+    dest->slen = src->slen;
+  }
+  
+  memcpy(dest->str, src->str, dest->slen);
+  
+  dest->valid = src->valid;
+  
+  return dest;
 }
 
 /**
@@ -220,8 +244,12 @@ mcstring_mccat(mcstring_t *dest, mcstring_t *src)
 void
 mcstring_free(mcstring_t *mcstring)
 {
+  if(!mcstring)
+    return;
+  
   if(mcstring->str)
     free(mcstring->str);
+  
   free(mcstring);
 }
 
@@ -254,6 +282,33 @@ Malloc(size_t size)
   if ( (ptr = malloc(size)) == NULL )
     perror("malloc null ptr error!");
   return ptr;
+}
+
+/**
+ * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
+ * 
+ * @param ptr pointer to the heap address to reallocate
+ * @param size reallocation size
+ * @return resized valid pointer to heap memory
+ */
+void *
+Realloc(void *ptr, size_t size)
+{
+  void *newptr;
+  
+  if (ptr == NULL)
+    return Malloc(size);
+  else if (size == 0)
+  {
+    free(ptr);
+    return NULL;
+  }
+  else
+  {
+    if( (newptr = realloc(ptr, size)) == NULL)
+      perror("realloc null ptr error!");
+    return newptr;
+  }
 }
 
 /**

@@ -35,7 +35,6 @@
  */
 #define PERR(msg) \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
 //TODO LOG, ELOG, ERR, etc
 
 /**
@@ -45,7 +44,7 @@
  */
 typedef struct _mcstring
 {
-  int16_t slen;
+  uint16_t slen;
   char *str;
   int valid;
 } mcstring_t;
@@ -54,14 +53,16 @@ typedef struct _mcstring
 int ismc_utf8(const char const* str);
 mcstring_t *mcstring_allocate(int16_t slen);
 mcstring_t *mcstring_create(int16_t slen, const char *strptr);
-mcstring_t *mcstring_ncat(mcstring_t *dest, const char *src, size_t size);
+mcstring_t *mcstring_copy(mcstring_t *dest, mcstring_t *src);
 mcstring_t *mcstring_mccat(mcstring_t *dest, mcstring_t *src);
+mcstring_t *mcstring_ncat(mcstring_t *dest, const char *src, size_t size);
 int mcstring_valid(mcstring_t *mcstring);
 void mcstring_free(mcstring_t *mcstring);
 
 /* Public memory management wrappers */
 void *Malloc(size_t size);
 void *Calloc(size_t num, size_t size);
+void *Realloc(void *ptr, size_t size);
 
 /* Public evbuffer utility */
 int CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
