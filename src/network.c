@@ -280,12 +280,15 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
 static inline int
 len_returncode(int inlen, int totalsize)
 {
-  if (inlen == totalsize)
+  if (inlen >= totalsize)
     return totalsize;
   else if (inlen < totalsize)
     return -EAGAIN;
   else
+  {
+    printf("inlen: %d, total %d\n", inlen, totalsize);
     return -EILSEQ;
+  }
 }	
 
 /** 

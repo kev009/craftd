@@ -177,7 +177,7 @@ struct packet_playerpos
   double z;
   bool flying;
 };
-static int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
+int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
 	   + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0C */
