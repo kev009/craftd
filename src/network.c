@@ -39,6 +39,7 @@
 
 #include "craftd-config.h"
 #include "craftd.h"
+#include "network.h"
 #include "packets.h"
 #include "javaendian.h"
 
@@ -51,15 +52,22 @@
  * Use more zero copy I/O and peeks if possible
  */
 
-int len_statemachine(uint8_t pkttype, struct evbuffer *input);
-int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
+/* Private forward declarations */
+static int len_statemachine(uint8_t pkttype, struct evbuffer *input);
+static int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
 		  struct PL_entry *player);
+static void process_login(struct PL_entry *player, mcstring_t *username, 
+			  uint32_t ver);
+static void send_loginresp(struct PL_entry *player);
 
-void process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver);
-void send_kick(struct PL_entry *player, mcstring_t *dconmsg);
-void send_loginresp(struct PL_entry *player);
-void send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode);
-
+/**
+ * This is the worker thread's main function and performs packet length
+ * detection, decoding, and response.  Work is passed in through the Work
+ * Queue structure.  On errors, we disconnect the client.
+ * 
+ * @param arg void pointer to the thread's worker ID
+ * @return NULL
+ */
 void 
 *run_worker(void *arg)
 {
@@ -113,6 +121,12 @@ void
     output = bufferevent_get_output(bev);
     
     inlen = evbuffer_get_length(input);
+    
+    /* Check another predicate: make sure there is work to do in case of
+     * spurious wakeups
+     */
+    if (inlen == 0)
+      goto WORKER_DONE;
     
     /* Drain the buffer in a loop to take care of compound packets.
      * We add pktlen for each iteration until inlen is reached or we jump
@@ -189,7 +203,17 @@ WORKER_ERR:
   return NULL;
 }
 
-void
+/**
+ * This internal method checks login predicates, populates the rest of the
+ * Player List entry, and sends the initial packet stream to spawn the player.
+ * 
+ * @remarks Scope: private
+ * 
+ * @param player Player List player pointer
+ * @param username inbound username from client login packet
+ * @param ver inbound version from client login packet
+ */
+static void
 process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
 {
   // TODO: Future, async check of minecraft.net for user validity
@@ -214,7 +238,14 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   return;
 }
 
-void
+/**
+ * Internal method that sends a login response packet
+ *
+ * @remarks Scope: private
+ * 
+ * @param player Player List player pointer
+ */
+static void
 send_loginresp(struct PL_entry *player)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
@@ -235,6 +266,16 @@ send_loginresp(struct PL_entry *player)
   return;
 }
 
+/**
+ * Send a prechunk packet to the player
+ * 
+ * @remarks Scope: public API method
+ *
+ * @param player Player List player pointer
+ * @param x chunk x coordinate
+ * @param z chunk z coordinate
+ * @param mode unload (false) or load (true) the specified chunk
+ */
 void
 send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 {
@@ -252,6 +293,16 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
   return;
 }
 
+/**
+ * Send the specified chunk to the player
+ * 
+ * @remarks Scope: public API method
+ * 
+ * @param player Player List player pointer
+ * @param x global chunk x coordinate
+ * @param y global chunk y coordinate
+ * @param z global chunk z coordinate
+ */
 void
 send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z)
 {
@@ -263,6 +314,14 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z)
  return;
 }
 
+/**
+ * Kick the specified player
+ * 
+ * @remarks Scope: public API method
+ * 
+ * @param player Player List player pointer
+ * @param dconmsg Pointer to an mcstring with the kick message
+ */
 void
 send_kick(struct PL_entry *player, mcstring_t *dconmsg)
 {
