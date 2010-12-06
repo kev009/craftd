@@ -103,7 +103,7 @@ struct
   const int base;
   const int str1offset;
   const int str2offset;
-} packet_loginsz = {
+} static const packet_loginsz = {
   .base       = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
 	      + sizeof(uint16_t) + sizeof(uint64_t) + sizeof(uint8_t),
   .str1offset = sizeof(uint8_t) + sizeof(uint32_t),
@@ -121,7 +121,7 @@ struct
 {
   const int base;
   const int str1offset;
-} packet_handshakesz = {
+} static const packet_handshakesz = {
   .base       = sizeof(uint8_t) + sizeof(uint16_t),
   .str1offset = sizeof(uint8_t)
 };
@@ -137,7 +137,7 @@ struct
 {
   const int base;
   const int str1offset;
-} packet_chatsz = {
+} static const packet_chatsz = {
   .base       = sizeof(uint8_t),
   .str1offset = sizeof(uint8_t)
 };
@@ -177,7 +177,7 @@ struct packet_playerpos
   double z;
   bool flying;
 };
-int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
+static const int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
 	   + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0C */
@@ -188,7 +188,7 @@ struct packet_look
   float pitch;
   bool flying;
 };
-int packet_looksz = sizeof(int8_t) + 2 * sizeof(float) 
+static const int packet_looksz = sizeof(int8_t) + 2 * sizeof(float) 
 		  + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0D */
@@ -203,8 +203,8 @@ struct packet_movelook
   float pitch;
   bool flying;
 };
-int packet_movelooksz = sizeof(int8_t) + 4 * sizeof(double) + 2 * sizeof(float)
-		      + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_movelooksz = sizeof(int8_t) + 4 * sizeof(double)
+   + 2 * sizeof(float) + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x32 */
 struct packet_prechunk
