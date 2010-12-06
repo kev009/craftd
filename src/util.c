@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -116,6 +117,9 @@ MCSTRING_CREATE_ERR:
 mcstring_t *
 mcstring_copy(mcstring_t *dest, mcstring_t *src)
 {
+  /* The string must be allocated or on the stack.  Do a sanity check */
+  assert(dest && src && src->str);
+  
   if (dest->slen != src->slen)
   {
     dest->str = Realloc(dest->str, src->slen);
@@ -331,7 +335,8 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
     int status;
 
     evbuffer_enable_locking(b, NULL);
-    evbuffer_lock(b);
+    //evbuffer_lock(b);
+    /* TODO: check locking semantics wrt multiple threads */
 
     if (!ptr)
     {
@@ -344,7 +349,7 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
 
     if (evbuffer_get_length(b) < ptr->pos + len)
     {
-      evbuffer_unlock(b); 
+      //evbuffer_unlock(b); 
       return EAGAIN;  /* not enough data */
     }
 
@@ -353,7 +358,7 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
         char tmp[128];
         evbuffer_copyout(b, tmp, ptr->pos + len);
         memcpy(buf, tmp+ptr->pos, len);
-        evbuffer_unlock(b);
+        //evbuffer_unlock(b);
         return 0;
     }
 
@@ -361,19 +366,19 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
     nvecs = evbuffer_peek(b, len, ptr, NULL, 0);
     if (nvecs < 1)
     {
-        evbuffer_unlock(b);
+        //evbuffer_unlock(b);
         return ENOBUFS;
     }
     v = calloc(sizeof(struct evbuffer_iovec), nvecs);
     if (v == NULL)
     {
-        evbuffer_unlock(b);
+        //evbuffer_unlock(b);
         return ENOBUFS;
     }
 
     if (evbuffer_peek(b, len, ptr, v, nvecs) < 0)
     {
-        evbuffer_unlock(b);
+        //evbuffer_unlock(b);
         free(v);
         return ENOBUFS; /* should be impossible, but let's take no chances */
     }
@@ -389,7 +394,7 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
         }
     }
 
-    evbuffer_unlock(b);
+    //evbuffer_unlock(b);
     free(v);
     return 0;
 }

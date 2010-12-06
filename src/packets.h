@@ -177,6 +177,8 @@ struct packet_playerpos
   double z;
   bool flying;
 };
+static int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
+	   + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0C */
 struct packet_look
@@ -186,6 +188,8 @@ struct packet_look
   float pitch;
   bool flying;
 };
+int packet_looksz = sizeof(int8_t) + 2 * sizeof(float) 
+		  + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0D */
 struct packet_movelook
@@ -199,6 +203,8 @@ struct packet_movelook
   float pitch;
   bool flying;
 };
+int packet_movelooksz = sizeof(int8_t) + 4 * sizeof(double) + 2 * sizeof(float)
+		      + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x32 */
 struct packet_prechunk

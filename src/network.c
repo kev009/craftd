@@ -241,6 +241,17 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 }
 
 void
+send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z)
+{
+ struct evbuffer *output = bufferevent_get_output(player->bev);
+ uint8_t pid = PID_MAPCHUNK;
+ 
+ evbuffer_add(output, &pid, sizeof(pid));
+ 
+ return;
+}
+
+void
 send_kick(struct PL_entry *player, mcstring_t *dconmsg)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
@@ -389,18 +400,15 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
-        puts("recvd player position packet\n");
-        break;
+        return len_returncode(inlen, packet_playerpossz);
     }
     case PID_PLAYERLOOK: // Player look packet 0x0C
     {
-        puts("recvd player look packet\n");
-        break;
+        return len_returncode(inlen, packet_looksz);
     }
     case PID_PLAYERMOVELOOK: // Player move+look packet 0x0D
     {
-        puts("recvd move+look packet\n");
-        break;
+	return len_returncode(inlen, packet_movelooksz);
     }
     case PID_PLAYERDIG: // Block dig packet 0x0E
     {
@@ -603,16 +611,25 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
         puts("recvd player position packet\n");
+	
+	evbuffer_drain(input, pktlen);
+	
         break;
     }
     case PID_PLAYERLOOK: // Player look packet 0x0C
     {
-        puts("recvd player look packet\n");
+        puts("recvd player look packet");
+	
+	evbuffer_drain(input, pktlen);
+	
         break;
     }
     case PID_PLAYERMOVELOOK: // Player move+look packet 0x0D
     {
-        puts("recvd move+look packet\n");
+        puts("recvd move+look packet");
+	
+	evbuffer_drain(input, pktlen);
+	
         break;
     }
     case PID_PLAYERDIG: // Block dig packet 0x0E
