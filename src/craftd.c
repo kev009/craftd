@@ -60,9 +60,9 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem->player = player;
   
   /* Add item to work queue */
-  pthread_mutex_lock(&WQ_mutex);
+  pthread_spin_lock(&WQ_spinlock);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
-  pthread_mutex_unlock(&WQ_mutex);
+  pthread_spin_unlock(&WQ_spinlock);
   
   /* Dispatch to an open worker */
   //pthread_mutex_lock(&worker_cvmutex);
@@ -113,7 +113,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 	
 	/* If the client disconnects, remove any pending WP buffer events */
 	struct WQ_entry *workitem, *workitemtmp;
-	pthread_mutex_lock(&WQ_mutex);
+	pthread_spin_lock(&WQ_spinlock);
 	STAILQ_FOREACH_SAFE(workitem, &WQ_head, WQ_entries, workitemtmp)
 	{
 	  if(workitem->bev == bev)
@@ -122,7 +122,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 	    puts("bev removed from workerpool by errorcb");
 	  }
 	}
-	pthread_mutex_unlock(&WQ_mutex);
+	pthread_spin_unlock(&WQ_spinlock);
 	
 	if (ctx)
 	  free(ctx);
@@ -283,7 +283,7 @@ main(int argc, char **argv)
   PL_count = 0;
 
   /* Work Queue is a singly-linked tail queue for player work requests */
-  pthread_mutex_init(&WQ_mutex, NULL);
+  pthread_spin_init(&WQ_spinlock, 0);
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
     

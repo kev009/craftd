@@ -83,7 +83,7 @@ void
     printf("in worker: %d\n", id);
     
     /* Pull work item */
-    pthread_mutex_lock(&WQ_mutex);
+    pthread_spin_lock(&WQ_spinlock);
     /* Check our predicate again:  The WQ is not empty
      * Prevent a nasty race condition if the client disconnects
      * Works in tandem with errorcb FOREACH bev removal loop
@@ -91,13 +91,13 @@ void
     if(STAILQ_EMPTY(&WQ_head))
     {
       puts("Race+deadlock avoidance in workerpool");
-      pthread_mutex_unlock(&WQ_mutex);
+      pthread_spin_unlock(&WQ_spinlock);
       //pthread_mutex_unlock(&worker_cvmutex);
       continue;
     }
     workitem = STAILQ_FIRST(&WQ_head);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
-    pthread_mutex_unlock(&WQ_mutex);
+    pthread_spin_unlock(&WQ_spinlock);
     
     bev = workitem->bev;
     player = workitem->player;
