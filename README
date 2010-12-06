@@ -1,4 +1,5 @@
-Welcome to craftd!
+Welcome to craftd!  Up to date documentation lives at:
+http://mc.kev009.com/craftd/
 
 This is early, pre-alpha software.  If you aren't familiar with autotools, 
 please wait until binary packages are available or at least source tarballs.
@@ -27,6 +28,10 @@ Please contact me and let me know what parts you intend to work on first.
 
 Generating ./configure:
 autoreconf -i
+
+Developer Documentation:
+Coding style and archetecture notes are on the wiki - 
+http://mc.kev009.com/wiki/Craftd:Main_Page
 
 You should have a good understanding of libevent-2.
 http://www.wangafu.net/~nickm/libevent-book/

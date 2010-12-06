@@ -24,3 +24,6 @@
  */
 
 #include "craftd-config.h"
+
+/* Hard coded www docroot for now */
+const char *docroot = "/home/kev009/c/009mc/craftd/htdocs";

@@ -49,8 +49,8 @@
 
 /* This HTTP server borrows heavily from Nick Mathewson's example in libevent */
 
-// TODO pull docroot from runtime config
-const char *docroot = "/home/kev009/c/009mc/craftd/htdocs";
+/* The path to htdocs, which contains static web content */
+extern const char *docroot;
 
 char uri_root[512];
 
