@@ -33,10 +33,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 
-#include "craftd.h" 
+#include "craftd.h"
+#include "javaendian.h"
 
 /* Public methods */
 void *run_worker(void *arg);

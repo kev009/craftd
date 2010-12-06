@@ -44,7 +44,7 @@
 #include "craftd-config.h"
 #include "craftd.h"
 #include "util.h"
-#include "network.h"
+#include "network/network.h"
 #include "timeloop.h"
 #include "httpd.h"
 
