@@ -90,7 +90,7 @@ void
      */
     if(STAILQ_EMPTY(&WQ_head))
     {
-      puts("Race+deadlock avoidance in workerpool");
+      puts("Race avoidance in workerpool");
       pthread_spin_unlock(&WQ_spinlock);
       //pthread_mutex_unlock(&worker_cvmutex);
       continue;
@@ -113,40 +113,52 @@ void
     output = bufferevent_get_output(bev);
     
     inlen = evbuffer_get_length(input);
-    evbuffer_copyout(input, &pkttype, 1);
-    pktlen = len_statemachine(pkttype, input);
     
-    /* On exception conditions, negate the return value to get correct errno */
-    if (pktlen < 0)
+    /* Drain the buffer in a loop to take care of compound packets.
+     * We add pktlen for each iteration until inlen is reached or we jump
+     * to the EAGAIN handler.
+     */
+    int processed = 0;
+    do
     {
-      pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
-      if (pktlen == EAGAIN)
+      evbuffer_copyout(input, &pkttype, 1);
+      pktlen = len_statemachine(pkttype, input);
+      
+      /* On exception conditions, negate the return value to get correct errno */
+      if (pktlen < 0)
       {
-	/* recvd a fragment, wait for another event */
-	puts("EAGAIN");
-	goto WORKER_DONE;
+	pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
+        if (pktlen == EAGAIN)
+        {
+	  /* recvd a fragment, wait for another event */
+	  puts("EAGAIN");
+          goto WORKER_DONE;
+        }
+        else if (pktlen == EILSEQ)
+        {
+	  /* recvd an packet that does not match known parameters
+	   * Punt the client and perform cleanup
+	   */
+	  printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
+	  goto WORKER_ERR;
+         }
+        
+        perror("unhandled readcb error");
       }
-      else if (pktlen == EILSEQ)
+      
+      /* Invariant: else we received a full packet of pktlen */
+      
+      status = packetdecoder(pkttype, pktlen, bev, player);
+      /* On decoding errors, punt the client for now */
+      if (status != 0)
       {
-        /* recvd an packet that does not match known parameters
-         * Punt the client and perform cleanup
-         */
-        printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
+	printf("Decode error, punting client.  errno: %d\n", status);
         goto WORKER_ERR;
       }
-      perror("unhandled readcb error");
+      
+      processed += pktlen;
     }
-    
-    /* Invariant: else we received a full packet of pktlen */
-    
-    status = packetdecoder(pkttype, pktlen, bev, player);
-    
-    /* On decoding errors, punt the client for now */
-    if(status != 0)
-    {
-      printf("Decode error, punting client.  errno: %d\n", status);
-      goto WORKER_ERR;
-    }
+    while(processed < inlen);
 
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
@@ -285,11 +297,8 @@ len_returncode(int inlen, int totalsize)
   else if (inlen < totalsize)
     return -EAGAIN;
   else
-  {
-    printf("inlen: %d, total %d\n", inlen, totalsize);
     return -EILSEQ;
-  }
-}	
+}
 
 /** 
  * Get and return length of full packet.
