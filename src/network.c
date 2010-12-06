@@ -25,6 +25,7 @@
 
 #include <config.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -385,8 +386,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
     case PID_KEEPALIVE: // Keepalive packet 0x00
     {
-        puts("recvd keepalive packet\n");
-        return 1;
+        return len_returncode(inlen, packet_keepalivesz);
     }
     case PID_LOGIN: // Login packet 0x01
     {
@@ -456,18 +456,56 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_PINVENTORY: // Update inventory packet 0x05
     {
-        puts("recvd update inventory packet\n");
-        break;
+        struct evbuffer_ptr ptr;
+	int16_t count;
+	int totalsize;
+	int status;
+
+	/* Pull the inventory packet item count */
+	evbuffer_ptr_set(input, &ptr, packet_inventorysz.countoffset,
+			 EVBUFFER_PTR_SET);
+	status = CRAFTD_evbuffer_copyout_from(input, &count, sizeof(count), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	count = ntohs(count);
+	
+	/* Iterate the inventory items to get the variable length */
+	int itemoffset = 0;
+	int16_t itemid;
+	for (int i = 0; i < count; ++i)
+	{
+	  evbuffer_ptr_set(input, &ptr, packet_inventorysz.payloadoffset
+			    + itemoffset, EVBUFFER_PTR_SET);
+	  status = CRAFTD_evbuffer_copyout_from(input, &itemid, 
+						sizeof(itemid), &ptr);
+	  if (status != 0)
+	    return -status;
+	  
+	  itemid = ntohs(itemid);
+	  itemoffset += sizeof(int16_t); // Move past the item id
+	  
+	  if (itemid != -1)
+	  {
+	    /* Skip past the item count and item health */
+	    itemoffset += sizeof(int8_t) + sizeof(int16_t);
+	  }
+	}
+	
+	totalsize = packet_inventorysz.base + itemoffset;
+	return len_returncode(inlen, totalsize);
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
-	puts("recvd use entity packet\n");
-	break;
+	return len_returncode(inlen, packet_playerpossz);
+    }
+    case PID_RESPAWN: // Repawn packet 0x09
+    {
+	return len_returncode(inlen, packet_respawnsz);
     }
     case PID_PLAYERFLY: // "Flying"/Player packet 0x0A
     {
-        puts("recvd flying packet\n");
-        break;
+        return len_returncode(inlen, packet_playerflysz);
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
@@ -483,43 +521,54 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_PLAYERDIG: // Block dig packet 0x0E
     {
-        puts("recvd block dig packet\n");
-        break;
+        return len_returncode(inlen, packet_digsz);
     }
     case PID_BLOCKPLACE: // Place packet 0x0F
     {
-        puts("recvd place packet\n");
-        break;
+        return len_returncode(inlen, packet_blockplacesz);
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {
-        puts("recvd block/item switch packet\n");
-        break;
+        return len_returncode(inlen, packet_holdchangesz);
     }
     case PID_ARMANIMATE: // Arm animate 0x12
     {
-        puts("recvd arm animate packet\n");
-	break;
+        return len_returncode(inlen, packet_armanimatesz);
     }
     case PID_PICKUPSPAWN:
     {
-        puts("recvd pickup spawn packet\n");
-	break;
+        return len_returncode(inlen, packet_pickupspawnsz);
     }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
-        puts("recvd disconnect packet\n");
-        break;
+        struct evbuffer_ptr ptr;
+	uint16_t mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_disconnectsz.str1offset, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohs(mlen);
+	
+	totalsize = packet_disconnectsz.base + mlen;
+	return len_returncode(inlen, totalsize);
     }
     default:
     {
-        printf("Unknown packet type: %x, len: %d\n!", pkttype, (int)inlen);
+        printf("Unknown packet type: %x, len: %d\n!", pkttype, (int)inlen); //LOGint
         // Close connection
         return -EILSEQ;
     }
     }
-
-    return -EILSEQ; // Temporary
+    
+    /* We should never get here; a coding error occurred if so */ 
+    bool unterminated_length_case = false;
+    assert(unterminated_length_case);
 }
 
 /**

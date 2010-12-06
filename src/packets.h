@@ -52,6 +52,7 @@ enum packetid
   PID_PINVENTORY        = 0x05,
   PID_SPAWNPOS          = 0x06,
   PID_USEENTITY         = 0x07,
+  PID_RESPAWN		= 0x09,
   PID_PLAYERFLY         = 0x0A,
   PID_PLAYERPOS         = 0x0B,
   PID_PLAYERLOOK        = 0x0C,
@@ -86,6 +87,7 @@ struct packet_keepalive
 {
   uint8_t pid;
 };
+static const int packet_keepalivesz = sizeof(uint8_t);
 
 /* pid 0x01 */
 struct packet_login
@@ -157,6 +159,19 @@ struct packet_inventory
   int16_t count;
   void *payload; //FIXME: void ptr necessary?
 };
+// Inventory offset information (C99 initialized struct)
+struct
+{
+  const int base;
+  const int typeoffset;
+  const int countoffset;
+  const int payloadoffset;
+} static const packet_inventorysz = {
+  .base       	 = sizeof(int8_t) + sizeof(int32_t) + sizeof(int16_t),
+  .typeoffset	 = sizeof(int8_t),
+  .countoffset   = sizeof(int8_t) + sizeof(int32_t),
+  .payloadoffset = sizeof(int8_t) + sizeof(int32_t) + sizeof(int16_t)
+};
 
 /* pid 0x06 */
 struct packet_spawnpos
@@ -166,6 +181,33 @@ struct packet_spawnpos
   int32_t y;
   int32_t z;
 };
+
+/* pid 0x07 */
+struct packet_useentity
+{
+  int8_t pid;
+  int32_t user;
+  int32_t target;
+  bool leftclick;
+};
+static const int packet_useentity = sizeof(int8_t) + 2 * sizeof(int32_t)
+		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+
+/* pid 0x09 */
+struct packet_respawn
+{
+  int8_t pid;
+};
+static const int packet_respawnsz = sizeof(int8_t);
+
+/* pid 0x0A */
+struct packet_playerfly
+{
+  int8_t pid;
+  bool onground;
+};
+static const int packet_playerflysz = sizeof(int8_t)
+		      + sizeof(uint8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0B */
 struct packet_playerpos
@@ -178,7 +220,7 @@ struct packet_playerpos
   bool flying;
 };
 static const int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
-	   + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0C */
 struct packet_look
@@ -189,7 +231,7 @@ struct packet_look
   bool flying;
 };
 static const int packet_looksz = sizeof(int8_t) + 2 * sizeof(float) 
-		  + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
 
 /* pid 0x0D */
 struct packet_movelook
@@ -205,6 +247,68 @@ struct packet_movelook
 };
 static const int packet_movelooksz = sizeof(int8_t) + 4 * sizeof(double)
    + 2 * sizeof(float) + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+
+/* pid 0x0E */
+struct packet_dig
+{
+ int8_t pid;
+ int8_t status;
+ int32_t x;
+ int8_t y;
+ int32_t z;
+ int8_t face;
+};
+static const int packet_digsz = 4 * sizeof(int8_t) + 2 * sizeof(int32_t);
+
+/* pid 0x0F */
+struct packet_blockplace
+{
+  int8_t pid;
+  int16_t itemid;
+  int32_t x;
+  int8_t y;
+  int32_t z;
+  int8_t direction;
+};
+static const int packet_blockplacesz = 3 * sizeof(int8_t) + sizeof(int16_t)
+				     + 2 * sizeof(int32_t);
+
+/* pid 0x10 */
+struct packet_holdchange
+{
+  int8_t pid;
+  int32_t unused;
+  int16_t itemid;
+};
+static const int packet_holdchangesz = sizeof(int8_t) + sizeof(int32_t)
+				     + sizeof(int16_t);
+
+/* pid 0x12 */
+struct packet_armanimate
+{
+  int8_t pid;
+  int32_t eid;
+  bool animate;
+};
+static const int packet_armanimatesz = sizeof(int8_t) + sizeof(int32_t)
+		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+
+/* pid 0x15 */
+struct packet_pickupspawn
+{
+  int8_t pid;
+  int32_t eid;
+  int16_t item;
+  int8_t count;
+  int32_t x;
+  int32_t y;
+  int32_t z;
+  int8_t rotation;
+  int8_t pitch;
+  int8_t roll;
+};
+static const int packet_pickupspawnsz = 5 * sizeof(int8_t) 
+				      + 4 * sizeof(int32_t) + sizeof(int16_t);
 
 /* pid 0x32 */
 struct packet_prechunk
@@ -235,6 +339,15 @@ struct packet_disconnect
   uint8_t pid;
   int16_t slen;
   char *message;
+};
+// Chat size/offset information (C99 initialized struct)
+struct
+{
+  const int base;
+  const int str1offset;
+} static const packet_disconnectsz = {
+  .base       = sizeof(uint8_t) + sizeof(int16_t),
+  .str1offset = sizeof(uint8_t) + sizeof(int16_t)
 };
 
 #endif
