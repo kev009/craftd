@@ -55,12 +55,11 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     {
     case PID_KEEPALIVE: // Keepalive packet 0x00
     {	
-        /* recvd keepalive, only byte packet. Toss it out for now
+        /* recvd keepalive, only byte packet. Toss it out for now.
          * We handle keepalives in timebound event loop.
          * Hopefully this useless packet goes away.
          */
-        puts("decoded keepalive!");
-        evbuffer_drain(input, 1);
+        evbuffer_drain(input, sizeof(int8_t));
 
         return 0;
     }
@@ -172,28 +171,40 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     case PID_CHAT: // Chat packet 0x03
     {
         puts("recvd chat packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_PINVENTORY: // Update inventory packet 0x05
     {
         puts("recvd update inventory packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
 	puts("recvd use entity packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
 	break;
     }
     case PID_PLAYERFLY: // "Flying"/Player packet 0x0A
     {
         puts("recvd flying packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
         puts("recvd player position packet\n");
 	
-	evbuffer_drain(input, pktlen);
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
         break;
     }
@@ -201,7 +212,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     {
         puts("recvd player look packet");
 	
-	evbuffer_drain(input, pktlen);
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
         break;
     }
@@ -209,38 +220,56 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     {
         puts("recvd move+look packet");
 	
-	evbuffer_drain(input, pktlen);
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
         break;
     }
     case PID_PLAYERDIG: // Block dig packet 0x0E
     {
         puts("recvd block dig packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_BLOCKPLACE: // Place packet 0x0F
     {
         puts("recvd place packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {
         puts("recvd block/item switch packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     case PID_ARMANIMATE: // Arm animate 0x12
     {
         puts("recvd arm animate packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
 	break;
     }
     case PID_PICKUPSPAWN:
     {
         puts("recvd pickup spawn packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
 	break;
     }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
         puts("recvd disconnect packet\n");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
         break;
     }
     default:

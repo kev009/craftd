@@ -63,6 +63,10 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   
   send_loginresp(player);
   send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
+  //send_chunk
+  send_spawnpos(player, 0, 0, 0); // TODO: pull spawn position from file
+  //send inv
+  send_movelook(player, 0, 0, 0, 0, 0, 0, 0); //TODO: pull position from file
   
   return;
 }
@@ -109,7 +113,7 @@ void
 send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
-  uint8_t pid = PID_PRECHUNK;
+  int8_t pid = PID_PRECHUNK;
   int32_t n_x = htonl(x);
   int32_t n_z = htonl(z);
   uint8_t n_mode = mode;
@@ -141,6 +145,69 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z)
  evbuffer_add(output, &pid, sizeof(pid));
  
  return;
+}
+
+/**
+ * Send the client their spawn position.  Can also be used to later update
+ * their compass bearing.
+ * 
+ * @param player Player List player pointer
+ * @param x global chunk x coordinate
+ * @param y global chunk y coordinate
+ * @param z global chunk z coordinate
+ */
+void
+send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  int8_t pid = PID_SPAWNPOS;
+  int32_t n_x = htonl(x);
+  int32_t n_y = htonl(y);
+  int32_t n_z = htonl(z);
+  
+  evbuffer_add(output, &pid, sizeof(pid));
+  evbuffer_add(output, &n_x, sizeof(n_x));
+  evbuffer_add(output, &n_y, sizeof(n_y));
+  evbuffer_add(output, &n_z, sizeof(n_z));
+}
+
+/**
+ * Send a combined move+look packet to the player.
+ * 
+ * @remarks Scope: public API method
+ * @remarks Note flip-flopped y and stance from client.  -_- Notch.
+ * 
+ * @param player Player List player pointer
+ * @param x absolute x coordinate
+ * @param stance modify player bounding box
+ * @param y absolute y coordinate
+ * @param z absolute z coordinate
+ * @param yaw rotation on the x-axis 
+ * @param pitch rotation on the y-axis 
+ * @param flying on the ground or in the air (0x0A)
+ */
+void
+send_movelook(struct PL_entry *player, double x, double stance, double y,
+	      double z, float yaw, float pitch, bool flying)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  int8_t pid = PID_PLAYERMOVELOOK;
+  double n_x = Cswapd(x);
+  double n_stance = Cswapd(stance);
+  double n_y = Cswapd(y);
+  double n_z = Cswapd(z);
+  float n_yaw = Cswapf(yaw);
+  float n_pitch = Cswapf(pitch);
+  int8_t n_flying = flying; // Cast to int8 to ensure it is 1 byte
+  
+  evbuffer_add(output, &pid, sizeof(pid));
+  evbuffer_add(output, &n_x, sizeof(n_x));
+  evbuffer_add(output, &n_y, sizeof(n_y));
+  evbuffer_add(output, &n_stance, sizeof(n_stance));
+  evbuffer_add(output, &n_z, sizeof(n_z));
+  evbuffer_add(output, &n_yaw, sizeof(n_yaw));
+  evbuffer_add(output, &n_pitch, sizeof(n_pitch));
+  evbuffer_add(output, &n_flying, sizeof(n_flying));
 }
 
 /**

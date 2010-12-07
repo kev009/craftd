@@ -30,7 +30,7 @@ Generating ./configure:
 autoreconf -i
 
 Developer Documentation:
-Coding style and archetecture notes are on the wiki - 
+Coding style and architecture notes are on the wiki - 
 http://mc.kev009.com/wiki/Craftd:Main_Page
 
 You should have a good understanding of libevent-2.
