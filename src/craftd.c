@@ -85,22 +85,22 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     {
         /* Connection closed, remove client from tables here */
         if( player->username.valid == 1)
-          printf("Connection closed for: %s\n", player->username.str);
+          LOG(LOG_INFO, "Connection closed for: %s", player->username.str);
         else
-          printf("Connection closed ip: %s\n", player->ip);
+          LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         finished = 1;
     }
     else if (error & BEV_EVENT_ERROR)
     {
         /* Some other kind of error, handle it here by checking errno */
-        puts("Some kind of error to be handled in errorcb\n");
+        LOG(LOG_ERR, "Some kind of error to be handled in errorcb");
         //EVUTIL_EVENT_ERROR;
         finished = 1;
     }
     else if (error & BEV_EVENT_TIMEOUT)
     {
         /* Handle timeout somehow */
-        puts("A buf event timeout?\n");
+        LOG(LOG_ERR, "A buf event timeout?");
 	finished = 1;
     }
     if (finished)
@@ -120,7 +120,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 	  if(workitem->bev == bev)
 	  {
 	    STAILQ_REMOVE(&WQ_head, workitem, WQ_entry, WQ_entries);
-	    puts("bev removed from workerpool by errorcb");
+	    LOG(LOG_DEBUG, "bev removed from workerpool by errorcb");
 	  }
 	}
 	pthread_spin_unlock(&WQ_spinlock);
@@ -144,11 +144,11 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     int fd = accept(listener, (struct sockaddr*)&ss, &slen);
     if (fd < 0)
     {
-        perror("accept error");
+        ERR("accept error");
     }
     else if (fd > FD_SETSIZE)
     {
-        puts("too many clients"); // LOG  
+        LOG(LOG_CRIT, "too many clients");
         close(fd);
     }
     else
@@ -158,12 +158,18 @@ do_accept(evutil_socket_t listener, short event, void *arg)
         /* Allocate space for a new player */
         player = Malloc(sizeof(struct PL_entry));
         player->fd = fd;
+	
+	/* Statically initialize the username string for now */
+	// TODO: write a string initializer
+	player->username.slen = 0;
 	player->username.valid = 0;
+	player->username.str = Malloc(25); // This gets realloced if larger
+	player->username.str[0] = '\0';
 
         /* Get the IPv4 or IPv6 address and store it */
         if (getpeername(fd, (struct sockaddr *)&ss, &slen))
         {
-          puts("Couldn't get peer IP"); // LOG
+          LOG(LOG_ERR, "Couldn't get peer IP");
           close(fd);
           free(player);
           return;
@@ -179,7 +185,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
         }
         else
         {
-          puts("weird address family"); // LOG
+          LOG(LOG_ERR, "weird address family");
           close(fd);
           free(player);
           return;
@@ -220,8 +226,8 @@ run_server(void)
     base = event_base_new();
     if (!base)
     {
-        fprintf(stderr, "Could not create MC libevent base!\n");
-        return;
+        LOG(LOG_CRIT, "Could not create MC libevent base!\n");
+        exit(EXIT_FAILURE);
     }
 
     bzero(&sin, sizeof(sin));
@@ -231,7 +237,7 @@ run_server(void)
 
     if ((listener = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("cannot create socket");
+        PERR("cannot create socket");
         return;
     }
 
@@ -246,13 +252,13 @@ run_server(void)
 
     if (bind(listener, (struct sockaddr*)&sin, sizeof(sin)) < 0)
     {
-        perror("cannot bind");
+        PERR("cannot bind");
         return;
     }
 
     if (listen(listener, MAX_LISTENBACKLOG) < 0)
     {
-        perror("listen error");
+        PERR("listen error");
         return;
     }
 
@@ -282,7 +288,7 @@ main(int argc, char **argv)
   // LOG_setmask = &setlogmask;
   LOG = &log_console;
   LOG_setlogmask = &log_console_setlogmask;
-  //LOG_setmask(LOG_MASK(LOG_DEBUG));
+  LOG_setlogmask(LOG_MASK(LOG_DEBUG));
 
   /* Player List singly-linked list setup */
   // hsearch w/direct ptr hashtable for name lookup if we need faster direct
@@ -311,7 +317,7 @@ main(int argc, char **argv)
   evthread_enable_lock_debuging(); // TODO: DEBUG flag
 
   if(status != 0)
-    perror("Cannot initialize libevent threading");
+    ERR("Cannot initialize libevent threading");
 
   /* Start timeloop */
   pthread_attr_init(&timeloop_thread_attr);
@@ -319,7 +325,7 @@ main(int argc, char **argv)
   status = pthread_create(&timeloop_thread_id, &timeloop_thread_attr, 
       run_timeloop, NULL);
   if(status != 0)
-    perror("Cannot start timeloop");
+    ERR("Cannot start timeloop");
   
   /* Start httpd */
   pthread_attr_init(&httpd_thread_attr);
@@ -328,7 +334,7 @@ main(int argc, char **argv)
       run_httpd, NULL);
   
   if(status != 0)
-    perror("Cannot start httpd");
+    ERR("Cannot start httpd");
 
   /* Start packet handler pool */
   pthread_attr_init(&WP_thread_attr);
@@ -338,7 +344,7 @@ main(int argc, char **argv)
   pthread_mutex_lock(&worker_cvmutex);
   status = pthread_cond_init(&worker_cv, NULL);
   if(status !=0)
-    puts("Worker condition var init failed!"); // LOG
+    ERR("Worker condition var init failed!");
   
   for (int i = 0; i < WORKER_POOL; ++i)
   {
@@ -346,7 +352,7 @@ main(int argc, char **argv)
     status = pthread_create(&WP_thread_id[i], &WP_thread_attr,
         run_worker, (void *) &WP_id[i]);
     if(status != 0)
-      puts("Worker pool startup failed!"); //LOG
+      ERR("Worker pool startup failed!");
   }
 
   /* Start inbound game server*/

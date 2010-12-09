@@ -47,14 +47,14 @@
  * detection, decoding, and response.  Work is passed in through the Work
  * Queue structure.  On errors, we disconnect the client.
  * 
- * @param arg void pointer to the thread's worker ID
+ * @param arg void cast pointer to the thread's worker ID (int)
  * @return NULL
  */
 void 
 *run_worker(void *arg)
 {
   int id = *(int *)arg;
-  printf("Worker %d started!\n", id);
+  LOG(LOG_INFO, "Worker %d started!", id);
   
   struct bufferevent *bev;
   struct evbuffer *input, *output;
@@ -70,7 +70,8 @@ void
     //pthread_mutex_lock(&worker_cvmutex);
     pthread_cond_wait(&worker_cv, &worker_cvmutex);
     //pthread_mutex_unlock(&worker_cvmutex);
-    printf("in worker: %d\n", id);
+    
+    LOGT(LOG_DEBUG, "in worker: %d", id);
     
     /* Pull work item */
     pthread_spin_lock(&WQ_spinlock);
@@ -80,7 +81,7 @@ void
      */
     if(STAILQ_EMPTY(&WQ_head))
     {
-      puts("Race avoidance in workerpool");
+      LOG(LOG_DEBUG, "Race avoidance in workerpool");
       pthread_spin_unlock(&WQ_spinlock);
       //pthread_mutex_unlock(&worker_cvmutex);
       continue;
@@ -94,7 +95,7 @@ void
     
     if (bev == NULL || player == NULL)
     {
-      puts("Aaack, null bev or ctx in worker?");
+      LOG(LOG_CRIT, "Aaack, null bev or ctx in worker?");
       goto WORKER_ERR;
     }
 
@@ -127,7 +128,7 @@ void
         if (pktlen == EAGAIN)
         {
 	  /* recvd a fragment, wait for another event */
-	  puts("EAGAIN");
+	  LOGT(LOG_DEBUG,"EAGAIN");
           goto WORKER_DONE;
         }
         else if (pktlen == EILSEQ)
@@ -135,7 +136,7 @@ void
 	  /* recvd an packet that does not match known parameters
 	   * Punt the client and perform cleanup
 	   */
-	  printf("EILSEQ in recv buffer!, pkttype: 0x%.2x\n", pkttype);
+	  LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
 	  goto WORKER_ERR;
          }
         
@@ -148,7 +149,7 @@ void
       /* On decoding errors, punt the client for now */
       if (status != 0)
       {
-	printf("Decode error, punting client.  errno: %d\n", status);
+	LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);
         goto WORKER_ERR;
       }
       

@@ -149,13 +149,13 @@ send_staticdoc_cb(struct evhttp_request *req, void *arg)
     return;
   }
 
-  printf("Got a GET request for <%s>\n", uri); // LOG
+  LOG(LOG_INFO, "chttpd: Got a GET request for <%s>", uri);
 
   /* Decode the URI */
   decoded = evhttp_uri_parse(uri);
   if (!decoded)
   {
-    printf("bad request\n"); // LOG
+    LOG(LOG_NOTICE, "chttpd: bad request\n");
     return;
   }
 
@@ -230,14 +230,14 @@ send_staticdoc_cb(struct evhttp_request *req, void *arg)
     const char *type = guess_content_type(decoded_path);
     if ((fd = open(whole_path, O_RDONLY)) < 0)
     {
-      puts("can'tt open file"); // LOG, log errno?
+      LOG(LOG_ERR, "chttpd: can't open file");
       goto err;
     }
 
     if (fstat(fd, &st) < 0)
     {
       /* Check that the length still matches */
-      puts("fstat different"); // log errno?
+      LOG(LOG_ERR, "fstat different");
       goto err;
     }
 
@@ -275,14 +275,14 @@ void *run_httpd(void *arg)
     htbase = event_base_new();
     if(!htbase)
     {
-      puts("httpd event base cannot start"); // LOG
+      LOG(LOG_CRIT, "httpd event base cannot start");
       exit(1);
     }
 
     httpd = evhttp_new(htbase);
     if(!htbase)
     {
-      puts("httpd evhttp module cannot start"); // LOG
+      LOG(LOG_CRIT, "httpd evhttp module cannot start");
       exit(1);
     }
 
@@ -297,11 +297,11 @@ void *run_httpd(void *arg)
     hthandle = evhttp_bind_socket_with_handle(httpd , INADDR_ANY, HTTPD_PORT);
     if(!hthandle)
     {
-      puts("cannot bind httpd!"); // LOG
+      LOG(LOG_CRIT, "cannot bind httpd!");
       exit(1);
     }
 
-    puts("httpd started!"); // LOG
+    LOG(LOG_INFO, "httpd started!");
 
     event_base_dispatch(htbase);
 

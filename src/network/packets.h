@@ -140,7 +140,7 @@ struct
   const int base;
   const int str1offset;
 } static const packet_chatsz = {
-  .base       = sizeof(uint8_t),
+  .base       = sizeof(uint8_t) + sizeof(uint16_t),
   .str1offset = sizeof(uint8_t)
 };
 
@@ -326,9 +326,9 @@ struct packet_mapchunk
   int32_t x;
   int16_t y;
   int32_t z;
-  int8_t sizex;
-  int8_t sizey;
-  int8_t sizez;
+  uint8_t sizex;
+  uint8_t sizey;
+  uint8_t sizez;
   int32_t bytearraysize;
   int8_t *bytearray;
 };

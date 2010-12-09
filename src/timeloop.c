@@ -29,7 +29,11 @@
 #include <stdlib.h>
 
 #include <event2/event.h>
+#include <event2/buffer.h>
+#include <event2/bufferevent.h>
 
+#include "craftd-config.h"
+#include "craftd.h"
 #include "timeloop.h"
 
 /* Public */
@@ -40,7 +44,7 @@ void *run_timeloop(void *arg)
   tlbase = event_base_new();
   if(!tlbase)
   {
-    puts("Time loop event base cannot start"); // LOG
+    LOG(LOG_CRIT, "Time loop event base cannot start");
     exit(1);
   }
 
@@ -53,7 +57,7 @@ void *run_timeloop(void *arg)
 
   //TODO will need various timer events w/ different reoccuring time intervals
 
-  puts("Time event loop started!"); // LOG
+  LOG(LOG_INFO, "Time event loop started!");
 
   event_base_dispatch(tlbase);
 

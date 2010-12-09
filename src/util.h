@@ -29,16 +29,16 @@
 #include <config.h>
 
 #include <errno.h>
+#include <stdint.h>
 #include <syslog.h>
 #include <stdarg.h>
 
-/**
- * Global error handling macros
- */
-#define PERR(msg) \
-  do { perror(msg); exit(EXIT_FAILURE); } while (0)
-//TODO ERR
+#include <event2/event.h>
+#include <event2/buffer.h>
 
+/**
+ * Global logging and error handling macros
+ */
 /* Function pointer to the current syslog() style logging routine */
 void (*LOG)(int, const char *, ...);
 int (*LOG_setlogmask)(int);
@@ -46,6 +46,21 @@ int (*LOG_setlogmask)(int);
 /* Console logging routines with syslog() style interface */
 void log_console(int priority, const char *format, ...);
 int log_console_setlogmask(int mask);
+
+/* Trace logging wrapper */
+#ifdef TRACE
+#define LOGT(...) \
+  do { LOG(__VA_ARGS__); } while (0)
+#else
+#define LOGT(...) \
+  do { ; } while(0)
+#endif
+
+/* Fatal errors */
+#define PERR(msg) \
+  do { perror(msg); exit(EXIT_FAILURE); } while (0)
+#define ERR(msg) \
+  do { LOG(LOG_CRIT, msg); exit(EXIT_FAILURE); } while (0)
 
 /**
  * Public and exposed mcstring structure interface
@@ -60,7 +75,7 @@ typedef struct _mcstring
 } mcstring_t;
 
 /* Public mcstring functiions */
-int ismc_utf8(const char const* str);
+int ismc_utf8(const char *str);
 mcstring_t *mcstring_allocate(int16_t slen);
 mcstring_t *mcstring_create(int16_t slen, const char *strptr);
 mcstring_t *mcstring_copy(mcstring_t *dest, mcstring_t *src);

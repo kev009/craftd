@@ -43,6 +43,8 @@
  * @param bev buffer event
  * @param player Player List entry (buffer event context)
  */
+
+int sent = 0;
 int
 packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
 	     struct PL_entry *player)
@@ -65,7 +67,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_LOGIN: // Login packet 0x01
     {
-        puts("decoded login packet");
+        LOG(LOG_DEBUG, "decoded login packet");
 	
 	struct packet_login u_login;
 	int16_t ulen;
@@ -107,9 +109,9 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	/* Get the dimension */
 	evbuffer_remove(input, &u_login.dimension, sizeof(u_login.dimension));
 
-	printf("recvd login from: %s client ver: %d seed: %lu dim: %d\n", 
+	LOG(LOG_INFO, "recvd login from: %s client ver: %d seed: %lu dim: %d", 
 	       u_login.username->str, u_login.version, u_login.mapseed, 
-	       u_login.dimension); // LOG
+	       u_login.dimension);
 	
 	/* Process the login */
 	process_login(player, u_login.username, u_login.version);
@@ -121,7 +123,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_HANDSHAKE: // Handshake packet 0x02
     {
-        puts("decoded handshake packet");
+        LOG(LOG_DEBUG, "decoded handshake packet");
 	
         struct packet_handshake u_hs;
         int16_t ulen;
@@ -139,7 +141,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         if(!mcstring_valid(u_hs.username))
           exit(4); // LOG bad str, punt client
 
-	printf("Handshake from: %s\n", u_hs.username->str);
+	LOG(LOG_DEBUG, "Handshake from: %s", u_hs.username->str);
   
 	mcstring_free(u_hs.username);
 
@@ -170,7 +172,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_CHAT: // Chat packet 0x03
     {
-        puts("recvd chat packet\n");
+        LOG(LOG_DEBUG, "recvd chat packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -178,7 +180,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PINVENTORY: // Update inventory packet 0x05
     {
-        puts("recvd update inventory packet\n");
+        LOG(LOG_DEBUG, "recvd update inventory packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -186,7 +188,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
-	puts("recvd use entity packet\n");
+	LOG(LOG_DEBUG, "recvd use entity packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -194,7 +196,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PLAYERFLY: // "Flying"/Player packet 0x0A
     {
-        puts("recvd flying packet\n");
+        LOG(LOG_DEBUG, "recvd flying packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -202,7 +204,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
-        puts("recvd player position packet\n");
+        LOG(LOG_DEBUG, "recvd player position packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -210,7 +212,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PLAYERLOOK: // Player look packet 0x0C
     {
-        puts("recvd player look packet");
+        LOG(LOG_DEBUG, "recvd player look packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -218,15 +220,15 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PLAYERMOVELOOK: // Player move+look packet 0x0D
     {
-        puts("recvd move+look packet");
+        LOG(LOG_DEBUG, "recvd move+look packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
+
         break;
     }
     case PID_PLAYERDIG: // Block dig packet 0x0E
     {
-        puts("recvd block dig packet\n");
+        LOG(LOG_DEBUG, "recvd block dig packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -234,7 +236,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_BLOCKPLACE: // Place packet 0x0F
     {
-        puts("recvd place packet\n");
+        LOG(LOG_DEBUG, "recvd place packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -242,7 +244,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {
-        puts("recvd block/item switch packet\n");
+        LOG(LOG_DEBUG, "recvd block/item switch packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -250,7 +252,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_ARMANIMATE: // Arm animate 0x12
     {
-        puts("recvd arm animate packet\n");
+        LOG(LOG_DEBUG, "recvd arm animate packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -258,7 +260,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PICKUPSPAWN:
     {
-        puts("recvd pickup spawn packet\n");
+        LOG(LOG_DEBUG, "recvd pickup spawn packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -266,7 +268,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
-        puts("recvd disconnect packet\n");
+        LOG(LOG_DEBUG, "recvd disconnect packet");
 	
 	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 	
@@ -274,7 +276,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     default:
     {
-        printf("Unrouted packet type: %x\n!", pkttype);
+        LOG(LOG_ERR, "Unrouted packet type: %x\n!", pkttype);
         // Close connection
         return EILSEQ;
     }

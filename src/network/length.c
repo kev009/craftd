@@ -251,7 +251,8 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     default:
     {
-        printf("Unknown packet type: %x, len: %d\n!", pkttype, (int)inlen); //LOGint
+        LOG(LOG_ERR, "Unknown packet type: %x, len: %d\n!", pkttype, 
+	    (int) inlen);
         // Close connection
         return -EILSEQ;
     }

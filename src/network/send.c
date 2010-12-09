@@ -25,12 +25,20 @@
 
 #include <config.h>
 
+#include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "craftd-config.h"
 #include "network.h"
 #include "network-private.h"
 #include "packets.h"
+
+// Hack zlib in to test chunk sending
+#include <stdio.h>
+#include <zlib.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 /**
  * This internal method checks login predicates, populates the rest of the
@@ -63,11 +71,29 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   
   send_loginresp(player);
   send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
-  //send_chunk
-  send_spawnpos(player, 0, 0, 0); // TODO: pull spawn position from file
-  //send inv
-  send_movelook(player, 0, 0, 0, 0, 0, 0, 0); //TODO: pull position from file
+  send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
+  for(int i = -4; i < 5; i++)
+  {
+    for(int j = -4; j < 5; j++)
+    {
+      send_prechunk(player, i,j, true);
+      send_chunk(player, i*16, 0, j*16, 16,128,16);
+    }
+  }
+  
+  /*
+  send_prechunk(player, 16, 0, true);
+  send_chunk(player, 16, 0, 0, 16, 128, 16);
+  send_prechunk(player, 16, 16, true);
+  send_chunk(player, 16, 0, 16, 16, 128, 16);
+  send_prechunk(player, 0, 16, true);
+  send_chunk(player, 0, 0, 16, 16, 128, 16);
+  */
+  
+  send_spawnpos(player, 32, 32, 32); // TODO: pull spawn position from file
+  //send inv
+  send_movelook(player, 6.5, 67.240000009536743, 65.620000004768372, 7.5, 0, 0, false); //TODO: pull position from file
   return;
 }
 
@@ -130,21 +156,75 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
  * Send the specified chunk to the player
  * 
  * @remarks Scope: public API method
+ * @remarks Internally and over the network size{x,y,z} are -1 over the wire
  * 
  * @param player Player List player pointer
  * @param x global chunk x coordinate
  * @param y global chunk y coordinate
  * @param z global chunk z coordinate
+ * @param sizex actual x size
+ * @param sizey actual y size
+ * @param sizez actual z size
  */
 void
-send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z)
+send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
+	   uint8_t sizex, uint8_t sizey, uint8_t sizez)
 {
- struct evbuffer *output = bufferevent_get_output(player->bev);
- uint8_t pid = PID_MAPCHUNK;
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  int8_t pid = PID_MAPCHUNK;
+  int32_t n_x = htonl(x);
+  int16_t n_y = htons(y);
+  int32_t n_z = htonl(z);
  
- evbuffer_add(output, &pid, sizeof(pid));
+  /* Check that the chunk size is greater than zero since the protocol must
+   * subtract one before sending.  If so, do it.
+   */
+  assert(sizex > 0 && sizey > 0 && sizez > 0);
+  assert(sizex <= 128 && sizey <= 128 && sizez <= 128);
+  --sizex;
+  --sizey;
+  --sizez;
+
+  // Hack in zlib support for test  
+  uint8_t *mapdata = (uint8_t*)Malloc(MAX_CHUNKARRAY);
+  memset(mapdata, 0, MAX_CHUNKARRAY);
+  for(int i=0; i<32768; i+=128)
+    mapdata[i] = 0x01; // Stone
+  memset(&mapdata[32768+16384], 255, 32768);
+  
+  uLongf written = MAX_CHUNKARRAY;
+  Bytef *buffer = (Bytef*)Malloc(MAX_CHUNKARRAY);
+  if (compress(buffer, &written, &mapdata[0], MAX_CHUNKARRAY) != Z_OK)
+    assert(false);
+  int32_t n_written = htonl(written);
  
- return;
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_x, sizeof(n_x));
+  evbuffer_add(tempbuf, &n_y, sizeof(n_y));
+  evbuffer_add(tempbuf, &n_z, sizeof(n_z));
+  evbuffer_add(tempbuf, &sizex, sizeof(sizex));
+  evbuffer_add(tempbuf, &sizey, sizeof(sizey));
+  evbuffer_add(tempbuf, &sizez, sizeof(sizez));
+  evbuffer_add(tempbuf, &n_written, sizeof(n_written));
+  evbuffer_add(tempbuf, buffer, written);
+  
+  /*struct stat st;
+  int fd = open("/home/kev009/c/009mc/myne2/blockdata.hex", O_RDONLY);
+  fstat(fd, &st);
+  
+  n_written = htonl(st.st_size);
+  evbuffer_add(tempbuf, &n_written, sizeof(n_written));
+  evbuffer_add_file(tempbuf, fd, 0, st.st_size);*/
+  
+ 
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  
+  free(mapdata);
+  free(buffer);
+ 
+  return;
 }
 
 /**
@@ -169,6 +249,8 @@ send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
   evbuffer_add(output, &n_x, sizeof(n_x));
   evbuffer_add(output, &n_y, sizeof(n_y));
   evbuffer_add(output, &n_z, sizeof(n_z));
+  
+  return;
 }
 
 /**
@@ -184,7 +266,7 @@ send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
  * @param z absolute z coordinate
  * @param yaw rotation on the x-axis 
  * @param pitch rotation on the y-axis 
- * @param flying on the ground or in the air (0x0A)
+ * @param flying on the ground or in the air (like 0x0A)
  */
 void
 send_movelook(struct PL_entry *player, double x, double stance, double y,
@@ -208,6 +290,8 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
   evbuffer_add(output, &n_yaw, sizeof(n_yaw));
   evbuffer_add(output, &n_pitch, sizeof(n_pitch));
   evbuffer_add(output, &n_flying, sizeof(n_flying));
+  
+  return;
 }
 
 /**
@@ -234,4 +318,6 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
   /* TODO forcefully close the socket and perform manual cleanup if the client
    * doesn't voluntarily disconnect
    */
+  
+  return;
 }

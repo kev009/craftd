@@ -24,13 +24,12 @@
  */
 
 #include "config.h"
-#include <stdio.h>
+#include "util.h"
 
 void
 craftd_version(const char *progname)
 {
-    fprintf(stderr, "%s (%s-%s)\n", progname, PACKAGE_TARNAME,
-            PACKAGE_VERSION);
-    fprintf(stderr, "Copyright (c) 2011 Kevin Bowling - ");
-    fprintf(stderr, "http://mc.kev009.com/craftd/\n");
+    LOG(LOG_NOTICE, "%s (%s-%s)", progname, PACKAGE_TARNAME, PACKAGE_VERSION);
+    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
+		    "http://mc.kev009.com/craftd/");
 }

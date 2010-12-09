@@ -74,6 +74,7 @@ void log_console(int priority, const char *format, ...)
 {
   va_list arglist;
   const char *loglevel;
+  va_start(arglist, format);
   
   /* Return on MASKed log priorities */
   if (LOG_MASK(priority) & log_consolemask)
@@ -113,6 +114,9 @@ void log_console(int priority, const char *format, ...)
   printf("%s", loglevel);
   vprintf(format, arglist);
   printf("\n");
+  
+  va_end(arglist);
+  return;
 }
 
 /**
@@ -350,7 +354,7 @@ Calloc(size_t num, size_t size)
 {
   void *ptr;
   if ( (ptr = calloc(num, size)) == NULL )
-    perror("calloc null ptr error!");
+    ERR("calloc null ptr error!");
   return ptr;
 }
 
@@ -365,7 +369,7 @@ Malloc(size_t size)
 {
   void *ptr;
   if ( (ptr = malloc(size)) == NULL )
-    perror("malloc null ptr error!");
+    ERR("malloc null ptr error!");
   return ptr;
 }
 
@@ -391,7 +395,7 @@ Realloc(void *ptr, size_t size)
   else
   {
     if( (newptr = realloc(ptr, size)) == NULL)
-      perror("realloc null ptr error!");
+      ERR("realloc null ptr error!");
     return newptr;
   }
 }
