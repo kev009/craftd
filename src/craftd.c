@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <syslog.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -274,6 +275,14 @@ main(int argc, char **argv)
   pthread_attr_t WP_thread_attr;
   int WP_id[WORKER_POOL];
   int status = 0;
+  
+  // TODO: select syslog or console logging
+  //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
+  // LOG = &syslog;
+  // LOG_setmask = &setlogmask;
+  LOG = &log_console;
+  LOG_setlogmask = &log_console_setlogmask;
+  //LOG_setmask(LOG_MASK(LOG_DEBUG));
 
   /* Player List singly-linked list setup */
   // hsearch w/direct ptr hashtable for name lookup if we need faster direct
@@ -288,12 +297,10 @@ main(int argc, char **argv)
   WQ_count = 0;
     
   /* Print startup message */
-  craftd_version(argv[0]); // LOG
-  puts("Server starting!"); // LOG
+  craftd_version(argv[0]);
+  LOG(LOG_INFO, "Server starting!");
 
   //daemon(1,1);
-
-  //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
 
 #ifdef WIN32
   status = evthread_use_windows_threads();

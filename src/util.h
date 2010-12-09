@@ -29,13 +29,23 @@
 #include <config.h>
 
 #include <errno.h>
+#include <syslog.h>
+#include <stdarg.h>
 
 /**
  * Global error handling macros
  */
 #define PERR(msg) \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
-//TODO LOG, ELOG, ERR, etc
+//TODO ERR
+
+/* Function pointer to the current syslog() style logging routine */
+void (*LOG)(int, const char *, ...);
+int (*LOG_setlogmask)(int);
+
+/* Console logging routines with syslog() style interface */
+void log_console(int priority, const char *format, ...);
+int log_console_setlogmask(int mask);
 
 /**
  * Public and exposed mcstring structure interface

@@ -28,11 +28,92 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <syslog.h>
 
 #include <event2/buffer.h>
 
 #include "craftd-config.h"
 #include "util.h"
+
+// Logging Routines
+/** Private storage for the console log mask */
+static int log_consolemask = 0;
+
+/**
+ * Provides a syslog style setlogmask() used by the console logger.  Usually
+ * accessed through the LOG_setlogmask function pointer where setlogmask() and
+ * log_console_setlogmask() can be selected at runtime.
+ * 
+ * @remarks See man setlogmask(3)
+ * 
+ * @param mask a bit-field mask of types to block
+ * @return the old mask, before setting to the param
+ */
+int log_console_setlogmask(int mask)
+{
+  int oldmask = log_consolemask;
+  if(mask == 0) // POSIX specification
+    return oldmask;
+  log_consolemask = mask;
+  return oldmask;
+}
+
+/**
+ * Provides a syslog() style interface but logs to stdout instead.
+ * Usually used from the LOG() function pointer where syslog() or log_console()
+ * can be selected at runtime.
+ * 
+ * @remarks See man syslog(3)
+ * 
+ * @param priority a syslog format priority designation
+ * @param format a syslog format string
+ * @param ... arguments for the format string
+ */
+void log_console(int priority, const char *format, ...)
+{
+  va_list arglist;
+  const char *loglevel;
+  
+  /* Return on MASKed log priorities */
+  if (LOG_MASK(priority) & log_consolemask)
+    return;
+  
+  switch(priority)
+  {
+    case LOG_ALERT:
+      loglevel = "ALERT: ";
+      break;
+    case LOG_CRIT:
+      loglevel = "CRIT: ";
+      break;
+    case LOG_DEBUG:
+      loglevel = "DEBUG: ";
+      break;
+    case LOG_EMERG:
+      loglevel = "EMERG: ";
+      break;
+    case LOG_ERR:
+      loglevel = "ERR: ";
+      break;
+    case LOG_INFO:
+      loglevel = "INFO: ";
+      break;
+    case LOG_NOTICE:
+      loglevel = "NOTICE: ";
+      break;
+    case LOG_WARNING:
+      loglevel = "WARNING: ";
+      break;
+    default:
+      loglevel = "UNKNOWN: ";
+      break;
+  }
+  
+  printf("%s", loglevel);
+  vprintf(format, arglist);
+  printf("\n");
+}
 
 /**
  * Check if str is valid MC UTF-8, nonzero otherwise
