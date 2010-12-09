@@ -34,6 +34,7 @@
 int len_statemachine(uint8_t pkttype, struct evbuffer *input);
 int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
 		  struct PL_entry *player);
+void process_handshake(struct PL_entry *player, mcstring_t *username);
 void process_login(struct PL_entry *player, mcstring_t *username, 
 			  uint32_t ver);
 void send_loginresp(struct PL_entry *player);

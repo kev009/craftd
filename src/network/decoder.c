@@ -142,31 +142,10 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
           exit(4); // LOG bad str, punt client
 
 	LOG(LOG_DEBUG, "Handshake from: %s", u_hs.username->str);
-  
+	
+	process_handshake(player, u_hs.username);
+	
 	mcstring_free(u_hs.username);
-
-	/* Use a non-authenticating handshake for now 
-         * XXX: just a hack to get a login.
-         * XXX  This needs to be added to the worker pool for computing hash
-         * from minecraft.net
-         */
-       	struct packet_handshake s_hs;
-	s_hs.pid = 0x02;
-        int16_t nslen;
-	const char *hashreply = "-";
-	s_hs.username = mcstring_create(strlen(hashreply), hashreply);
-
-        if (s_hs.username == NULL)
-          exit(5); // DEBUG hash reply malformed
-
-        nslen = ntohs(s_hs.username->slen);
-	evbuffer_add(output, &s_hs.pid, sizeof(s_hs.pid));
-        evbuffer_add(output, &nslen, sizeof(nslen));
-        evbuffer_add(output, s_hs.username->str, s_hs.username->slen);
-
-        bufferevent_flush(bev, EV_WRITE, BEV_FLUSH);
-
-        mcstring_free(s_hs.username);
 
 	return 0;
     }

@@ -98,6 +98,41 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
 }
 
 /**
+ * Internal method that sends a handshake response packet
+ *
+ * @remarks Scope: private
+ *
+ * @param player Player List player pointer
+ * @param username mcstring of the handshake username
+ */
+void
+process_handshake(struct PL_entry *player, mcstring_t *username)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+
+  /* Use a non-authenticating handshake for now 
+   * XXX: just a hack to get a login.
+   * XXX  This needs to be added to the worker pool for computing hash
+   * from minecraft.net
+   */
+  
+  uint8_t pid = PID_HANDSHAKE;
+  mcstring_t *hashreply = mcstring_create(strlen("-"), "-");
+  int16_t n_hlen = htons(hashreply->slen);
+  
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
+  evbuffer_add(tempbuf, hashreply->str, hashreply->slen);
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  mcstring_free(hashreply);
+  
+  return;
+}
+
+/**
  * Internal method that sends a login response packet
  *
  * @remarks Scope: private
@@ -108,6 +143,8 @@ void
 send_loginresp(struct PL_entry *player)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
   uint8_t pid = PID_LOGIN;
   int32_t entityid = htonl(1); // TODO generate player entity IDs
   int16_t unused1 = htons(0); // Future server name? mcstring.
@@ -115,12 +152,15 @@ send_loginresp(struct PL_entry *player)
   int64_t mapseed = htonll(0);
   int8_t dimension = 0;
   
-  evbuffer_add(output, &pid, sizeof(pid));
-  evbuffer_add(output, &entityid, sizeof(entityid));
-  evbuffer_add(output, &unused1, sizeof(unused1));
-  evbuffer_add(output, &unused2, sizeof(unused2));
-  evbuffer_add(output, &mapseed, sizeof(mapseed));
-  evbuffer_add(output, &dimension, sizeof(dimension));
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &entityid, sizeof(entityid));
+  evbuffer_add(tempbuf, &unused1, sizeof(unused1));
+  evbuffer_add(tempbuf, &unused2, sizeof(unused2));
+  evbuffer_add(tempbuf, &mapseed, sizeof(mapseed));
+  evbuffer_add(tempbuf, &dimension, sizeof(dimension));
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
 
   return;
 }
@@ -139,15 +179,20 @@ void
 send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
   int8_t pid = PID_PRECHUNK;
   int32_t n_x = htonl(x);
   int32_t n_z = htonl(z);
   uint8_t n_mode = mode;
   
-  evbuffer_add(output, &pid, sizeof(pid));
-  evbuffer_add(output, &n_x, sizeof(n_x));
-  evbuffer_add(output, &n_z, sizeof(n_z));
-  evbuffer_add(output, &n_mode, sizeof(n_mode));
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_x, sizeof(n_x));
+  evbuffer_add(tempbuf, &n_z, sizeof(n_z));
+  evbuffer_add(tempbuf, &n_mode, sizeof(n_mode));
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
   
   return;
 }
@@ -240,15 +285,20 @@ void
 send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
   int8_t pid = PID_SPAWNPOS;
   int32_t n_x = htonl(x);
   int32_t n_y = htonl(y);
   int32_t n_z = htonl(z);
   
-  evbuffer_add(output, &pid, sizeof(pid));
-  evbuffer_add(output, &n_x, sizeof(n_x));
-  evbuffer_add(output, &n_y, sizeof(n_y));
-  evbuffer_add(output, &n_z, sizeof(n_z));
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_x, sizeof(n_x));
+  evbuffer_add(tempbuf, &n_y, sizeof(n_y));
+  evbuffer_add(tempbuf, &n_z, sizeof(n_z));
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
   
   return;
 }
@@ -273,6 +323,8 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
 	      double z, float yaw, float pitch, bool flying)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
   int8_t pid = PID_PLAYERMOVELOOK;
   double n_x = Cswapd(x);
   double n_stance = Cswapd(stance);
@@ -282,14 +334,17 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
   float n_pitch = Cswapf(pitch);
   int8_t n_flying = flying; // Cast to int8 to ensure it is 1 byte
   
-  evbuffer_add(output, &pid, sizeof(pid));
-  evbuffer_add(output, &n_x, sizeof(n_x));
-  evbuffer_add(output, &n_y, sizeof(n_y));
-  evbuffer_add(output, &n_stance, sizeof(n_stance));
-  evbuffer_add(output, &n_z, sizeof(n_z));
-  evbuffer_add(output, &n_yaw, sizeof(n_yaw));
-  evbuffer_add(output, &n_pitch, sizeof(n_pitch));
-  evbuffer_add(output, &n_flying, sizeof(n_flying));
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_x, sizeof(n_x));
+  evbuffer_add(tempbuf, &n_y, sizeof(n_y));
+  evbuffer_add(tempbuf, &n_stance, sizeof(n_stance));
+  evbuffer_add(tempbuf, &n_z, sizeof(n_z));
+  evbuffer_add(tempbuf, &n_yaw, sizeof(n_yaw));
+  evbuffer_add(tempbuf, &n_pitch, sizeof(n_pitch));
+  evbuffer_add(tempbuf, &n_flying, sizeof(n_flying));
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
   
   return;
 }
@@ -306,12 +361,17 @@ void
 send_kick(struct PL_entry *player, mcstring_t *dconmsg)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
   uint8_t pid = PID_DISCONNECT;
   int16_t slen = htons(dconmsg->slen);
 
-  evbuffer_add(output, &pid, sizeof(pid));
-  evbuffer_add(output, &slen, sizeof(slen));
-  evbuffer_add(output, dconmsg->str, dconmsg->slen);
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &slen, sizeof(slen));
+  evbuffer_add(tempbuf, dconmsg->str, dconmsg->slen);
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
   
   mcstring_free(dconmsg);
   
