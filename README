@@ -7,6 +7,7 @@ please wait until binary packages are available or at least source tarballs.
 Dependencies:
 libevent 2.0.9+ - http://monkey.org/~provos/libevent/
 zlib 1.2.3+ - http://zlib.net/
+Jansson (Git head) - http://github.com/akheron/jansson - Will probably bundle this later
 Pthreads
 
 Successfully built on:
