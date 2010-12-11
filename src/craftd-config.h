@@ -28,11 +28,26 @@
 
 #include <config.h>
 
-#define SERVER_PORT (25565)
-#define HTTPD_PORT (25566)
 #define MAX_LISTENBACKLOG (16)
 #define MAX_BUF (8096)
-#define MC_MAXSTRING (100)
-#define WORKER_POOL (2)
+
+/* Public methods */
+void craftd_config_setdefaults();
+void craftd_config_parse(const char* file);
+
+/* Public data */
+struct
+{
+  // Game settings
+  int game_port;
+  int max_listenbacklog;
+  int mcstring_max;
+  int workpool_size;
+  char *motd_file;
+  
+  // httpd settings
+  int httpd_port;
+  char *docroot;
+} Config;
 
 #endif

@@ -210,7 +210,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
 	player->bev = bev;
 	
         bufferevent_setcb(bev, readcb, NULL, errorcb, player);
-        bufferevent_setwatermark(bev, EV_READ, 0, MAX_BUF);
+        //bufferevent_setwatermark(bev, EV_READ, 0, MAX_BUF);
         bufferevent_enable(bev, EV_READ|EV_WRITE);
     }
 }
@@ -226,14 +226,14 @@ run_server(void)
     base = event_base_new();
     if (!base)
     {
-        LOG(LOG_CRIT, "Could not create MC libevent base!\n");
+        LOG(LOG_CRIT, "Could not create MC libevent base!");
         exit(EXIT_FAILURE);
     }
 
     bzero(&sin, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons(SERVER_PORT);
+    sin.sin_port = htons(Config.game_port);
 
     if ((listener = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -277,19 +277,31 @@ main(int argc, char **argv)
   pthread_attr_t httpd_thread_attr;
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
-  pthread_t WP_thread_id[WORKER_POOL];
-  pthread_attr_t WP_thread_attr;
-  int WP_id[WORKER_POOL];
   int status = 0;
-  
+
   // TODO: select syslog or console logging
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
   // LOG = &syslog;
   // LOG_setmask = &setlogmask;
+  
   LOG = &log_console;
   LOG_setlogmask = &log_console_setlogmask;
-  LOG_setlogmask(LOG_MASK(LOG_DEBUG));
-
+  //LOG_setlogmask(LOG_MASK(LOG_DEBUG));
+  
+  /* Print startup message */
+  craftd_version(argv[0]);
+  LOG(LOG_INFO, "Server starting!");
+  
+  /* Initialize the configuration */
+  craftd_config_setdefaults();
+  craftd_config_parse("craftd.conf");
+  
+  
+  /* Declare the worker pool after reading config values */
+  pthread_attr_t WP_thread_attr;
+  pthread_t WP_thread_id[Config.workpool_size];
+  int WP_id[Config.workpool_size];
+  
   /* Player List singly-linked list setup */
   // hsearch w/direct ptr hashtable for name lookup if we need faster direct
   // access (keep two ADTs and entries for each player)
@@ -301,10 +313,6 @@ main(int argc, char **argv)
   pthread_spin_init(&WQ_spinlock, 0);
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
-    
-  /* Print startup message */
-  craftd_version(argv[0]);
-  LOG(LOG_INFO, "Server starting!");
 
   //daemon(1,1);
 
@@ -346,7 +354,7 @@ main(int argc, char **argv)
   if(status !=0)
     ERR("Worker condition var init failed!");
   
-  for (int i = 0; i < WORKER_POOL; ++i)
+  for (int i = 0; i < Config.workpool_size; ++i)
   {
     WP_id[i] = i;
     status = pthread_create(&WP_thread_id[i], &WP_thread_attr,

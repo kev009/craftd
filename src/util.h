@@ -59,8 +59,8 @@ int log_console_setlogmask(int mask);
 /* Fatal errors */
 #define PERR(msg) \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
-#define ERR(msg) \
-  do { LOG(LOG_CRIT, msg); exit(EXIT_FAILURE); } while (0)
+#define ERR(...) \
+  do { LOG(LOG_CRIT, __VA_ARGS__); exit(EXIT_FAILURE); } while (0)
 
 /**
  * Public and exposed mcstring structure interface

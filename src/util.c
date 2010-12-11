@@ -72,9 +72,9 @@ int log_console_setlogmask(int mask)
  */
 void log_console(int priority, const char *format, ...)
 {
-  va_list arglist;
+  va_list ap;
   const char *loglevel;
-  va_start(arglist, format);
+  va_start(ap, format);
   
   /* Return on MASKed log priorities */
   if (LOG_MASK(priority) & log_consolemask)
@@ -112,10 +112,10 @@ void log_console(int priority, const char *format, ...)
   }
   
   printf("%s", loglevel);
-  vprintf(format, arglist);
+  vprintf(format, ap);
   printf("\n");
   
-  va_end(arglist);
+  va_end(ap);
   return;
 }
 
@@ -159,7 +159,7 @@ mcstring_create(int16_t slen, const char *strp)
 {
   char *strin = NULL;
 
-  if (slen > MC_MAXSTRING)
+  if (slen > Config.mcstring_max)
     goto MCSTRING_CREATE_ERR; // LOG bad string
 
   strin = (char *)Malloc(slen+1);
@@ -228,7 +228,7 @@ mcstring_copy(mcstring_t *dest, mcstring_t *src)
 mcstring_t *
 mcstring_allocate(int16_t slen)
 {
-  if (slen > MC_MAXSTRING)
+  if (slen > Config.mcstring_max)
     return NULL;
 
   char *strin;
@@ -262,7 +262,7 @@ int
 mcstring_valid(mcstring_t *mcstring)
 {
 
-  if(mcstring->slen > MC_MAXSTRING)
+  if(mcstring->slen > Config.mcstring_max)
     return 0;
   if(!ismc_utf8(mcstring->str))
     return 0;

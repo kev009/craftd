@@ -49,9 +49,6 @@
 
 /* This HTTP server borrows heavily from Nick Mathewson's example in libevent */
 
-/* The path to htdocs, which contains static web content */
-extern const char *docroot;
-
 char uri_root[512];
 
 /* MIME types for common file extensions */
@@ -175,10 +172,10 @@ send_staticdoc_cb(struct evhttp_request *req, void *arg)
   if (strstr(decoded_path, ".."))
     goto err;
 
-  len = strlen(decoded_path)+strlen(docroot)+2;
+  len = strlen(decoded_path)+strlen(Config.docroot)+2;
   whole_path = Malloc(len);
 
-  evutil_snprintf(whole_path, len, "%s/%s", docroot, decoded_path);
+  evutil_snprintf(whole_path, len, "%s/%s", Config.docroot, decoded_path);
 
   if (stat(whole_path, &st) < 0)
     goto err;
@@ -294,7 +291,8 @@ void *run_httpd(void *arg)
     evhttp_set_gencb(httpd, send_staticdoc_cb, NULL);
     
     
-    hthandle = evhttp_bind_socket_with_handle(httpd , INADDR_ANY, HTTPD_PORT);
+    hthandle = evhttp_bind_socket_with_handle(httpd , INADDR_ANY, 
+					      Config.httpd_port);
     if(!hthandle)
     {
       LOG(LOG_CRIT, "cannot bind httpd!");
