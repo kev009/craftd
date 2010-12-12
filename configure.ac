@@ -7,6 +7,9 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
 AC_CONFIG_MACRO_DIR([m4])
 
+# Build bundled libjansson
+AC_CONFIG_SUBDIRS([third-party/jansson])
+
 # Don't look for C++ or Fortran compilers
 m4_undefine([AC_PROG_CXX])
 m4_defun([AC_PROG_CXX],[])
