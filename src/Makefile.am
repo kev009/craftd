@@ -3,7 +3,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 
 # Include jansson headers
-AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src -I$(top_srcdir)/compat/sys
+AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src -I$(top_srcdir)/compat/
 
 bin_PROGRAMS = craftd
 craftd_SOURCES = craftd.c craftd.h
