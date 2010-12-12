@@ -8,7 +8,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Build bundled libjansson
-AC_CONFIG_SUBDIRS([third-party/jansson])
+#AC_CONFIG_SUBDIRS([third-party/jansson])
 
 # Don't look for C++ or Fortran compilers
 m4_undefine([AC_PROG_CXX])
@@ -17,9 +17,13 @@ m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
 
 AC_PROG_CC_C99
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+AC_LTDL_DLLIB
 
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
+                 third-party/jansson/src/jansson_config.h])
 AC_CONFIG_SRCDIR([src/mapchunk.h])
 
 # Checks for libraries.
@@ -44,6 +48,22 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
                   sys/socket.h unistd.h endian.h sys/endian.h])
+
+# Define libjansson stuff
+AC_TYPE_LONG_LONG_INT
+case $ac_cv_type_long_long_int in
+     yes) json_have_long_long=1;;
+     *) json_have_long_long=0;;
+esac
+AC_SUBST([json_have_long_long])
+
+AC_C_INLINE
+case $ac_cv_c_inline in
+    yes) json_inline=inline;;
+    no) json_inline=;;
+    *) json_inline=$ac_cv_c_inline;;
+esac
+AC_SUBST([json_inline])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

@@ -7,7 +7,6 @@ please wait until binary packages are available or at least source tarballs.
 Dependencies:
 libevent 2.0.9+ - http://monkey.org/~provos/libevent/
 zlib 1.2.3+ - http://zlib.net/
-Jansson (Git head) - http://github.com/akheron/jansson - Will probably bundle this later
 Pthreads
 
 Successfully built on:
@@ -38,8 +37,14 @@ You should have a good understanding of libevent-2.
 http://www.wangafu.net/~nickm/libevent-book/
 http://mc.kev009.com/libevent - Up to date doxygen
 
+Bundled JSON API (used for web GUI and config):
+Jansson (Git head) - http://github.com/akheron/jansson
+
 Protocol reference:
 http://mc.kev009.com/wiki/
+
+Continuous Integration Builds;
+http://bb.tkte.ch/job/craftd/
 
 Also recommended books:
 * Advanced Programming in the UNIX Environment - Stevens, et. al

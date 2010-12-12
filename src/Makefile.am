@@ -1,9 +1,29 @@
 AM_LIBS = $(libevent2_pthreads_LIBS) $(PTHREAD_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
-
-# Include jansson headers
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src -I$(top_srcdir)/compat/
+
+# Custom build shim for jansson
+jsondir = $(top_srcdir)/third-party/jansson/src
+noinst_LTLIBRARIES = libjansson.la
+libjansson_la_includedir = $(jsondir)/
+libjansson_la_SOURCES = \
+        $(jsondir)/dump.c \
+        $(jsondir)/error.c \
+        $(jsondir)/hashtable.c \
+        $(jsondir)/hashtable.h \
+        $(jsondir)/jansson_private.h \
+        $(jsondir)/jansson.h \
+        $(jsondir)/load.c \
+        $(jsondir)/strbuffer.c \
+        $(jsondir)/strbuffer.h \
+        $(jsondir)/utf.c \
+        $(jsondir)/utf.h \
+        $(jsondir)/value.c \
+        $(jsondir)/variadic.c
+libjansson_la_LDFLAGS = \
+        -export-symbols-regex '^json_' \
+        -version-info 3:0:3
 
 bin_PROGRAMS = craftd
 craftd_SOURCES = craftd.c craftd.h
@@ -16,5 +36,4 @@ craftd_SOURCES += timeloop.c timeloop.h
 craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
-craftd_LDADD = $(PTHREAD_LIBS) \
-$(top_srcdir)/third-party/jansson/src/.libs/libjansson.a
+craftd_LDADD = $(PTHREAD_LIBS) libjansson.la
