@@ -1,4 +1,4 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src htdocs third-party/jansson
+SUBDIRS = third-party/jansson src htdocs
 
 EXTRA_DIST = compat craftd.conf
