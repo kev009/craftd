@@ -15,5 +15,6 @@ craftd_SOURCES += util.c util.h version.c javaendian.h
 craftd_SOURCES += timeloop.c timeloop.h
 craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
-craftd_LDADD = $(libevent2_pthreads_LIBS) $(PTHREAD_LIBS) \
-  $(top_srcdir)/third-party/jansson/src/.libs/libjansson.a
+craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
+craftd_LDADD = $(PTHREAD_LIBS) \
+$(top_srcdir)/third-party/jansson/src/.libs/libjansson.a
