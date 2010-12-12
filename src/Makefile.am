@@ -1,4 +1,4 @@
-AM_LIBS = $(PTHREAD_LIBS) $(LIBS)
+AM_LIBS = $(PTHREAD_LIBS) $(libevent2_pthreads_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 
