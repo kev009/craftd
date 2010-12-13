@@ -19,7 +19,7 @@ m4_defun([AC_PROG_F77],[])
 AC_PROG_CC_C99
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
-AC_LTDL_DLLIB
+#AC_LTDL_DLLIB
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
