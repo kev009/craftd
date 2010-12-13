@@ -56,7 +56,6 @@ void craftd_config_setdefaults()
  */
 void parseJBool(bool *storage, const json_t *obj, const char *key)
 {
-  bool bval;
   json_t *boolobj = json_object_get(obj, key);
 
   /* Check if the key is defined in the config file (nonfatal) */
