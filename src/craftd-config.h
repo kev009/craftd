@@ -28,6 +28,8 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+
 #define MAX_LISTENBACKLOG (16)
 #define MAX_BUF (8096)
 
@@ -46,6 +48,7 @@ struct
   char *motd_file;
   
   // httpd settings
+  bool httpd_enabled;
   int httpd_port;
   char *docroot;
 } Config;

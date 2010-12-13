@@ -335,14 +335,17 @@ main(int argc, char **argv)
   if(status != 0)
     ERR("Cannot start timeloop");
   
-  /* Start httpd */
-  pthread_attr_init(&httpd_thread_attr);
-  pthread_attr_setdetachstate(&httpd_thread_attr, PTHREAD_CREATE_DETACHED);
-  status = pthread_create(&httpd_thread_id, &httpd_thread_attr, 
-      run_httpd, NULL);
+  /* Start httpd if it is enabled */
+  if (Config.httpd_enabled)
+  {
+    pthread_attr_init(&httpd_thread_attr);
+    pthread_attr_setdetachstate(&httpd_thread_attr, PTHREAD_CREATE_DETACHED);
+    status = pthread_create(&httpd_thread_id, &httpd_thread_attr, 
+        run_httpd, NULL);
   
-  if(status != 0)
-    ERR("Cannot start httpd");
+    if(status != 0)
+      ERR("Cannot start httpd");
+  }
 
   /* Start packet handler pool */
   pthread_attr_init(&WP_thread_attr);

@@ -22,12 +22,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
 
 #include <jansson.h>
 
 #include "craftd-config.h"
 #include "util.h"
-#include <string.h>
 
 /**
  * This function defines and initializes defaults for the craftd settings
@@ -43,8 +45,42 @@ void craftd_config_setdefaults()
   Config.motd_file = "motd.conf";
   
   // httpd settings
+  Config.httpd_enabled = true;
   Config.httpd_port = 25566;
   Config.docroot = "htdocs/";
+}
+
+/**
+ * Read a boolean value from a JSON object and store it as a C99 boolean in the
+ * specified storage location.
+ */
+void parseJBool(bool *storage, const json_t *obj, const char *key)
+{
+  bool bval;
+  json_t *boolobj = json_object_get(obj, key);
+
+  /* Check if the key is defined in the config file (nonfatal) */
+  if (!boolobj)
+  {
+    LOG(LOG_DEBUG, "Config: key \"%s\" is undefined.  Using default.", key);
+    return;
+  }
+
+  /* Check if the value is a boolean (fatal) */
+  if (!json_is_boolean(boolobj))
+    ERR("Error processing key: \"%s\".  Value is not boolean!", key);
+
+  /* Set the storage location to the C99 boolean type */
+  if (json_is_true(boolobj))
+  {
+    LOG(LOG_DEBUG, "Got bool value: 'true' for key: \"%s\"", key);
+    *storage = true;
+  }
+  else
+  {
+    LOG(LOG_DEBUG, "Got bool value: 'false' for key: \"%s\"", key);
+    *storage = false;
+  }
 }
 
 /**
@@ -63,14 +99,14 @@ void parseJInt(int *storage, const json_t *obj, const char *key)
   json_t *intobj = json_object_get(obj, key);
 
   /* Check if the key is defined in the config file (nonfatal) */
-  if(!intobj)
+  if (!intobj)
   {
     LOG(LOG_DEBUG, "Config: key \"%s\" is undefined.  Using default.", key);
     return;
   }
   
   /* Check if the value is a number (fatal) */
-  if(!json_is_number(intobj))
+  if (!json_is_number(intobj))
     ERR("Error processing key: \"%s\".  Value is not an integer!", key); 
   
   /* Cast and make sure the value is set (fatal) */
@@ -98,14 +134,14 @@ void parseJString(char *storage, const json_t *obj, const char *key)
   json_t *strobj = json_object_get(obj, key);
   
   /* Check if the key is defined in the config file (nonfatal) */
-  if(!strobj)
+  if (!strobj)
   {
     LOG(LOG_DEBUG, "Config: key \"%s\" is undefined.  Using default.", key);
     return;
   }
   
   /* Check if the value is a string (fatal) */
-  if(!json_is_string(strobj))
+  if (!json_is_string(strobj))
     ERR("Error processing key: \"%s\".  Value is not a string!", key);
   
   strval = json_string_value(strobj);
@@ -127,7 +163,7 @@ void craftd_config_parse(const char *file)
   json_error_t error;
   
   json = json_load_file("craftd.conf", 0, &error);
-  if(!json)
+  if (!json)
   {
     LOG(LOG_ERR, "Config (line: %d, col: %d):\nConfig:%s", error.line,
 	error.column, error.text);
@@ -136,7 +172,7 @@ void craftd_config_parse(const char *file)
   
   /* Get the general game server configuration */
   jsongame = json_object_get(json, "server");
-  if(json_is_object(jsongame))
+  if (json_is_object(jsongame))
   {
     parseJInt(&Config.game_port, jsongame, "game-port");
     parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
@@ -152,6 +188,7 @@ void craftd_config_parse(const char *file)
   jsonhttp = json_object_get(json, "httpd");
   if(json_is_object(jsonhttp))
   {
+    parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
     parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
     parseJString(Config.docroot, jsonhttp, "static-docroot");
   }
