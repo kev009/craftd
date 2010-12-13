@@ -34,8 +34,9 @@
 
 /* Search path for the main config file, in order */
 static const char *config_searchpath[] = {
-  "~/.craftd/craftd.conf",
+  "/.craftd/craftd.conf", // $HOME is appended to this in _setdefaults()!
   "/etc/craftd/craftd.conf",
+  "/usr/local/etc/craftd/craftd.conf",
   "craftd.conf", // Current working directory (for devs)
   NULL
 };
@@ -47,6 +48,17 @@ static const char *config_searchpath[] = {
 void
 craftd_config_setdefaults()
 {
+  // Add $HOME to the first searchpath entry
+  if (getenv("HOME") != NULL)
+  {
+    char *homeconfig = Malloc(1 + strlen(getenv("HOME")) +
+        strlen(config_searchpath[0]));
+    homeconfig[0] = '\0';
+    strcat(homeconfig, getenv("HOME"));
+    strcat(homeconfig, config_searchpath[0]);
+    config_searchpath[0] = homeconfig;
+  }
+
   // Game settings
   Config.game_port = 25565;
   Config.max_listenbacklog = 16;
