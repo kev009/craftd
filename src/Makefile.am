@@ -13,6 +13,7 @@ libjansson_la_SOURCES = \
         $(jsondir)/hashtable.c \
         $(jsondir)/hashtable.h \
         $(jsondir)/jansson_private.h \
+	$(jsondir)/jansson_config.h \
         $(jsondir)/jansson.h \
         $(jsondir)/load.c \
         $(jsondir)/strbuffer.c \
@@ -22,8 +23,7 @@ libjansson_la_SOURCES = \
         $(jsondir)/value.c \
         $(jsondir)/variadic.c
 libjansson_la_LDFLAGS = \
-        -export-symbols-regex '^json_' \
-        -version-info 3:0:3
+        -export-symbols-regex '^json_'
 
 bin_PROGRAMS = craftd
 craftd_SOURCES = craftd.c craftd.h

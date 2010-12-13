@@ -5,8 +5,9 @@
 # https://github.com/github/gitignore
 ###
 
-## Binaries
+## Binaries and generated
 src/craftd
+third-party/jansson/src/jansson_config.h
 
 ## C
 # Compiled Object files
