@@ -294,7 +294,7 @@ main(int argc, char **argv)
   
   /* Initialize the configuration */
   craftd_config_setdefaults();
-  craftd_config_parse("craftd.conf");
+  craftd_config_parse(NULL);
   
   
   /* Declare the worker pool after reading config values */

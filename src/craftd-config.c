@@ -25,17 +25,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <jansson.h>
 
 #include "craftd-config.h"
 #include "util.h"
 
+/* Search path for the main config file, in order */
+static const char *config_searchpath[] = {
+  "~/.craftd/craftd.conf",
+  "/etc/craftd/craftd.conf",
+  "craftd.conf", // Current working directory (for devs)
+  NULL
+};
+
 /**
  * This function defines and initializes defaults for the craftd settings
  * structure.
  */
-void craftd_config_setdefaults()
+void
+craftd_config_setdefaults()
 {
   // Game settings
   Config.game_port = 25565;
@@ -54,7 +64,8 @@ void craftd_config_setdefaults()
  * Read a boolean value from a JSON object and store it as a C99 boolean in the
  * specified storage location.
  */
-void parseJBool(bool *storage, const json_t *obj, const char *key)
+void
+parseJBool(bool *storage, const json_t *obj, const char *key)
 {
   json_t *boolobj = json_object_get(obj, key);
 
@@ -92,7 +103,8 @@ void parseJBool(bool *storage, const json_t *obj, const char *key)
  * @param obj json object to parse
  * @param key json key to read
  */
-void parseJInt(int *storage, const json_t *obj, const char *key)
+void
+parseJInt(int *storage, const json_t *obj, const char *key)
 {
   int32_t ival;
   json_t *intobj = json_object_get(obj, key);
@@ -127,7 +139,8 @@ void parseJInt(int *storage, const json_t *obj, const char *key)
  * @param obj json object to parse
  * @param key key to read
  */
-void parseJString(char *storage, const json_t *obj, const char *key)
+void
+parseJString(char *storage, const json_t *obj, const char *key)
 {
   const char *strval;
   json_t *strobj = json_object_get(obj, key);
@@ -156,12 +169,34 @@ void parseJString(char *storage, const json_t *obj, const char *key)
  *
  * @param file the JSON file name to parse
  */
-void craftd_config_parse(const char *file)
+void
+craftd_config_parse(const char *file)
 {
   json_t *json, *jsongame, *jsonhttp;
   json_error_t error;
+
+  /* If we didn't get a config file passed as an argument, check search path */
+  if (file == NULL)
+  {
+    int i;
+    for (i = 0; config_searchpath[i] != NULL &&
+        access(config_searchpath[i], R_OK) != 0; ++i);
   
-  json = json_load_file("craftd.conf", 0, &error);
+    file = config_searchpath[i];
+
+    if (file == NULL)
+      ERR("Config: craftd.conf not found!");
+  }
+  /* Check that the file argument exists */
+  else
+  {
+    if (access(file, R_OK) != 0)
+      ERR("Config: file %s not readable!");
+  }
+
+  LOG(LOG_INFO, "Config: Using file: %s", file);
+
+  json = json_load_file(file, 0, &error);
   if (!json)
   {
     LOG(LOG_ERR, "Config (line: %d, col: %d):\nConfig:%s", error.line,
