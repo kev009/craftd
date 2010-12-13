@@ -155,11 +155,11 @@ ismc_utf8(const char *str)
  * @return a ptr to an mcstring structure or null
  */
 mcstring_t *
-mcstring_create(int16_t slen, const char *strp)
+mcstring_create(size_t slen, const char *strp)
 {
   char *strin = NULL;
 
-  if (slen > Config.mcstring_max)
+  if (slen > (size_t)Config.mcstring_max)
     goto MCSTRING_CREATE_ERR; // LOG bad string
 
   strin = (char *)Malloc(slen+1);
@@ -226,9 +226,9 @@ mcstring_copy(mcstring_t *dest, mcstring_t *src)
  * @return space for a slen mcstring
  */
 mcstring_t *
-mcstring_allocate(int16_t slen)
+mcstring_allocate(size_t slen)
 {
-  if (slen > Config.mcstring_max)
+  if (slen > (size_t)Config.mcstring_max)
     return NULL;
 
   char *strin;

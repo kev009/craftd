@@ -115,7 +115,7 @@ void
      * We add pktlen for each iteration until inlen is reached or we jump
      * to the EAGAIN handler.
      */
-    int processed = 0;
+    size_t processed = 0;
     do
     {
       evbuffer_copyout(input, &pkttype, 1);

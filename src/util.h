@@ -76,8 +76,8 @@ typedef struct _mcstring
 
 /* Public mcstring functiions */
 int ismc_utf8(const char *str);
-mcstring_t *mcstring_allocate(int16_t slen);
-mcstring_t *mcstring_create(int16_t slen, const char *strptr);
+mcstring_t *mcstring_allocate(size_t slen);
+mcstring_t *mcstring_create(size_t slen, const char *strptr);
 mcstring_t *mcstring_copy(mcstring_t *dest, mcstring_t *src);
 mcstring_t *mcstring_mccat(mcstring_t *dest, mcstring_t *src);
 mcstring_t *mcstring_ncat(mcstring_t *dest, const char *src, size_t size);

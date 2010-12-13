@@ -100,12 +100,12 @@ struct packet_login
   uint8_t dimension;
 };
 // Login size/offset information (C99 initialized struct)
-struct
+static const struct
 {
   const int base;
   const int str1offset;
   const int str2offset;
-} static const packet_loginsz = {
+} packet_loginsz = {
   .base       = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
 	      + sizeof(uint16_t) + sizeof(uint64_t) + sizeof(uint8_t),
   .str1offset = sizeof(uint8_t) + sizeof(uint32_t),
@@ -119,11 +119,11 @@ struct packet_handshake
   mcstring_t *username;
 };
 // Handshake size/offset information (C99 initialized struct)
-struct
+static const struct
 {
   const int base;
   const int str1offset;
-} static const packet_handshakesz = {
+} packet_handshakesz = {
   .base       = sizeof(uint8_t) + sizeof(uint16_t),
   .str1offset = sizeof(uint8_t)
 };
@@ -135,11 +135,11 @@ struct packet_chat
   mcstring_t *message;
 };
 // Chat size/offset information (C99 initialized struct)
-struct
+static const struct
 {
   const int base;
   const int str1offset;
-} static const packet_chatsz = {
+} packet_chatsz = {
   .base       = sizeof(uint8_t) + sizeof(uint16_t),
   .str1offset = sizeof(uint8_t)
 };
@@ -160,13 +160,13 @@ struct packet_inventory
   void *payload; //FIXME: void ptr necessary?
 };
 // Inventory offset information (C99 initialized struct)
-struct
+static const struct
 {
   const int base;
   const int typeoffset;
   const int countoffset;
   const int payloadoffset;
-} static const packet_inventorysz = {
+} packet_inventorysz = {
   .base       	 = sizeof(int8_t) + sizeof(int32_t) + sizeof(int16_t),
   .typeoffset	 = sizeof(int8_t),
   .countoffset   = sizeof(int8_t) + sizeof(int32_t),
@@ -341,11 +341,11 @@ struct packet_disconnect
   char *message;
 };
 // Chat size/offset information (C99 initialized struct)
-struct
+static const struct
 {
   const int base;
   const int str1offset;
-} static const packet_disconnectsz = {
+} packet_disconnectsz = {
   .base       = sizeof(uint8_t) + sizeof(int16_t),
   .str1offset = sizeof(uint8_t) + sizeof(int16_t)
 };

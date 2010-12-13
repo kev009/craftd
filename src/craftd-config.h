@@ -29,6 +29,7 @@
 #include <config.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define MAX_LISTENBACKLOG (16)
 #define MAX_BUF (8096)
