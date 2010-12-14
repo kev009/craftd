@@ -99,9 +99,9 @@ Cswapd(double d)
 {
   uint64_t tmp = 0;
   double out = 0;
-  memcpy(&d, &tmp, sizeof(tmp));
+  memcpy(&tmp, &d, sizeof(tmp));
   tmp = ntohll(tmp);
-  memcpy(&tmp, &out, sizeof(tmp));
+  memcpy(&out, &tmp, sizeof(tmp));
   return out;
 }
 
@@ -110,9 +110,9 @@ Cswapf(float f)
 {
   uint32_t tmp = 0;
   float out = 0;
-  memcpy(&f, &tmp, sizeof(tmp));
+  memcpy(&tmp, &f, sizeof(tmp));
   tmp = ntohl(tmp);
-  memcpy(&tmp, &out, sizeof(tmp));
+  memcpy(&out, &tmp, sizeof(tmp));
   return out;
 }
 #endif /* FLOAT_WORDS_BIGENDIAN */
