@@ -70,8 +70,8 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
-  send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
+  send_prechunk(player, -1, -1, true); // TODO: pull spwan position from file
+  //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
   for(int i = -4; i < 5; i++)
   {
@@ -82,18 +82,9 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
     }
   }
   
-  /*
-  send_prechunk(player, 16, 0, true);
-  send_chunk(player, 16, 0, 0, 16, 128, 16);
-  send_prechunk(player, 16, 16, true);
-  send_chunk(player, 16, 0, 16, 16, 128, 16);
-  send_prechunk(player, 0, 16, true);
-  send_chunk(player, 0, 0, 16, 16, 128, 16);
-  */
-  
-  send_spawnpos(player, 32, 32, 32); // TODO: pull spawn position from file
+  send_spawnpos(player, 32, 260, 32); // TODO: pull spawn position from file
   //send inv
-  send_movelook(player, 6.5, 67.240000009536743, 65.620000004768372, 7.5, 0, 0, false); //TODO: pull position from file
+  send_movelook(player, 0, 128.1, 128.2, 0, 0, 0, false); //TODO: pull position from file
   return;
 }
 
@@ -234,10 +225,10 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   // Hack in zlib support for test  
   uint8_t *mapdata = (uint8_t*)Malloc(MAX_CHUNKARRAY);
   memset(mapdata, 0, MAX_CHUNKARRAY);
-  for(int i=0; i<32768; i+=128)
+  for(int i=0; i<32768; i+=64)
     mapdata[i] = 0x01; // Stone
   memset(&mapdata[32768+16384], 255, 32768);
-  
+
   uLongf written = MAX_CHUNKARRAY;
   Bytef *buffer = (Bytef*)Malloc(MAX_CHUNKARRAY);
   if (compress(buffer, &written, &mapdata[0], MAX_CHUNKARRAY) != Z_OK)
