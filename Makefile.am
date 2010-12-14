@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src htdocs
 
-EXTRA_DIST = compat craftd.conf
+EXTRA_DIST = compat
 
 # Make a correct default config file
 edit = sed \
