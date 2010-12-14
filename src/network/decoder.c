@@ -201,7 +201,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     {
         LOG(LOG_DEBUG, "recvd move+look packet");
 	
-#ifdef __DEBUG
+#if 0
         struct packet_movelook ml;
 
         evbuffer_remove(input, &ml.x, sizeof(ml.x));
@@ -221,7 +221,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         LOG(LOG_NOTICE, "x:%f,y:%f,s:%f,z:%f,rot:%f,pit:%f", ml.x,ml.y,ml.stance,ml.z,ml.rotation,ml.pitch);
 #endif
 
-	//evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
 
         break;
     }
