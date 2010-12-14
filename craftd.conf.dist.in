@@ -1,16 +1,17 @@
 {
   "00": "craftd config file.  Must be valid JSON.",
   "server": {
+    "daemonize": true,
     "game-port": 25565,
     "minecraft-stringmax": 100,
     "max-listenbacklog": 16,
     "worker-pool-size": 2,
-    "motd-file": "motd.conf"
+    "motd-file": "@sysconfdir@/craftd/motd.conf"
   },
   "httpd": {
     "enabled": true,
     "httpd-port": 25566,
-    "static-docroot": "/home/kev009/009mc/craftd/htdocs/"
+    "static-docroot": "@datadir@/craftd/htdocs/"
   }
 }
 

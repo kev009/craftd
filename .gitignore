@@ -8,6 +8,7 @@
 ## Binaries and generated
 src/craftd
 third-party/jansson/src/jansson_config.h
+craftd.conf.dist
 
 ## C
 # Compiled Object files
