@@ -42,6 +42,7 @@ void craftd_config_parse(const char* file);
 struct
 {
   // Game settings
+  bool daemonize;
   int game_port;
   int max_listenbacklog;
   int mcstring_max;

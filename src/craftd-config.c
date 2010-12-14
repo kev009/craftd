@@ -60,6 +60,7 @@ craftd_config_setdefaults()
   }
 
   // Game settings
+  Config.daemonize = true;
   Config.game_port = 25565;
   Config.max_listenbacklog = 16;
   Config.mcstring_max = 100;
@@ -220,6 +221,7 @@ craftd_config_parse(const char *file)
   jsongame = json_object_get(json, "server");
   if (json_is_object(jsongame))
   {
+    parseJBool(&Config.daemonize, jsongame, "daemonize");
     parseJInt(&Config.game_port, jsongame, "game-port");
     parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");

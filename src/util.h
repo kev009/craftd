@@ -89,6 +89,9 @@ void *Malloc(size_t size);
 void *Calloc(size_t num, size_t size);
 void *Realloc(void *ptr, size_t size);
 
+/* Daemonize implementation */
+int CRAFTD_daemonize(int nochdir, int noclose);
+
 /* Public evbuffer utility */
 int CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
                              size_t len, struct evbuffer_ptr *ptr);

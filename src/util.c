@@ -29,7 +29,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <syslog.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <event2/buffer.h>
 
@@ -398,6 +403,67 @@ Realloc(void *ptr, size_t size)
       ERR("realloc null ptr error!");
     return newptr;
   }
+}
+
+/**
+ * Code to fork, close extra FDs, become session leader, etc.
+ */
+int
+CRAFTD_daemonize(int nochdir, int noclose)
+{
+  int fd0, fd1, fd2;
+  int status = 0;
+
+  /* Switch to syslog */
+  LOG = &syslog;
+  LOG_setlogmask = &setlogmask;
+
+  /* Set file creation mask */
+  umask(117); // u+rw, g+rw
+
+  /* Fork and kill the parent. */
+  status = fork();
+  if (status < 0)
+    PERR("Daemonize: Cannot fork!");
+  else if (status != 0) // Quit the parent process
+    _Exit(0);
+  // Else we are the forked child
+  
+  /* Prevent future opens from attaching TTYs and fork again to be safe */
+  struct sigaction sa = {.sa_handler = SIG_IGN}; sigaction(SIGCHLD, &sa, NULL);
+  status = fork();
+  if (status < 0)
+    ERR("Daemonize: Cannot fork!");
+  else if (status != 0) // Quit the parent process
+    _Exit(0);
+
+  /* Become a session leader */
+  status = setsid();
+  if (status < 0)
+    ERR("Daemonize: Error becoming session leader");
+  
+  if (!nochdir)
+  {
+    //chdir(Config.rootdir); // TODO: switch to $prefix/datadir?
+    status = chdir("/");
+    if (status != 0)
+      ERR("Daemonize: error changing directories");
+  }
+
+  if (!noclose)
+  {
+    /* Close standard streams */
+    close(0); // stdin
+    close(1); // stdout
+    close(2); // stderr
+
+    /* Redirect standard streams to /dev/null */
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
+  }
+
+  return 0;
 }
 
 /**

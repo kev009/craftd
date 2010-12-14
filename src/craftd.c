@@ -281,16 +281,18 @@ main(int argc, char **argv)
 
   // TODO: select syslog or console logging
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
-  // LOG = &syslog;
-  // LOG_setmask = &setlogmask;
-  
+  openlog(PACKAGE_TARNAME, LOG_PID, LOG_DAEMON);
+
+  /* We initialize with stdout logging until config is loaded and the process
+   * daemonizes
+   */
   LOG = &log_console;
   LOG_setlogmask = &log_console_setlogmask;
-  //LOG_setlogmask(LOG_MASK(LOG_DEBUG));
-  
+  LOG_setlogmask(LOG_MASK(LOG_DEBUG));
+
   /* Print startup message */
   craftd_version(argv[0]);
-  LOG(LOG_INFO, "Server starting!");
+  LOG(LOG_INFO, "Server starting!  Max FDs: %d", sysconf(_SC_OPEN_MAX));
   
   /* Initialize the configuration */
   craftd_config_setdefaults();
@@ -314,7 +316,16 @@ main(int argc, char **argv)
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
 
-  //daemon(1,1);
+  if (Config.daemonize == true) // TODO: or argv -d
+  {
+    LOG(LOG_INFO, "Daemonizing.");
+
+    /* Swap over to syslog */
+    LOG = &syslog;
+    LOG_setlogmask = &setlogmask;
+    
+    CRAFTD_daemonize(0, 0); // chdir, and close FDs
+  }
 
 #ifdef WIN32
   status = evthread_use_windows_threads();
