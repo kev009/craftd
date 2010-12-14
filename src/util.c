@@ -426,7 +426,7 @@ CRAFTD_daemonize(int nochdir, int noclose)
   if (status < 0)
     PERR("Daemonize: Cannot fork!");
   else if (status != 0) // Quit the parent process
-    _Exit(0);
+    _exit(0);
   // Else we are the forked child
   
   /* Prevent future opens from attaching TTYs and fork again to be safe */
@@ -435,7 +435,7 @@ CRAFTD_daemonize(int nochdir, int noclose)
   if (status < 0)
     ERR("Daemonize: Cannot fork!");
   else if (status != 0) // Quit the parent process
-    _Exit(0);
+    _exit(0);
 
   /* Become a session leader */
   status = setsid();

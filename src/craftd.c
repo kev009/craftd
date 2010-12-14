@@ -49,6 +49,16 @@
 #include "timeloop.h"
 #include "httpd.h"
 
+/**
+ * Try and perform cleanup with a atexit call
+ */
+void
+exit_handler(void)
+{
+  LOG(LOG_INFO, "Exiting.");
+  //closelog();
+}
+
 void
 readcb(struct bufferevent *bev, void *ctx)
 {
@@ -278,6 +288,8 @@ main(int argc, char **argv)
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
   int status = 0;
+
+  atexit(exit_handler);
 
   // TODO: select syslog or console logging
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
