@@ -44,6 +44,8 @@
 void *run_worker(void *arg);
 
 /* Public protocol functions that can be exposed to APIs */
+void send_directchat(struct PL_entry *player, mcstring_t *message);
+void send_chat(struct PL_entry *player, mcstring_t *message);
 void send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode);
 void send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
 	        uint8_t sizex, uint8_t sizey, uint8_t sizez);

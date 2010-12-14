@@ -128,7 +128,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         struct packet_handshake u_hs;
         int16_t ulen;
 
-        evbuffer_remove(input, &u_hs.pid, sizeof(u_hs.pid));
+        evbuffer_drain(input, sizeof(u_hs.pid));
 	evbuffer_remove(input, &ulen, sizeof(ulen));
 	ulen = ntohs(ulen);
 
@@ -152,10 +152,28 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     case PID_CHAT: // Chat packet 0x03
     {
         LOG(LOG_DEBUG, "recvd chat packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+
+        struct packet_chat chat;
+        int16_t mlen;
+
+        evbuffer_drain(input, sizeof(chat.pid));
+        evbuffer_remove(input, &mlen, sizeof(mlen));
+        mlen = ntohs(mlen);
+
+        chat.message = mcstring_allocate(mlen);
+        if(chat.message == NULL)
+          exit(3); // LOG bad allocate
+
+        evbuffer_remove(input, chat.message->str, chat.message->slen);
+
+        if (!mcstring_valid(chat.message))
+          exit(4); // LOG bad str, punt client
+
+        process_chat(player, chat.message);
+
+        mcstring_free(chat.message);
+
+        return 0;
     }
     case PID_PINVENTORY: // Update inventory packet 0x05
     {

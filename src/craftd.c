@@ -94,8 +94,8 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     if (error & BEV_EVENT_EOF)
     {
         /* Connection closed, remove client from tables here */
-        if( player->username.valid == 1)
-          LOG(LOG_INFO, "Connection closed for: %s", player->username.str);
+        if( player->username->valid == 1)
+          LOG(LOG_INFO, "Connection closed for: %s", player->username->str);
         else
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         finished = 1;
@@ -171,10 +171,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
 	
 	/* Statically initialize the username string for now */
 	// TODO: write a string initializer
-	player->username.slen = 0;
-	player->username.valid = 0;
-	player->username.str = Malloc(25); // This gets realloced if larger
-	player->username.str[0] = '\0';
+        player->username = mcstring_create(strlen(""), "");
 
         /* Get the IPv4 or IPv6 address and store it */
         if (getpeername(fd, (struct sockaddr *)&ss, &slen))

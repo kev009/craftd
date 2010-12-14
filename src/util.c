@@ -212,7 +212,7 @@ mcstring_copy(mcstring_t *dest, mcstring_t *src)
   
   if (dest->slen != src->slen)
   {
-    dest->str = Realloc(dest->str, src->slen);
+    dest->str = Realloc(dest->str, 1 + src->slen);
     dest->slen = src->slen;
   }
   
@@ -322,11 +322,12 @@ mcstring_mccat(mcstring_t *dest, mcstring_t *src)
   mcnew = mcstring_allocate(newlen);
   if(mcnew == NULL)
     return NULL;
-  memcpy(dest->str, src->str, newlen);
+  memcpy(mcnew->str, dest->str, dest->slen);
+  memcpy(mcnew->str + dest->slen, src->str, src->slen);
   if(!mcstring_valid(mcnew))
     return NULL;
 
-  mcstring_free(dest); /*XXX should we free here?  both, neither? */
+  //mcstring_free(dest); /*XXX should we free here?  both, neither? */
 
   return mcnew;
 }

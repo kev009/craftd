@@ -66,7 +66,7 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   
   /* Otherwise, finish populating their Player List entry */
   pthread_rwlock_wrlock(&player->rwlock);
-  mcstring_copy(&player->username, username);
+  mcstring_copy(player->username, username);
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
@@ -124,6 +124,24 @@ process_handshake(struct PL_entry *player, mcstring_t *username)
 }
 
 /**
+ * Process a chat message or command
+ */
+void
+process_chat(struct PL_entry *player, mcstring_t *message)
+{
+  if (message->str[0] == '/')
+  {
+    LOG(LOG_INFO, "Command: %s", message->str);
+    send_directchat(player, message);
+    // process_cmd
+  }
+  else
+  {
+    send_chat(player, message);
+  }
+}
+
+/**
  * Internal method that sends a login response packet
  *
  * @remarks Scope: private
@@ -152,6 +170,54 @@ send_loginresp(struct PL_entry *player)
   
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
+
+  return;
+}
+
+void
+send_directchat(struct PL_entry *player, mcstring_t *message)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+
+  uint8_t pid = PID_CHAT;
+  int16_t mlen = htons(message->slen);
+
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &mlen, sizeof(mlen));
+  evbuffer_add(tempbuf, message->str, message->slen);
+
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+
+  return;
+}
+
+void
+send_chat(struct PL_entry *player, mcstring_t *message)
+{
+  mcstring_t *username;
+  mcstring_t *newmessage;
+  struct PL_entry *player_iter;
+
+  char format[100] = "<";
+  strncat(format, player->username->str, strlen(format)
+          + player->username->slen);
+  strncat(format, "> ", strlen(format));
+  username = mcstring_create(strlen(format), format);
+
+  newmessage = mcstring_mccat(username, message);
+  LOG(LOG_INFO, "Chat: %s", newmessage->str);
+
+  pthread_rwlock_rdlock(&PL_rwlock);
+  SLIST_FOREACH(player_iter, &PL_head, PL_entries)
+  {
+    send_directchat(player_iter, newmessage);
+  }
+  pthread_rwlock_unlock(&PL_rwlock);
+
+  mcstring_free(newmessage);
+  mcstring_free(username);
 
   return;
 }

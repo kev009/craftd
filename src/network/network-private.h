@@ -37,4 +37,5 @@ int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 void process_handshake(struct PL_entry *player, mcstring_t *username);
 void process_login(struct PL_entry *player, mcstring_t *username, 
 			  uint32_t ver);
+void process_chat(struct PL_entry *player, mcstring_t *message);
 void send_loginresp(struct PL_entry *player);
