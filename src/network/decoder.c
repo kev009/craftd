@@ -86,7 +86,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	if (u_login.username == NULL)
           exit(3); // LOG bad allocate, punt
 	
-	evbuffer_remove(input, u_login.username->str, u_login.username->slen);
+	evbuffer_remove(input, u_login.username->str, ulen);
 	if (!mcstring_valid(u_login.username))
           exit(4); // LOG bad str, punt client
 	  
@@ -98,7 +98,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	if (u_login.password == NULL)
 	  exit(3); // LOG bad allocate, punt
 	  
-	evbuffer_remove(input, u_login.password->str, u_login.password->slen);
+	evbuffer_remove(input, u_login.password->str, plen);
 	if (!mcstring_valid(u_login.password))
 	  exit(4); // LOG, punt
 	
@@ -136,7 +136,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         if(u_hs.username == NULL)
           exit(3); // LOG bad allocate
 
-	evbuffer_remove(input, u_hs.username->str, u_hs.username->slen);
+	evbuffer_remove(input, u_hs.username->str, ulen);
           
         if(!mcstring_valid(u_hs.username))
           exit(4); // LOG bad str, punt client
@@ -164,7 +164,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         if(chat.message == NULL)
           exit(3); // LOG bad allocate
 
-        evbuffer_remove(input, chat.message->str, chat.message->slen);
+        evbuffer_remove(input, chat.message->str, mlen);
 
         if (!mcstring_valid(chat.message))
           exit(4); // LOG bad str, punt client
