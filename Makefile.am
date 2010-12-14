@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src htdocs
 
-EXTRA_DIST = compat
+EXTRA_DIST = compat craftd.conf.dist.in motd.conf.dist
 
 # Make a correct default config file
 edit = sed \
@@ -16,8 +16,12 @@ craftd.conf.dist: Makefile
 
 craftd.conf.dist: $(srcdir)/craftd.conf.dist.in
 
+DISTCLEANFILES = craftd.conf.dist
+
 crafdconfdir = ${sysconfdir}/craftd/
 crafdconf_DATA = craftd.conf.dist motd.conf.dist
+
+
 
 # Jansson extras
 jsondir = third-party/jansson
