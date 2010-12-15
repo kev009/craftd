@@ -83,6 +83,7 @@ struct WQ_entry
 };
 
 /* Public methods */
+void errorcb(struct bufferevent *bev, short error, void *ctx);
 void craftd_version(const char *progname);
 
 #endif

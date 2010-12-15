@@ -347,7 +347,7 @@ static const struct
   const int str1offset;
 } packet_disconnectsz = {
   .base       = sizeof(uint8_t) + sizeof(int16_t),
-  .str1offset = sizeof(uint8_t) + sizeof(int16_t)
+  .str1offset = sizeof(uint8_t)
 };
 
 #endif

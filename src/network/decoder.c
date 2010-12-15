@@ -286,8 +286,8 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
         LOG(LOG_DEBUG, "recvd disconnect packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+
+        errorcb(bev, BEV_EVENT_EOF, player);
 	
         break;
     }
