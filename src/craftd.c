@@ -291,7 +291,7 @@ main(int argc, char *argv[])
   openlog(PACKAGE_TARNAME, LOG_PID, LOG_DAEMON);
 
   /* We initialize with stdout logging until config is loaded and the process
-   * daemonizes.  DEBUG logs are disabled by default.
+   * daemonizes.
    */
   LOG = &log_console;
   LOG_setlogmask = &log_console_setlogmask;
@@ -364,7 +364,7 @@ main(int argc, char *argv[])
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
 
-  if (!dontfork && Config.daemonize == true) // TODO: or argv -d
+  if (!dontfork && Config.daemonize == true)
   {
     LOG(LOG_INFO, "Daemonizing.");
 
