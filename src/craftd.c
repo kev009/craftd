@@ -103,8 +103,8 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     else if (error & BEV_EVENT_ERROR)
     {
         /* Some other kind of error, handle it here by checking errno */
-        LOG(LOG_ERR, "Some kind of error to be handled in errorcb");
-        //EVUTIL_EVENT_ERROR;
+        LOG(LOG_INFO, "libevent: ip %s - %s", player->ip,
+            evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
         finished = 1;
     }
     else if (error & BEV_EVENT_TIMEOUT)
@@ -113,8 +113,10 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
         LOG(LOG_ERR, "A buf event timeout?");
 	finished = 1;
     }
+
     if (finished)
     {
+        //TODO: Add mutual exclusion so a worker doesn't get a null ptr
         //TODO: Convert this to a SLIST_FOREACH
         //XXXX Grab a rdlock until player is found, wrlock delete, free
         pthread_rwlock_wrlock(&PL_rwlock);
