@@ -278,7 +278,7 @@ run_server(void)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
   pthread_t httpd_thread_id;
   pthread_attr_t httpd_thread_attr;
@@ -287,25 +287,64 @@ main(int argc, char **argv)
   int status = 0;
 
   atexit(exit_handler);
-
-  // TODO: select syslog or console logging
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
   openlog(PACKAGE_TARNAME, LOG_PID, LOG_DAEMON);
 
   /* We initialize with stdout logging until config is loaded and the process
-   * daemonizes
+   * daemonizes.  DEBUG logs are disabled by default.
    */
   LOG = &log_console;
   LOG_setlogmask = &log_console_setlogmask;
-  LOG_setlogmask(LOG_MASK(LOG_DEBUG));
+
+  /* Print version info */
+  craftd_version(argv[0]);
+
+  /* Get command line arguments */
+  int opt;
+  int dontfork = 0;
+  int dontlogmask = 0;
+  char *argconfigfile = NULL;
+  while((opt = getopt(argc, argv, "c:dhnv")) != -1)
+  {
+    switch(opt)
+    {
+      case 'd':
+        dontlogmask = 1;
+        break;
+      case 'v':
+        exit(EXIT_SUCCESS); // Version header already printed
+      case 'n':
+        dontfork = 1;
+        break;
+      case 'c':
+        argconfigfile = optarg; // User specified conf file
+        break;
+      case 'h':
+      default:
+        fprintf(stderr, "\nUsage: %s [OPTION]...\n"
+            "-c <conf file>\tspecify a conf file location\n"
+            "-d\t\tenable verbose debugging messages\n"
+            "-h\t\tdisplay this help and exit\n"
+            "-n\t\tdon't fork/daemonize (overrides config file)\n"
+            "-v\t\toutput version information and exit\n"
+            "\nFor complete documentation, visit the wiki.\n\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+  }
+
+  /* By default, mask debugging messages */
+  if (!dontlogmask)
+  {
+    log_console_setlogmask(LOG_MASK(LOG_DEBUG));
+    setlogmask(LOG_MASK(LOG_DEBUG));
+  }
 
   /* Print startup message */
-  craftd_version(argv[0]);
   LOG(LOG_INFO, "Server starting!  Max FDs: %d", sysconf(_SC_OPEN_MAX));
-  
+
   /* Initialize the configuration */
   craftd_config_setdefaults();
-  craftd_config_parse(NULL);
+  craftd_config_parse(argconfigfile);
   
   
   /* Declare the worker pool after reading config values */
@@ -325,7 +364,7 @@ main(int argc, char **argv)
   STAILQ_INIT(&WQ_head);
   WQ_count = 0;
 
-  if (Config.daemonize == true) // TODO: or argv -d
+  if (!dontfork && Config.daemonize == true) // TODO: or argv -d
   {
     LOG(LOG_INFO, "Daemonizing.");
 
