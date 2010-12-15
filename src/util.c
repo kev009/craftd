@@ -125,6 +125,31 @@ void log_console(int priority, const char *format, ...)
 }
 
 /**
+ * A callback used by event_set_log_callback() to make libevent use our
+ * logging functionality since we do not have stderr after daemonizing
+ *
+ * @param severity _EVENT_LOG_DEBUG or _EVENT_LOG_ERR
+ * @param msg An error string
+ */
+void
+ev_log_callback(int severity, const char *msg)
+{
+  switch(severity)
+  {
+    case _EVENT_LOG_DEBUG:
+      LOG(LOG_DEBUG, "libevent: %s", msg);
+      break;
+    case _EVENT_LOG_ERR:
+      LOG(LOG_ERR, "libevent: %s", msg);
+      break;
+    default:
+      LOG(LOG_WARNING, "libevent: UNKNOWN/new error type! Please report this");
+      LOG(LOG_NOTICE, "libevent/unknown: %s", msg);
+      break;
+  }
+}
+
+/**
  * Check if str is valid MC UTF-8, nonzero otherwise
  * @param str string to check
  * @return 1 if valid, zero otherwise

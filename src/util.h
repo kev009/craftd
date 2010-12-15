@@ -62,6 +62,9 @@ int log_console_setlogmask(int mask);
 #define ERR(...) \
   do { LOG(LOG_CRIT, __VA_ARGS__); exit(EXIT_FAILURE); } while (0)
 
+/* Override libevent error reporting to use our interface */
+void ev_log_callback(int severity, const char *msg);
+
 /**
  * Public and exposed mcstring structure interface
  * It is not advised to directly build strings but instead use the public
@@ -69,6 +72,8 @@ int log_console_setlogmask(int mask);
  */
 typedef struct _mcstring
 {
+  pthread_mutex_t mutex;
+  int refcount;
   uint16_t slen;
   char *str;
   int valid;

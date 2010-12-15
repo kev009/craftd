@@ -345,7 +345,9 @@ main(int argc, char *argv[])
   /* Initialize the configuration */
   craftd_config_setdefaults();
   craftd_config_parse(argconfigfile);
-  
+
+  /* Tell libevent to use our logging functions */
+  event_set_log_callback(ev_log_callback);
   
   /* Declare the worker pool after reading config values */
   pthread_attr_t WP_thread_attr;
