@@ -169,16 +169,13 @@ WORKER_DONE:
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
 
-    /* TODO: Code a function to remove the player from playerlist with
-     * correct locking semantics and share this code with errorcb() in craftd.c
-     */
     
     free(workitem);
-    if (player)
-      free(player);
-    if (bev)
-      bufferevent_free(bev);
-    
+
+    const char *cwmsg = "Error in packet sequence.";
+    mcstring_t *wmsg = mcstring_create(strlen(cwmsg), cwmsg);
+    send_kick(player, wmsg);
+
     //pthread_mutex_unlock(&worker_cvmutex);
     continue;
   }

@@ -423,6 +423,8 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
   uint8_t pid = PID_DISCONNECT;
   int16_t slen = htons(dconmsg->slen);
 
+  LOG(LOG_NOTICE, "IP %s kicked: %s", player->ip, dconmsg->str);
+
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &slen, sizeof(slen));
   evbuffer_add(tempbuf, dconmsg->str, dconmsg->slen);
@@ -432,9 +434,7 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
   
   mcstring_free(dconmsg);
   
-  /* TODO forcefully close the socket and perform manual cleanup if the client
-   * doesn't voluntarily disconnect
-   */
+  errorcb(player->bev, BEV_EVENT_EOF, player);
   
   return;
 }
