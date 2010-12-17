@@ -1,7 +1,9 @@
 AM_LIBS = $(libevent2_pthreads_LIBS) $(PTHREAD_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
-AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src -I$(top_srcdir)/compat/
+AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
+AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
+AM_CPPFLAGS += -I$(top_srcdir)/compat/
 
 # Custom build shim for jansson
 jsondir = $(top_srcdir)/third-party/jansson/src
@@ -25,8 +27,11 @@ libjansson_la_SOURCES = \
 libjansson_la_LDFLAGS = \
         -export-symbols-regex '^json_'
 
+bstringdir = $(top_srcdir)/third-party/bstring
 bin_PROGRAMS = craftd
-craftd_SOURCES = craftd.c craftd.h
+craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
+craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
+craftd_SOURCES += craftd.c craftd.h
 craftd_SOURCES += craftd-config.c craftd-config.h
 craftd_SOURCES += network/network.h network/network-private.h network/packets.h
 craftd_SOURCES += network/worker.c network/decoder.c network/send.c

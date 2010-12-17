@@ -94,8 +94,8 @@ struct packet_login
 {
   uint8_t pid;
   uint32_t version;
-  mcstring_t *username;
-  mcstring_t *password;
+  bstring username;
+  bstring password;
   uint64_t mapseed;
   uint8_t dimension;
 };
@@ -116,7 +116,7 @@ static const struct
 struct packet_handshake
 {
   uint8_t pid;
-  mcstring_t *username;
+  bstring username;
 };
 // Handshake size/offset information (C99 initialized struct)
 static const struct
@@ -132,7 +132,7 @@ static const struct
 struct packet_chat
 {
   uint8_t pid;
-  mcstring_t *message;
+  bstring message;
 };
 // Chat size/offset information (C99 initialized struct)
 static const struct
@@ -338,7 +338,7 @@ struct packet_disconnect
 {
   uint8_t pid;
   int16_t slen;
-  char *message;
+  bstring message;
 };
 // Chat size/offset information (C99 initialized struct)
 static const struct

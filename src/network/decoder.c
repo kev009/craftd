@@ -81,26 +81,12 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	/* Get the username */
 	evbuffer_remove(input, &ulen, sizeof(ulen));
 	ulen = ntohs(ulen);
-	
-	u_login.username = mcstring_allocate(ulen);
-	if (u_login.username == NULL)
-          exit(3); // LOG bad allocate, punt
-	
-	evbuffer_remove(input, u_login.username->str, ulen);
-	if (!mcstring_valid(u_login.username))
-          exit(4); // LOG bad str, punt client
-	  
+        u_login.username = getMCString(input, ulen); //TODO verify
+
 	/* Get the password */
 	evbuffer_remove(input, &plen, sizeof(plen));
 	plen = ntohs(plen);
-	
-	u_login.password = mcstring_allocate(plen);
-	if (u_login.password == NULL)
-	  exit(3); // LOG bad allocate, punt
-	  
-	evbuffer_remove(input, u_login.password->str, plen);
-	if (!mcstring_valid(u_login.password))
-	  exit(4); // LOG, punt
+        u_login.password = getMCString(input, plen); //TODO verify
 	
 	/* Get the mapseed */
 	evbuffer_remove(input, &u_login.mapseed, sizeof(u_login.mapseed));
@@ -110,14 +96,14 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	evbuffer_remove(input, &u_login.dimension, sizeof(u_login.dimension));
 
 	LOG(LOG_INFO, "recvd login from: %s client ver: %d seed: %lu dim: %d", 
-	       u_login.username->str, u_login.version, u_login.mapseed, 
+	       u_login.username->data, u_login.version, u_login.mapseed, 
 	       u_login.dimension);
 	
 	/* Process the login */
 	process_login(player, u_login.username, u_login.version);
-	
-	mcstring_free(u_login.username);
-	mcstring_free(u_login.password);
+
+        bstrFree(u_login.username);
+        bstrFree(u_login.password);
 	
 	return 0;
     }
@@ -126,26 +112,22 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         LOG(LOG_DEBUG, "decoded handshake packet");
 	
         struct packet_handshake u_hs;
+        u_hs.username = NULL;
         int16_t ulen;
 
         evbuffer_drain(input, sizeof(u_hs.pid));
 	evbuffer_remove(input, &ulen, sizeof(ulen));
 	ulen = ntohs(ulen);
 
-        u_hs.username = mcstring_allocate(ulen);
-        if(u_hs.username == NULL)
-          exit(3); // LOG bad allocate
-
-	evbuffer_remove(input, u_hs.username->str, ulen);
-          
-        if(!mcstring_valid(u_hs.username))
-          exit(4); // LOG bad str, punt client
-
-	LOG(LOG_DEBUG, "Handshake from: %s", u_hs.username->str);
+        u_hs.username = getMCString(input, ulen);
+        if(!u_hs.username)
+          exit(4); // TODO punt
+	
+        LOG(LOG_DEBUG, "Handshake from: %s", u_hs.username->data);
 	
 	process_handshake(player, u_hs.username);
-	
-	mcstring_free(u_hs.username);
+
+        bstrFree(u_hs.username);
 
 	return 0;
     }
@@ -160,18 +142,11 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
         evbuffer_remove(input, &mlen, sizeof(mlen));
         mlen = ntohs(mlen);
 
-        chat.message = mcstring_allocate(mlen);
-        if(chat.message == NULL)
-          exit(3); // LOG bad allocate
-
-        evbuffer_remove(input, chat.message->str, mlen);
-
-        if (!mcstring_valid(chat.message))
-          exit(4); // LOG bad str, punt client
+        chat.message = getMCString(input, mlen); //TODO verify
 
         process_chat(player, chat.message);
 
-        mcstring_free(chat.message);
+        bstrFree(chat.message);
 
         return 0;
     }

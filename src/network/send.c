@@ -51,7 +51,7 @@
  * @param ver inbound version from client login packet
  */
 void
-process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
+process_login(struct PL_entry *player, bstring username, uint32_t ver)
 {
   // TODO: Future, async check of minecraft.net for user validity
   // TODO: Future, check against local ACL
@@ -59,14 +59,16 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
   /* Check if the client version is compatible with the craftd version */
   if (ver != PROTOCOL_VERSION)
   {
-    const char *dconmsg = "Client version is incompatible with this server.";
-    send_kick(player, mcstring_create(strlen(dconmsg), dconmsg) );
+    bstring dconmsg;
+    dconmsg = bfromcstr("Client version is incompatible with this server.");
+    send_kick(player, dconmsg);
+    bstrFree(dconmsg);
     return;
   }
   
   /* Otherwise, finish populating their Player List entry */
   pthread_rwlock_wrlock(&player->rwlock);
-  mcstring_copy(player->username, username);
+  player->username = bstrcpy(username);
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
@@ -97,7 +99,7 @@ process_login(struct PL_entry *player, mcstring_t *username, uint32_t ver)
  * @param username mcstring of the handshake username
  */
 void
-process_handshake(struct PL_entry *player, mcstring_t *username)
+process_handshake(struct PL_entry *player, bstring username)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
@@ -109,16 +111,16 @@ process_handshake(struct PL_entry *player, mcstring_t *username)
    */
   
   uint8_t pid = PID_HANDSHAKE;
-  mcstring_t *hashreply = mcstring_create(strlen("-"), "-");
+  bstring hashreply = bfromcstr("-");
   int16_t n_hlen = htons(hashreply->slen);
   
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
-  evbuffer_add(tempbuf, hashreply->str, hashreply->slen);
+  evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
   
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
-  mcstring_free(hashreply);
+  bstrFree(hashreply);
   
   return;
 }
@@ -127,11 +129,11 @@ process_handshake(struct PL_entry *player, mcstring_t *username)
  * Process a chat message or command
  */
 void
-process_chat(struct PL_entry *player, mcstring_t *message)
+process_chat(struct PL_entry *player, bstring message)
 {
-  if (message->str[0] == '/')
+  if (message->data[0] == '/')
   {
-    LOG(LOG_INFO, "Command: %s", message->str);
+    LOG(LOG_INFO, "Command: %s", message->data);
     send_directchat(player, message);
     // process_cmd
   }
@@ -175,7 +177,7 @@ send_loginresp(struct PL_entry *player)
 }
 
 void
-send_directchat(struct PL_entry *player, mcstring_t *message)
+send_directchat(struct PL_entry *player, bstring message)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
@@ -185,7 +187,7 @@ send_directchat(struct PL_entry *player, mcstring_t *message)
 
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &mlen, sizeof(mlen));
-  evbuffer_add(tempbuf, message->str, message->slen);
+  evbuffer_add(tempbuf, message->data, message->slen);
 
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
@@ -194,31 +196,26 @@ send_directchat(struct PL_entry *player, mcstring_t *message)
 }
 
 void
-send_chat(struct PL_entry *player, mcstring_t *message)
+send_chat(struct PL_entry *player, bstring message)
 {
-  mcstring_t *username;
-  mcstring_t *newmessage;
   struct PL_entry *player_iter;
 
-  char format[100] = "<";
-  strncat(format, player->username->str, strlen(format)
-          + player->username->slen);
-  strncat(format, "> ", strlen(format));
-  username = mcstring_create(strlen(format), format);
-
-  newmessage = mcstring_mccat(username, message);
-  LOG(LOG_INFO, "Chat: %s", newmessage->str);
+  bstring newmsg = bfromcstr("<");
+  bconcat(newmsg, player->username);
+  bcatcstr(newmsg, "> ");
+  bconcat(newmsg, message);
+  
+  LOG(LOG_INFO, "Chat: %s", newmsg->data);
 
   pthread_rwlock_rdlock(&PL_rwlock);
   SLIST_FOREACH(player_iter, &PL_head, PL_entries)
   {
-    send_directchat(player_iter, newmessage);
+    send_directchat(player_iter, newmsg);
   }
   pthread_rwlock_unlock(&PL_rwlock);
 
-  mcstring_free(newmessage);
-  mcstring_free(username);
-
+  bstrFree(newmsg);
+  
   return;
 }
 
@@ -415,7 +412,7 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
  * @param dconmsg Pointer to an mcstring with the kick message
  */
 void
-send_kick(struct PL_entry *player, mcstring_t *dconmsg)
+send_kick(struct PL_entry *player, bstring dconmsg)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
@@ -423,16 +420,14 @@ send_kick(struct PL_entry *player, mcstring_t *dconmsg)
   uint8_t pid = PID_DISCONNECT;
   int16_t slen = htons(dconmsg->slen);
 
-  LOG(LOG_NOTICE, "IP %s kicked: %s", player->ip, dconmsg->str);
+  LOG(LOG_NOTICE, "IP %s kicked: %s", player->ip, dconmsg->data);
 
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &slen, sizeof(slen));
-  evbuffer_add(tempbuf, dconmsg->str, dconmsg->slen);
+  evbuffer_add(tempbuf, dconmsg->data, dconmsg->slen);
   
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
-  
-  mcstring_free(dconmsg);
   
   errorcb(player->bev, BEV_EVENT_EOF, player);
   

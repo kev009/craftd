@@ -36,6 +36,8 @@
 #include <event2/event.h>
 #include <event2/buffer.h>
 
+#include "bstrlib.h"
+
 /**
  * Global logging and error handling macros
  */
@@ -65,29 +67,9 @@ int log_console_setlogmask(int mask);
 /* Override libevent error reporting to use our interface */
 void ev_log_callback(int severity, const char *msg);
 
-/**
- * Public and exposed mcstring structure interface
- * It is not advised to directly build strings but instead use the public
- * methods below.
- */
-typedef struct _mcstring
-{
-  pthread_mutex_t mutex;
-  int refcount;
-  uint16_t slen;
-  char *str;
-  int valid;
-} mcstring_t;
-
 /* Public mcstring functiions */
 int ismc_utf8(const char *str);
-mcstring_t *mcstring_allocate(size_t slen);
-mcstring_t *mcstring_create(size_t slen, const char *strptr);
-mcstring_t *mcstring_copy(mcstring_t *dest, mcstring_t *src);
-mcstring_t *mcstring_mccat(mcstring_t *dest, mcstring_t *src);
-mcstring_t *mcstring_ncat(mcstring_t *dest, const char *src, size_t size);
-int mcstring_valid(mcstring_t *mcstring);
-void mcstring_free(mcstring_t *mcstring);
+bstring getMCString(struct evbuffer *buf, int16_t len);
 
 /* Public memory management wrappers */
 void *Malloc(size_t size);

@@ -37,6 +37,9 @@
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 
+#include "bstrlib.h"
+#include "bstraux.h"
+
 #include "craftd.h"
 #include "javaendian.h"
 
@@ -44,12 +47,12 @@
 void *run_worker(void *arg);
 
 /* Public protocol functions that can be exposed to APIs */
-void send_directchat(struct PL_entry *player, mcstring_t *message);
-void send_chat(struct PL_entry *player, mcstring_t *message);
+void send_directchat(struct PL_entry *player, bstring message);
+void send_chat(struct PL_entry *player, bstring message);
 void send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode);
 void send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
 	        uint8_t sizex, uint8_t sizey, uint8_t sizez);
 void send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z);
 void send_movelook(struct PL_entry *player, double x, double stance, double y,
 	           double z, float yaw, float pitch, bool flying);
-void send_kick(struct PL_entry *player, mcstring_t *dconmsg);
+void send_kick(struct PL_entry *player, bstring dconmsg);

@@ -42,6 +42,9 @@
 #include <event2/buffer.h>
 #include <event2/util.h>
 
+#include "bstrlib.h"
+#include "bstraux.h"
+
 #include "craftd.h"
 #include "craftd-config.h"
 #include "httpd.h"
@@ -108,7 +111,7 @@ json_request_cb(struct evhttp_request *req, void *arg)
   evbuffer_add_printf(bout, "\n    <h2>%d users online</h2>\n", PL_count);
   SLIST_FOREACH(player, &PL_head, PL_entries)
   {
-    evbuffer_add_printf(bout, "    %s - %s<br>\n",  player->username->str, 
+    evbuffer_add_printf(bout, "    %s - %s<br>\n",  player->username->data, 
 			player->ip);
   }
   pthread_rwlock_unlock(&PL_rwlock);

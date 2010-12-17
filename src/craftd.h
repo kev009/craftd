@@ -31,6 +31,8 @@
 #include <pthread.h>
 #include <sys/queue.h>
 
+#include "bstrlib.h"
+
 #include "craftd-config.h"
 #include "util.h"
 
@@ -54,7 +56,7 @@ struct PL_entry
   char ip[128];
   //uint64_t mapseed;
   //uint8_t dimension;
-  mcstring_t *username;
+  bstring username;
   SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
 };
 

@@ -63,7 +63,7 @@ void
   size_t inlen;
   int status;
   int pktlen;
-  uint8_t pkttype = 0;
+  uint8_t pkttype;
   
   for(;;)
   {
@@ -172,9 +172,9 @@ WORKER_ERR:
     
     free(workitem);
 
-    const char *cwmsg = "Error in packet sequence.";
-    mcstring_t *wmsg = mcstring_create(strlen(cwmsg), cwmsg);
+    bstring wmsg = bfromcstr("Error in packet sequence.");
     send_kick(player, wmsg);
+    bstrFree(wmsg);
 
     //pthread_mutex_unlock(&worker_cvmutex);
     continue;

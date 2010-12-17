@@ -42,6 +42,9 @@
 #include <event2/bufferevent.h>
 #include <event2/thread.h>
 
+#include "bstrlib.h"
+#include "bstraux.h"
+
 #include "craftd-config.h"
 #include "craftd.h"
 #include "util.h"
@@ -94,8 +97,8 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     if (error & BEV_EVENT_EOF)
     {
         /* Connection closed, remove client from tables here */
-        if( player->username->valid == 1)
-          LOG(LOG_INFO, "Connection closed for: %s", player->username->str);
+        if (player->username != NULL)
+          LOG(LOG_INFO, "Connection closed for: %s", player->username->data);
         else
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         finished = 1;
@@ -172,8 +175,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
         player->fd = fd;
 	
 	/* Statically initialize the username string for now */
-	// TODO: write a string initializer
-        player->username = mcstring_create(strlen(""), "");
+        player->username = NULL;
 
         /* Get the IPv4 or IPv6 address and store it */
         if (getpeername(fd, (struct sockaddr *)&ss, &slen))
