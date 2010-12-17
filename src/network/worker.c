@@ -63,7 +63,7 @@ void
   size_t inlen;
   int status;
   int pktlen;
-  uint8_t pkttype;
+  uint8_t pkttype = 0;
   
   for(;;)
   {
