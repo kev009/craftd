@@ -150,7 +150,18 @@ process_chat(struct PL_entry *player, bstring message)
   {
     LOG(LOG_INFO, "Command: %s", message->data);
     send_directchat(player, message);
-    // process_cmd
+    
+    // TODO: temporary who cmd
+    bstring whocmd = bfromcstr("/who");
+    if (binstrr(message, whocmd->slen+1, whocmd))
+    {
+      pthread_rwlock_rdlock(&PL_rwlock);
+      bstring whomsg = bformat("There are %d players online", PL_count);
+      pthread_rwlock_unlock(&PL_rwlock);
+
+      send_directchat(player, whomsg);
+      bstrFree(whomsg);
+    }
   }
   else
   {
@@ -430,6 +441,43 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
   evbuffer_free(tempbuf);
   
   return;
+}
+
+void
+send_namedentity(struct PL_entry *player, int32_t eid)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+
+  /*
+  int8_t pid = PID_NAMEDENTITYSPAWN;
+  int16_t slen = htons(0); //eid map to player
+  */
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+}
+
+void
+send_entity(struct PL_entry *player, int32_t eid)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+
+  int8_t pid = PID_ENTITY;
+  eid = htonl(eid);
+
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &eid, sizeof(eid));
+
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+}
+
+void
+send_entityrelmove(struct PL_entry *player, int32_t eid)
+{
+  // TODO
 }
 
 /**

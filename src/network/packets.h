@@ -62,6 +62,7 @@ enum packetid
   PID_HOLDCHANGE        = 0x10,
   PID_ADDINVENTORY      = 0x11,
   PID_ARMANIMATE        = 0x12,
+  PID_NAMEDENTITYSPAWN  = 0x14,
   PID_PICKUPSPAWN       = 0x15,
   PID_COLLECTITEM       = 0x16,
   PID_ADDOBJVEHICLE     = 0x17,
