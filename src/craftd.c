@@ -62,6 +62,17 @@ exit_handler(void)
   //closelog();
 }
 
+/**
+ * Temporary entity ID creation
+ */
+int
+newEid()
+{
+  static int eid = 0;
+  eid++;
+  return eid;
+}
+
 void
 readcb(struct bufferevent *bev, void *ctx)
 {
@@ -189,6 +200,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
 	
 	/* Statically initialize the username string for now */
         player->username = NULL;
+        player->eid = newEid();
 
         /* Get the IPv4 or IPv6 address and store it */
         if (getpeername(fd, (struct sockaddr *)&ss, &slen))

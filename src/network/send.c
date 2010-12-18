@@ -172,7 +172,7 @@ send_loginresp(struct PL_entry *player)
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_LOGIN;
-  int32_t entityid = htonl(1); // TODO generate player entity IDs
+  int32_t entityid = htonl(player->eid);
   int16_t unused1 = htons(0); // Future server name? mcstring.
   int16_t unused2 = htons(0); // Future MOTD? mcstring.
   int64_t mapseed = htonll(0);
