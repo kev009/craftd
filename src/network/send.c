@@ -153,13 +153,12 @@ process_chat(struct PL_entry *player, bstring message)
     
     // TODO: temporary who cmd
     bstring whocmd = bfromcstr("/who");
-    if (binstrr(message, whocmd->slen+1, whocmd))
+    if (binstrr(message, (whocmd->slen), whocmd) != BSTR_ERR)
     {
       pthread_rwlock_rdlock(&PL_rwlock);
       bstring whomsg = bformat("There are %d players online", PL_count);
-      pthread_rwlock_unlock(&PL_rwlock);
-
       send_directchat(player, whomsg);
+      pthread_rwlock_unlock(&PL_rwlock);
       bstrFree(whomsg);
     }
   }
