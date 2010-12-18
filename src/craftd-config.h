@@ -31,14 +31,22 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_LISTENBACKLOG (16)
-#define MAX_BUF (8096)
+#include "bstrlib.h"
+
+/* Networking knobs */
+const int MAX_LISTENBACKLOG;
+const int MAX_BUF;
 
 /* Public methods */
 void craftd_config_setdefaults();
-void craftd_config_parse(const char* file);
+void craftd_config_parse(const char *file);
+void craftd_config_readmotd(char *file);
 
 /* Public data */
+#define MOTD_LINES (20) // Max MOTD line count
+extern bstring Config_motd[MOTD_LINES];
+int Config_motdsz;
+
 struct
 {
   // Game settings

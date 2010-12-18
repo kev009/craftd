@@ -95,6 +95,12 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
       player->username->data);
   send_syschat(loginmsg);
   bstrFree(loginmsg);
+
+  /* Send player MOTD */
+  for(int i=0; i < Config_motdsz; ++i)
+  {
+    send_directchat(player, Config_motd[i]);
+  }
   
   return;
 }

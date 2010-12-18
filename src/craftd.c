@@ -362,6 +362,7 @@ main(int argc, char *argv[])
   /* Initialize the configuration */
   craftd_config_setdefaults();
   craftd_config_parse(argconfigfile);
+  craftd_config_readmotd(Config.motd_file);
 
   /* Tell libevent to use our logging functions */
   event_set_log_callback(ev_log_callback);

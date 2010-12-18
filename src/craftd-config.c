@@ -26,11 +26,22 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <jansson.h>
 
 #include "craftd-config.h"
 #include "util.h"
+
+/* Networking knobs */
+const int MAX_LISTENBACKLOG = 16;
+const int MAX_BUF = 8096;
+
+/* MOTD */
+bstring Config_motd[MOTD_LINES];
+int Config_motdsz = 0;
 
 /* Search path for the main config file, in order */
 static const char *config_searchpath[] = {
@@ -65,12 +76,46 @@ craftd_config_setdefaults()
   Config.max_listenbacklog = 16;
   Config.mcstring_max = 100;
   Config.workpool_size = 2;
-  Config.motd_file = "motd.conf";
+  char *motddefault = "motd.conf";
+  Config.motd_file = motddefault;
   
   // httpd settings
   Config.httpd_enabled = true;
   Config.httpd_port = 25566;
-  Config.docroot = "htdocs/";
+  char *docrootdefault = "htdocs/";
+  Config.docroot = docrootdefault;
+}
+
+void
+craftd_config_readmotd(char *file)
+{
+  //struct bstrList *motd = bstrListCreate();
+  FILE *fp;
+
+  LOG(LOG_DEBUG, "Reading MOTD file %s", file);
+  
+  /* Open the MOTD or exit */
+  if ((fp = fopen(file, "r")) == NULL)
+    PERR("Error reading MOTD file"); // Read errno and quit
+  struct bStream *bs = bsopen((bNread)fread, fp);
+
+  bstring line;
+  int i;
+  for (i = 0; (line = bgets((bNgetc)fgetc, fp, '\n')) != NULL; ++i)
+  {
+    if (i > MOTD_LINES)
+      ERR("MOTD File is too long, max lines is %d", MOTD_LINES);
+
+    LOG(LOG_DEBUG, "MOTD: %s", line->data);
+    Config_motd[i] = line;
+  }
+
+  Config_motdsz = i;
+
+  bsclose(bs);
+  fclose(fp);
+
+  return;
 }
 
 /**
@@ -152,8 +197,8 @@ parseJInt(int *storage, const json_t *obj, const char *key)
  * @param obj json object to parse
  * @param key key to read
  */
-void
-parseJString(char *storage, const json_t *obj, const char *key)
+char *
+parseJString(const json_t *obj, const char *key)
 {
   const char *strval;
   json_t *strobj = json_object_get(obj, key);
@@ -162,7 +207,7 @@ parseJString(char *storage, const json_t *obj, const char *key)
   if (!strobj)
   {
     LOG(LOG_DEBUG, "Config: key \"%s\" is undefined.  Using default.", key);
-    return;
+    return Config.motd_file;
   }
   
   /* Check if the value is a string (fatal) */
@@ -173,8 +218,8 @@ parseJString(char *storage, const json_t *obj, const char *key)
   LOG(LOG_DEBUG, "Got string value: \"%s\" for key: \"%s\"", strval, key);
   
   /* Set the storage location to the new value */
-  storage = (char *)Malloc(strlen(strval));
-  storage = strdup(strval);
+  //storage = (char *)Malloc(strlen(strval));
+  return strdup(strval);
 }
 
 /**
@@ -225,7 +270,7 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.game_port, jsongame, "game-port");
     parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
-    parseJString(Config.motd_file, jsongame, "motd-file");
+    Config.motd_file = parseJString(jsongame, "motd-file");
   }
   else
   {
@@ -238,7 +283,7 @@ craftd_config_parse(const char *file)
   {
     parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
     parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
-    parseJString(Config.docroot, jsonhttp, "static-docroot");
+    Config.docroot = parseJString(jsonhttp, "static-docroot");
   }
   else
   {
