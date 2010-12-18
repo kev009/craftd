@@ -174,81 +174,80 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 void
 do_accept(evutil_socket_t listener, short event, void *arg)
 {
-    struct event_base *base = arg;
+  struct event_base *base = arg;
+  struct PL_entry *player;
 
-    struct PL_entry *player;
+  struct sockaddr_storage ss;
+  socklen_t slen = sizeof(ss);
+  int fd = accept(listener, (struct sockaddr*)&ss, &slen);
+  if (fd < 0)
+  {
+    ERR("accept error");
+  }
+  else if (fd > FD_SETSIZE)
+  {
+    LOG(LOG_CRIT, "too many clients");
+    close(fd);
+  }
+  else
+  {
+    struct bufferevent *bev;
 
-    struct sockaddr_storage ss;
-    socklen_t slen = sizeof(ss);
-    int fd = accept(listener, (struct sockaddr*)&ss, &slen);
-    if (fd < 0)
+    /* Allocate space for a new player */
+    player = Malloc(sizeof(struct PL_entry));
+	
+    /* Get the IPv4 or IPv6 address and store it */
+    if (getpeername(fd, (struct sockaddr *)&ss, &slen))
     {
-        ERR("accept error");
+      LOG(LOG_ERR, "Couldn't get peer IP");
+      close(fd);
+      free(player);
+      return;
     }
-    else if (fd > FD_SETSIZE)
+
+    void *inaddr;
+    if (ss.ss_family == AF_INET)
     {
-        LOG(LOG_CRIT, "too many clients");
-        close(fd);
+      inaddr = &((struct sockaddr_in*)&ss)->sin_addr;
+    }
+    else if (ss.ss_family == AF_INET6)
+    {
+      inaddr = &((struct sockaddr_in6*)&ss)->sin6_addr;
     }
     else
     {
-        struct bufferevent *bev;
-
-        /* Allocate space for a new player */
-        player = Malloc(sizeof(struct PL_entry));
-        player->fd = fd;
-	
-	/* Statically initialize the username string for now */
-        player->username = NULL;
-        player->eid = newEid();
-
-        /* Get the IPv4 or IPv6 address and store it */
-        if (getpeername(fd, (struct sockaddr *)&ss, &slen))
-        {
-          LOG(LOG_ERR, "Couldn't get peer IP");
-          close(fd);
-          free(player);
-          return;
-        }
-        void *inaddr;
-        if (ss.ss_family == AF_INET)
-        {
-          inaddr = &((struct sockaddr_in*)&ss)->sin_addr;
-        }
-        else if (ss.ss_family == AF_INET6)
-        {
-          inaddr = &((struct sockaddr_in6*)&ss)->sin6_addr;
-        }
-        else
-        {
-          LOG(LOG_ERR, "weird address family");
-          close(fd);
-          free(player);
-          return;
-        }
-
-        /* Initialize the player's internal rwlock */
-        pthread_rwlock_init(&player->rwlock, NULL);
-        
-        /* Lock for the list ptr update and add them to the Player List */
-        pthread_rwlock_wrlock(&PL_rwlock);
-        SLIST_INSERT_HEAD(&PL_head, player, PL_entries);
-        ++PL_count;
-        pthread_rwlock_unlock(&PL_rwlock);
-
-        evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
-
-        evutil_make_socket_nonblocking(fd);
-
-        bev = bufferevent_socket_new(base, fd, 
-				     BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
-	
-	player->bev = bev;
-	
-        bufferevent_setcb(bev, readcb, NULL, errorcb, player);
-        //bufferevent_setwatermark(bev, EV_READ, 0, MAX_BUF);
-        bufferevent_enable(bev, EV_READ|EV_WRITE);
+      LOG(LOG_ERR, "weird address family");
+      close(fd);
+      free(player);
+      return;
     }
+
+    /* Get the socket and buffer event into nonblocking mode, register
+     * callbacks, set watermarks
+     */
+    evutil_make_socket_nonblocking(fd);
+    bev = bufferevent_socket_new(base, fd, 
+                                 BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
+    bufferevent_setcb(bev, readcb, NULL, errorcb, player);
+    //bufferevent_setwatermark(bev, EV_READ, 0, MAX_BUF);
+    bufferevent_enable(bev, EV_READ|EV_WRITE);
+
+    /* Get most of the player set up before lock&insert */
+    player->fd = fd;
+    player->bev = bev;
+    player->username = NULL;
+    player->eid = newEid();
+    evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
+
+    /* Initialize the player's internal rwlock */
+    pthread_rwlock_init(&player->rwlock, NULL);
+
+    /* Lock for the list ptr update and add them to the Player List */
+    pthread_rwlock_wrlock(&PL_rwlock);
+    SLIST_INSERT_HEAD(&PL_head, player, PL_entries);
+    ++PL_count;
+    pthread_rwlock_unlock(&PL_rwlock);
+  }
 }
 
 void
