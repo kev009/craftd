@@ -226,7 +226,7 @@ static const int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
 struct packet_look
 {
   int8_t pid;
-  float rotation;
+  float yaw;
   float pitch;
   bool flying;
 };
@@ -241,7 +241,7 @@ struct packet_movelook
   double y;
   double stance;
   double z;
-  float rotation;
+  float yaw;
   float pitch;
   bool flying;
 };

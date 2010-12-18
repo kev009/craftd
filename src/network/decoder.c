@@ -176,45 +176,72 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
-        LOG(LOG_DEBUG, "recvd player position packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+      LOG(LOG_DEBUG, "recvd player position packet");
+      struct packet_playerpos pos;
+
+      pthread_rwlock_wrlock(&player->position.rwlock);
+      evbuffer_drain(input, sizeof(pos.pid));
+      evbuffer_remove(input, &pos.x, sizeof(pos.x));
+      evbuffer_remove(input, &pos.y, sizeof(pos.y));
+      /* Throw away stance */
+      evbuffer_drain(input, sizeof(pos.stance));
+      evbuffer_remove(input, &pos.z, sizeof(pos.z));
+      /* Throw away flying */
+      evbuffer_drain(input, sizeof(int8_t));
+
+      /* Flip bits */
+      player->position.x = Cswapd(pos.x);
+      player->position.y = Cswapd(pos.y);
+      player->position.z = Cswapd(pos.z);
+
+      pthread_rwlock_unlock(&player->position.rwlock);
+
+      break;
     }
     case PID_PLAYERLOOK: // Player look packet 0x0C
     {
-        LOG(LOG_DEBUG, "recvd player look packet");
+      LOG(LOG_DEBUG, "recvd player look packet");
+      struct packet_look look;
+
+      pthread_rwlock_wrlock(&player->position.rwlock);
+      evbuffer_drain(input, sizeof(look.pid));
+      evbuffer_remove(input, &look.yaw, sizeof(look.yaw));
+      evbuffer_remove(input, &look.pitch, sizeof(look.pitch));
+      /* Throw away flying */
+      evbuffer_drain(input, sizeof(int8_t));
+
+      /* Flip bits */
+      player->position.yaw = Cswapf(look.yaw);
+      player->position.pitch = Cswapf(look.pitch);
+
+      pthread_rwlock_unlock(&player->position.rwlock);
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+      break;
     }
     case PID_PLAYERMOVELOOK: // Player move+look packet 0x0D
     {
         LOG(LOG_DEBUG, "recvd move+look packet");
-	
-#if 0
         struct packet_movelook ml;
 
+        pthread_rwlock_wrlock(&player->position.rwlock);
+        evbuffer_drain(input, sizeof(ml.pid));
         evbuffer_remove(input, &ml.x, sizeof(ml.x));
         evbuffer_remove(input, &ml.y, sizeof(ml.y));
-        evbuffer_remove(input, &ml.stance, sizeof(ml.stance));
+        /* Throw away stance */
+        evbuffer_drain(input, sizeof(ml.stance));
         evbuffer_remove(input, &ml.z, sizeof(ml.z));
-        evbuffer_remove(input, &ml.rotation, sizeof(ml.rotation));
+        evbuffer_remove(input, &ml.yaw, sizeof(ml.yaw));
         evbuffer_remove(input, &ml.pitch, sizeof(ml.pitch));
         evbuffer_remove(input, &ml.flying, sizeof(int8_t));
 
-        ml.x = Cswapd(ml.x);
-        ml.y = Cswapd(ml.y);
-        ml.stance = Cswapd(ml.stance);
-        ml.z = Cswapd(ml.stance);
-        ml.rotation = Cswapf(ml.rotation);
-        ml.pitch = Cswapf(ml.pitch);
-        LOG(LOG_NOTICE, "x:%f,y:%f,s:%f,z:%f,rot:%f,pit:%f", ml.x,ml.y,ml.stance,ml.z,ml.rotation,ml.pitch);
-#endif
+        /* Flip bits */
+        player->position.x = Cswapd(ml.x);
+        player->position.y = Cswapd(ml.y);
+        player->position.z = Cswapd(ml.z);
+        player->position.yaw = Cswapf(ml.yaw);
+        player->position.pitch = Cswapf(ml.pitch);
 
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+        pthread_rwlock_unlock(&player->position.rwlock);
 
         break;
     }

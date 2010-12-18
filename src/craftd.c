@@ -239,8 +239,9 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->eid = newEid();
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
-    /* Initialize the player's internal rwlock */
+    /* Initialize the player's internal rwlocks */
     pthread_rwlock_init(&player->rwlock, NULL);
+    pthread_rwlock_init(&player->position.rwlock, NULL);
 
     /* Lock for the list ptr update and add them to the Player List */
     pthread_rwlock_wrlock(&PL_rwlock);

@@ -58,6 +58,15 @@ struct PL_entry
   //uint8_t dimension;
   int eid;
   bstring username;
+  struct
+  {
+    pthread_rwlock_t rwlock;
+    double x;
+    double y;
+    double z;
+    float yaw;
+    float pitch;
+  } position;
   SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
 };
 
