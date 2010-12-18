@@ -21,7 +21,10 @@ DISTCLEANFILES = craftd.conf.dist
 crafdconfdir = ${sysconfdir}/craftd/
 crafdconf_DATA = craftd.conf.dist motd.conf.dist
 
-
+# bstring extas
+bstrdir = third-party/bstring
+EXTRA_DIST += $(bstrdir)/license.txt $(bstrdir)/security.txt \
+	      $(bstrdir)/bstrlib.txt $(bstrdir)/porting.txt
 
 # Jansson extras
 jsondir = third-party/jansson

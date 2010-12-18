@@ -96,11 +96,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
     
     if (error & BEV_EVENT_EOF)
     {
-        /* Connection closed, remove client from tables here */
-        if (player->username != NULL)
-          LOG(LOG_INFO, "Connection closed for: %s", player->username->data);
-        else
-          LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
+        /* Connection closed */
         finished = 1;
     }
     else if (error & BEV_EVENT_ERROR)
@@ -119,6 +115,23 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 
     if (finished)
     {
+        if (player->username != NULL)
+        {
+          /* In-band disconnect message */
+          bstring dconmsg = bformat("%s has disconnected", 
+              player->username->data);
+          send_syschat(dconmsg);
+          bstrFree(dconmsg);
+
+          /* System log message */
+          LOG(LOG_INFO, "Connection closed for: %s", player->username->data);
+        }
+        else
+        {
+          /* The user hasn't gotten far enough to register a username */
+          LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
+        }
+
         //TODO: Add mutual exclusion so a worker doesn't get a null ptr
         //TODO: Convert this to a SLIST_FOREACH
         //XXXX Grab a rdlock until player is found, wrlock delete, free

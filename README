@@ -37,8 +37,10 @@ You should have a good understanding of libevent-2.
 http://www.wangafu.net/~nickm/libevent-book/
 http://mc.kev009.com/libevent - Up to date doxygen
 
-Bundled JSON API (used for web GUI and config):
+Bundled Libs:
+JSON API (used for web GUI and config): 
 Jansson (Git head) - http://github.com/akheron/jansson
+bstring - Safer C strings - http://bstring.sourceforge.net/
 
 Protocol reference:
 http://mc.kev009.com/wiki/

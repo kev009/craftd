@@ -72,7 +72,7 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  send_prechunk(player, -1, -1, true); // TODO: pull spwan position from file
+  //send_prechunk(player, 0, -1, true); // TODO: pull spwan position from file
   //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
   for(int i = -4; i < 5; i++)
@@ -87,6 +87,15 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   send_spawnpos(player, 32, 260, 32); // TODO: pull spawn position from file
   //send inv
   send_movelook(player, 0, 128.1, 128.2, 0, 0, 0, false); //TODO: pull position from file
+  
+  //send_directchat(player, motd);
+
+  /* Login message */
+  bstring loginmsg = bformat("Player %s has joined the game!", 
+      player->username->data);
+  send_syschat(loginmsg);
+  bstrFree(loginmsg);
+  
   return;
 }
 
@@ -200,10 +209,7 @@ send_chat(struct PL_entry *player, bstring message)
 {
   struct PL_entry *player_iter;
 
-  bstring newmsg = bfromcstr("<");
-  bconcat(newmsg, player->username);
-  bcatcstr(newmsg, "> ");
-  bconcat(newmsg, message);
+  bstring newmsg = bformat("<%s> %s", player->username->data, message->data);
   
   LOG(LOG_INFO, "Chat: %s", newmsg->data);
 
@@ -216,6 +222,23 @@ send_chat(struct PL_entry *player, bstring message)
 
   bstrFree(newmsg);
   
+  return;
+}
+
+void
+send_syschat(bstring message)
+{
+ struct PL_entry *player_iter;
+
+  LOG(LOG_INFO, "Syschat: %s", message->data);
+
+  pthread_rwlock_rdlock(&PL_rwlock);
+  SLIST_FOREACH(player_iter, &PL_head, PL_entries)
+  {
+    send_directchat(player_iter, message);
+  }
+  pthread_rwlock_unlock(&PL_rwlock);
+
   return;
 }
 
