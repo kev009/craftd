@@ -66,9 +66,9 @@
 /* Not WORDS_BIGENDIAN */
 
 /* Add generic ntohll/htonll routine if needed */
-#if defined(HAVE_DECL_BE64TOH) && !defined(ntohll)
+#if (HAVE_DECL_BE64TOH) && !defined(ntohll)
 #define ntohll(ll) be64toh(ll)
-#ifdef HAVE_DECL_HTOBE64
+#if (HAVE_DECL_HTOBE64)
 #define htonll(ll) htobe64(ll)
 #else
 #define htonll(ll) be64toh(ll)
