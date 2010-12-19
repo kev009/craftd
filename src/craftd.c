@@ -136,6 +136,9 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 
           /* System log message */
           LOG(LOG_INFO, "Connection closed for: %s", player->username->data);
+
+          /* Free the username */
+          bstrFree(player->username);
         }
         else
         {
@@ -147,7 +150,6 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
         //TODO: Convert this to a SLIST_FOREACH
         //XXXX Grab a rdlock until player is found, wrlock delete, free
         pthread_rwlock_wrlock(&PL_rwlock);
-        bstrFree(player->username);
 	SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
 	pthread_rwlock_unlock(&PL_rwlock);
@@ -161,11 +163,13 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 	  {
 	    STAILQ_REMOVE(&WQ_head, workitem, WQ_entry, WQ_entries);
 	    LOG(LOG_DEBUG, "bev removed from workerpool by errorcb");
+
+            free(workitem);
 	  }
 	}
 	pthread_spin_unlock(&WQ_spinlock);
 	
-	if (ctx)
+        if (ctx)
 	  free(ctx);
 	if (bev)
 	  bufferevent_free(bev);
@@ -267,7 +271,7 @@ run_server(void)
         exit(EXIT_FAILURE);
     }
 
-    bzero(&sin, sizeof(sin));
+    memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(Config.game_port);

@@ -86,6 +86,7 @@ void
       //pthread_mutex_unlock(&worker_cvmutex);
       continue;
     }
+
     workitem = STAILQ_FIRST(&WQ_head);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
     pthread_spin_unlock(&WQ_spinlock);
@@ -168,8 +169,6 @@ WORKER_DONE:
 
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
-
-    
     free(workitem);
 
     bstring wmsg = bfromcstr("Error in packet sequence.");
