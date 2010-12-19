@@ -78,7 +78,17 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
 
 AC_C_BIGENDIAN
-AC_CHECK_DECLS([be64toh,htobe64], [], [],[#include <endian.h>, #include <sys/endian.h>])
+
+AC_CHECK_DECLS([be64toh,htobe64], [], [],
+[#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
+#ifdef HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>
+#endif
+])
+
+
 # Check if we need to reorder float and double types
 AX_C_FLOAT_WORDS_BIGENDIAN
 

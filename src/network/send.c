@@ -346,16 +346,10 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   evbuffer_add(tempbuf, &sizez, sizeof(sizez));
   evbuffer_add(tempbuf, &n_written, sizeof(n_written));
   evbuffer_add(tempbuf, buffer, written);
+
+  /* TODO: swap to this zero copy method */
+  //evbuffer_add_reference(tempbuf, buffer, written, chunkfree_cb, buffer);
   
-  /*struct stat st;
-  int fd = open("/home/kev009/c/009mc/myne2/blockdata.hex", O_RDONLY);
-  fstat(fd, &st);
-  
-  n_written = htonl(st.st_size);
-  evbuffer_add(tempbuf, &n_written, sizeof(n_written));
-  evbuffer_add_file(tempbuf, fd, 0, st.st_size);*/
-  
- 
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
   

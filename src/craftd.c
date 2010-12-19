@@ -147,6 +147,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
         //TODO: Convert this to a SLIST_FOREACH
         //XXXX Grab a rdlock until player is found, wrlock delete, free
         pthread_rwlock_wrlock(&PL_rwlock);
+        bstrFree(player->username);
 	SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
 	pthread_rwlock_unlock(&PL_rwlock);
