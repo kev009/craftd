@@ -85,14 +85,12 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem->player = player;
   
   /* Add item to work queue */
-  pthread_spin_lock(&WQ_spinlock);
+  pthread_mutex_lock(&worker_cvmutex);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
-  pthread_spin_unlock(&WQ_spinlock);
   
   /* Dispatch to an open worker */
-  //pthread_mutex_lock(&worker_cvmutex);
   pthread_cond_signal(&worker_cv);
-  //pthread_mutex_unlock(&worker_cvmutex);
+  pthread_mutex_unlock(&worker_cvmutex);
 
   return; // Good read
 }
@@ -126,6 +124,21 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 
     if (finished)
     {
+	/* If the client disconnects, remove any pending WP buffer events */
+	struct WQ_entry *workitem, *workitemtmp;
+	pthread_mutex_lock(&worker_cvmutex);
+        STAILQ_FOREACH_SAFE(workitem, &WQ_head, WQ_entries, workitemtmp)
+	{
+	  if(workitem->bev == bev)
+	  {
+	    STAILQ_REMOVE(&WQ_head, workitem, WQ_entry, WQ_entries);
+	    LOG(LOG_DEBUG, "bev removed from workerpool by errorcb");
+
+            free(workitem);
+	  }
+	}
+	//pthread_mutex_unlock(&worker_cvmutex);
+
         if (player->username != NULL)
         {
           /* In-band disconnect message */
@@ -153,26 +166,13 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
 	SLIST_REMOVE(&PL_head, ctx, PL_entry, PL_entries);
         --PL_count;
 	pthread_rwlock_unlock(&PL_rwlock);
-	
-	/* If the client disconnects, remove any pending WP buffer events */
-	struct WQ_entry *workitem, *workitemtmp;
-	pthread_spin_lock(&WQ_spinlock);
-	STAILQ_FOREACH_SAFE(workitem, &WQ_head, WQ_entries, workitemtmp)
-	{
-	  if(workitem->bev == bev)
-	  {
-	    STAILQ_REMOVE(&WQ_head, workitem, WQ_entry, WQ_entries);
-	    LOG(LOG_DEBUG, "bev removed from workerpool by errorcb");
-
-            free(workitem);
-	  }
-	}
-	pthread_spin_unlock(&WQ_spinlock);
-	
+		
         if (ctx)
 	  free(ctx);
 	if (bev)
 	  bufferevent_free(bev);
+
+        pthread_mutex_unlock(&worker_cvmutex);
     }
 }
 
@@ -336,14 +336,14 @@ main(int argc, char *argv[])
   /* Get command line arguments */
   int opt;
   int dontfork = 0;
-  int dontlogmask = 0;
+  int debugging = 0;
   char *argconfigfile = NULL;
   while((opt = getopt(argc, argv, "c:dhnv")) != -1)
   {
     switch(opt)
     {
       case 'd':
-        dontlogmask = 1;
+        debugging = 1;
         break;
       case 'v':
         exit(EXIT_SUCCESS); // Version header already printed
@@ -367,7 +367,7 @@ main(int argc, char *argv[])
   }
 
   /* By default, mask debugging messages */
-  if (!dontlogmask)
+  if (!debugging)
   {
     log_console_setlogmask(LOG_MASK(LOG_DEBUG));
     setlogmask(LOG_MASK(LOG_DEBUG));
@@ -397,9 +397,7 @@ main(int argc, char *argv[])
   PL_count = 0;
 
   /* Work Queue is a singly-linked tail queue for player work requests */
-  pthread_spin_init(&WQ_spinlock, 0);
   STAILQ_INIT(&WQ_head);
-  WQ_count = 0;
 
   if (!dontfork && Config.daemonize == true)
   {
@@ -417,8 +415,9 @@ main(int argc, char *argv[])
 #else
   status = evthread_use_pthreads();
 #endif
-  
-  evthread_enable_lock_debuging(); // TODO: DEBUG flag
+ 
+  if(debugging)
+    evthread_enable_lock_debuging();
 
   if(status != 0)
     ERR("Cannot initialize libevent threading");
@@ -448,7 +447,6 @@ main(int argc, char *argv[])
   pthread_attr_setdetachstate(&WP_thread_attr, PTHREAD_CREATE_DETACHED);
   
   pthread_mutex_init(&worker_cvmutex, NULL);
-  pthread_mutex_lock(&worker_cvmutex);
   status = pthread_cond_init(&worker_cv, NULL);
   if(status !=0)
     ERR("Worker condition var init failed!");
@@ -463,6 +461,7 @@ main(int argc, char *argv[])
   }
 
   /* Start inbound game server*/
+  sleep(1);
   run_server();
   
   return 0;

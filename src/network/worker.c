@@ -67,30 +67,26 @@ void
   
   for(;;)
   {
-    //pthread_mutex_lock(&worker_cvmutex);
-    pthread_cond_wait(&worker_cv, &worker_cvmutex);
-    //pthread_mutex_unlock(&worker_cvmutex);
+    pthread_mutex_lock(&worker_cvmutex);
     
-    LOGT(LOG_DEBUG, "in worker: %d", id);
-    
-    /* Pull work item */
-    pthread_spin_lock(&WQ_spinlock);
     /* Check our predicate again:  The WQ is not empty
      * Prevent a nasty race condition if the client disconnects
      * Works in tandem with errorcb FOREACH bev removal loop
      */
-    if(STAILQ_EMPTY(&WQ_head))
+    do
     {
-      LOG(LOG_DEBUG, "Race avoidance in workerpool");
-      pthread_spin_unlock(&WQ_spinlock);
-      //pthread_mutex_unlock(&worker_cvmutex);
-      continue;
+      LOGT(LOG_DEBUG, "Worker %d ready", id);
+      pthread_cond_wait(&worker_cv, &worker_cvmutex);
     }
-
+    while (STAILQ_EMPTY(&WQ_head));
+    
+    LOGT(LOG_DEBUG, "in worker: %d", id);
+    
+    /* Pull work item */
     workitem = STAILQ_FIRST(&WQ_head);
     STAILQ_REMOVE_HEAD(&WQ_head, WQ_entries);
-    pthread_spin_unlock(&WQ_spinlock);
-    
+    pthread_mutex_unlock(&worker_cvmutex);
+
     bev = workitem->bev;
     player = workitem->player;
     
@@ -161,10 +157,6 @@ void
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
     free(workitem);
-    
-    //sleep(2); // Test for WQ distribution
-    
-    //pthread_mutex_unlock(&worker_cvmutex);
     continue;
 
 WORKER_ERR:
@@ -175,7 +167,6 @@ WORKER_ERR:
     send_kick(player, wmsg);
     bstrFree(wmsg);
 
-    //pthread_mutex_unlock(&worker_cvmutex);
     continue;
   }
 

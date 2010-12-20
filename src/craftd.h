@@ -79,9 +79,8 @@ pthread_mutex_t worker_cvmutex;
 
 /**
  * Declare a Work Queue as a singly-linked tail queue for player work reqs
+ * Uses the worker_cv and worker_cvmutex for syncronization
  */
-pthread_spinlock_t WQ_spinlock;
-int WQ_count;
 STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
 
 /**
