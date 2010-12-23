@@ -38,7 +38,7 @@
  * PROTOCOL_VERSION controls the allowed client version
  */
 
-#define PROTOCOL_VERSION (7)
+#define PROTOCOL_VERSION (8)
 
 #define MAX_CHUNKARRAY (81920)
 
@@ -49,9 +49,10 @@ enum packetid
   PID_HANDSHAKE         = 0x02,
   PID_CHAT              = 0x03,
   PID_TIMEUPDATE        = 0x04,
-  PID_PINVENTORY        = 0x05,
+  PID_PINVENTORY        = 0x05, //TODO: different in v8
   PID_SPAWNPOS          = 0x06,
   PID_USEENTITY         = 0x07,
+  PID_UPDATEHEALTH      = 0x08,
   PID_RESPAWN		= 0x09,
   PID_PLAYERFLY         = 0x0A,
   PID_PLAYERPOS         = 0x0B,
@@ -60,7 +61,6 @@ enum packetid
   PID_PLAYERDIG         = 0x0E,
   PID_BLOCKPLACE        = 0x0F,
   PID_HOLDCHANGE        = 0x10,
-  PID_ADDINVENTORY      = 0x11,
   PID_ARMANIMATE        = 0x12,
   PID_NAMEDENTITYSPAWN  = 0x14,
   PID_PICKUPSPAWN       = 0x15,
@@ -74,12 +74,21 @@ enum packetid
   PID_ENTITYLOOK        = 0x20,
   PID_ENTITYLOOKRELMOVE = 0x21,
   PID_ENTITYTELEPORT    = 0x22,
+  PID_ENTITYSTATUS      = 0x26,
   PID_ATTACHENTITY      = 0x27,
   PID_PRECHUNK          = 0x32,
   PID_MAPCHUNK	        = 0x33,
   PID_MULTIBLOCKCHANGE  = 0x34,
   PID_BLOCKCHANGE	= 0x35,
-  PID_COMPLEXENTITY     = 0x3B,
+  PID_EXPLOSION         = 0x3C,
+  PID_OPENWINDOW        = 0x64,
+  PID_CLOSEWINDOW       = 0x65,
+  PID_WINDOWCLICK       = 0x66,
+  PID_SETSLOT           = 0x67,
+  PID_WINDOWITEMS       = 0x68,
+  PID_UPDATEPROGBAR     = 0x69,
+  PID_TRANSACTION       = 0x6A,
+  PID_UPDATESIGN        = 0x82,
   PID_DISCONNECT        = 0xFF
 };
 
@@ -150,28 +159,6 @@ struct packet_time
 {
   int8_t pid;
   int64_t time;
-};
-
-/* pid 0x05 */
-struct packet_inventory
-{
-  int8_t pid;
-  int32_t type;
-  int16_t count;
-  void *payload; //FIXME: void ptr necessary?
-};
-// Inventory offset information (C99 initialized struct)
-static const struct
-{
-  const int base;
-  const int typeoffset;
-  const int countoffset;
-  const int payloadoffset;
-} packet_inventorysz = {
-  .base       	 = sizeof(int8_t) + sizeof(int32_t) + sizeof(int16_t),
-  .typeoffset	 = sizeof(int8_t),
-  .countoffset   = sizeof(int8_t) + sizeof(int32_t),
-  .payloadoffset = sizeof(int8_t) + sizeof(int32_t) + sizeof(int16_t)
 };
 
 /* pid 0x06 */
@@ -332,6 +319,60 @@ struct packet_mapchunk
   uint8_t sizez;
   int32_t bytearraysize;
   int8_t *bytearray;
+};
+
+/* pid 0x64 */
+struct packet_openwindow
+{
+  int8_t pid;
+  int8_t winid;
+  int8_t type;
+  bstring title;
+  int8_t slots;
+};
+// Open window size/offset information (C99 initialized struct)
+static const struct
+{
+  const int base;
+  const int str1offset;
+} packet_openwindowsz = {
+  .base       = 4 * sizeof(int8_t) + sizeof(int16_t),
+  .str1offset = 3 * sizeof(int8_t)
+};
+
+/* pid 0x65 */
+struct packet_closewindow
+{
+  int8_t pid;
+  int8_t winid;
+};
+static const int packet_closewindowsz = 2 * sizeof(int8_t);
+
+/* pid 0x66 */
+/* Note: this packet is variable length.  If itemid is -1, itemcount and
+ * itemuses are not sent
+ */
+struct packet_windowclick
+{
+  int8_t pid;
+  int8_t winid;
+  int16_t slot;
+  int8_t rightclick;
+  int16_t action;
+  int16_t itemid;
+  int8_t itemcount;
+  int8_t itemuses;
+};
+// Window click size information (C99 initialized struct)
+static const struct
+{
+  const int itemidoffset;
+  const int clicknull;
+  const int click;
+} packet_windowclicksz = {
+  .itemidoffset = 3 * sizeof(int8_t) + 2 * sizeof(int16_t),
+  .clicknull = 3 * sizeof(int8_t) + 3 * sizeof(int16_t),
+  .click = 5 * sizeof(int8_t) + 3 * sizeof(int16_t)
 };
 
 /* pid 0xFF */

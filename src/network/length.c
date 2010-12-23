@@ -145,47 +145,6 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_chatsz.base + mlen;
 	return len_returncode(inlen, totalsize);
     }
-    case PID_PINVENTORY: // Update inventory packet 0x05
-    {
-        struct evbuffer_ptr ptr;
-	int16_t count;
-	int totalsize;
-	int status;
-
-	/* Pull the inventory packet item count */
-	evbuffer_ptr_set(input, &ptr, packet_inventorysz.countoffset,
-			 EVBUFFER_PTR_SET);
-	status = CRAFTD_evbuffer_copyout_from(input, &count, sizeof(count), &ptr);
-	if (status != 0)
-	  return -status;
-	
-	count = ntohs(count);
-	
-	/* Iterate the inventory items to get the variable length */
-	int itemoffset = 0;
-	int16_t itemid;
-	for (int i = 0; i < count; ++i)
-	{
-	  evbuffer_ptr_set(input, &ptr, packet_inventorysz.payloadoffset
-			    + itemoffset, EVBUFFER_PTR_SET);
-	  status = CRAFTD_evbuffer_copyout_from(input, &itemid, 
-						sizeof(itemid), &ptr);
-	  if (status != 0)
-	    return -status;
-	  
-	  itemid = ntohs(itemid);
-	  itemoffset += sizeof(int16_t); // Move past the item id
-	  
-	  if (itemid != -1)
-	  {
-	    /* Skip past the item count and item health */
-	    itemoffset += sizeof(int8_t) + sizeof(int16_t);
-	  }
-	}
-	
-	totalsize = packet_inventorysz.base + itemoffset;
-	return len_returncode(inlen, totalsize);
-    }
     case PID_USEENTITY: // Use entity packet 0x07
     {
 	return len_returncode(inlen, packet_playerpossz);
@@ -229,6 +188,30 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     case PID_PICKUPSPAWN:
     {
         return len_returncode(inlen, packet_pickupspawnsz);
+    }
+    case PID_CLOSEWINDOW: // Close window 0x65
+    {
+        return len_returncode(inlen, packet_closewindowsz);
+    }
+    case PID_WINDOWCLICK: // Window click 0x66
+    {
+      struct evbuffer_ptr ptr;
+      int status;
+      int16_t itemid;
+
+      evbuffer_ptr_set(input, &ptr, packet_windowclicksz.itemidoffset,
+                       EVBUFFER_PTR_SET);
+
+      status = CRAFTD_evbuffer_copyout_from(input, &itemid, sizeof(itemid), 
+                                            &ptr);
+      if ( status != 0)
+        return -status;
+
+      itemid = ntohs(itemid);
+      if (itemid == -1)
+        return len_returncode(inlen, packet_windowclicksz.clicknull);
+      else
+        return len_returncode(inlen, packet_windowclicksz.click);
     }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {

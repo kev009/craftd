@@ -150,14 +150,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 
         return 0;
     }
-    case PID_PINVENTORY: // Update inventory packet 0x05
-    {
-        LOG(LOG_DEBUG, "recvd update inventory packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
-    }
     case PID_USEENTITY: // Use entity packet 0x07
     {
 	LOG(LOG_DEBUG, "recvd use entity packet");
@@ -285,12 +277,30 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	
 	break;
     }
+    case PID_CLOSEWINDOW: // Close window packet 0x65
+    {
+        LOG(LOG_DEBUG, "recvd close window packet");
+
+        evbuffer_drain(input, pktlen);
+
+        break;
+    }
+    case PID_WINDOWCLICK: // Window click 0x66
+    {
+        LOG(LOG_DEBUG, "recvd window click packet");
+
+        evbuffer_drain(input, pktlen);
+
+        break;
+    }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
         LOG(LOG_DEBUG, "recvd disconnect packet");
 
+        evbuffer_drain(input, pktlen);
+        
         errorcb(bev, BEV_EVENT_EOF, player);
-	
+
         break;
     }
     default:
