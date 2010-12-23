@@ -265,11 +265,9 @@ static const int packet_blockplacesz = 3 * sizeof(int8_t) + sizeof(int16_t)
 struct packet_holdchange
 {
   int8_t pid;
-  int32_t unused;
   int16_t itemid;
 };
-static const int packet_holdchangesz = sizeof(int8_t) + sizeof(int32_t)
-				     + sizeof(int16_t);
+static const int packet_holdchangesz = sizeof(int8_t) + sizeof(int16_t);
 
 /* pid 0x12 */
 struct packet_armanimate
