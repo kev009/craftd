@@ -35,13 +35,14 @@
  * this stuff is worth it, you can buy me a beer in return. Lukas Niederbremer.
  * --------------------------------------------------------------------------
  */
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <zlib.h>
 #include <string.h>
 
-#include "endianness.h"
+#include "javaendian.h"
 #include "nbt.h"
 
 /* Initialization subroutine(s) */
@@ -201,8 +202,7 @@ int nbt_read_short(nbt_file *nbt, int16_t **out)
     int16_t t;
 
     gzread(nbt->fp, &t, sizeof(t));
-    if (get_endianness() == L_ENDIAN)
-        swaps((uint16_t *)&t);
+    t = ntohs(t);
 
     *out = malloc(sizeof(int16_t));
     memcpy(*out, &t, sizeof(int16_t));
@@ -216,8 +216,7 @@ int nbt_read_int(nbt_file *nbt, int32_t **out)
     int32_t t;
 
     gzread(nbt->fp, &t, sizeof(t));
-    if (get_endianness() == L_ENDIAN)
-        swapi((uint32_t *)&t);
+    t = ntohl(t);
     
     *out = malloc(sizeof(int32_t));
     memcpy(*out, &t, sizeof(int32_t));
@@ -230,8 +229,7 @@ int nbt_read_long(nbt_file *nbt, int64_t **out)
     int64_t t;
 
     gzread(nbt->fp, &t, sizeof(t));
-    if (get_endianness() == L_ENDIAN)
-        swapl((uint64_t *)&t);
+    t = ntohll(t);
 
     *out = malloc(sizeof(int64_t));
     memcpy(*out, &t, sizeof(int64_t));
@@ -244,8 +242,7 @@ int nbt_read_float(nbt_file *nbt, float **out)
     float t;
 
     gzread(nbt->fp, &t, sizeof(t));
-    if (get_endianness() == L_ENDIAN)
-        t = swapf(t);
+    t = Cswapf(t);
 
     *out = malloc(sizeof(float));
     memcpy(*out, &t, sizeof(float));
@@ -258,8 +255,7 @@ int nbt_read_double(nbt_file *nbt, double **out)
     double t;
 
     gzread(nbt->fp, &t, sizeof(t));
-    if (get_endianness() == L_ENDIAN)
-        t = swapd(t);
+    t = Cswapd(t);
 
     *out = malloc(sizeof(double));
     memcpy(*out, &t, sizeof(double));
@@ -272,8 +268,7 @@ int nbt_read_byte_array(nbt_file *nbt, unsigned char **out)
     int32_t len;
 
     gzread(nbt->fp, &len, sizeof(len));
-    if (get_endianness() == L_ENDIAN)
-        swapi((uint32_t *)&len);
+    len = ntohl(len);
 
     *out = malloc(len);
     gzread(nbt->fp, *out, len);
@@ -286,8 +281,7 @@ int nbt_read_string(nbt_file *nbt, char **out)
     int16_t len;
 
     gzread(nbt->fp, &len, sizeof(len));
-    if (get_endianness() == L_ENDIAN)
-        swaps((uint16_t *)&len);
+    len = ntohs(len);
 
     *out = malloc(len + 1);
     memset(*out, 0, len + 1);
@@ -307,8 +301,7 @@ int32_t nbt_read_list(nbt_file *nbt, char *type_out, void ***target)
 
     gzread(nbt->fp, &len, sizeof(len));
 
-    if (get_endianness() == L_ENDIAN)
-        swapi((uint32_t *)&len);
+	len = ntohl(len);
 
 
     *target = malloc(len * sizeof(void *));
@@ -891,10 +884,7 @@ int nbt_write_byte(nbt_file *nbt, char *val)
 int nbt_write_short(nbt_file *nbt, int16_t *val)
 {
     int16_t temp = *val;
-
-    /* Needs swapping first? */
-    if (get_endianness() == L_ENDIAN)
-        swaps((uint16_t *)&temp);
+    temp = htonl(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(int16_t));
 }
@@ -902,9 +892,7 @@ int nbt_write_short(nbt_file *nbt, int16_t *val)
 int nbt_write_int(nbt_file *nbt, int32_t *val)
 {
     int32_t temp = *val;
-
-    if (get_endianness() == L_ENDIAN)
-        swapi((uint32_t *)&temp);
+    temp = htonl(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(int32_t));
 }
@@ -912,9 +900,7 @@ int nbt_write_int(nbt_file *nbt, int32_t *val)
 int nbt_write_long(nbt_file *nbt, int64_t *val)
 {
     int64_t temp = *val;
-
-    if (get_endianness() == L_ENDIAN)
-        swapl((uint64_t *)&temp);
+    temp = htonll(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(int64_t));
 }
@@ -922,9 +908,7 @@ int nbt_write_long(nbt_file *nbt, int64_t *val)
 int nbt_write_float(nbt_file *nbt, float *val)
 {
     float temp = *val;
-
-    if (get_endianness() == L_ENDIAN)
-        temp = swapf(temp);
+    temp = Cswapf(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(float));
 }
@@ -932,9 +916,7 @@ int nbt_write_float(nbt_file *nbt, float *val)
 int nbt_write_double(nbt_file *nbt, double *val)
 {
     double temp = *val;
-
-    if (get_endianness() == L_ENDIAN)
-        temp = swapd(temp);
+    temp = Cswapd(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(double));
 }

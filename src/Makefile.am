@@ -7,7 +7,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/compat/
 
 # Custom build shim for jansson
 jsondir = $(top_srcdir)/third-party/jansson/src
-noinst_LTLIBRARIES = libjansson.la
+noinst_LTLIBRARIES = libjansson.la libcdnbt.la
 libjansson_la_includedir = $(jsondir)/
 libjansson_la_SOURCES = \
         $(jsondir)/dump.c \
@@ -26,6 +26,10 @@ libjansson_la_SOURCES = \
         $(jsondir)/variadic.c
 libjansson_la_LDFLAGS = \
         -export-symbols-regex '^json_'
+
+cdnbtdir = nbt
+libcdnbt_la_includedir = $(cdnbtdir)/
+libcdnbt_la_SOURCES = $(cdnbtdir)/nbt.c $(cdnbtdir)/nbt.h
 
 bstringdir = $(top_srcdir)/third-party/bstring
 bin_PROGRAMS = craftd
