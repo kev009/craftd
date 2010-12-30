@@ -29,5 +29,6 @@
 #include <config.h>
 
 /* Map Chunk */
+int loadChunk(int x, int z, uint8_t *mapdata);
 
 #endif

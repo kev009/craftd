@@ -71,6 +71,9 @@ void ev_log_callback(int severity, const char *msg);
 int ismc_utf8(const char *str);
 bstring getMCString(struct evbuffer *buf, int16_t len);
 
+/* Public utility functions */
+char *itoa(int value, char *result, int base);
+
 /* Public memory management wrappers */
 void *Malloc(size_t size);
 void *Calloc(size_t num, size_t size);

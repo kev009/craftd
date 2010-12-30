@@ -25,6 +25,107 @@
 
 #include <stdio.h>
 #include <zlib.h>
+
+#include "util.h"
 #include "mapchunk.h"
+#include "nbt/nbt.h"
+#include "network/packets.h" // temp for MAX_CHUNKARRAY
 
 /* Map Chunk */
+
+// Temp
+const char *worldfolder = "/home/kev009/World1";
+const int WORLDBASE = 36;
+const int PATHMAX = 256; //fixme
+
+int valid_chunk(nbt_tag *nbtroot)
+{
+    /* Check valid root element */
+    nbt_tag *root = nbt_find_tag_by_name("Level", nbtroot);
+
+    if ((root != NULL) &&
+        (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND))
+    {
+        nbt_tag *blocks = nbt_find_tag_by_name("Blocks", root);
+
+        if ((blocks != NULL) && (blocks->type == TAG_BYTE_ARRAY))
+        {
+            nbt_byte_array *arr = (nbt_byte_array *)blocks->value;
+
+            if (arr->length == 32768)
+                return 0; /* Valid at last. */
+        }
+    }
+
+    return 1;
+}
+
+int loadChunk(int x, int z, uint8_t *mapdata)
+{
+  const char bufsize = 8; // Big enough for all base36 int values and -,nul
+  char chunkpath[PATHMAX];
+  char dir1[bufsize], dir2[bufsize];
+  char cname1[bufsize], cname2[bufsize];
+  nbt_file *nf;
+
+  /* Chunk directory and subdir location */
+  itoa((x & 63), dir1, WORLDBASE);
+  itoa((z & 63), dir2, WORLDBASE);
+  /* Chunk file name */
+  itoa(x, cname1, WORLDBASE);
+  itoa(z, cname2, WORLDBASE);
+
+  evutil_snprintf(chunkpath, PATHMAX, "%s/%s/%s/c.%s.%s.dat", worldfolder,
+      dir1, dir2, cname1, cname2);
+
+  LOGT(LOG_DEBUG, "Loading chunk %s", chunkpath);
+
+  if (nbt_init(&nf) != NBT_OK)
+  {
+    LOG(LOG_ERR, "cannot init chunk struct");
+    return -1;
+  }
+
+  if (nbt_parse(nf, chunkpath) != NBT_OK)
+  {
+    LOG(LOG_ERR, "cannot parse chunk '%s'", chunkpath);
+    goto CHUNKRDERR;
+  }
+
+  if (valid_chunk(nf->root) == 0)
+  {
+    nbt_byte_array *blocks, *data, *skylight, *blocklight;
+    nbt_tag *t_level = nbt_find_tag_by_name("Level", nf->root);
+    nbt_tag *t_blocks = nbt_find_tag_by_name("Blocks", t_level);
+    nbt_tag *t_data = nbt_find_tag_by_name("Data", t_level);
+    nbt_tag *t_skylight = nbt_find_tag_by_name("SkyLight", t_level);
+    nbt_tag *t_blocklight = nbt_find_tag_by_name("BlockLight", t_level);
+
+    blocks = nbt_cast_byte_array(t_blocks);
+    data = nbt_cast_byte_array(t_data);
+    skylight = nbt_cast_byte_array(t_skylight);
+    blocklight = nbt_cast_byte_array(t_blocklight);
+
+    int offset = 0;
+    memcpy(mapdata, blocks->content, blocks->length);
+    offset += blocks->length;
+    memcpy(mapdata+offset, data->content, data->length);
+    offset += data->length;
+    memcpy(mapdata+offset, skylight->content, skylight->length);
+    offset += skylight->length;
+    memcpy(mapdata+offset, blocklight->content, blocklight->length);
+  }
+  else
+  {
+    LOG(LOG_ERR, "bad chunk file '%s'", chunkpath);
+    goto CHUNKRDERR;
+  }
+
+  // Good read
+  nbt_free(nf);
+  return 0;
+
+CHUNKRDERR:
+  nbt_free(nf);
+  return -1;
+}

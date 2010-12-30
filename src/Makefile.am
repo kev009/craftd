@@ -45,4 +45,4 @@ craftd_SOURCES += timeloop.c timeloop.h
 craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
-craftd_LDADD = $(PTHREAD_LIBS) libjansson.la
+craftd_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la

@@ -33,6 +33,7 @@
 #include "network.h"
 #include "network-private.h"
 #include "packets.h"
+#include "mapchunk.h"
 
 // Hack zlib in to test chunk sending
 #include <stdio.h>
@@ -72,19 +73,19 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  //send_prechunk(player, 0, -1, true); // TODO: pull spwan position from file
+  //send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
   //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
-  for(int i = -4; i < 5; i++)
+  for(int x = -4; x < 5; x++)
   {
-    for(int j = -4; j < 5; j++)
+    for(int z = -4; z < 5; z++)
     {
-      send_prechunk(player, i,j, true);
-      send_chunk(player, i*16, 0, j*16, 16,128,16);
+      send_prechunk(player, x, z, true);
+      send_chunk(player, x, 0, z, 16,128,16);
     }
   }
   
-  send_spawnpos(player, 32, 260, 32); // TODO: pull spawn position from file
+  send_spawnpos(player, 0, 0, 0); // TODO: pull spawn position from file
   //send inv
   send_movelook(player, 0, 128.1, 128.2, 0, 0, 0, false); //TODO: pull position from file
   
@@ -311,9 +312,9 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   int8_t pid = PID_MAPCHUNK;
-  int32_t n_x = htonl(x);
+  int32_t n_x = htonl(x * 16);
   int16_t n_y = htons(y);
-  int32_t n_z = htonl(z);
+  int32_t n_z = htonl(z * 16);
  
   /* Check that the chunk size is greater than zero since the protocol must
    * subtract one before sending.  If so, do it.
@@ -324,12 +325,11 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   --sizey;
   --sizez;
 
-  // Hack in zlib support for test  
-  uint8_t *mapdata = (uint8_t*)Malloc(MAX_CHUNKARRAY);
-  memset(mapdata, 0, MAX_CHUNKARRAY);
-  for(int i=0; i<32768; i+=64)
-    mapdata[i] = 0x01; // Stone
-  memset(&mapdata[32768+16384], 255, 32768);
+  uint8_t mapdata[MAX_CHUNKARRAY];
+  if (loadChunk(x, z, &mapdata[0]) != 0)
+  {
+    return;
+  }
 
   uLongf written = MAX_CHUNKARRAY;
   Bytef *buffer = (Bytef*)Malloc(MAX_CHUNKARRAY);
@@ -353,7 +353,6 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
   
-  free(mapdata);
   free(buffer);
  
   return;
