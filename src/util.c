@@ -263,7 +263,8 @@ CRAFTD_daemonize(int nochdir, int noclose)
   // Else we are the forked child
   
   /* Prevent future opens from attaching TTYs and fork again to be safe */
-  struct sigaction sa = {.sa_handler = SIG_IGN}; sigaction(SIGCHLD, &sa, NULL);
+  struct sigaction sa = {.sa_handler = SIG_IGN}; 
+  sigaction(SIGCHLD, &sa, NULL);
   status = fork();
   if (status < 0)
     ERR("Daemonize: Cannot fork!");
