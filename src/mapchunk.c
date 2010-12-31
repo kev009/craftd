@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <zlib.h>
 
+#include "craftd-config.h"
 #include "util.h"
 #include "mapchunk.h"
 #include "nbt/nbt.h"
@@ -33,9 +34,7 @@
 /* Map Chunk */
 
 // Temp
-const char *worldfolder = "/home/kev009/World1";
 const int WORLDBASE = 36;
-const int PATHMAX = 256; //fixme
 
 int valid_chunk(nbt_tag *nbtroot)
 {
@@ -62,7 +61,7 @@ int valid_chunk(nbt_tag *nbtroot)
 int loadChunk(int x, int z, uint8_t *mapdata)
 {
   const char bufsize = 8; // Big enough for all base36 int values and -,nul
-  char chunkpath[PATHMAX];
+  char chunkpath[PATH_MAX]; // POSIX maximum path length
   char dir1[bufsize], dir2[bufsize];
   char cname1[bufsize], cname2[bufsize];
   nbt_file *nf;
@@ -74,8 +73,8 @@ int loadChunk(int x, int z, uint8_t *mapdata)
   itoa(x, cname1, WORLDBASE);
   itoa(z, cname2, WORLDBASE);
 
-  evutil_snprintf(chunkpath, PATHMAX, "%s/%s/%s/c.%s.%s.dat", worldfolder,
-      dir1, dir2, cname1, cname2);
+  evutil_snprintf(chunkpath, PATH_MAX, "%s/%s/%s/c.%s.%s.dat", 
+      Config.world_dir, dir1, dir2, cname1, cname2);
 
   LOGT(LOG_DEBUG, "Loading chunk %s", chunkpath);
 

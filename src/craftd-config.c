@@ -78,6 +78,8 @@ craftd_config_setdefaults()
   Config.workpool_size = 2;
   char *motddefault = "motd.conf";
   Config.motd_file = motddefault;
+  char *worlddefault = "world/";
+  Config.world_dir = worlddefault;
   
   // httpd settings
   Config.httpd_enabled = true;
@@ -271,6 +273,7 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
     Config.motd_file = parseJString(jsongame, "motd-file");
+    Config.world_dir = parseJString(jsongame, "world-dir");
   }
   else
   {

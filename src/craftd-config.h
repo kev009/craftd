@@ -56,6 +56,7 @@ struct
   int mcstring_max;
   int workpool_size;
   char *motd_file;
+  char *world_dir;
   
   // httpd settings
   bool httpd_enabled;

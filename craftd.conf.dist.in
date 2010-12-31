@@ -6,7 +6,8 @@
     "minecraft-stringmax": 100,
     "max-listenbacklog": 16,
     "worker-pool-size": 2,
-    "motd-file": "@sysconfdir@/craftd/motd.conf"
+    "motd-file": "@sysconfdir@/craftd/motd.conf",
+    "world-dir": "@datadir@/craftd/world"
   },
   "httpd": {
     "enabled": true,
