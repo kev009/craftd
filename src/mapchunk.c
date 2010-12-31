@@ -29,7 +29,6 @@
 #include "util.h"
 #include "mapchunk.h"
 #include "nbt/nbt.h"
-#include "network/packets.h" // temp for MAX_CHUNKARRAY
 
 /* Map Chunk */
 

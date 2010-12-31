@@ -76,18 +76,22 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   //send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
   //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
-  for(int x = -4; x < 5; x++)
+  // Temp
+  const int radius = 5;
+  const int spawnx = -264;
+  const int spawnz = 261;
+  for(int x = -radius; x < radius; x++)
   {
-    for(int z = -4; z < 5; z++)
+    for(int z = -radius; z < radius; z++)
     {
-      send_prechunk(player, x, z, true);
-      send_chunk(player, x, 0, z, 16,128,16);
+      send_prechunk(player, spawnx/16 + x, spawnz/16 + z, true);
+      send_chunk(player, spawnx/16 + x, 0, spawnz/16 + z, 16,128,16);
     }
   }
   
-  send_spawnpos(player, 0, 0, 0); // TODO: pull spawn position from file
+  send_spawnpos(player, spawnx, 65, spawnz); // TODO: pull spawn position from file
   //send inv
-  send_movelook(player, 0, 128.1, 128.2, 0, 0, 0, false); //TODO: pull position from file
+  send_movelook(player, spawnx, 70.1, 70.2, spawnz, 0, 0, false); //TODO: pull position from file
   
   //send_directchat(player, motd);
 
@@ -328,6 +332,7 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   uint8_t mapdata[MAX_CHUNKARRAY];
   if (loadChunk(x, z, &mapdata[0]) != 0)
   {
+    /* TODO: bad read.  add to mapgen queue if file DNE */
     return;
   }
 

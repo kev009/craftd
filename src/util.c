@@ -202,8 +202,8 @@ char *itoa(int value, char *result, int base)
   {
     tmp_value = value;
     value /= base;
-    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrs"
-             "tuvwxyz" [35 + (tmp_value - value * base)];
+    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqr"
+             "stuvwxyz" [35 + (tmp_value - value * base)];
   }
   while (value);
 
