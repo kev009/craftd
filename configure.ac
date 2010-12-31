@@ -90,6 +90,9 @@ AC_CHECK_DECLS([be64toh,htobe64], [], [],
 #endif
 ])
 
+AC_CHECK_MEMBERS([struct sigaction.sa_handler], [], [],
+[#include <signal.h>
+])
 
 # Check if we need to reorder float and double types
 AX_C_FLOAT_WORDS_BIGENDIAN

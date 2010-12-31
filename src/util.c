@@ -303,8 +303,23 @@ CRAFTD_daemonize(int nochdir, int noclose)
   // Else we are the forked child
   
   /* Prevent future opens from attaching TTYs and fork again to be safe */
+#ifdef HAVE_STRUCT_SIGACTION_SA_HANDLER
   struct sigaction sa = {.sa_handler = SIG_IGN}; 
   sigaction(SIGCHLD, &sa, NULL);
+  sigaction(SIGPIPE, &sa, NULL);
+  sigaction(SIGTSTP, &sa, NULL);
+  sigaction(SIGTTOU, &sa, NULL);
+  sigaction(SIGTTIN, &sa, NULL);
+#else
+  signal(SIGCHLD, SIG_IGN);
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
+  signal(SIGTTOU, SIG_IGN);
+  signal(SIGTTIN, SIG_IGN);
+#endif
+
+  // TODO: handle HUP, term
+
   status = fork();
   if (status < 0)
     ERR("Daemonize: Cannot fork!");
