@@ -304,7 +304,8 @@ CRAFTD_daemonize(int nochdir, int noclose)
   
   /* Prevent future opens from attaching TTYs and fork again to be safe */
 #ifdef HAVE_STRUCT_SIGACTION_SA_HANDLER
-  struct sigaction sa = {.sa_handler = SIG_IGN}; 
+  struct sigaction sa;
+  sa.sa_handler = SIG_IGN; 
   sigaction(SIGCHLD, &sa, NULL);
   sigaction(SIGPIPE, &sa, NULL);
   sigaction(SIGTSTP, &sa, NULL);

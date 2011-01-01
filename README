@@ -15,6 +15,7 @@ FreeBSD - GCC
 IRIX - MIPSpro (Big-Endian functionality verified)
 AIX - xlC, GCC (Big-Endian functionality verified)
 Windows - MinGW - Needs rework.  Priority is getting basics working on UNIX.
+Windows - Cygwin (works great w/o modification)
 
 == Users ==
 Wait for a release tarball.  The git repo does not track the generated configure
