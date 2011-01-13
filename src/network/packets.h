@@ -359,7 +359,7 @@ struct packet_windowclick
   int16_t action;
   int16_t itemid;
   int8_t itemcount;
-  int8_t itemuses;
+  int16_t itemuses;
 };
 // Window click size information (C99 initialized struct)
 static const struct
@@ -370,7 +370,7 @@ static const struct
 } packet_windowclicksz = {
   .itemidoffset = 3 * sizeof(int8_t) + 2 * sizeof(int16_t),
   .clicknull = 3 * sizeof(int8_t) + 3 * sizeof(int16_t),
-  .click = 5 * sizeof(int8_t) + 3 * sizeof(int16_t)
+  .click = 4 * sizeof(int8_t) + 4 * sizeof(int16_t)
 };
 
 /* pid 0xFF */
