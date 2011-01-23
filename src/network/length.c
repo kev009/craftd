@@ -189,10 +189,12 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
         return -status;
 
       itemid = ntohs(itemid);
-      if (itemid == -1)
+      if (itemid >= 0)
+        return len_returncode(inlen, packet_blockplacesz.place);
+      else if (itemid == -1)
         return len_returncode(inlen, packet_blockplacesz.emptyplace);
       else
-        return len_returncode(inlen, packet_blockplacesz.place);
+	return -EILSEQ;
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {

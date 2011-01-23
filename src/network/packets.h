@@ -288,8 +288,7 @@ struct packet_armanimate
   int32_t eid;
   int8_t animate;
 };
-static const int packet_armanimatesz = sizeof(int8_t) + sizeof(int32_t)
-		       + sizeof(int8_t);
+static const int packet_armanimatesz = 2 * sizeof(int8_t) + sizeof(int32_t);
 
 /* pid 0x13 */
 struct packet_entityaction
