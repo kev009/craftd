@@ -252,14 +252,25 @@ static const int packet_digsz = 4 * sizeof(int8_t) + 2 * sizeof(int32_t);
 struct packet_blockplace
 {
   int8_t pid;
-  int16_t itemid;
   int32_t x;
   int8_t y;
   int32_t z;
   int8_t direction;
+  int16_t itemid;
+  int8_t amount;
+  int16_t damage;
 };
-static const int packet_blockplacesz = 3 * sizeof(int8_t) + sizeof(int16_t)
-				     + 2 * sizeof(int32_t);
+// Block/item place size information (C99 initialized struct)
+static const struct
+{
+  const int itemidoffset;
+  const int emptyplace;
+  const int place;
+} packet_blockplacesz = {
+  .itemidoffset = 3 * sizeof(int8_t) + 2 * sizeof(int32_t),
+  .emptyplace = 3 * sizeof(int8_t) + 2 * sizeof(int32_t) + sizeof(int16_t),
+  .place =  4 * sizeof(int8_t) + 2 * sizeof(int32_t) + 2 * sizeof(int16_t)
+};
 
 /* pid 0x10 */
 struct packet_holdchange
