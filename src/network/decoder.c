@@ -269,6 +269,14 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev,
 	
 	break;
     }
+    case PID_ENTITYACTION: // Entity action (crouch) 0x13
+    {
+	LOG(LOG_DEBUG, "recvd entity action packet");
+	
+	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+	
+	break;
+    }
     case PID_PICKUPSPAWN:
     {
         LOG(LOG_DEBUG, "recvd pickup spawn packet");

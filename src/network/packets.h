@@ -62,6 +62,7 @@ enum packetid
   PID_BLOCKPLACE        = 0x0F,
   PID_HOLDCHANGE        = 0x10,
   PID_ARMANIMATE        = 0x12,
+  PID_ENTITYACTION	= 0x13,
   PID_NAMEDENTITYSPAWN  = 0x14,
   PID_PICKUPSPAWN       = 0x15,
   PID_COLLECTITEM       = 0x16,
@@ -289,6 +290,15 @@ struct packet_armanimate
 };
 static const int packet_armanimatesz = sizeof(int8_t) + sizeof(int32_t)
 		       + sizeof(int8_t);
+
+/* pid 0x13 */
+struct packet_entityaction
+{
+  int8_t pid;
+  int32_t eid;
+  int8_t action;
+};
+static const int packet_entityactionsz = 2 * sizeof(int8_t) + sizeof(int32_t);
 
 /* pid 0x15 */
 struct packet_pickupspawn

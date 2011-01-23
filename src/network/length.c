@@ -202,6 +202,10 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
         return len_returncode(inlen, packet_armanimatesz);
     }
+    case PID_ENTITYACTION: // Entity action (crouch) 0x13
+    {
+	return len_returncode(inlen, packet_entityactionsz);
+    }
     case PID_PICKUPSPAWN:
     {
         return len_returncode(inlen, packet_pickupspawnsz);
