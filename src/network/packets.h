@@ -274,10 +274,10 @@ struct packet_armanimate
 {
   int8_t pid;
   int32_t eid;
-  bool animate;
+  int8_t animate;
 };
 static const int packet_armanimatesz = sizeof(int8_t) + sizeof(int32_t)
-		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+		       + sizeof(int8_t);
 
 /* pid 0x15 */
 struct packet_pickupspawn
