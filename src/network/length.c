@@ -175,7 +175,24 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_BLOCKPLACE: // Place packet 0x0F
     {
-        return len_returncode(inlen, packet_blockplacesz);
+      struct evbuffer_ptr ptr;
+      int status;
+      int16_t itemid;
+
+      evbuffer_ptr_set(input, &ptr, packet_blockplacesz.itemidoffset,
+                       EVBUFFER_PTR_SET);
+      
+      status = CRAFTD_evbuffer_copyout_from(input, &itemid, sizeof(itemid), 
+                                            &ptr);
+      
+      if ( status != 0)
+        return -status;
+
+      itemid = ntohs(itemid);
+      if (itemid == -1)
+        return len_returncode(inlen, packet_blockplacesz.emptyplace);
+      else
+        return len_returncode(inlen, packet_blockplacesz.place);
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {
