@@ -42,7 +42,6 @@
 
 #define MAX_CHUNKARRAY (81920)
 
-extern tagbstring x;
 enum packetid
 {
   PID_KEEPALIVE         = 0x00,
@@ -341,7 +340,7 @@ static const struct
   const int str1offset;
 } packet_namedentityspawnsz = {
   .base       = 3 * sizeof(MCbyte) + 4 * sizeof(MCint) + 2 * sizeof(MCshort),
-  .str1offset = sizeof(MCbyte) +  sizeof(MCint);
+  .str1offset = sizeof(MCbyte) +  sizeof(MCint)
 };
 
 /* pid 0x15 */
@@ -415,7 +414,7 @@ static const struct
   const int str1offset;
 } packet_paintingsz = {
   .base       = sizeof(MCbyte) + 5 * sizeof(MCint) + sizeof(MCshort),
-  .str1offset = sizeof(MCbyte) +  sizeof(MCint);
+  .str1offset = sizeof(MCbyte) +  sizeof(MCint)
 };
 
 /* pid 0x1c */
@@ -508,7 +507,7 @@ struct packet_entityattach
   MCint eid;
   MCint vid; //eid of vehicle to be attached to
 };
-static const int packet_entityattachsz = sizeof(MCbyte); + 2 * sizeof(MCint);
+static const int packet_entityattachsz = sizeof(MCbyte) + 2 * sizeof(MCint);
 
 /* pid 0x28 */
 struct packet_entitymeta

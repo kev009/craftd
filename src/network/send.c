@@ -461,7 +461,7 @@ send_entity(struct PL_entry *player, int32_t eid)
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
 
-  int8_t pid = PID_ENTITY;
+  int8_t pid = PID_ENTITYINIT;
   eid = htonl(eid);
 
   evbuffer_add(tempbuf, &pid, sizeof(pid));
