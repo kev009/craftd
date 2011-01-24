@@ -42,6 +42,7 @@
 
 #define MAX_CHUNKARRAY (81920)
 
+extern tagbstring x;
 enum packetid
 {
   PID_KEEPALIVE         = 0x00,
@@ -49,10 +50,10 @@ enum packetid
   PID_HANDSHAKE         = 0x02,
   PID_CHAT              = 0x03,
   PID_TIMEUPDATE        = 0x04,
-  PID_PINVENTORY        = 0x05, //TODO: different in v8
+  PID_ENTITYEQUIPMENT   = 0x05,
   PID_SPAWNPOS          = 0x06,
   PID_USEENTITY         = 0x07,
-  PID_UPDATEHEALTH      = 0x08,
+  PID_PLAYERHEALTH      = 0x08,
   PID_RESPAWN		= 0x09,
   PID_PLAYERFLY         = 0x0A,
   PID_PLAYERPOS         = 0x0B,
@@ -66,17 +67,18 @@ enum packetid
   PID_NAMEDENTITYSPAWN  = 0x14,
   PID_PICKUPSPAWN       = 0x15,
   PID_COLLECTITEM       = 0x16,
-  PID_ADDOBJVEHICLE     = 0x17,
-  PID_MOBSPAWN          = 0x18,
+  PID_SPAWNOBJECT       = 0x17,
+  PID_SPAWNMOB          = 0x18,
+  PID_PAINTING		= 0x19,
   PID_ENTITYVELOCITY    = 0x1C,
-  PID_DESTROYENTITY     = 0x1D,
-  PID_ENTITY            = 0x1E,
+  PID_ENTITYDESTROY     = 0x1D,
+  PID_ENTITYINIT        = 0x1E,
   PID_ENTITYRELMOVE     = 0x1F,
   PID_ENTITYLOOK        = 0x20,
-  PID_ENTITYLOOKRELMOVE = 0x21,
-  PID_ENTITYTELEPORT    = 0x22,
+  PID_ENTITYLOOKMOVE 	= 0x21,
+  PID_ENTITYPOS		= 0x22,
   PID_ENTITYSTATUS      = 0x26,
-  PID_ATTACHENTITY      = 0x27,
+  PID_ENTITYATTACH      = 0x27,
   PID_PRECHUNK          = 0x32,
   PID_MAPCHUNK	        = 0x33,
   PID_MULTIBLOCKCHANGE  = 0x34,
@@ -96,19 +98,19 @@ enum packetid
 /* pid 0x00 */
 struct packet_keepalive
 {
-  uint8_t pid;
+  MCbyte pid;
 };
-static const int packet_keepalivesz = sizeof(uint8_t);
+static const int packet_keepalivesz = sizeof(MCbyte);
 
 /* pid 0x01 */
 struct packet_login
 {
-  uint8_t pid;
-  uint32_t version;
+  MCbyte pid;
+  MCint version;
   bstring username;
   bstring password;
-  uint64_t mapseed;
-  uint8_t dimension;
+  MClong mapseed;
+  MCbyte dimension;
 };
 // Login size/offset information (C99 initialized struct)
 static const struct
@@ -117,16 +119,16 @@ static const struct
   const int str1offset;
   const int str2offset;
 } packet_loginsz = {
-  .base       = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
-	      + sizeof(uint16_t) + sizeof(uint64_t) + sizeof(uint8_t),
-  .str1offset = sizeof(uint8_t) + sizeof(uint32_t),
-  .str2offset = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint16_t)
+  .base       = sizeof(MCbyte) + sizeof(MCint) + sizeof(MCshort)
+	      + sizeof(MCshort) + sizeof(MClong) + sizeof(MCbyte),
+  .str1offset = sizeof(MCbyte) + sizeof(MCint),
+  .str2offset = sizeof(MCbyte) + sizeof(MCint) + sizeof(MCshort)
 };
 
 /* pid 0x02 */
 struct packet_handshake
 {
-  uint8_t pid;
+  MCbyte pid;
   bstring username;
 };
 // Handshake size/offset information (C99 initialized struct)
@@ -135,14 +137,14 @@ static const struct
   const int base;
   const int str1offset;
 } packet_handshakesz = {
-  .base       = sizeof(uint8_t) + sizeof(uint16_t),
-  .str1offset = sizeof(uint8_t)
+  .base       = sizeof(MCbyte) + sizeof(MCshort),
+  .str1offset = sizeof(MCbyte)
 };
 
 /* pid 0x03 */
 struct packet_chat
 {
-  uint8_t pid;
+  MCbyte pid;
   bstring message;
 };
 // Chat size/offset information (C99 initialized struct)
@@ -151,115 +153,135 @@ static const struct
   const int base;
   const int str1offset;
 } packet_chatsz = {
-  .base       = sizeof(uint8_t) + sizeof(uint16_t),
-  .str1offset = sizeof(uint8_t)
+  .base       = sizeof(MCbyte) + sizeof(MCshort),
+  .str1offset = sizeof(MCbyte)
 };
 
 /* pid 0x04 */
 struct packet_time
 {
-  int8_t pid;
-  int64_t time;
+  MCbyte pid;
+  MClong time;
 };
+
+/* pid 0x05 */
+struct packet_entityequipment
+{
+  MCbyte pid;
+  MCint eid;
+  MCshort eslot;
+  MCshort eitem;
+  MCshort dmg; //Don't really know yet
+};
+static const int packet_entityequipmentsz = sizeof(MCbyte) + sizeof(MCint)
+		      + 3 * sizeof(MCshort);
 
 /* pid 0x06 */
 struct packet_spawnpos
 {
-  int8_t pid;
-  int32_t x;
-  int32_t y;
-  int32_t z;
+  MCbyte pid;
+  MCint x;
+  MCint y;
+  MCint z;
 };
 
 /* pid 0x07 */
 struct packet_useentity
 {
-  int8_t pid;
-  int32_t user;
-  int32_t target;
+  MCbyte pid;
+  MCint user;
+  MCint target;
   bool leftclick;
 };
-static const int packet_useentity = sizeof(int8_t) + 2 * sizeof(int32_t)
-		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_useentitysz = sizeof(MCbyte) + 2 * sizeof(MCint)
+		       + sizeof(MCbyte); // Use MCbyte to ensure bool is 1 byte
+
+/* pid 0x08 */
+struct packet_playerhealth
+{
+  MCbyte pid;
+  MCshort health;
+};
+static const int packet_playerhealthsz = sizeof(MCbyte) + sizeof(MCshort);
 
 /* pid 0x09 */
 struct packet_respawn
 {
-  int8_t pid;
+  MCbyte pid;
 };
-static const int packet_respawnsz = sizeof(int8_t);
+static const int packet_respawnsz = sizeof(MCbyte);
 
 /* pid 0x0A */
 struct packet_playerfly
 {
-  int8_t pid;
+  MCbyte pid;
   bool onground;
 };
-static const int packet_playerflysz = sizeof(int8_t)
-		      + sizeof(uint8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_playerflysz = sizeof(MCbyte)
+		      + sizeof(MCbyte); // Use MCbyte to ensure bool is 1 byte
 
 /* pid 0x0B */
 struct packet_playerpos
 {
-  int8_t pid;
-  double x;
-  double y;
-  double stance;
-  double z;
+  MCbyte pid;
+  MCdouble x;
+  MCdouble y;
+  MCdouble stance;
+  MCdouble z;
   bool flying;
 };
-static const int packet_playerpossz = sizeof(int8_t) + 4 * sizeof(double)
-		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_playerpossz = sizeof(MCbyte) + 4 * sizeof(MCdouble)
+		       + sizeof(MCbyte); // Use MCbyte to ensure bool is 1 byte
 
 /* pid 0x0C */
 struct packet_look
 {
-  int8_t pid;
-  float yaw;
-  float pitch;
+  MCbyte pid;
+  MCfloat yaw;
+  MCfloat pitch;
   bool flying;
 };
-static const int packet_looksz = sizeof(int8_t) + 2 * sizeof(float) 
-		       + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_looksz = sizeof(MCbyte) + 2 * sizeof(MCfloat) 
+		       + sizeof(MCbyte); // Use MCbyte to ensure bool is 1 byte
 
 /* pid 0x0D */
 struct packet_movelook
 {
-  int8_t pid;
-  double x;
-  double y;
-  double stance;
-  double z;
-  float yaw;
-  float pitch;
+  MCbyte pid;
+  MCdouble x;
+  MCdouble y;
+  MCdouble stance;
+  MCdouble z;
+  MCfloat yaw;
+  MCfloat pitch;
   bool flying;
 };
-static const int packet_movelooksz = sizeof(int8_t) + 4 * sizeof(double)
-   + 2 * sizeof(float) + sizeof(int8_t); // Use int8_t to ensure bool is 1 byte
+static const int packet_movelooksz = sizeof(MCbyte) + 4 * sizeof(MCdouble)
+   + 2 * sizeof(MCfloat) + sizeof(MCbyte); // Use MCbyte to ensure bool is 1 byte
 
 /* pid 0x0E */
 struct packet_dig
 {
- int8_t pid;
- int8_t status;
- int32_t x;
- int8_t y;
- int32_t z;
- int8_t face;
+ MCbyte pid;
+ MCbyte status;
+ MCint x;
+ MCbyte y;
+ MCint z;
+ MCbyte face;
 };
-static const int packet_digsz = 4 * sizeof(int8_t) + 2 * sizeof(int32_t);
+static const int packet_digsz = 4 * sizeof(MCbyte) + 2 * sizeof(MCint);
 
 /* pid 0x0F */
 struct packet_blockplace
 {
-  int8_t pid;
-  int32_t x;
-  int8_t y;
-  int32_t z;
-  int8_t direction;
-  int16_t itemid;
-  int8_t amount;
-  int16_t damage;
+  MCbyte pid;
+  MCint x;
+  MCbyte y;
+  MCint z;
+  MCbyte direction;
+  MCshort itemid;
+  MCbyte amount;
+  MCshort damage;
 };
 // Block/item place size information (C99 initialized struct)
 static const struct
@@ -268,85 +290,291 @@ static const struct
   const int emptyplace;
   const int place;
 } packet_blockplacesz = {
-  .itemidoffset = 3 * sizeof(int8_t) + 2 * sizeof(int32_t),
-  .emptyplace = 3 * sizeof(int8_t) + 2 * sizeof(int32_t) + sizeof(int16_t),
-  .place =  4 * sizeof(int8_t) + 2 * sizeof(int32_t) + 2 * sizeof(int16_t)
+  .itemidoffset = 3 * sizeof(MCbyte) + 2 * sizeof(MCint),
+  .emptyplace = 3 * sizeof(MCbyte) + 2 * sizeof(MCint) + sizeof(MCshort),
+  .place =  4 * sizeof(MCbyte) + 2 * sizeof(MCint) + 2 * sizeof(MCshort)
 };
 
 /* pid 0x10 */
 struct packet_holdchange
 {
-  int8_t pid;
-  int16_t itemid;
+  MCbyte pid;
+  MCshort itemid;
 };
-static const int packet_holdchangesz = sizeof(int8_t) + sizeof(int16_t);
+static const int packet_holdchangesz = sizeof(MCbyte) + sizeof(MCshort);
 
 /* pid 0x12 */
 struct packet_armanimate
 {
-  int8_t pid;
-  int32_t eid;
-  int8_t animate;
+  MCbyte pid;
+  MCint eid;
+  MCbyte animate;
 };
-static const int packet_armanimatesz = 2 * sizeof(int8_t) + sizeof(int32_t);
+static const int packet_armanimatesz = 2 * sizeof(MCbyte) + sizeof(MCint);
 
 /* pid 0x13 */
 struct packet_entityaction
 {
-  int8_t pid;
-  int32_t eid;
-  int8_t action;
+  MCbyte pid;
+  MCint eid;
+  MCbyte action;
 };
-static const int packet_entityactionsz = 2 * sizeof(int8_t) + sizeof(int32_t);
+static const int packet_entityactionsz = 2 * sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x14 */
+struct packet_namedentityspawn
+{
+  MCbyte pid;
+  MCint eid;
+  bstring entityname;
+  MCint x;
+  MCint y;
+  MCint z;
+  MCbyte rotation;
+  MCbyte pitch;
+  MCshort currentitem;
+};
+// Named Entity size information (C99 initialized struct)
+static const struct
+{
+  const int base;
+  const int str1offset;
+} packet_namedentityspawnsz = {
+  .base       = 3 * sizeof(MCbyte) + 4 * sizeof(MCint) + 2 * sizeof(MCshort),
+  .str1offset = sizeof(MCbyte) +  sizeof(MCint);
+};
 
 /* pid 0x15 */
 struct packet_pickupspawn
 {
-  int8_t pid;
-  int32_t eid;
-  int16_t item;
-  int8_t count;
-  int32_t x;
-  int32_t y;
-  int32_t z;
-  int8_t rotation;
-  int8_t pitch;
-  int8_t roll;
+  MCbyte pid;
+  MCint eid;
+  MCshort item;
+  MCbyte count;
+  MCint x;
+  MCint y;
+  MCint z;
+  MCbyte rotation;
+  MCbyte pitch;
+  MCbyte roll;
 };
-static const int packet_pickupspawnsz = 5 * sizeof(int8_t) 
-				      + 4 * sizeof(int32_t) + sizeof(int16_t);
+static const int packet_pickupspawnsz = 5 * sizeof(MCbyte) 
+				      + 4 * sizeof(MCint) + sizeof(MCshort);
+
+/* pid 0x16 */
+struct packet_collectitem
+{
+  MCbyte pid;
+  MCint eidcollected;
+  MCint eidcollector;
+};
+static const int packet_collectitemsz = sizeof(MCbyte) + 2 * sizeof(MCint);
+  
+/* pid 0x17 */
+struct packet_spawnobject
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte otype;
+  MCint x;
+  MCint y;
+  MCint z;
+};
+static const int packet_spawnobjectsz = 2 * sizeof(MCbyte) + 4 * sizeof(MCint);
+
+/* pid 0x18 */
+struct packet_spawnmob
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte mtype;
+  MCint x;
+  MCint y;
+  MCint z;
+  MCbyte rotation;
+  MCbyte pitch;
+  //TODO Add meta data stream field
+};
+//TODO determine size for packet_spawnmob
+
+/* pid 0x19 */
+struct packet_painting //TODO Verify packet details
+{
+  MCbyte pid;
+  MCint eid;
+  bstring title;
+  MCint x;
+  MCint y;
+  MCint z;
+  MCint type;
+};
+// painting packet size information (C99 initialized struct)
+static const struct
+{
+  const int base;
+  const int str1offset;
+} packet_paintingsz = {
+  .base       = sizeof(MCbyte) + 5 * sizeof(MCint) + sizeof(MCshort),
+  .str1offset = sizeof(MCbyte) +  sizeof(MCint);
+};
+
+/* pid 0x1c */
+struct packet_entityvelocity
+{
+  MCbyte pid;
+  MCint eid;
+  MCshort vx;
+  MCshort vy;
+  MCshort vz;
+};
+static const int packet_entityvelocitysz = sizeof(MCbyte) + sizeof(MCint) 
+					   + sizeof(MCshort);
+
+/* pid 0x1d */
+struct packet_entitydestroy
+{
+  MCbyte pid;
+  MCint eid;
+};
+static const int packet_entitydestroysz = sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x1e */
+struct packet_entityinit
+{
+  MCbyte pid;
+  MCint eid;
+};
+static const int packet_entityinitsz = sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x1f */
+struct packet_entityrelmove
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte rx;
+  MCbyte ry;
+  MCbyte rz;
+};
+static const int packet_entityrelmovesz = 4 * sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x20 */
+struct packet_entitylook
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte rotation;
+  MCbyte pitch;
+};
+static const int packet_entitylooksz = 3 * sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x21 */
+struct packet_entitylookmove
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte rx;
+  MCbyte ry;
+  MCbyte rz;
+  MCbyte rotation;
+  MCbyte pitch;
+};
+static const int packet_entitylookmovesz = 6 * sizeof(MCbyte) + sizeof(MCint);
+
+struct packet_entitypos
+{
+  MCbyte pid;
+  MCint eid;
+  MCint x;
+  MCint y;
+  MCint z;
+  MCbyte rotation;
+  MCbyte pitch;
+};
+static const int packet_entitypossz = 3 * sizeof(MCbyte) + 4 * sizeof(MCint);
+
+/* pid 0x26 */
+struct packet_entitystatus
+{
+  MCbyte pid;
+  MCint eid;
+  MCbyte status;
+};
+static const int packet_entitystatussz = 2 * sizeof(MCbyte) + sizeof(MCint);
+
+/* pid 0x27 */
+struct packet_entityattach
+{
+  MCbyte pid;
+  MCint eid;
+  MCint vid; //eid of vehicle to be attached to
+};
+static const int packet_entityattachsz = sizeof(MCbyte); + 2 * sizeof(MCint);
+
+/* pid 0x28 */
+struct packet_entitymeta
+{
+  MCbyte pid;
+  //TODO add metadata field
+};
+//TODO add packet_entitymetasz
 
 /* pid 0x32 */
 struct packet_prechunk
 {
-  int8_t pid;
-  int32_t x;
-  int32_t z;
+  MCbyte pid;
+  MCint x;
+  MCint z;
   bool mode;
 };
 
 /* pid 0x33 */
 struct packet_mapchunk
 {
-  int8_t pid;
-  int32_t x;
-  int16_t y;
-  int32_t z;
-  uint8_t sizex;
-  uint8_t sizey;
-  uint8_t sizez;
-  int32_t bytearraysize;
-  int8_t *bytearray;
+  MCbyte pid;
+  MCint x;
+  MCshort y;
+  MCint z;
+  MCbyte sizex;
+  MCbyte sizey;
+  MCbyte sizez;
+  MCint bytearraysize;
+  MCbyte *bytearray;
 };
+
+/* pid 0x36 */
+struct packet_noteblockplay
+{
+  MCbyte pid;
+  MCint x;
+  MCshort y;
+  MCint z;
+  MCbyte itype;
+  MCbyte pitch;
+};
+const static int packet_noteblockplaysz = 3 * sizeof(MCbyte) + sizeof(MCshort)
+					  + 2* sizeof(MCint);
+
+/* pid 0x3c */
+struct packet_explosion
+{
+  MCbyte pid;
+  MCdouble x;
+  MCdouble y;
+  MCdouble z;
+  MCfloat animradius;
+  MCint recordc;
+  MCbyte *records;
+};
+//TODO determine size of packet_explosion
 
 /* pid 0x64 */
 struct packet_openwindow
 {
-  int8_t pid;
-  int8_t winid;
-  int8_t type;
+  MCbyte pid;
+  MCbyte winid;
+  MCbyte type;
   bstring title;
-  int8_t slots;
+  MCbyte slots;
 };
 // Open window size/offset information (C99 initialized struct)
 static const struct
@@ -354,17 +582,17 @@ static const struct
   const int base;
   const int str1offset;
 } packet_openwindowsz = {
-  .base       = 4 * sizeof(int8_t) + sizeof(int16_t),
-  .str1offset = 3 * sizeof(int8_t)
+  .base       = 4 * sizeof(MCbyte) + sizeof(MCshort),
+  .str1offset = 3 * sizeof(MCbyte)
 };
 
 /* pid 0x65 */
 struct packet_closewindow
 {
-  int8_t pid;
-  int8_t winid;
+  MCbyte pid;
+  MCbyte winid;
 };
-static const int packet_closewindowsz = 2 * sizeof(int8_t);
+static const int packet_closewindowsz = 2 * sizeof(MCbyte);
 
 /* pid 0x66 */
 /* Note: this packet is variable length.  If itemid is -1, itemcount and
@@ -372,14 +600,14 @@ static const int packet_closewindowsz = 2 * sizeof(int8_t);
  */
 struct packet_windowclick
 {
-  int8_t pid;
-  int8_t winid;
-  int16_t slot;
-  int8_t rightclick;
-  int16_t action;
-  int16_t itemid;
-  int8_t itemcount;
-  int16_t itemuses;
+  MCbyte pid;
+  MCbyte winid;
+  MCshort slot;
+  MCbyte rightclick;
+  MCshort action;
+  MCshort itemid;
+  MCbyte itemcount;
+  MCshort itemuses;
 };
 // Window click size information (C99 initialized struct)
 static const struct
@@ -388,16 +616,16 @@ static const struct
   const int clicknull;
   const int click;
 } packet_windowclicksz = {
-  .itemidoffset = 3 * sizeof(int8_t) + 2 * sizeof(int16_t),
-  .clicknull = 3 * sizeof(int8_t) + 3 * sizeof(int16_t),
-  .click = 4 * sizeof(int8_t) + 4 * sizeof(int16_t)
+  .itemidoffset = 3 * sizeof(MCbyte) + 2 * sizeof(MCshort),
+  .clicknull = 3 * sizeof(MCbyte) + 3 * sizeof(MCshort),
+  .click = 4 * sizeof(MCbyte) + 4 * sizeof(MCshort)
 };
 
 /* pid 0xFF */
 struct packet_disconnect
 {
-  uint8_t pid;
-  int16_t slen;
+  MCbyte pid;
+  MCshort slen;
   bstring message;
 };
 // Chat size/offset information (C99 initialized struct)
@@ -406,8 +634,8 @@ static const struct
   const int base;
   const int str1offset;
 } packet_disconnectsz = {
-  .base       = sizeof(uint8_t) + sizeof(int16_t),
-  .str1offset = sizeof(uint8_t)
+  .base       = sizeof(MCbyte) + sizeof(MCshort),
+  .str1offset = sizeof(MCbyte)
 };
 
 #endif

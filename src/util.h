@@ -39,6 +39,17 @@
 #include "bstrlib.h"
 
 /**
+ * Define MC data types 
+ */
+typedef int8_t MCbyte;
+typedef int16_t MCshort;
+typedef int32_t MCint;
+typedef int64_t MClong;
+typedef float MCfloat;
+typedef double MCdouble;
+
+
+/**
  * Global logging and error handling macros
  */
 /* Function pointer to the current syslog() style logging routine */
