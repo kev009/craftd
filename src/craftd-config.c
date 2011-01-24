@@ -81,6 +81,21 @@ craftd_config_setdefaults()
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
   
+  // Proxy Settings
+  Config.proxy_enabled = false;
+  Config.proxy_port = 25564;
+  Config.proxy_default_server = "Default Server";
+  Server *defaultserv = (Server *)malloc(sizeof(Server));
+  bzero(defaultserv,sizeof(Server));
+  defaultserv->host = "127.0.0.1";
+  defaultserv->name = "Default Server";
+  defaultserv->port = 25565;
+  Server **defaultproxyservers = (Server **)malloc(sizeof(Server *)*2);
+  bzero(defaultproxyservers,sizeof(Server *)*2);
+  defaultproxyservers[0] = defaultserv;
+  defaultproxyservers[1] = NULL;
+  Config.proxy_servers = defaultproxyservers;
+
   // httpd settings
   Config.httpd_enabled = true;
   Config.httpd_port = 25566;
@@ -232,7 +247,7 @@ parseJString(const json_t *obj, const char *key)
 void
 craftd_config_parse(const char *file)
 {
-  json_t *json, *jsongame, *jsonhttp;
+  json_t *json, *jsongame, *jsonhttp, *jsonproxy;
   json_error_t error;
 
   /* If we didn't get a config file passed as an argument, check search path */
@@ -292,6 +307,43 @@ craftd_config_parse(const char *file)
   {
     LOG(LOG_INFO, "Config: no httpd section, skipping.");
   }
+  /* Get the Proxy server configuration */
+  jsonproxy = json_object_get(json,"proxy");
+  if(json_is_object(jsonproxy))
+  {
+    parseJBool(&Config.proxy_enabled,jsonproxy,"enabled");
+    parseJInt(&Config.proxy_port,jsonproxy,"proxy-port");
+    Config.proxy_default_server = parseJString(jsonproxy,"default-server");
+    json_t *jsonpservers = json_object_get(jsonproxy,"servers");
+    /* Get server configurations */
+    if(json_is_array(jsonpservers))
+    {
+      Server **proxyservers = (Server**)malloc((json_array_size(jsonpservers)+1)*sizeof(Server*));
+      int aIndex = 0;
+      for(; aIndex < json_array_size(jsonpservers); aIndex++)
+      {
+	json_t *serverelement = json_array_get(jsonpservers, aIndex);
+	proxyservers[aIndex] = (Server *) malloc(sizeof(Server));	
+	//Remember to free()/realloc() proxyservers when a server context is deleted or added during runtime
+	bzero(proxyservers[aIndex],sizeof(Server));
+	proxyservers[aIndex]->host = parseJString(serverelement,"host");
+	proxyservers[aIndex]->name = parseJString(serverelement,"name");
+	parseJInt(&proxyservers[aIndex]->port,serverelement,"port");
+      }
+      proxyservers[aIndex] = NULL; //Null terminate the list
+      Config.proxy_servers = proxyservers; //Save changes
+    }
+    else
+    {
+      LOG(LOG_INFO, "Config: no proxy:servers section, skipping");
+    }
+  }
+  else
+  {
+    LOG(LOG_INFO, "Config: no proxy section, skipping.");
+  }
+
+
   
   /* Release the file reader */
   json_decref(json);

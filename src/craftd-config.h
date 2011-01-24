@@ -46,7 +46,13 @@ void craftd_config_readmotd(char *file);
 #define MOTD_LINES (20) // Max MOTD line count
 extern bstring Config_motd[MOTD_LINES];
 int Config_motdsz;
-
+typedef struct Server
+{
+  //Server Definitions
+  char *host;
+  int port;
+  char *name;
+} Server;
 struct
 {
   // Game settings
@@ -58,10 +64,17 @@ struct
   char *motd_file;
   char *world_dir;
   
+  // Proxy Settings
+  bool proxy_enabled;
+  int proxy_port;
+  char *proxy_default_server;
+  Server **proxy_servers;
+
   // httpd settings
-  bool httpd_enabled;
+  bool httpd_enabled; 
   int httpd_port;
   char *docroot;
 } Config;
+
 
 #endif
