@@ -99,6 +99,7 @@ void
     /* Do work */
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
+    bufferevent_lock(bev);
     
     inlen = evbuffer_get_length(input);
     
@@ -156,11 +157,13 @@ void
 
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
+    bufferevent_unlock(bev);
     free(workitem);
     continue;
 
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
+    bufferevent_unlock(bev);
     free(workitem);
 
     bstring wmsg = bfromcstr("Error in packet sequence.");
