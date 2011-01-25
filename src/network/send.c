@@ -41,6 +41,83 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+
+/**
+ * This internal method process packets from a pointer to a struct and
+ * a packet type
+ * 
+ * @remarks Scope: private
+ * 
+ * @param player Player this method affects
+ * @param pkttype Type of packet that 'packet' points to
+ * @param packet Pointer to struct of packet type 'packetid'
+ */
+void
+process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
+{
+  switch(pkttype)
+  {
+    case PID_LOGIN:
+    {
+      process_login(player, ((struct packet_login*) packet)->username, ((struct packet_login*) packet)->version);
+      return;
+    }
+    case PID_HANDSHAKE:
+    {
+      process_handshake(player,((struct packet_handshake*) packet)->username);
+      return;
+    }
+    case PID_CHAT:
+    {
+      process_chat(player,((struct packet_chat*) packet)->message);
+      return;
+    }
+    case PID_PLAYERPOS:
+    {
+      pthread_rwlock_wrlock(&player->position.rwlock);
+      /* Flip bits */
+      player->position.x = Cswapd(((struct packet_playerpos*) packet)->x);
+      player->position.y = Cswapd(((struct packet_playerpos*) packet)->y);
+      player->position.z = Cswapd(((struct packet_playerpos*) packet)->z);
+      pthread_rwlock_unlock(&player->position.rwlock);
+      return;
+    }
+    case PID_PLAYERLOOK:
+    {
+      pthread_rwlock_wrlock(&player->position.rwlock);
+      /* Flip bits */
+      player->position.yaw = Cswapf(((struct packet_look*) packet)->yaw);
+      player->position.pitch = Cswapf(((struct packet_look*) packet)->pitch);
+      pthread_rwlock_unlock(&player->position.rwlock);
+      return;
+    }
+    case PID_PLAYERMOVELOOK:
+    {
+      pthread_rwlock_wrlock(&player->position.rwlock);
+      /* Flip bits */
+      player->position.x = Cswapd(((struct packet_movelook*) packet)->x);
+      player->position.y = Cswapd(((struct packet_movelook*) packet)->y);
+      player->position.z = Cswapd(((struct packet_movelook*) packet)->z);
+      player->position.yaw = Cswapf(((struct packet_movelook*) packet)->yaw);
+      player->position.pitch = Cswapf(((struct packet_movelook*) packet)->pitch);
+
+      pthread_rwlock_unlock(&player->position.rwlock);
+      return;
+    }
+    case PID_DISCONNECT:
+    {
+      errorcb(player->bev, BEV_EVENT_EOF, player);
+      return;
+    }
+    default:
+    {
+      return; //Do nothing
+    }
+  }
+  return;
+}
+
+
 /**
  * This internal method checks login predicates, populates the rest of the
  * Player List entry, and sends the initial packet stream to spawn the player.
