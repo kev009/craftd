@@ -83,16 +83,14 @@ craftd_config_setdefaults()
   
   // Proxy Settings
   Config.proxy_enabled = false;
-  Config.proxy_port = 25564;
   Config.proxy_default_server = "Default Server";
-  Server *defaultserv = (Server *)malloc(sizeof(Server));
-  bzero(defaultserv,sizeof(Server));
-  defaultserv->host = "127.0.0.1";
-  defaultserv->name = "Default Server";
-  defaultserv->port = 25565;
-  Server **defaultproxyservers = (Server **)malloc(sizeof(Server *)*2);
-  bzero(defaultproxyservers,sizeof(Server *)*2);
-  defaultproxyservers[0] = defaultserv;
+  Server defaultserv;
+  memset(&defaultserv,0,sizeof(Server));
+  defaultserv.host = "127.0.0.1";
+  defaultserv.name = "Default Server";
+  defaultserv.port = 25565;
+  Server *defaultproxyservers[2];
+  defaultproxyservers[0] = &defaultserv;
   defaultproxyservers[1] = NULL;
   Config.proxy_servers = defaultproxyservers;
 
@@ -247,7 +245,7 @@ parseJString(const json_t *obj, const char *key)
 void
 craftd_config_parse(const char *file)
 {
-  json_t *json, *jsongame, *jsonhttp, *jsonproxy;
+  json_t *json, *jsongame, *jsonhttp;
   json_error_t error;
 
   /* If we didn't get a config file passed as an argument, check search path */
@@ -289,33 +287,11 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
     Config.motd_file = parseJString(jsongame, "motd-file");
     Config.world_dir = parseJString(jsongame, "world-dir");
-  }
-  else
-  {
-    LOG(LOG_INFO, "Config: no server section, skipping.");
-  }
-  
-  /* Get the httpd server configuration */
-  jsonhttp = json_object_get(json, "httpd");
-  if(json_is_object(jsonhttp))
-  {
-    parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
-    parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
-    Config.docroot = parseJString(jsonhttp, "static-docroot");
-  }
-  else
-  {
-    LOG(LOG_INFO, "Config: no httpd section, skipping.");
-  }
-  /* Get the Proxy server configuration */
-  jsonproxy = json_object_get(json,"proxy");
-  if(json_is_object(jsonproxy))
-  {
-    parseJBool(&Config.proxy_enabled,jsonproxy,"enabled");
-    parseJInt(&Config.proxy_port,jsonproxy,"proxy-port");
-    Config.proxy_default_server = parseJString(jsonproxy,"default-server");
-    json_t *jsonpservers = json_object_get(jsonproxy,"servers");
-    /* Get server configurations */
+    Config.proxy_default_server = parseJString(jsongame,"default-server");
+    parseJBool(&Config.proxy_enabled,jsongame,"proxy-enabled");
+    
+    json_t *jsonpservers = json_object_get(jsongame,"servers");
+    
     if(json_is_array(jsonpservers))
     {
       Server **proxyservers = (Server**)malloc((json_array_size(jsonpservers)+1)*sizeof(Server*));
@@ -335,15 +311,26 @@ craftd_config_parse(const char *file)
     }
     else
     {
-      LOG(LOG_INFO, "Config: no proxy:servers section, skipping");
+      LOG(LOG_INFO, "Config: no proxy-servers section, skipping");
     }
   }
   else
   {
-    LOG(LOG_INFO, "Config: no proxy section, skipping.");
+    LOG(LOG_INFO, "Config: no server section, skipping.");
   }
-
-
+  
+  /* Get the httpd server configuration */
+  jsonhttp = json_object_get(json, "httpd");
+  if(json_is_object(jsonhttp))
+  {
+    parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
+    parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
+    Config.docroot = parseJString(jsonhttp, "static-docroot");
+  }
+  else
+  {
+    LOG(LOG_INFO, "Config: no httpd section, skipping.");
+  }
   
   /* Release the file reader */
   json_decref(json);

@@ -55,7 +55,7 @@ typedef struct Server
 } Server;
 struct
 {
-  // Game settings
+  // Server settings
   bool daemonize;
   int game_port;
   int max_listenbacklog;
@@ -63,10 +63,7 @@ struct
   int workpool_size;
   char *motd_file;
   char *world_dir;
-  
-  // Proxy Settings
   bool proxy_enabled;
-  int proxy_port;
   char *proxy_default_server;
   Server **proxy_servers;
 
