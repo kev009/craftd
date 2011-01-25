@@ -61,7 +61,7 @@ void
   struct WQ_entry *workitem;
   struct PL_entry *player;
   size_t inlen;
-  int status;
+  void * packet;
   int pktlen;
   uint8_t pkttype;
   
@@ -143,13 +143,17 @@ void
       
       /* Invariant: else we received a full packet of pktlen */
       
-      status = packetdecoder(pkttype, pktlen, bev, player);
+      packet = packetdecoder(pkttype, pktlen, bev);
+      process_packet(player,pkttype,packet);
+      packetfree(pkttype,packet);
       /* On decoding errors, punt the client for now */
+      
+      /* Remove this temporarally untill we have a sane way to handle decoder problems
       if (status != 0)
       {
 	LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);
         goto WORKER_ERR;
-      }
+      }*/
       
       processed += pktlen;
     }

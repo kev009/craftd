@@ -31,9 +31,11 @@
 #include "network.h"
 
 /* Private method forward declarations */
+void process_packet(struct PL_entry *player, uint8_t pkttype, void * packet);
+
 int len_statemachine(uint8_t pkttype, struct evbuffer *input);
-int packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev, 
-		  struct PL_entry *player);
+void * packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev);
+void packetfree(uint8_t pkttype, void * packet);
 void process_handshake(struct PL_entry *player, bstring username);
 void process_login(struct PL_entry *player, bstring username, 
 			  uint32_t ver);
