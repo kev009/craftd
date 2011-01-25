@@ -106,7 +106,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "decoded login packet");
 	
 	struct packet_login *u_login = Malloc(sizeof(struct packet_login));
-	bzero(u_login,sizeof(struct packet_login));
+	memset(u_login,0,sizeof(struct packet_login));
 	
 	int16_t ulen;
 	int16_t plen;
@@ -144,7 +144,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "decoded handshake packet");
 	
 	struct packet_handshake *u_hs = Malloc(sizeof(struct packet_handshake));
-	bzero(u_hs,sizeof(struct packet_handshake));
+	memset(u_hs,0,sizeof(struct packet_handshake));
 	
         u_hs->username = NULL;
         int16_t ulen;
@@ -166,7 +166,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd chat packet");
 
 	struct packet_chat *chat = Malloc(sizeof(struct packet_chat));
-	bzero(chat,sizeof(struct packet_chat));
+	memset(chat,0,sizeof(struct packet_chat));
         int16_t mlen;
 
         evbuffer_drain(input, sizeof(chat->pid));
@@ -198,7 +198,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 	LOG(LOG_DEBUG, "recvd player position packet");
 
 	struct packet_playerpos *pos = Malloc(sizeof(struct packet_playerpos));
-	bzero(pos,sizeof(struct packet_playerpos));
+	memset(pos,0,sizeof(struct packet_playerpos));
 
 	evbuffer_drain(input, sizeof(pos->pid));
 	evbuffer_remove(input, &pos->x, sizeof(pos->x));
@@ -216,7 +216,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 	LOG(LOG_DEBUG, "recvd player look packet");
 
 	struct packet_look *look = Malloc(sizeof(struct packet_look));
-	bzero(look,sizeof(struct packet_look));
+	memset(look,0,sizeof(struct packet_look));
 
 	evbuffer_drain(input, sizeof(look->pid));
 	evbuffer_remove(input, &look->yaw, sizeof(look->yaw));
@@ -231,7 +231,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd move+look packet");
         
 	struct packet_movelook *ml = Malloc(sizeof(struct packet_movelook));
-	bzero(ml,sizeof(struct packet_movelook));
+	memset(ml,0,sizeof(struct packet_movelook));
 
         evbuffer_drain(input, sizeof(ml->pid));
         evbuffer_remove(input, &ml->x, sizeof(ml->x));
