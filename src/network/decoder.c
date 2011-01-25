@@ -44,16 +44,16 @@ void packetfree(uint8_t pkttype, void * packet)
   {
     case PID_LOGIN:
     {
-      bdestroy(((struct packet_login*) packet)->username);
-      bdestroy(((struct packet_login*) packet)->password);
+      bstrFree(((struct packet_login*) packet)->username);
+      bstrFree(((struct packet_login*) packet)->password);
     }
     case PID_HANDSHAKE:
     {
-      bdestroy(((struct packet_handshake*) packet)->username);
+      bstrFree(((struct packet_handshake*) packet)->username);
     }
     case PID_CHAT:
     {
-      bdestroy(((struct packet_chat*) packet)->message);
+      bstrFree(((struct packet_chat*) packet)->message);
     }
   }
   free(packet);
