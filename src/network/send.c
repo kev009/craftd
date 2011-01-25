@@ -77,7 +77,7 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
   // Temp
-  const int radius = 5;
+  const int radius = 10;
   const int spawnx = -264;
   const int spawnz = 261;
   for(int x = -radius; x < radius; x++)
@@ -461,7 +461,7 @@ send_entity(struct PL_entry *player, int32_t eid)
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
 
-  int8_t pid = PID_ENTITY;
+  int8_t pid = PID_ENTITYINIT;
   eid = htonl(eid);
 
   evbuffer_add(tempbuf, &pid, sizeof(pid));
