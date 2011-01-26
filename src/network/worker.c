@@ -142,10 +142,29 @@ void
       }
       
       /* Invariant: else we received a full packet of pktlen */
-      
-      packet = packetdecoder(pkttype, pktlen, bev);
-      process_packet(player,pkttype,packet);
-      packetfree(pkttype,packet);
+      if(workitem->worktype == WQ_GAME)
+      {
+	packet = packetdecoder(pkttype, pktlen, bev);
+	if(Config.proxy_enabled)
+	{
+	  if(process_isproxypassthrough(pkttype) && player->sev)
+	  {
+	    evbuffer_remove_buffer(bufferevent_get_input(bev),
+				   bufferevent_get_output(player->sev),pktlen);
+	  }else
+	  {
+	    process_proxypacket(player,pkttype,packet);
+	  }
+	}
+	else
+	{
+	  process_packet(player,pkttype,packet);
+	}
+	packetfree(pkttype,packet);
+      }
+      else if(workitem->worktype ==WQ_PROXY)
+      {
+      }
       /* On decoding errors, punt the client for now */
       
       /* Remove this temporarally untill we have a sane way to handle decoder problems

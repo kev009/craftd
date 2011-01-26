@@ -33,6 +33,9 @@
 /* Private method forward declarations */
 void process_packet(struct PL_entry *player, uint8_t pkttype, void * packet);
 
+void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet);
+bool process_isproxypassthrough(uint8_t pkttype);
+
 int len_statemachine(uint8_t pkttype, struct evbuffer *input);
 void * packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev);
 void packetfree(uint8_t pkttype, void * packet);

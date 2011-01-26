@@ -31,10 +31,14 @@
 #include <pthread.h>
 #include <sys/queue.h>
 
+#include <event2/event.h>
+#include <event2/dns.h>
+
 #include "bstrlib.h"
 
 #include "craftd-config.h"
 #include "util.h"
+
 
 /* Public data */
 
@@ -44,15 +48,21 @@
 pthread_rwlock_t PL_rwlock;
 int PL_count;
 SLIST_HEAD(PL_slisthead, PL_entry) PL_head;
+struct event_base* base;
+struct evdns_base* dns_base;
 
 /**
  * This is a player entry in the singly-linked list
  */
+
 struct PL_entry
 {
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
   struct bufferevent *bev;
+  struct bufferevent *sev;
+  void * loginpacket;
+  void * handshakepacket;
   char ip[128];
   //uint64_t mapseed;
   //uint8_t dimension;
@@ -83,13 +93,16 @@ pthread_mutex_t worker_cvmutex;
  */
 STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
 
+
 /**
  * This is a work queue entry in the singly-linked tail queue
  */
+enum WQ_type {WQ_PROXY,WQ_GAME};
 struct WQ_entry
 {
   struct bufferevent *bev;
   struct PL_entry *player;
+  enum WQ_type worktype;
   STAILQ_ENTRY(WQ_entry) WQ_entries; // Pointer to next work item
 };
 

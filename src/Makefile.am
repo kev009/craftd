@@ -40,6 +40,7 @@ craftd_SOURCES += craftd-config.c craftd-config.h
 craftd_SOURCES += network/network.h network/network-private.h network/packets.h
 craftd_SOURCES += network/worker.c network/decoder.c network/send.c
 craftd_SOURCES += network/length.c
+craftd_SOURCES += network/proxy-send.c proxy.c proxy.h
 craftd_SOURCES += util.c util.h version.c javaendian.h
 craftd_SOURCES += timeloop.c timeloop.h
 craftd_SOURCES += mapchunk.c mapchunk.h

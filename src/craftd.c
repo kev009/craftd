@@ -83,6 +83,7 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
   workitem->player = player;
+  workitem->worktype = WQ_GAME;
   
   /* Add item to work queue */
   pthread_mutex_lock(&worker_cvmutex);
@@ -158,6 +159,18 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
           /* The user hasn't gotten far enough to register a username */
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         }
+        if (player->loginpacket)
+	{
+	  free(player->loginpacket);
+	}
+        if (player->handshakepacket)
+	{
+	  free(player->handshakepacket);
+	}
+	if (player->sev)
+	{
+	  bufferevent_free(player->sev);
+	}
 
         //TODO: Add mutual exclusion so a worker doesn't get a null ptr
         //TODO: Convert this to a SLIST_FOREACH
@@ -242,6 +255,10 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->bev = bev;
     player->username = NULL;
     player->eid = newEid();
+    player->sev = NULL;
+    player->loginpacket = NULL;
+    player->handshakepacket = NULL;
+    
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
     /* Initialize the player's internal rwlocks */
@@ -261,10 +278,13 @@ run_server(void)
 {
     evutil_socket_t listener;
     struct sockaddr_in sin;
-    struct event_base* base;
     struct event *listener_event;
 
     base = event_base_new();
+    
+    if(Config.proxy_enabled)
+      dns_base = evdns_base_new(base,1);
+    
     if (!base)
     {
         LOG(LOG_CRIT, "Could not create MC libevent base!");
@@ -319,6 +339,7 @@ main(int argc, char *argv[])
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
   int status = 0;
+  base = NULL; //initialize eventbase to null
 
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
