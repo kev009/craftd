@@ -28,7 +28,7 @@
 
 #include <config.h>
 #include <event2/event.h>
-#include "event2/bufferevent.h"
+#include <event2/bufferevent.h>
 #include <event2/buffer.h>
 #include <event2/util.h>
 #include "craftd.h"
@@ -36,6 +36,6 @@
 
 
 /* Public interfaces */
-bufferevent *create_servercon(PL_entry *player , Server *server);
+struct bufferevent *create_servercon(struct PL_entry *player , Server *server);
 
 #endif

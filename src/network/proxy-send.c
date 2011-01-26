@@ -81,9 +81,9 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	  player->sev = create_servercon(player,server);
 	
 	
-	player->loginpacket = Malloc(sizeof(packet_login));
+	player->loginpacket = Malloc(sizeof(struct packet_login));
 	
-	memcpy(player->loginpacket, lpacket, sizeof(packet_login));
+	memcpy(player->loginpacket, lpacket, sizeof(struct packet_login));
 	
 	pthread_rwlock_unlock(&player->rwlock);
 	send_loginresp(player);
@@ -103,7 +103,8 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	}
 	return;
     }
-    return;
+  }
+  return;
 }
 
 bool process_isproxypassthrough(uint8_t pkttype)

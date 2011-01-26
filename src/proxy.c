@@ -36,7 +36,7 @@
 
 // For sys info, maybe getrusage()
 //#include <sys/resource.h>
-
+#include "proxy.h"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
@@ -118,7 +118,7 @@ void proxy_errorcb(struct bufferevent *bev, short error, void *ctx)
     }
 }
 
-struct bufferevent *create_servercon(PL_entry *player, Server *server)
+struct bufferevent *create_servercon(struct PL_entry *player, Server *server)
 {
   struct bufferevent *bev;
   bev = bufferevent_socket_new(base,-1,BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
