@@ -4,7 +4,7 @@
  * but keeps the original author's "Beerware" notice in compliance and
  * acknowledgement of the original source code.
  *
- * Copyright (c) 2010 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
+ * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
