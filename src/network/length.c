@@ -31,6 +31,7 @@
 #include "network.h"
 #include "network-private.h"
 #include "packets.h"
+#include <stdlib.h>
 
 /**
  * A utility function for the length state machine to return the correct length
@@ -145,13 +146,25 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_chatsz.base + mlen;
 	return len_returncode(inlen, totalsize);
     }
-    case PID_SPAWNPOS:
+    case PID_TIMEUPDATE:
+    {
+      return len_returncode(inlen, packet_timesz);
+    }
+    case PID_ENTITYEQUIPMENT: //Entity equipment packet 0x05
+    {
+      return len_returncode(inlen, packet_entityequipmentsz);
+    }
+    case PID_SPAWNPOS: //Spawn position packet 0x06
     {
         return len_returncode(inlen,packet_spawnpossz);
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
 	return len_returncode(inlen, packet_playerpossz);
+    }
+    case PID_PLAYERHEALTH: // Health update packet 0x08
+    {
+      return len_returncode(inlen, packet_playerhealthsz);
     }
     case PID_RESPAWN: // Repawn packet 0x09
     {
@@ -212,11 +225,160 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
 	return len_returncode(inlen, packet_entityactionsz);
     }
-    case PID_PICKUPSPAWN:
+    case PID_NAMEDENTITYSPAWN: // Entity spawn packet (named) 0x14
+    {
+	struct evbuffer_ptr ptr;
+	uint16_t mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_namedentityspawnsz.str1offset, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohs(mlen);
+	
+	totalsize = packet_namedentityspawnsz.base + mlen;
+	return len_returncode(inlen, totalsize);
+    }
+    case PID_PICKUPSPAWN: // pickup item spawn packet 0x15
     {
         return len_returncode(inlen, packet_pickupspawnsz);
     }
-    case PID_PRECHUNK:
+    case PID_COLLECTITEM: // Collect Item packet 0x16
+    {
+	return len_returncode(inlen,packet_collectitemsz);
+    }
+    case PID_SPAWNOBJECT: //Spawn objects (ex minecarts) 0x17
+    {
+        return len_returncode(inlen, packet_spawnobjectsz);
+    }
+    case PID_SPAWNMOB:
+    {
+	struct evbuffer_ptr ptr;
+	int totalsize;
+	
+	evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase, 
+			 EVBUFFER_PTR_SET);
+	
+	if(inlen-packet_spawnmobszbase < 0) return -EAGAIN;
+	char *buf = Malloc(inlen-packet_spawnmobszbase); //not entirely too sure if this needs a free()
+	int status;
+
+	//evbuffer_enable_locking(b, NULL);
+	//evbuffer_lock(b);
+	/* TODO: check locking semantics wrt multiple threads */
+	
+	status = evbuffer_copyout(input, buf, inlen-packet_spawnmobszbase);
+	//evbuffer_unlock(b);
+	//if (status < 0)
+	//  return status;
+	int size = 0;
+	for(int i = 0; i < status && size == 0; i++)
+	{
+	  if(buf[i] == 0xf7)size = i+1; //not too sure this is right.. need to verify
+	};
+	free(buf);
+	if(size==0)
+	  return -EAGAIN; //We don't have all the meta data. It is always at least 1 byte
+	
+	totalsize = packet_spawnmobszbase + size;
+
+	return len_returncode(inlen, totalsize);	
+    }
+    case PID_PAINTING:
+    {
+	struct evbuffer_ptr ptr;
+	uint16_t mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_paintingsz.str1offset, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohs(mlen);
+	
+	totalsize = packet_paintingsz.base + mlen;
+	return len_returncode(inlen, totalsize);
+    }
+    case PID_ENTITYVELOCITY:
+    {
+	return len_returncode(inlen, packet_entityvelocitysz);
+    }
+    case PID_ENTITYDESTROY:
+    {
+        return len_returncode(inlen, packet_entitydestroysz);
+    }
+    case PID_ENTITYINIT:
+    {
+	return len_returncode(inlen, packet_entityinitsz);
+    }
+    case PID_ENTITYRELMOVE:
+    {
+	return len_returncode(inlen, packet_entityrelmovesz);
+    }
+    case PID_ENTITYLOOK:
+    {
+	return len_returncode(inlen, packet_entitylooksz);
+    }
+    case PID_ENTITYLOOKMOVE:
+    {
+	return len_returncode(inlen, packet_entitylookmovesz);
+    }
+    case PID_ENTITYPOS:
+    {
+	return len_returncode(inlen, packet_entitypossz);
+    }
+    case PID_ENTITYSTATUS:
+    {
+	return len_returncode(inlen, packet_entitystatussz);
+    }
+    case PID_ENTITYATTACH:
+    {
+	return len_returncode(inlen, packet_entityattachsz);
+    }
+    case PID_ENTITYMETA:
+    {
+      	struct evbuffer_ptr ptr;
+	MCint mlen;
+	int totalsize;
+	
+	evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase, 
+			 EVBUFFER_PTR_SET);
+	
+	if(inlen-packet_entitymetaszbase < 0) return -EAGAIN;
+	char *buf = malloc(inlen-packet_entitymetaszbase); //not entirely too sure if this needs a free()
+	int status;
+
+	//evbuffer_enable_locking(b, NULL);
+	//evbuffer_lock(b);
+	/* TODO: check locking semantics wrt multiple threads */
+	
+	status = evbuffer_copyout(input, buf, inlen-packet_entitymetaszbase);
+	//evbuffer_unlock(b);
+	//if (status < 0)
+	//  return status;
+	int size = 0;
+	for(int i = 0; i < status && size == 0; i++)
+	{
+	  if(buf[i] == 0xf7)size = i+1; //not too sure this is right.. need to verify
+	};
+	free(buf);
+	if(size==0)
+	  return -EAGAIN; //We don't have all the meta data. It is always at least 1 byte
+	
+	totalsize = packet_entitymetaszbase + size;
+	
+	return len_returncode(inlen, totalsize);	
+    }
+    case PID_PRECHUNK: // Prechunk packet 0x32
     {
         return len_returncode(inlen,packet_prechunksz);
     }

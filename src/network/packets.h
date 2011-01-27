@@ -78,6 +78,7 @@ enum packetid
   PID_ENTITYPOS		= 0x22,
   PID_ENTITYSTATUS      = 0x26,
   PID_ENTITYATTACH      = 0x27,
+  PID_ENTITYMETA	= 0x28,
   PID_PRECHUNK          = 0x32,
   PID_MAPCHUNK	        = 0x33,
   PID_MULTIBLOCKCHANGE  = 0x34,
@@ -162,6 +163,7 @@ struct packet_time
   MCbyte pid;
   MClong time;
 };
+static const int packet_timesz = sizeof(MCbyte) + sizeof(MClong);
 
 /* pid 0x05 */
 struct packet_entityequipment
@@ -393,9 +395,9 @@ struct packet_spawnmob
   MCint z;
   MCbyte rotation;
   MCbyte pitch;
-  //TODO Add meta data stream field
+  void* metadata;
 };
-//TODO determine size for packet_spawnmob
+static const int packet_spawnmobszbase = 4 * sizeof(MCbyte) + 4 * sizeof(MCint);
 
 /* pid 0x19 */
 struct packet_painting //TODO Verify packet details
@@ -516,7 +518,7 @@ struct packet_entitymeta
   MCbyte pid;
   //TODO add metadata field
 };
-//TODO add packet_entitymetasz
+static const int packet_entitymetaszbase = sizeof(MCbyte);
 
 /* pid 0x32 */
 struct packet_prechunk
