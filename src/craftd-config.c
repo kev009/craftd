@@ -84,12 +84,11 @@ craftd_config_setdefaults()
   // Proxy Settings
   Config.proxy_enabled = false;
   Config.proxy_default_server = "Default Server";
-  Server defaultserv;
-  memset(&defaultserv,0,sizeof(Server));
-  defaultserv.host = "127.0.0.1";
-  defaultserv.name = "Default Server";
-  defaultserv.port = 25565;
-  Server *defaultproxyservers[2];
+  Server *defaultserv = Malloc(sizeof(Server));
+  defaultserv->host = "127.0.0.1";
+  defaultserv->name = "Default Server";
+  defaultserv->port = 25565;
+  Server **defaultproxyservers = Malloc(sizeof(Server *));
   defaultproxyservers[0] = &defaultserv;
   defaultproxyservers[1] = NULL;
   Config.proxy_servers = defaultproxyservers;

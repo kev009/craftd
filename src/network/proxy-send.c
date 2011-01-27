@@ -34,6 +34,49 @@
 #include "proxy.h"
 #include "craftd.h"
 
+
+void send_proxyhandshake(struct PL_entry *player)
+{
+  struct evbuffer *output = bufferevent_get_output(player->sev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
+  uint8_t pid = PID_HANDSHAKE;
+  int16_t n_ulen = htons(player->username->slen);
+  
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_ulen, sizeof(n_ulen));
+  evbuffer_add(tempbuf, player->username->data, player->username->slen);
+  
+  evbuffer_add_buffer(output,tempbuf);
+  evbuffer_free(tempbuf);
+  
+}
+void send_proxylogin(struct PL_entry *player)
+{
+  struct evbuffer *output = bufferevent_get_output(player->sev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
+  uint8_t pid = PID_LOGIN;
+  int32_t entityid = htonl(8);
+  int16_t l_su = htons(player->username->slen);
+  int16_t unused2 = htons(0); // Future MOTD? mcstring.
+  int64_t mapseed = 0;
+  int8_t dimension = 0;
+  
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &entityid, sizeof(entityid));
+  evbuffer_add(tempbuf, &l_su, sizeof(l_su));
+  evbuffer_add(tempbuf, player->username->data, player->username->slen);
+  evbuffer_add(tempbuf, &unused2, sizeof(unused2));
+  evbuffer_add(tempbuf, &mapseed, sizeof(mapseed));
+  evbuffer_add(tempbuf, &dimension, sizeof(dimension));
+  
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+}
+
+
 /**
  * This internal method proxy packets from a pointer to a struct and
  * a packet type
@@ -76,9 +119,13 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	  if(strcmp(Config.proxy_servers[i]->name,Config.proxy_default_server)==0)
 	    server = Config.proxy_servers[i];
 	}
+	//if(server == NULL)
+	  LOG(LOG_CRIT,"Error getting server struct");
 	
-	if(server != NULL)
+	//if(server != NULL)
 	  player->sev = create_servercon(player,server);
+	
+	
 	
 	
 	player->loginpacket = Malloc(sizeof(struct packet_login));
@@ -103,8 +150,33 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	}
 	return;
     }
+    case PID_HANDSHAKE:
+    {
+      process_handshake(player,((struct packet_handshake*) packet)->username);
+    }
   }
   return;
+}
+void process_proxyserverpacket(struct PL_entry *player, uint8_t pkttype, void * packet)
+{
+  switch(pkttype)
+  {
+    case PID_HANDSHAKE:
+    {
+      struct packet_handshake* hpacket = (struct packet_handshake*) packet;
+      if(bstrcmp(hpacket->username,bfromcstr("-"))!=0)
+      {
+	LOGT(LOG_INFO, "Remote server requires authentication");
+	bufferevent_free(player->sev);
+      }
+      send_proxylogin(player);
+      return;
+    }
+    case PID_LOGIN:
+    {
+      return; //do nothing.. for now
+    }
+  }
 }
 
 bool process_isproxypassthrough(uint8_t pkttype)
@@ -113,7 +185,17 @@ bool process_isproxypassthrough(uint8_t pkttype)
   {
     case PID_LOGIN:
     case PID_HANDSHAKE:
-      return 1;
+      return 0;
   }
-  return 0;
+  return 1;
+}
+bool process_isproxyserverpassthrough(uint8_t pkttype)
+{
+  switch(pkttype)
+  {
+    case PID_LOGIN:
+    case PID_HANDSHAKE:
+      return 0;
+  }
+  return 1;
 }

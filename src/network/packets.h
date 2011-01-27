@@ -183,6 +183,7 @@ struct packet_spawnpos
   MCint y;
   MCint z;
 };
+static const int packet_spawnpossz = sizeof(MCbyte) + 3 * sizeof(MCint);
 
 /* pid 0x07 */
 struct packet_useentity
@@ -525,6 +526,7 @@ struct packet_prechunk
   MCint z;
   bool mode;
 };
+static const int packet_prechunksz = 2 * sizeof(MCbyte) + 2 * sizeof(MCint);
 
 /* pid 0x33 */
 struct packet_mapchunk
@@ -538,6 +540,14 @@ struct packet_mapchunk
   MCbyte sizez;
   MCint bytearraysize;
   MCbyte *bytearray;
+};
+static const struct
+{
+  const int base;
+  const int sizelocation;
+} packet_mapchunksz = {
+  .base       = 4 * sizeof(MCbyte) + 3 * sizeof(MCint) + sizeof(MCshort),
+  .sizelocation = 4 * sizeof(MCbyte) + 2 * sizeof(MCint) + sizeof(MCshort)
 };
 
 /* pid 0x36 */

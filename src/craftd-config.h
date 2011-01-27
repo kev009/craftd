@@ -53,6 +53,7 @@ typedef struct Server
   int port;
   char *name;
 } Server;
+
 struct
 {
   // Server settings

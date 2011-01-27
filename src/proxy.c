@@ -41,6 +41,7 @@
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
 #include <event2/util.h>
+#include "network/network-private.h"
 
 #include "bstrlib.h"
 #include "bstraux.h"
@@ -73,8 +74,11 @@ void proxy_errorcb(struct bufferevent *bev, short error, void *ctx)
     
     // Get player context from linked list 
     struct PL_entry *player = ctx;
-    
-    if (error & BEV_EVENT_EOF)
+    if (error & BEV_EVENT_CONNECTED)
+    {
+      send_proxyhandshake(player);
+    }
+    else if (error & BEV_EVENT_EOF)
     {
         /* Connection closed */
         finished = 1;
@@ -124,7 +128,7 @@ struct bufferevent *create_servercon(struct PL_entry *player, Server *server)
   bev = bufferevent_socket_new(base,-1,BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
   bufferevent_setcb(bev,proxy_readcb,NULL,proxy_errorcb,player);
   bufferevent_enable(bev, EV_READ|EV_WRITE);
-  bufferevent_socket_connect_hostname(bev,dns_base,AF_INET,server->host,server->port);
+  bufferevent_socket_connect_hostname(bev,dns_base,AF_INET,"127.0.0.1",25565);
   return bev;
 }
 

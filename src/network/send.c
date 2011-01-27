@@ -238,6 +238,7 @@ process_chat(struct PL_entry *player, bstring message)
     
     // TODO: temporary who cmd
     bstring whocmd = bfromcstr("/who");
+    bstring lcmd = bfromcstr("/login");
     if (binstrr(message, (whocmd->slen), whocmd) != BSTR_ERR)
     {
       pthread_rwlock_rdlock(&PL_rwlock);
@@ -245,6 +246,9 @@ process_chat(struct PL_entry *player, bstring message)
       send_directchat(player, whomsg);
       pthread_rwlock_unlock(&PL_rwlock);
       bstrFree(whomsg);
+    } else if(binstrr(message, (lcmd->slen), lcmd) != BSTR_ERR)
+    {
+      send_loginresp(player);
     }
   }
   else

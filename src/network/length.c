@@ -145,6 +145,10 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_chatsz.base + mlen;
 	return len_returncode(inlen, totalsize);
     }
+    case PID_SPAWNPOS:
+    {
+        return len_returncode(inlen,packet_spawnpossz);
+    }
     case PID_USEENTITY: // Use entity packet 0x07
     {
 	return len_returncode(inlen, packet_playerpossz);
@@ -211,6 +215,29 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     case PID_PICKUPSPAWN:
     {
         return len_returncode(inlen, packet_pickupspawnsz);
+    }
+    case PID_PRECHUNK:
+    {
+        return len_returncode(inlen,packet_prechunksz);
+    }
+    case PID_MAPCHUNK: // Map chunk 0x33
+    {
+        struct evbuffer_ptr ptr;
+	MCint mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_mapchunksz.sizelocation, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohl(mlen);
+	
+	totalsize = packet_mapchunksz.base + mlen;
+	return len_returncode(inlen, totalsize);	
     }
     case PID_CLOSEWINDOW: // Close window 0x65
     {
