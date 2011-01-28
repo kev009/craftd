@@ -258,36 +258,26 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_SPAWNMOB:
     {
-	struct evbuffer_ptr ptr;
-	int totalsize;
-	
-	evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase, 
-			 EVBUFFER_PTR_SET);
-	
-	if(inlen-packet_spawnmobszbase < 0) return -EAGAIN;
-	char *buf = Malloc(inlen-packet_spawnmobszbase); //not entirely too sure if this needs a free()
+      	struct evbuffer_ptr ptr;
+	uint8_t byte = 0;
 	int status;
-
-	//evbuffer_enable_locking(b, NULL);
-	//evbuffer_lock(b);
-	/* TODO: check locking semantics wrt multiple threads */
 	
-	status = evbuffer_copyout(input, buf, inlen-packet_spawnmobszbase);
-	//evbuffer_unlock(b);
-	//if (status < 0)
-	//  return status;
+
 	int size = 0;
-	for(int i = 0; i < status && size == 0; i++)
+	while(byte != 127) //this loop should always run at least once
 	{
-	  if(buf[i] == 0xf7)size = i+1; //not too sure this is right.. need to verify
+	  evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
+		    EVBUFFER_PTR_SET);
+	  //evbuffer_enable_locking(b, NULL);
+	  //evbuffer_lock(b);
+	  /* TODO: check locking semantics wrt multiple threads */ 
+	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(byte), &ptr);
+	  //evbuffer_unlock(b);
+	  if (status < 0)
+	    return -status;
+	  size++; //even increment after an 0xf7 byte 
 	};
-	free(buf);
-	if(size==0)
-	  return -EAGAIN; //We don't have all the meta data. It is always at least 1 byte
-	
-	totalsize = packet_spawnmobszbase + size;
-
-	return len_returncode(inlen, totalsize);	
+	return len_returncode(inlen, packet_spawnmobszbase + size);
     }
     case PID_PAINTING:
     {
@@ -347,36 +337,26 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     case PID_ENTITYMETA:
     {
       	struct evbuffer_ptr ptr;
-	MCint mlen;
-	int totalsize;
-	
-	evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase, 
-			 EVBUFFER_PTR_SET);
-	
-	if(inlen-packet_entitymetaszbase < 0) return -EAGAIN;
-	char *buf = malloc(inlen-packet_entitymetaszbase); //not entirely too sure if this needs a free()
+	uint8_t byte = 0;
 	int status;
+	
 
-	//evbuffer_enable_locking(b, NULL);
-	//evbuffer_lock(b);
-	/* TODO: check locking semantics wrt multiple threads */
-	
-	status = evbuffer_copyout(input, buf, inlen-packet_entitymetaszbase);
-	//evbuffer_unlock(b);
-	//if (status < 0)
-	//  return status;
 	int size = 0;
-	for(int i = 0; i < status && size == 0; i++)
+	while(byte != 127) //this loop should always run at least once
 	{
-	  if(buf[i] == 0xf7)size = i+1; //not too sure this is right.. need to verify
+	  evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase+size, 
+		    EVBUFFER_PTR_SET);
+	  //evbuffer_enable_locking(b, NULL);
+	  //evbuffer_lock(b);
+	  /* TODO: check locking semantics wrt multiple threads */ 
+	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(byte), &ptr);
+	  //evbuffer_unlock(b);
+	  if (status < 0)
+	    return -status;
+	  size++; //even increment after an 0xf7 byte 
 	};
-	free(buf);
-	if(size==0)
-	  return -EAGAIN; //We don't have all the meta data. It is always at least 1 byte
 	
-	totalsize = packet_entitymetaszbase + size;
-	
-	return len_returncode(inlen, totalsize);	
+	return len_returncode(inlen, packet_entitymetaszbase + size);
     }
     case PID_PRECHUNK: // Prechunk packet 0x32
     {
@@ -424,6 +404,108 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
         return len_returncode(inlen, packet_windowclicksz.clicknull);
       else
         return len_returncode(inlen, packet_windowclicksz.click);
+    }
+    case PID_SETSLOT:
+    {
+	struct evbuffer_ptr ptr;
+	int status;
+	MCshort itemid;
+	
+	evbuffer_ptr_set(input,&ptr,packet_setslotsz.itemidoffset,
+			 EVBUFFER_PTR_SET);
+	status =  CRAFTD_evbuffer_copyout_from(input,&itemid,sizeof(itemid),
+					       &ptr);
+	if(status != 0)
+	  return -status;
+	if(itemid == -1)
+	  return len_returncode(inlen,packet_setslotsz.itemnull);
+	else
+	  return len_returncode(inlen,packet_setslotsz.item);
+    }
+    case PID_WINDOWITEMS:
+    {
+      	struct evbuffer_ptr ptr;
+	int status;
+	MCshort itemcount;
+	MCshort itemid;
+	
+	evbuffer_ptr_set(input,&ptr,packet_windowitemssz.itemcountoffset,
+			 EVBUFFER_PTR_SET);
+	status =  CRAFTD_evbuffer_copyout_from(input,&itemcount,sizeof(itemcount),
+					       &ptr);
+	if(status != 0)
+	  return -status;
+	
+	itemcount = ntohs(itemcount);
+	if(itemcount == 0)
+	  return len_returncode(inlen,packet_windowitemssz.itemcountoffset+
+				sizeof(itemcount));
+	int runningsize = 0; //running size total
+	for(int i = 0; i < itemcount; i++)
+	{
+	  evbuffer_ptr_set(input,&ptr,packet_windowitemssz.itemcountoffset+2+runningsize,
+			  EVBUFFER_PTR_SET);
+	  status =  CRAFTD_evbuffer_copyout_from(input,&itemid,sizeof(itemid),
+					       &ptr);
+	  if(status != 0)
+	    return -status;
+	  
+	  if(itemid == -1)
+	    runningsize += packet_windowitemssz.itemnullsize; //add only 2 bytes (MCshort) to total size if itemid is -1
+	  else
+	    runningsize += packet_windowitemssz.itemsize;
+	}
+	return len_returncode(inlen,packet_windowitemssz.itemcountoffset+runningsize);
+    }
+    case PID_UPDATEPROGBAR:
+    {
+	return len_returncode(inlen,packet_updateprogbarsz);
+    }
+    case PID_TRANSACTION:
+    {
+	return len_returncode(inlen,packet_transactionsz);
+    }
+    case PID_UPDATESIGN:
+    {
+	struct evbuffer_ptr ptr;
+	uint16_t len1;  // Size of the line 1 string
+	uint16_t len2;  // Size of the line 2 string
+	uint16_t len3;  // Size of the line 3 string
+	uint16_t len4;  // Size of the line 4 string
+	int totalsize;
+	int status;
+
+	evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str1offset, 
+			EVBUFFER_PTR_SET);
+	status = CRAFTD_evbuffer_copyout_from(input, &len1, sizeof(len1), &ptr);
+	if (status != 0)
+	  return -status;
+	len1 = ntohs(len1);
+
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str2offset, 
+			EVBUFFER_PTR_SET);
+	status = CRAFTD_evbuffer_copyout_from(input, &len2, sizeof(len2), &ptr);
+	if (status != 0)
+	  return -status;
+	len2 = ntohs(len2);
+	
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str3offset, 
+			EVBUFFER_PTR_SET);
+	status = CRAFTD_evbuffer_copyout_from(input, &len3, sizeof(len3), &ptr);
+	if (status != 0)
+	  return -status;
+	len3 = ntohs(len3);
+	
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str4offset, 
+			EVBUFFER_PTR_SET);
+	status = CRAFTD_evbuffer_copyout_from(input, &len4, sizeof(len4), &ptr);
+	if (status != 0)
+	  return -status;
+	len4 = ntohs(len4);	
+
+	// Packet type + 2(strlen + varstring) + etc
+	totalsize = packet_updatesignsz.base + len1 + len2 + len3 + len4;
+	return len_returncode(inlen, totalsize);
     }
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {

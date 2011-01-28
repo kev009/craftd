@@ -632,6 +632,92 @@ static const struct
   .click = 4 * sizeof(MCbyte) + 4 * sizeof(MCshort)
 };
 
+/* pid 0x67 */
+struct packet_setslot
+{
+  MCbyte pid;
+  MCbyte winid;
+  MCshort slot;
+  MCitem item;
+};
+static const struct
+{
+  const int itemidoffset;
+  const int itemnull;
+  const int item;
+} packet_setslotsz = {
+  .itemidoffset = 2 * sizeof(MCbyte) + 1 * sizeof(MCshort),
+  .itemnull = 2 * sizeof(MCbyte) + 2 * sizeof(MCshort),
+  .item = 3 * sizeof(MCbyte) + 3 * sizeof(MCshort)
+};
+
+/* pid 0x68 */
+struct packet_windowitems //The size of this packet depends on two varaibles
+{			  //The amount of items and the if the items are null or not
+  MCbyte pid;
+  MCbyte winid;
+  MCshort icount;
+  MCitem *payload;
+};
+static const struct
+{
+  const int itemcountoffset;
+  const int itemnullsize;
+  const int itemsize;
+} packet_windowitemssz = {
+  .itemcountoffset = 2 * sizeof(MCbyte),
+  .itemnullsize = 1 * sizeof(MCshort),
+  .itemsize = 1 * sizeof(MCbyte) + 2 * sizeof(MCshort)
+};
+
+/* pid 0x69 */
+struct packet_updateprogbar
+{
+  MCbyte pid;
+  MCbyte winid;
+  MCshort pbar;
+  MCshort value;
+};
+static const int packet_updateprogbarsz = 2 * sizeof(MCbyte) + 2 * sizeof(MCshort);
+
+/* pid 0x6a */
+struct packet_transaction
+{
+  MCbyte pid;
+  MCbyte winid;
+  MCshort actionnum;
+  bool accepted;
+};
+static const int packet_transactionsz = 3 * sizeof(MCbyte) + sizeof(MCshort);
+
+/* pid 0x82 */
+struct packet_updatesign
+{
+  MCbyte pid;
+  MCint x;
+  MCshort y;
+  MCint z;
+  bstring line1;
+  bstring line2;
+  bstring line3;
+  bstring line4;
+};
+// Login size/offset information (C99 initialized struct)
+static const struct
+{
+  const int base;
+  const int str1offset;
+  const int str2offset;
+  const int str3offset;
+  const int str4offset;
+} packet_updatesignsz = {
+  .base       = sizeof(MCbyte) + 2 * sizeof(MCint) + 5 * sizeof(MCshort),
+  .str1offset = sizeof(MCbyte) + 2 * sizeof(MCint) + 1 * sizeof(MCshort),
+  .str2offset = sizeof(MCbyte) + 2 * sizeof(MCint) + 2 * sizeof(MCshort),
+  .str3offset = sizeof(MCbyte) + 2 * sizeof(MCint) + 3 * sizeof(MCshort),
+  .str4offset = sizeof(MCbyte) + 2 * sizeof(MCint) + 4 * sizeof(MCshort)
+};
+
 /* pid 0xFF */
 struct packet_disconnect
 {

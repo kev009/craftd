@@ -47,6 +47,12 @@ typedef int32_t MCint;
 typedef int64_t MClong;
 typedef float MCfloat;
 typedef double MCdouble;
+typedef struct MCitem
+{
+  MCshort itemid;
+  MCbyte count;
+  MCshort uses;
+} MCitem;
 
 
 /**
