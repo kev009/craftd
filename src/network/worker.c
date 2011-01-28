@@ -150,13 +150,19 @@ void
 	{
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
+	    bufferevent_lock(player->sev);
 	    evbuffer_remove_buffer(bufferevent_get_input(bev),
 				   bufferevent_get_output(player->sev),pktlen);
+	    bufferevent_unlock(player->sev);
 	  }else
 	  {
+	    //if(player->sev)
+	      //bufferevent_lock(player->sev);
 	    packet = packetdecoder(pkttype, pktlen, bev);
 	    process_proxypacket(player,pkttype,packet);
 	    packetfree(pkttype,packet);
+	    //if(player->sev)
+	      //bufferevent_unlock(player->sev);
 	  }
 	}
 	else
@@ -169,17 +175,23 @@ void
       }
       else if(workitem->worktype ==WQ_PROXY)
       {
+	//LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
+	bufferevent_lock(player->sev);
 	if(process_isproxyserverpassthrough(pkttype))
 	{
+	  
 	  evbuffer_remove_buffer(bufferevent_get_input(player->sev),
-				   bufferevent_get_output(player->bev),pktlen);	  
+				   bufferevent_get_output(player->bev),pktlen);
+	  
 	}
 	else
 	{
 	  packet = packetdecoder(pkttype, pktlen, bev);
 	  process_proxyserverpacket(player,pkttype,packet);;
 	  packetfree(pkttype,packet);
-	} 
+	  
+	}
+	bufferevent_unlock(player->sev);
       } else { goto WORKER_ERR; }
       /* On decoding errors, punt the client for now */
       

@@ -551,6 +551,16 @@ static const struct
   .base       = 4 * sizeof(MCbyte) + 3 * sizeof(MCint) + sizeof(MCshort),
   .sizelocation = 4 * sizeof(MCbyte) + 2 * sizeof(MCint) + sizeof(MCshort)
 };
+struct packet_blockchange
+{
+  MCbyte pid;
+  MCint x;
+  MCbyte y;
+  MCint z;
+  MCbyte btype;
+  MCbyte metadata;
+};
+static const int packet_blockchangesz = 4 * sizeof(MCbyte) + 2 * sizeof(MCint);
 
 /* pid 0x36 */
 struct packet_noteblockplay

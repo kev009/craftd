@@ -264,7 +264,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	
 
 	int size = 0;
-	while(byte != 127) //this loop should always run at least once
+	do//this loop should always run at least once
 	{
 	  evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
 		    EVBUFFER_PTR_SET);
@@ -276,7 +276,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  if (status < 0)
 	    return -status;
 	  size++; //even increment after an 0xf7 byte 
-	};
+	}while(byte != 127) ;
 	return len_returncode(inlen, packet_spawnmobszbase + size);
     }
     case PID_PAINTING:
@@ -334,6 +334,10 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
 	return len_returncode(inlen, packet_entityattachsz);
     }
+    case PID_BLOCKCHANGE:
+    {
+	return len_returncode(inlen,packet_blockchangesz);
+    }
     case PID_ENTITYMETA:
     {
       	struct evbuffer_ptr ptr;
@@ -342,7 +346,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	
 
 	int size = 0;
-	while(byte != 127) //this loop should always run at least once
+	do //this loop should always run at least once
 	{
 	  evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase+size, 
 		    EVBUFFER_PTR_SET);
@@ -354,7 +358,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  if (status < 0)
 	    return -status;
 	  size++; //even increment after an 0xf7 byte 
-	};
+	}while(byte != 127);
 	
 	return len_returncode(inlen, packet_entitymetaszbase + size);
     }
@@ -482,21 +486,21 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  return -status;
 	len1 = ntohs(len1);
 
-		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str2offset, 
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str2offset+len1, 
 			EVBUFFER_PTR_SET);
 	status = CRAFTD_evbuffer_copyout_from(input, &len2, sizeof(len2), &ptr);
 	if (status != 0)
 	  return -status;
 	len2 = ntohs(len2);
 	
-		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str3offset, 
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str3offset+len1+len2, 
 			EVBUFFER_PTR_SET);
 	status = CRAFTD_evbuffer_copyout_from(input, &len3, sizeof(len3), &ptr);
 	if (status != 0)
 	  return -status;
 	len3 = ntohs(len3);
 	
-		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str4offset, 
+		evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str4offset+len1+len2+len3, 
 			EVBUFFER_PTR_SET);
 	status = CRAFTD_evbuffer_copyout_from(input, &len4, sizeof(len4), &ptr);
 	if (status != 0)

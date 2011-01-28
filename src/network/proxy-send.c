@@ -51,6 +51,22 @@ void send_proxyhandshake(struct PL_entry *player)
   evbuffer_free(tempbuf);
   
 }
+void send_proxychat(struct PL_entry *player,bstring message)
+{
+  struct evbuffer *output = bufferevent_get_output(player->sev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
+  uint8_t pid = PID_CHAT;
+  int16_t mlen = htons(message->slen);
+
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &mlen, sizeof(mlen));
+  evbuffer_add(tempbuf, message->data, message->slen);
+
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  
+}
 void send_proxylogin(struct PL_entry *player)
 {
   struct evbuffer *output = bufferevent_get_output(player->sev);
@@ -153,7 +169,20 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
     case PID_HANDSHAKE:
     {
       process_handshake(player,((struct packet_handshake*) packet)->username);
+      return;
     }
+    case PID_CHAT:
+    {
+      struct packet_chat *cpacket = (struct packet_chat*)packet;
+      if(cpacket->message->data[0] == '\\')
+      {
+	send_directchat(player,bformat("You are on a proxy server"));
+      }
+      else
+	send_proxychat(player,cpacket->message);
+      break;
+    }
+    
   }
   return;
 }
@@ -185,6 +214,7 @@ bool process_isproxypassthrough(uint8_t pkttype)
   {
     case PID_LOGIN:
     case PID_HANDSHAKE:
+    case PID_CHAT:
       return 0;
   }
   return 1;
