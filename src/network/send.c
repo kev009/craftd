@@ -20,7 +20,7 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.test
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <config.h>
@@ -576,6 +576,25 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &slen, sizeof(slen));
   evbuffer_add(tempbuf, dconmsg->data, dconmsg->slen);
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  
+  errorcb(player->bev, BEV_EVENT_EOF, player);
+  
+  return;
+}
+send_timeupdate(struct PL_entry *player, int64_t time)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
+  uint8_t pid = PID_TIMEUPDATE;
+  time = htonll(time);
+
+
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &time, sizeof(time));
   
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
