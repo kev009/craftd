@@ -176,7 +176,17 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
       struct packet_chat *cpacket = (struct packet_chat*)packet;
       if(cpacket->message->data[0] == '\\')
       {
-	send_directchat(player,bformat("You are on a proxy server"));
+	bstring lcmd = bfromcstr("\\login");
+	if(binstrr(cpacket->message,lcmd->slen,lcmd) != BSTR_ERR)
+ 	{
+	  
+	  send_loginresp(player);
+	  process_handshake(player,player->username);
+	  bufferevent_free(player->sev);
+	  sleep(1);
+	  player->sev = create_servercon(player,NULL);
+	}
+	//send_directchat(player,bformat("You are on a proxy server"));
       }
       else
 	send_proxychat(player,cpacket->message);

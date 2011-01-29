@@ -145,13 +145,14 @@ void
       
       if(workitem->worktype == WQ_GAME)
       {
+	LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
 	
 	if(Config.proxy_enabled)
 	{
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
 	    bufferevent_lock(player->sev);
-	    evbuffer_remove_buffer(bufferevent_get_input(bev),
+	    evbuffer_remove_buffer(input,
 				   bufferevent_get_output(player->sev),pktlen);
 	    bufferevent_unlock(player->sev);
 	  }else
@@ -175,14 +176,11 @@ void
       }
       else if(workitem->worktype ==WQ_PROXY)
       {
-	//LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
-	bufferevent_lock(player->sev);
+	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
+	bufferevent_lock(player->bev);
 	if(process_isproxyserverpassthrough(pkttype))
 	{
-	  
-	  evbuffer_remove_buffer(bufferevent_get_input(player->sev),
-				   bufferevent_get_output(player->bev),pktlen);
-	  
+	  evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);  
 	}
 	else
 	{
@@ -191,7 +189,7 @@ void
 	  packetfree(pkttype,packet);
 	  
 	}
-	bufferevent_unlock(player->sev);
+	bufferevent_unlock(player->bev);
       } else { goto WORKER_ERR; }
       /* On decoding errors, punt the client for now */
       

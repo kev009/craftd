@@ -275,8 +275,9 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  //evbuffer_unlock(b);
 	  if (status < 0)
 	    return -status;
+	  LOG(LOG_DEBUG,"Decoding metadata %d : %d",size,byte);
 	  size++; //even increment after an 0xf7 byte 
-	}while(byte != 127) ;
+	}while(byte != 127);
 	return len_returncode(inlen, packet_spawnmobszbase + size);
     }
     case PID_PAINTING:
@@ -334,6 +335,26 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
 	return len_returncode(inlen, packet_entityattachsz);
     }
+    case PID_MULTIBLOCKCHANGE:
+    {
+        struct evbuffer_ptr ptr;
+	int16_t asize;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_multiblockchangeszbase, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &asize, sizeof(asize), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	asize = ntohs(asize);
+	
+	totalsize = packet_multiblockchangeszbase + sizeof(asize) 
+	  + (asize*(sizeof(MCshort)+2*sizeof(MCbyte)));
+	return len_returncode(inlen, totalsize);
+    }
     case PID_BLOCKCHANGE:
     {
 	return len_returncode(inlen,packet_blockchangesz);
@@ -354,6 +375,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  //evbuffer_lock(b);
 	  /* TODO: check locking semantics wrt multiple threads */ 
 	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(byte), &ptr);
+	  //LOG(LOG_DEBUG,"decode meta data byte: %d",byte);
 	  //evbuffer_unlock(b);
 	  if (status < 0)
 	    return -status;
@@ -430,17 +452,20 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
       	struct evbuffer_ptr ptr;
 	int status;
+	MCshort itemcountraw;
 	MCshort itemcount;
 	MCshort itemid;
 	
 	evbuffer_ptr_set(input,&ptr,packet_windowitemssz.itemcountoffset,
 			 EVBUFFER_PTR_SET);
-	status =  CRAFTD_evbuffer_copyout_from(input,&itemcount,sizeof(itemcount),
+	status =  CRAFTD_evbuffer_copyout_from(input,&itemcountraw,sizeof(itemcountraw),
 					       &ptr);
+	
 	if(status != 0)
 	  return -status;
+	itemcount = ntohs(itemcountraw);
+	LOG(LOG_DEBUG,"Number of window items: %d", itemcount);
 	
-	itemcount = ntohs(itemcount);
 	if(itemcount == 0)
 	  return len_returncode(inlen,packet_windowitemssz.itemcountoffset+
 				sizeof(itemcount));
@@ -459,7 +484,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  else
 	    runningsize += packet_windowitemssz.itemsize;
 	}
-	return len_returncode(inlen,packet_windowitemssz.itemcountoffset+runningsize);
+	return len_returncode(inlen,packet_windowitemssz.itemcountoffset+runningsize+2);
     }
     case PID_UPDATEPROGBAR:
     {

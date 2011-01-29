@@ -42,6 +42,7 @@
 
 #define MAX_CHUNKARRAY (81920)
 
+
 enum packetid
 {
   PID_KEEPALIVE         = 0x00,
@@ -430,7 +431,7 @@ struct packet_entityvelocity
   MCshort vz;
 };
 static const int packet_entityvelocitysz = sizeof(MCbyte) + sizeof(MCint) 
-					   + sizeof(MCshort);
+					   + 3 * sizeof(MCshort);
 
 /* pid 0x1d */
 struct packet_entitydestroy
@@ -516,9 +517,10 @@ static const int packet_entityattachsz = sizeof(MCbyte) + 2 * sizeof(MCint);
 struct packet_entitymeta
 {
   MCbyte pid;
-  //TODO add metadata field
+  MCint eid;
+  MCbyte *metadata;//TODO add metadata field
 };
-static const int packet_entitymetaszbase = sizeof(MCbyte);
+static const int packet_entitymetaszbase = sizeof(MCbyte) + 1 * sizeof(MCint);
 
 /* pid 0x32 */
 struct packet_prechunk
@@ -551,6 +553,21 @@ static const struct
   .base       = 4 * sizeof(MCbyte) + 3 * sizeof(MCint) + sizeof(MCshort),
   .sizelocation = 4 * sizeof(MCbyte) + 2 * sizeof(MCint) + sizeof(MCshort)
 };
+
+/* pid 0x34 */
+struct packet_multiblockchange 
+{
+  MCbyte pid;
+  MCint x;
+  MCint z;
+  MCshort asize;
+  MCshort *cord;
+  MCbyte *type;
+  MCbyte *metadata;
+};
+static const int packet_multiblockchangeszbase = sizeof(MCbyte) + 2 *sizeof(MCint);
+
+/* pid 0x35 */
 struct packet_blockchange
 {
   MCbyte pid;

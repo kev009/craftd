@@ -128,7 +128,7 @@ struct bufferevent *create_servercon(struct PL_entry *player, Server *server)
   bev = bufferevent_socket_new(base,-1,BEV_OPT_CLOSE_ON_FREE|BEV_OPT_THREADSAFE);
   bufferevent_setcb(bev,proxy_readcb,NULL,proxy_errorcb,player);
   bufferevent_enable(bev, EV_READ|EV_WRITE);
-  bufferevent_socket_connect_hostname(bev,dns_base,AF_INET,"127.0.0.1",25565);
+  bufferevent_socket_connect_hostname(bev,dns_base,AF_INET,"192.168.1.5",25565);
   return bev;
 }
 
