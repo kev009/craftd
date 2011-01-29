@@ -150,8 +150,6 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  //send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
-  //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
   // Temp
   const int radius = 10;
