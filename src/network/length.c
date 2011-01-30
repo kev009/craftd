@@ -263,7 +263,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int status;
 	
 
-	int size = 0;
+	int size = 1;
 	do//this loop should always run at least once
 	{
 	  evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
@@ -271,12 +271,12 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  //evbuffer_enable_locking(b, NULL);
 	  //evbuffer_lock(b);
 	  /* TODO: check locking semantics wrt multiple threads */ 
-	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(byte), &ptr);
+	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(MCbyte), &ptr);
 	  //evbuffer_unlock(b);
-	  if (status < 0)
+	  if (status != 0)
 	    return -status;
 	  LOG(LOG_DEBUG,"Decoding metadata %d : %d",size,byte);
-	  size++; //even increment after an 0xf7 byte 
+	  size++;
 	}while(byte != 127);
 	return len_returncode(inlen, packet_spawnmobszbase + size);
     }
@@ -377,7 +377,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  status = CRAFTD_evbuffer_copyout_from(input, &byte, sizeof(byte), &ptr);
 	  //LOG(LOG_DEBUG,"decode meta data byte: %d",byte);
 	  //evbuffer_unlock(b);
-	  if (status < 0)
+	  if (status != 0)
 	    return -status;
 	  size++; //even increment after an 0xf7 byte 
 	}while(byte != 127);
