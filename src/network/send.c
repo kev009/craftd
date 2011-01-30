@@ -41,7 +41,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-
 /**
  * This internal method process packets from a pointer to a struct and
  * a packet type
@@ -159,8 +158,12 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   {
     for(int z = -radius; z < radius; z++)
     {
-      send_prechunk(player, spawnx/16 + x, spawnz/16 + z, true);
-      send_chunk(player, spawnx/16 + x, 0, spawnz/16 + z, 16,128,16);
+      // Use a circular send pattern based on Bravo/MostAwesomeDude's algo
+      if ( x*x + z*z <= radius*radius )
+      {
+	send_prechunk(player, spawnx/16 + x, spawnz/16 + z, true);
+        send_chunk(player, spawnx/16 + x, 0, spawnz/16 + z, 16,128,16);
+      }
     }
   }
   
@@ -336,6 +339,74 @@ send_syschat(bstring message)
   pthread_rwlock_unlock(&PL_rwlock);
 
   return;
+}
+
+/**
+ * A wrapper to send and delete changed packets within a client's tracked
+ * radius
+ */
+// Private utility functions for send_chunk_radius
+static void chunkradiusunload(const void *T, void *ctx)
+{
+  struct PL_entry *player = (void *)ctx;
+  chunk_coord coord = *(chunk_coord *)T;
+  send_prechunk(player, coord.x, coord.z, false);
+}
+static void chunkradiusload(const void *T, void *ctx)
+{
+  // Send full chunk
+  const int sizex = 16, sizey = 128, sizez = 16;
+  
+  struct PL_entry *player = (void *)ctx;
+  chunk_coord coord = *(chunk_coord *)T;
+  
+  send_prechunk(player, coord.x, coord.z, true);
+  send_chunk(player, coord.x, 0, coord.z, sizex, sizey, sizez);
+}
+static void chunkradiusfree(const void *T, void *ctx)
+{
+  chunk_coord *coord = (chunk_coord *)T;
+  free(coord);
+}
+
+void
+send_chunk_radius(struct PL_entry *player, int32_t x, int32_t z)
+{
+  // Get "chunk coords"
+  x /= 16;
+  z /= 16;
+  
+  // Send radius
+  const int radius = 10;
+  
+  Set_T oldchunkset = player->loadedchunks;
+  
+  // Make a new set containing coordinates of all chunks client should have
+  Set_T newchunkset = Set_new(400, chunkcoordcmp, chunkcoordhash);
+  for(int x = -radius; x < radius; x++)
+  {
+    for(int z = -radius; z < radius; z++)
+    {
+      // Use a circular send pattern based on Bravo/MostAwesomeDude's algo
+      if ( x*x + z*z <= radius*radius )
+      {
+	chunk_coord *coord = Malloc(sizeof(chunk_coord));
+	coord->x = x;
+	coord->z = z;
+	Set_put(newchunkset, coord);
+      }
+    }
+  }
+  
+  Set_T toremove = Set_minus(oldchunkset, newchunkset);
+  Set_T toadd = Set_minus(newchunkset, oldchunkset);
+  
+  Set_map(toremove, &chunkradiusunload, (void *)player);
+  Set_map(toadd, &chunkradiusload, (void *)player);
+  
+  player->loadedchunks = newchunkset;
+  Set_map(oldchunkset, &chunkradiusfree, NULL);
+  Set_free(&oldchunkset);
 }
 
 /**
