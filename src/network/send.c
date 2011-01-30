@@ -41,6 +41,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+// Temp for send radius
+const int RADIUS = 10;
+
 /**
  * This internal method process packets from a pointer to a struct and
  * a packet type
@@ -78,7 +81,11 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
       player->position.x = Cswapd(((struct packet_playerpos*) packet)->x);
       player->position.y = Cswapd(((struct packet_playerpos*) packet)->y);
       player->position.z = Cswapd(((struct packet_playerpos*) packet)->z);
+      
+      send_chunk_radius(player, player->position.x, player->position.z, RADIUS);
+      
       pthread_rwlock_unlock(&player->position.rwlock);
+      
       return;
     }
     case PID_PLAYERLOOK:
@@ -99,8 +106,11 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
       player->position.z = Cswapd(((struct packet_movelook*) packet)->z);
       player->position.yaw = Cswapf(((struct packet_movelook*) packet)->yaw);
       player->position.pitch = Cswapf(((struct packet_movelook*) packet)->pitch);
+      
+      send_chunk_radius(player, player->position.x, player->position.z, RADIUS);
 
       pthread_rwlock_unlock(&player->position.rwlock);
+      
       return;
     }
     case PID_DISCONNECT:
