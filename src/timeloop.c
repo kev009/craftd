@@ -70,6 +70,11 @@ send_keepalive_cb(evutil_socket_t fd, short event, void *arg)
     return;
 }
 
+/**
+ * Internal method to send time update packet. Used only by the
+ * timeloop to send at custom interval. Time interval is defined by
+ * timepktinterval constant.
+ */
 static void
 send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 {
@@ -96,35 +101,45 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
     return;
 }
 
+/**
+ * Internal method to increase raw time every second. Used only by
+ * by the timeloop.
+ * 
+ * @remarks Note: diffrent rates for Day/Nigt/Sunset/Sunrise can be used.
+ * 
+ */
 static void
 timeincrease_cb()
 {
- //todo: thread lock unlock ?!
-    /*if (time >= 0 || time <= 11999)
+//todo: thread lock unlock ?!
+    if (time >= 0 & time <= 11999)
     {
         time += dayrate;
-	return;
+        return;
     }
-    else if (time >= 12000 || time <= 13799)
+    else if (time >= 12000 & time <= 13799)
     {
         time += sunsetrate;
-	return;
+        return;
     }
-    else if (time >= 13800 || time <= 22199)
+    else if (time >= 13800 & time <= 22199)
     {
         time += nightrate;
-	return;
+        return;
     }
-    else if (time >= 22200 || time <= 23999)
+    else if (time >= 22200 & time <= 23999)
     {
         time += sunriserate;
-	return;
+
+        if (time >= 24000)
+        {
+            time -= 24000;
+        }
+        return;
     }
-    else */
-    time += dayrate;
-    if (time >= 24000)
+    else if (time >= 24000)
     {
-        time = 0;
+        time -= 24000;
     }
     return;
 }
