@@ -14,6 +14,10 @@
 #include "arith.h"
 #include "set.h"
 
+#define  ALLOC(size) (Malloc(size))
+#define  FREE(ptr) (free(ptr))
+#define  NEW(p) ((p) = ALLOC((long)sizeof *(p)))
+
 #define T Set_T
 struct T {
 	int length;
@@ -44,7 +48,7 @@ static T copy(T t, int hint) {
 			struct member *p;
 			const void *member = q->member;
 			int i = (*set->hash)(member)%set->size;
-			Malloc(sizeof(*p));
+			NEW(p);
 			p->member = member;
 			p->link = set->buckets[i];
 			set->buckets[i] = p;
@@ -63,7 +67,7 @@ T Set_new(int hint,
 	assert(hint >= 0);
 	for (i = 1; primes[i] < hint; i++)
 		;
-	set = Malloc(sizeof (*set) +
+	set = ALLOC(sizeof (*set) +
 		primes[i-1]*sizeof (set->buckets[0]));
 	set->size = primes[i-1];
 	set->cmp  = cmp  ?  cmp : cmpatom;
@@ -96,7 +100,7 @@ void Set_put(T set, const void *member) {
 		if ((*set->cmp)(member, p->member) == 0)
 			break;
 	if (p == NULL) {
-		Malloc(sizeof(*p));
+		NEW(p);
 		p->member = member;
 		p->link = set->buckets[i];
 		set->buckets[i] = p;
@@ -117,7 +121,7 @@ void *Set_remove(T set, const void *member) {
 			struct member *p = *pp;
 			*pp = p->link;
 			member = p->member;
-			free(p);
+			FREE(p);
 			set->length--;
 			return (void *)member;
 		}
@@ -135,10 +139,10 @@ void Set_free(T *set) {
 		for (i = 0; i < (*set)->size; i++)
 			for (p = (*set)->buckets[i]; p; p = q) {
 				q = p->link;
-				free(p);
+				FREE(p);
 			}
 	}
-	free(*set);
+	FREE(*set);
 }
 void Set_map(T set,
 	void apply(const void *member, void *cl), void *cl) {
@@ -159,7 +163,7 @@ void **Set_toArray(T set, void *end) {
 	void **array;
 	struct member *p;
 	assert(set);
-	array = Malloc((set->length + 1)*sizeof (*array));
+	array = ALLOC((set->length + 1)*sizeof (*array));
 	for (i = 0; i < set->size; i++)
 		for (p = set->buckets[i]; p; p = p->link)
 			array[j++] = (void *)p->member;
@@ -205,7 +209,7 @@ T Set_inter(T s, T t) {
 					struct member *p;
 					const void *member = q->member;
 					int i = (*set->hash)(member)%set->size;
-					Malloc(sizeof(*p));
+					NEW(p);
 					p->member = member;
 					p->link = set->buckets[i];
 					set->buckets[i] = p;
@@ -234,7 +238,7 @@ T Set_minus(T t, T s) {
 					struct member *p;
 					const void *member = q->member;
 					int i = (*set->hash)(member)%set->size;
-					Malloc(sizeof(*p));
+					NEW(p);
 					p->member = member;
 					p->link = set->buckets[i];
 					set->buckets[i] = p;
@@ -263,7 +267,7 @@ T Set_diff(T s, T t) {
 					struct member *p;
 					const void *member = q->member;
 					int i = (*set->hash)(member)%set->size;
-					Malloc(sizeof(*p));
+					NEW(p);
 					p->member = member;
 					p->link = set->buckets[i];
 					set->buckets[i] = p;
@@ -280,7 +284,7 @@ T Set_diff(T s, T t) {
 					struct member *p;
 					const void *member = q->member;
 					int i = (*set->hash)(member)%set->size;
-					Malloc(sizeof(*p));
+					NEW(p);
 					p->member = member;
 					p->link = set->buckets[i];
 					set->buckets[i] = p;

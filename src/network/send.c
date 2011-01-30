@@ -151,27 +151,15 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   send_loginresp(player);
   
   // Temp
-  const int radius = 10;
   const int spawnx = -264;
   const int spawnz = 261;
-  for(int x = -radius; x < radius; x++)
-  {
-    for(int z = -radius; z < radius; z++)
-    {
-      // Use a circular send pattern based on Bravo/MostAwesomeDude's algo
-      if ( x*x + z*z <= radius*radius )
-      {
-	send_prechunk(player, spawnx/16 + x, spawnz/16 + z, true);
-        send_chunk(player, spawnx/16 + x, 0, spawnz/16 + z, 16,128,16);
-      }
-    }
-  }
+  
+  const int spawnradius = 5;
+  send_chunk_radius(player, spawnx, spawnz, spawnradius);
   
   send_spawnpos(player, spawnx, 65, spawnz); // TODO: pull spawn position from file
   //send inv
   send_movelook(player, spawnx, 70.1, 70.2, spawnz, 0, 0, false); //TODO: pull position from file
-  
-  //send_directchat(player, motd);
 
   /* Login message */
   bstring loginmsg = bformat("Player %s has joined the game!", 
@@ -370,14 +358,11 @@ static void chunkradiusfree(const void *T, void *ctx)
 }
 
 void
-send_chunk_radius(struct PL_entry *player, int32_t x, int32_t z)
+send_chunk_radius(struct PL_entry *player, int32_t xin, int32_t zin, int radius)
 {
   // Get "chunk coords"
-  x /= 16;
-  z /= 16;
-  
-  // Send radius
-  const int radius = 10;
+  xin /= 16;
+  zin /= 16;
   
   Set_T oldchunkset = player->loadedchunks;
   
@@ -391,8 +376,8 @@ send_chunk_radius(struct PL_entry *player, int32_t x, int32_t z)
       if ( x*x + z*z <= radius*radius )
       {
 	chunk_coord *coord = Malloc(sizeof(chunk_coord));
-	coord->x = x;
-	coord->z = z;
+	coord->x = x + xin;
+	coord->z = z + zin;
 	Set_put(newchunkset, coord);
       }
     }

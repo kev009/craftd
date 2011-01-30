@@ -48,6 +48,7 @@
 #include "craftd-config.h"
 #include "craftd.h"
 #include "util.h"
+#include "mapchunk.h"
 #include "network/network.h"
 #include "timeloop.h"
 #include "httpd.h"
@@ -242,6 +243,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->bev = bev;
     player->username = NULL;
     player->eid = newEid();
+    player->loadedchunks = Set_new(0, chunkcoordcmp, chunkcoordhash);
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
     /* Initialize the player's internal rwlocks */
