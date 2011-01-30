@@ -180,11 +180,14 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	if(binstrr(cpacket->message,lcmd->slen,lcmd) != BSTR_ERR)
  	{
 	  
-	  send_loginresp(player);
-	  process_handshake(player,player->username);
+	  //send_loginresp(player);
+	  //process_handshake(player,player->username);
 	  bufferevent_free(player->sev);
-	  sleep(1);
-	  player->sev = create_servercon(player,NULL);
+	  pthread_rwlock_wrlock(&player->rwlock);
+	  player->sev = NULL;
+	  pthread_rwlock_unlock(&player->rwlock);
+	  //sleep(2);
+	  //player->sev = create_servercon(player,NULL);
 	}
 	//send_directchat(player,bformat("You are on a proxy server"));
       }
