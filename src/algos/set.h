@@ -5,7 +5,7 @@
  * Contains significant code and influence from the book:
  * "C Interfaces and Implementations" by David R. Hanson (ISBN 0-201-49841-3)
  * 
- * See algos/LICENSE-MISet_T for the original MISet_T license
+ * See algos/LICENSE-MIT for the original MIT license
  */
 
 typedef struct Set_T *Set_T;

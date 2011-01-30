@@ -14,6 +14,7 @@
 #include "arith.h"
 #include "set.h"
 
+/* Map to craftd internals */
 #define  ALLOC(size) (Malloc(size))
 #define  FREE(ptr) (free(ptr))
 #define  NEW(p) ((p) = ALLOC((long)sizeof *(p)))
