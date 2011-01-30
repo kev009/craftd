@@ -83,13 +83,13 @@ craftd_config_setdefaults()
   
   // Proxy Settings
   Config.proxy_enabled = false;
-  Config.proxy_default_server = "Default Server";
-  Server *defaultserv = Malloc(sizeof(Server));
-  defaultserv->host = "127.0.0.1";
-  defaultserv->name = "Default Server";
-  defaultserv->port = 25565;
-  Server **defaultproxyservers = Malloc(sizeof(Server *));
-  defaultproxyservers[0] = &defaultserv;
+  char *defaultservername = "Default Server";
+  Config.proxy_default_server = defaultservername;
+  Server **defaultproxyservers = Malloc(sizeof(Server *)*2);
+  defaultproxyservers[0] = Malloc(sizeof(Server));
+  defaultproxyservers[0]->host = strdup("127.0.0.1");
+  defaultproxyservers[0]->name = strdup("Default Server");
+  defaultproxyservers[0]->port = 25565;
   defaultproxyservers[1] = NULL;
   Config.proxy_servers = defaultproxyservers;
 
@@ -212,7 +212,7 @@ parseJInt(int *storage, const json_t *obj, const char *key)
  * @param key key to read
  */
 char *
-parseJString(const json_t *obj, const char *key)
+parseJString(const json_t *obj, const char *key, const char *defaultvalue)
 {
   const char *strval;
   json_t *strobj = json_object_get(obj, key);
@@ -221,7 +221,7 @@ parseJString(const json_t *obj, const char *key)
   if (!strobj)
   {
     LOG(LOG_DEBUG, "Config: key \"%s\" is undefined.  Using default.", key);
-    return Config.motd_file;
+    return defaultvalue;
   }
   
   /* Check if the value is a string (fatal) */
@@ -284,9 +284,9 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.game_port, jsongame, "game-port");
     parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
-    Config.motd_file = parseJString(jsongame, "motd-file");
-    Config.world_dir = parseJString(jsongame, "world-dir");
-    Config.proxy_default_server = parseJString(jsongame,"default-server");
+    Config.motd_file = parseJString(jsongame, "motd-file",Config.motd_file);
+    Config.world_dir = parseJString(jsongame, "world-dir",Config.world_dir);
+    Config.proxy_default_server = parseJString(jsongame,"default-server",Config.proxy_default_server);
     parseJBool(&Config.proxy_enabled,jsongame,"proxy-enabled");
     
     json_t *jsonpservers = json_object_get(jsongame,"servers");
@@ -301,8 +301,8 @@ craftd_config_parse(const char *file)
 	proxyservers[aIndex] = (Server *) malloc(sizeof(Server));	
 	//Remember to free()/realloc() proxyservers when a server context is deleted or added during runtime
 	bzero(proxyservers[aIndex],sizeof(Server));
-	proxyservers[aIndex]->host = parseJString(serverelement,"host");
-	proxyservers[aIndex]->name = parseJString(serverelement,"name");
+	proxyservers[aIndex]->host = parseJString(serverelement,"host","127.0.0.1");
+	proxyservers[aIndex]->name = parseJString(serverelement,"name","undefined");
 	parseJInt(&proxyservers[aIndex]->port,serverelement,"port");
       }
       proxyservers[aIndex] = NULL; //Null terminate the list
@@ -324,7 +324,7 @@ craftd_config_parse(const char *file)
   {
     parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
     parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
-    Config.docroot = parseJString(jsonhttp, "static-docroot");
+    Config.docroot = parseJString(jsonhttp, "static-docroot",Config.docroot);
   }
   else
   {
