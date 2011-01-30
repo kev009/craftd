@@ -3,6 +3,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
+AM_CPPFLAGS += -I$(top_srcdir)/third-party/klib
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
 
 # Custom build shim for jansson
