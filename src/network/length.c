@@ -160,7 +160,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
-	return len_returncode(inlen, packet_playerpossz);
+	return len_returncode(inlen, packet_useentitysz);
     }
     case PID_PLAYERHEALTH: // Health update packet 0x08
     {
@@ -266,8 +266,9 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int size = 1;
 	do//this loop should always run at least once
 	{
-	  evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
-		    EVBUFFER_PTR_SET);
+	  if(evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
+		    EVBUFFER_PTR_SET) != 0)
+	    return -EAGAIN;
 	  //evbuffer_enable_locking(b, NULL);
 	  //evbuffer_lock(b);
 	  /* TODO: check locking semantics wrt multiple threads */ 
@@ -369,8 +370,9 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int size = 0;
 	do //this loop should always run at least once
 	{
-	  evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase+size, 
-		    EVBUFFER_PTR_SET);
+	  if(evbuffer_ptr_set(input, &ptr, packet_entitymetaszbase+size, 
+		    EVBUFFER_PTR_SET) != 0)
+	    return -EAGAIN;
 	  //evbuffer_enable_locking(b, NULL);
 	  //evbuffer_lock(b);
 	  /* TODO: check locking semantics wrt multiple threads */ 
@@ -406,6 +408,25 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	
 	totalsize = packet_mapchunksz.base + mlen;
 	return len_returncode(inlen, totalsize);	
+    }
+    case PID_OPENWINDOW: //Open window 0x64
+    {
+	struct evbuffer_ptr ptr;
+	uint16_t mlen;
+	int totalsize;
+	int status;
+	
+	evbuffer_ptr_set(input, &ptr, packet_openwindowsz.str1offset, 
+			 EVBUFFER_PTR_SET);
+	
+	status = CRAFTD_evbuffer_copyout_from(input, &mlen, sizeof(mlen), &ptr);
+	if (status != 0)
+	  return -status;
+	
+	mlen = ntohs(mlen);
+	
+	totalsize = packet_openwindowsz.base + mlen;
+	return len_returncode(inlen, totalsize);
     }
     case PID_CLOSEWINDOW: // Close window 0x65
     {

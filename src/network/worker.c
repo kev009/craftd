@@ -117,7 +117,7 @@ void
     do
     {
       evbuffer_copyout(input, &pkttype, 1);
-      LOG(LOG_DEBUG,"got packet %d",pkttype);
+      //LOG(LOG_DEBUG,"got packet %d",pkttype);
       pktlen = len_statemachine(pkttype, input);
       
       /* On exception conditions, negate the return value to get correct errno */

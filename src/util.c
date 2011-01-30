@@ -375,14 +375,14 @@ CRAFTD_evbuffer_copyout_from(struct evbuffer *b, void *buf,
     char *cp = buf;
     int status;
 
-    evbuffer_enable_locking(b, NULL);
+    //evbuffer_enable_locking(b, NULL);
     //evbuffer_lock(b);
     /* TODO: check locking semantics wrt multiple threads */
 
     if (!ptr)
     {
         status = evbuffer_copyout(b, buf, len);
-        evbuffer_unlock(b);
+        //evbuffer_unlock(b);
         if (status < 0)
           return status;
         return 0;

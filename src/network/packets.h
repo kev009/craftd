@@ -354,6 +354,7 @@ struct packet_pickupspawn
   MCint eid;
   MCshort item;
   MCbyte count;
+  MCshort damage; //Verify
   MCint x;
   MCint y;
   MCint z;
@@ -362,7 +363,7 @@ struct packet_pickupspawn
   MCbyte roll;
 };
 static const int packet_pickupspawnsz = 5 * sizeof(MCbyte) 
-				      + 4 * sizeof(MCint) + sizeof(MCshort);
+				      + 4 * sizeof(MCint) + 2 *sizeof(MCshort);
 
 /* pid 0x16 */
 struct packet_collectitem
