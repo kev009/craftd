@@ -32,6 +32,8 @@
 #include <pthread.h>
 
 /* Public data */
+int64_t time;
+const int timepktinterval = 30, dayrate = 20, sunsetrate = 20, nightrate = 20, sunriserate = 20;
 pthread_rwlock_t TLQ_rwlock;
 int TLQ_count;
 TAILQ_HEAD(TLQ_tailhead, TLQ_entry) TLQ_head;

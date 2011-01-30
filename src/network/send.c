@@ -584,6 +584,8 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   
   return;
 }
+
+void
 send_timeupdate(struct PL_entry *player, int64_t time)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
@@ -599,7 +601,6 @@ send_timeupdate(struct PL_entry *player, int64_t time)
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
   
-  errorcb(player->bev, BEV_EVENT_EOF, player);
   
   return;
 }

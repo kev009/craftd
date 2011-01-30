@@ -57,3 +57,4 @@ void send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z);
 void send_movelook(struct PL_entry *player, double x, double stance, double y,
 	           double z, float yaw, float pitch, bool flying);
 void send_kick(struct PL_entry *player, bstring dconmsg);
+void send_timeupdate(struct PL_entry *player, int64_t time);
