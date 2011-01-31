@@ -138,7 +138,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int totalsize;
 	int status;
 	
-	if(evbuffer_ptr_set(input, &ptr, packet_chat.str1offset, 
+	if(evbuffer_ptr_set(input, &ptr, packet_chatsz.str1offset, 
 		  EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
@@ -201,7 +201,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
       int status;
       int16_t itemid;
 
-      if(evbuffer_ptr_set(input, &ptr, packet_blockplacesz.str1offset, 
+      if(evbuffer_ptr_set(input, &ptr, packet_blockplacesz.itemidoffset, 
 		EVBUFFER_PTR_SET) != 0)
 	return -EAGAIN;
       
@@ -448,7 +448,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
       int status;
       int16_t itemid;
 
-      if(evbuffer_ptr_set(input, &ptr, packet_namedentityspawnsz.itemidoffset, 
+      if(evbuffer_ptr_set(input, &ptr, packet_windowclicksz.itemidoffset, 
 		EVBUFFER_PTR_SET) != 0)
 	return -EAGAIN;
 
@@ -506,7 +506,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int runningsize = 0; //running size total
 	for(int i = 0; i < itemcount; i++)
 	{
-	  if(evbuffer_ptr_set(input, &ptr, packet_windowitems.itemcountoffset+2+runningsize,
+	  if(evbuffer_ptr_set(input, &ptr,packet_windowitemssz.itemcountoffset+2+runningsize,
 			      EVBUFFER_PTR_SET) != 0)
 	    return -EAGAIN;
 
