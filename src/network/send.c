@@ -77,12 +77,19 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
     case PID_PLAYERPOS:
     {
       pthread_rwlock_wrlock(&player->position.rwlock);
+      
+      int oldx = player->position.x/16, oldz = player->position.z/16;
+      
       /* Flip bits */
       player->position.x = Cswapd(((struct packet_playerpos*) packet)->x);
       player->position.y = Cswapd(((struct packet_playerpos*) packet)->y);
       player->position.z = Cswapd(((struct packet_playerpos*) packet)->z);
       
-      send_chunk_radius(player, player->position.x, player->position.z, RADIUS);
+      int newx = player->position.x/16, newz = player->position.z/16;
+      
+      if (oldx != newx || oldz != newz)
+	send_chunk_radius(player, player->position.x, player->position.z, 
+			  RADIUS);
       
       pthread_rwlock_unlock(&player->position.rwlock);
       
@@ -100,6 +107,9 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
     case PID_PLAYERMOVELOOK:
     {
       pthread_rwlock_wrlock(&player->position.rwlock);
+      
+      int oldx = player->position.x/16, oldz = player->position.z/16;
+      
       /* Flip bits */
       player->position.x = Cswapd(((struct packet_movelook*) packet)->x);
       player->position.y = Cswapd(((struct packet_movelook*) packet)->y);
@@ -107,7 +117,11 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
       player->position.yaw = Cswapf(((struct packet_movelook*) packet)->yaw);
       player->position.pitch = Cswapf(((struct packet_movelook*) packet)->pitch);
       
-      send_chunk_radius(player, player->position.x, player->position.z, RADIUS);
+      int newx = player->position.x/16, newz = player->position.z/16;
+      
+      if (oldx != newx || oldz != newz)
+	send_chunk_radius(player, player->position.x, player->position.z, 
+			  RADIUS);
 
       pthread_rwlock_unlock(&player->position.rwlock);
       
@@ -373,6 +387,8 @@ send_chunk_radius(struct PL_entry *player, int32_t xin, int32_t zin, int radius)
   // Get "chunk coords"
   xin /= 16;
   zin /= 16;
+  
+  LOG(LOG_DEBUG, "Sending new chunks center:(%d, %d)", xin, zin);
   
   Set_T oldchunkset = player->loadedchunks;
   
