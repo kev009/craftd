@@ -699,20 +699,20 @@ send_kick(struct PL_entry *player, bstring dconmsg)
  * @remarks Scope: public API method
  * 
  * @param player Player List player pointer
- * @param time Time in raw format.
+ * @param time Time in raw game format.
  */
 void
-send_timeupdate(struct PL_entry *player, int64_t time)
+send_timeupdate(struct PL_entry *player, int time)
 {
   struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_TIMEUPDATE;
-  time = htonll(time);
+  int64_t ntime = htonll(time);
 
 
   evbuffer_add(tempbuf, &pid, sizeof(pid));
-  evbuffer_add(tempbuf, &time, sizeof(time));
+  evbuffer_add(tempbuf, &ntime, sizeof(ntime));
   
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);

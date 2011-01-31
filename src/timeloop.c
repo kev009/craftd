@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
@@ -38,6 +39,46 @@
 #include "timeloop.h"
 #include "network/packets.h"
 #include "network/network.h"
+
+/* Private Data */
+static const int timepktinterval = 30;
+pthread_spinlock_t gametime_spinlock;
+static int gametime = 0;
+
+/* Public Accessors */
+
+/**
+ * Access the private gametime
+ * 
+ * @remarks Public accessor
+ * 
+ * @returns gametime in game format(0-24000)
+ */
+int TL_get_gametime()
+{
+  // TODO: This should switch to libatomic_ops if available
+  int tmp;
+  pthread_spin_lock(&gametime_spinlock);
+  tmp = gametime;
+  pthread_spin_unlock(&gametime_spinlock);
+  return tmp;
+}
+
+/**
+ * Mutator the private gametime
+ * 
+ * @remarks Public accessor
+ * 
+ * @returns gametime in game format(0-24000)
+ */
+int TL_set_gametime(int time)
+{
+  // TODO: This should switch to libatomic_ops if available
+  pthread_spin_lock(&gametime_spinlock);
+  gametime = time;
+  pthread_spin_unlock(&gametime_spinlock);
+  return time;
+}
 
 /**
  * Internal method to send the silly TCP keepalive packet.  Used only by the
@@ -79,8 +120,10 @@ static void
 send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 {
     struct PL_entry *player;
-    const int8_t timeupdatepkt = PID_TIMEUPDATE;
-
+    
+    int timecpy;
+    timecpy = TL_get_gametime();
+    
     pthread_rwlock_rdlock(&PL_rwlock);
 
     /* Check if there are players logged in */
@@ -94,7 +137,7 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 
     SLIST_FOREACH(player, &PL_head, PL_entries)
     {
-        send_timeupdate(player, time);
+        send_timeupdate(player, timecpy);
     }
 
     pthread_rwlock_unlock(&PL_rwlock);
@@ -109,37 +152,40 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
  * 
  */
 static void
-timeincrease_cb()
+timeincrease_cb(evutil_socket_t fd, short event, void *arg)
 {
-//todo: thread lock unlock ?!
-    if (time >= 0 & time <= 11999)
-    {
-        time += dayrate;
-        return;
-    }
-    else if (time >= 12000 & time <= 13799)
-    {
-        time += sunsetrate;
-        return;
-    }
-    else if (time >= 13800 & time <= 22199)
-    {
-        time += nightrate;
-        return;
-    }
-    else if (time >= 22200 & time <= 23999)
-    {
-        time += sunriserate;
+    const int dayrate = 20, sunsetrate = 20, nightrate = 20, sunriserate = 20;
 
-        if (time >= 24000)
+    int timecpy = TL_get_gametime();
+    
+    if (timecpy >= 0 && timecpy <= 11999)
+    {
+	TL_set_gametime(timecpy + dayrate);
+        return;
+    }
+    else if (timecpy >= 12000 && timecpy <= 13799)
+    {
+        TL_set_gametime(timecpy + sunsetrate);
+        return;
+    }
+    else if (timecpy >= 13800 && timecpy <= 22199)
+    {
+        TL_set_gametime(timecpy + nightrate);
+        return;
+    }
+    else if (timecpy >= 22200 && timecpy <= 23999)
+    {
+        timecpy += sunriserate;
+
+        if (timecpy >= 24000)
         {
-            time -= 24000;
+            TL_set_gametime(0);
         }
         return;
     }
-    else if (time >= 24000)
+    else if (gametime >= 24000)
     {
-        time -= 24000;
+        TL_set_gametime(0);
     }
     return;
 }
@@ -149,6 +195,9 @@ void *run_timeloop(void *arg)
 {
     struct event_base* tlbase;
 
+    // Initialize the game time spinlock
+    pthread_spin_init(&gametime_spinlock, PTHREAD_PROCESS_PRIVATE);
+    
     tlbase = event_base_new();
     if (!tlbase)
     {
@@ -164,15 +213,15 @@ void *run_timeloop(void *arg)
     evtimer_add(keepalive_event, &keepalive_interval);
 
     /* Register the time packet update handler */
-    event *timeupdate_event;
-    timeval timeupdate_interval = {timepktinterval,0}; // interval defined by constant timepktinterval
+    struct event *timeupdate_event;
+    struct timeval timeupdate_interval = {timepktinterval,0};
 
     timeupdate_event = event_new(tlbase, -1, EV_PERSIST, send_timeupdate_cb, NULL);
     evtimer_add(timeupdate_event, &timeupdate_interval);
     
      /* Register the time update handler */
-    event *timeincrease_event;
-    timeval timeincrease_interval = {1,0};
+    struct event *timeincrease_event;
+    struct timeval timeincrease_interval = {1,0};
 
     timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
     evtimer_add(timeincrease_event, &timeincrease_interval);

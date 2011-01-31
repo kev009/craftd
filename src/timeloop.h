@@ -32,7 +32,6 @@
 #include <pthread.h>
 
 /* Public data */
-const int timepktinterval = 30, dayrate = 20, sunsetrate = 20, nightrate = 20, sunriserate = 20, time = 0;
 pthread_rwlock_t TLQ_rwlock;
 int TLQ_count;
 TAILQ_HEAD(TLQ_tailhead, TLQ_entry) TLQ_head;
@@ -48,6 +47,8 @@ struct TLQ_entry
 
 /* Public interfaces */
 void *run_timeloop(void *arg);
+int TL_get_gametime();
+int TL_set_gametime(int time);
 
 #endif
 
