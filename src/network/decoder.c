@@ -46,14 +46,17 @@ void packetfree(uint8_t pkttype, void * packet)
     {
       bstrFree(((struct packet_login*) packet)->username);
       bstrFree(((struct packet_login*) packet)->password);
+      break;
     }
     case PID_HANDSHAKE:
     {
       bstrFree(((struct packet_handshake*) packet)->username);
+      break;
     }
     case PID_CHAT:
     {
       bstrFree(((struct packet_chat*) packet)->message);
+      break;
     }
   }
   free(packet);
