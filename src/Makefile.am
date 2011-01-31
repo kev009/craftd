@@ -6,6 +6,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/klib
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
 
+extra_DIST = algos/LICENSE-MIT
+
 # Custom build shim for jansson
 jsondir = $(top_srcdir)/third-party/jansson/src
 noinst_LTLIBRARIES = libjansson.la libcdnbt.la
@@ -38,6 +40,7 @@ craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
 craftd_SOURCES += craftd.c craftd.h
 craftd_SOURCES += craftd-config.c craftd-config.h
+craftd_SOURCES += algos/set.h algos/set.c algos/arith.h
 craftd_SOURCES += network/network.h network/network-private.h network/packets.h
 craftd_SOURCES += network/worker.c network/decoder.c network/send.c
 craftd_SOURCES += network/length.c

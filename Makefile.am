@@ -29,3 +29,7 @@ EXTRA_DIST += $(bstrdir)/license.txt $(bstrdir)/security.txt \
 # Jansson extras
 jsondir = third-party/jansson
 EXTRA_DIST += $(jsondir)/LICENSE $(jsondir)/README.rst
+
+# klib extras
+klibdir = third-party/klib
+EXTRA_DIST += $(klibdir)

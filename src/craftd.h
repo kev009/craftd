@@ -33,9 +33,10 @@
 
 #include <event2/event.h>
 #include <event2/dns.h>
+#include <bstrlib.h>
 
-#include "bstrlib.h"
 
+#include "algos/set.h"
 #include "craftd-config.h"
 #include "util.h"
 
@@ -77,6 +78,8 @@ struct PL_entry
     float yaw;
     float pitch;
   } position;
+  Set_T loadedchunks; // The working set of chunks that we have sent
+  
   SLIST_ENTRY(PL_entry) PL_entries; // Pointer to the next player entry
 };
 

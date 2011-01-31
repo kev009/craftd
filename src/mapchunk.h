@@ -28,7 +28,19 @@
 
 #include <config.h>
 
+#include "craftd.h"
+
 /* Map Chunk */
+typedef struct chunk_coord chunk_coord;
+struct chunk_coord
+{
+  int x;
+  int z;
+};
+
+int chunkcoordcmp(const void *a, const void *b);
+uint chunkcoordhash(const void *a);
+
 int loadChunk(int x, int z, uint8_t *mapdata);
 
 #endif

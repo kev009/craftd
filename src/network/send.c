@@ -41,6 +41,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+// Temp for send radius
+const int RADIUS = 10;
 
 
 
@@ -78,11 +80,22 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
     case PID_PLAYERPOS:
     {
       pthread_rwlock_wrlock(&player->position.rwlock);
+      
+      int oldx = player->position.x/16, oldz = player->position.z/16;
+      
       /* Flip bits */
       player->position.x = Cswapd(((struct packet_playerpos*) packet)->x);
       player->position.y = Cswapd(((struct packet_playerpos*) packet)->y);
       player->position.z = Cswapd(((struct packet_playerpos*) packet)->z);
+      
+      int newx = player->position.x/16, newz = player->position.z/16;
+      
+      if (oldx != newx || oldz != newz)
+	send_chunk_radius(player, player->position.x, player->position.z, 
+			  RADIUS);
+      
       pthread_rwlock_unlock(&player->position.rwlock);
+      
       return;
     }
     case PID_PLAYERLOOK:
@@ -97,14 +110,24 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
     case PID_PLAYERMOVELOOK:
     {
       pthread_rwlock_wrlock(&player->position.rwlock);
+      
+      int oldx = player->position.x/16, oldz = player->position.z/16;
+      
       /* Flip bits */
       player->position.x = Cswapd(((struct packet_movelook*) packet)->x);
       player->position.y = Cswapd(((struct packet_movelook*) packet)->y);
       player->position.z = Cswapd(((struct packet_movelook*) packet)->z);
       player->position.yaw = Cswapf(((struct packet_movelook*) packet)->yaw);
       player->position.pitch = Cswapf(((struct packet_movelook*) packet)->pitch);
+      
+      int newx = player->position.x/16, newz = player->position.z/16;
+      
+      if (oldx != newx || oldz != newz)
+	send_chunk_radius(player, player->position.x, player->position.z, 
+			  RADIUS);
 
       pthread_rwlock_unlock(&player->position.rwlock);
+      
       return;
     }
     case PID_DISCONNECT:
@@ -153,27 +176,17 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  //send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
-  //send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
   
   // Temp
-  const int radius = 10;
   const int spawnx = -264;
   const int spawnz = 261;
-  for(int x = -radius; x < radius; x++)
-  {
-    for(int z = -radius; z < radius; z++)
-    {
-      send_prechunk(player, spawnx/16 + x, spawnz/16 + z, true);
-      send_chunk(player, spawnx/16 + x, 0, spawnz/16 + z, 16,128,16);
-    }
-  }
+  
+  const int spawnradius = 5;
+  send_chunk_radius(player, spawnx, spawnz, spawnradius);
   
   send_spawnpos(player, spawnx, 65, spawnz); // TODO: pull spawn position from file
   //send inv
   send_movelook(player, spawnx, 70.1, 70.2, spawnz, 0, 0, false); //TODO: pull position from file
-  
-  //send_directchat(player, motd);
 
   /* Login message */
   bstring loginmsg = bformat("Player %s has joined the game!", 
@@ -345,6 +358,73 @@ send_syschat(bstring message)
   pthread_rwlock_unlock(&PL_rwlock);
 
   return;
+}
+
+/**
+ * A wrapper to send and delete changed packets within a client's tracked
+ * radius
+ */
+// Private utility functions for send_chunk_radius
+static void chunkradiusunload(const void *T, void *ctx)
+{
+  struct PL_entry *player = (void *)ctx;
+  chunk_coord coord = *(chunk_coord *)T;
+  send_prechunk(player, coord.x, coord.z, false);
+}
+static void chunkradiusload(const void *T, void *ctx)
+{
+  // Send full chunk
+  const int sizex = 16, sizey = 128, sizez = 16;
+  
+  struct PL_entry *player = (void *)ctx;
+  chunk_coord coord = *(chunk_coord *)T;
+  
+  send_prechunk(player, coord.x, coord.z, true);
+  send_chunk(player, coord.x, 0, coord.z, sizex, sizey, sizez);
+}
+static void chunkradiusfree(const void *T, void *ctx)
+{
+  chunk_coord *coord = (chunk_coord *)T;
+  free(coord);
+}
+
+void
+send_chunk_radius(struct PL_entry *player, int32_t xin, int32_t zin, int radius)
+{
+  // Get "chunk coords"
+  xin /= 16;
+  zin /= 16;
+  
+  LOG(LOG_DEBUG, "Sending new chunks center:(%d, %d)", xin, zin);
+  
+  Set_T oldchunkset = player->loadedchunks;
+  
+  // Make a new set containing coordinates of all chunks client should have
+  Set_T newchunkset = Set_new(400, chunkcoordcmp, chunkcoordhash);
+  for(int x = -radius; x < radius; x++)
+  {
+    for(int z = -radius; z < radius; z++)
+    {
+      // Use a circular send pattern based on Bravo/MostAwesomeDude's algo
+      if ( x*x + z*z <= radius*radius )
+      {
+	chunk_coord *coord = Malloc(sizeof(chunk_coord));
+	coord->x = x + xin;
+	coord->z = z + zin;
+	Set_put(newchunkset, coord);
+      }
+    }
+  }
+  
+  Set_T toremove = Set_minus(oldchunkset, newchunkset);
+  Set_T toadd = Set_minus(newchunkset, oldchunkset);
+  
+  Set_map(toremove, &chunkradiusunload, (void *)player);
+  Set_map(toadd, &chunkradiusload, (void *)player);
+  
+  player->loadedchunks = newchunkset;
+  Set_map(oldchunkset, &chunkradiusfree, NULL);
+  Set_free(&oldchunkset);
 }
 
 /**

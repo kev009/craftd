@@ -23,18 +23,65 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include <stdio.h>
+#include <sys/queue.h>
 #include <zlib.h>
 
+#include <khash.h>
+
 #include "craftd-config.h"
+#include "craftd.h"
 #include "util.h"
 #include "mapchunk.h"
 #include "nbt/nbt.h"
 
 /* Map Chunk */
-
 // Temp
-const int WORLDBASE = 36;
+static const int WORLDBASE = 36;
+
+/**
+ * Check if two chunk coordinate pairs for equality
+ * 
+ * @returns 0 if equal, 1 otherwise
+ */
+int chunkcoordcmp(const void *a, const void *b)
+{
+  chunk_coord coordA = *(chunk_coord *)a;
+  chunk_coord coordB = *(chunk_coord *)b;
+  
+  if ( coordA.x == coordB.x && coordA.z == coordB.z)
+    return 0;
+  
+  return 1;
+}
+
+/**
+ * Compute a hash function of a chunk coordinate pair
+ */
+uint chunkcoordhash(const void *T)
+{
+  const int HASHMULTIPLIER = 31;
+  chunk_coord coord = *(chunk_coord *)T;
+  
+  return coord.x * (HASHMULTIPLIER) * coord.z;
+}
+
+/**
+ * Global Active Chunk Table
+ *
+ * The GACT holds a chunk (x,z) coordinate as the key and a linked list of
+ * players in that region as the value.
+ * 
+ * This association enables broadcasting to in-range players
+ */
+struct GACT_entry
+{
+  pthread_spinlock_t spinlock;
+  struct PL_entry player;
+  SLIST_ENTRY(GACT_entry) GACT_entries; // Pointer to the GACT list entry
+};
 
 int valid_chunk(nbt_tag *nbtroot)
 {
