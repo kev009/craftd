@@ -207,17 +207,17 @@ void *run_timeloop(void *arg)
         exit(1);
     }
 
+
+    /* Register the keepalive handler */
+    struct event *keepalive_event;
+    struct timeval keepalive_interval = {10, 0}; // 10 Second Interval
+
+    keepalive_event = event_new(tlbase, -1, EV_PERSIST, send_keepalive_cb, NULL);
+    evtimer_add(keepalive_event, &keepalive_interval);
+
     //We do not need to update time when connecting to a proxy
     if(!Config.proxy_enabled)
     {
-      /* Register the keepalive handler */
-      struct event *keepalive_event;
-      struct timeval keepalive_interval = {10, 0}; // 10 Second Interval
-
-      keepalive_event = event_new(tlbase, -1, EV_PERSIST, send_keepalive_cb, NULL);
-      evtimer_add(keepalive_event, &keepalive_interval);
-
-
       /* Register the time packet update handler */
       struct event *timeupdate_event;
       struct timeval timeupdate_interval = {timepktinterval,0};

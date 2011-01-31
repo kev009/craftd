@@ -34,7 +34,14 @@
 #include "proxy.h"
 #include "craftd.h"
 
-
+/**
+ * This method sends a handshake to a connected server via proxy
+ * The sever connection is handled with player->bev
+ * 
+ * @remarks Scope: private
+ * 
+ * @param player player struct to connect with
+ */
 void send_proxyhandshake(struct PL_entry *player)
 {
   struct evbuffer *output = bufferevent_get_output(player->sev);
@@ -51,6 +58,15 @@ void send_proxyhandshake(struct PL_entry *player)
   evbuffer_free(tempbuf);
   
 }
+/**
+ * This method sends a chat message to a connected server via proxy
+ * The sever connection is handled with player->bev
+ * 
+ * @remarks Scope: private
+ * 
+ * @param player player struct to connect with
+ * @param message bstring message to conenct with
+ */
 void send_proxychat(struct PL_entry *player,bstring message)
 {
   struct evbuffer *output = bufferevent_get_output(player->sev);
@@ -67,6 +83,14 @@ void send_proxychat(struct PL_entry *player,bstring message)
   evbuffer_free(tempbuf);
   
 }
+/**
+ * This method sends login packets to a connected server via proxy
+ * The sever connection is handled with player->bev
+ * 
+ * @remarks Scope: private
+ * 
+ * @param player player struct to connect with
+ */
 void send_proxylogin(struct PL_entry *player)
 {
   struct evbuffer *output = bufferevent_get_output(player->sev);
@@ -179,20 +203,24 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	bstring lcmd = bfromcstr("\\login");
 	if(binstrr(cpacket->message,lcmd->slen,lcmd) != BSTR_ERR)
  	{
-	  
-	  //send_loginresp(player);
+	  /* Don't do anything untill properly tested
 	  //process_handshake(player,player->username);
+	  send_loginresp(player);
+	  //sleep(2);
 	  bufferevent_free(player->sev);
 	  pthread_rwlock_wrlock(&player->rwlock);
-	  player->sev = NULL;
+	  player->sev = create_servercon(player,Config.proxy_servers[0]);
 	  pthread_rwlock_unlock(&player->rwlock);
 	  //sleep(2);
-	  //player->sev = create_servercon(player,NULL);
+	  //player->sev = create_servercon(player,NULL);*/
 	}
 	//send_directchat(player,bformat("You are on a proxy server"));
       }
       else
-	send_proxychat(player,cpacket->message);
+      {
+	if(player->sev)
+	  send_proxychat(player,cpacket->message);
+      }
       break;
     }
   }

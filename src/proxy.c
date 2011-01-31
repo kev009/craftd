@@ -76,9 +76,9 @@ void proxy_errorcb(struct bufferevent *bev, short error, void *ctx)
     struct PL_entry *player = ctx;
     if (error & BEV_EVENT_CONNECTED)
     {
-      //bufferevent_lock(player->sev);
+      bufferevent_lock(player->sev);
       send_proxyhandshake(player);
-      //bufferevent_unlock(player->sev);
+      bufferevent_unlock(player->sev);
     }
     else if (error & BEV_EVENT_EOF)
     {

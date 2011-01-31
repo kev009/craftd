@@ -97,12 +97,9 @@ void
     }
 
     /* Do work */
-    //bufferevent_lock(bev);
+    bufferevent_lock(player->bev);
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
-    evbuffer_enable_locking(input,NULL);
-    evbuffer_enable_locking(output,NULL);
-    evbuffer_lock(input);
     
     inlen = evbuffer_get_length(input);
     
@@ -155,16 +152,18 @@ void
 	{
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
-	    evbuffer_lock(bufferevent_get_output(player->sev));
+	    bufferevent_lock(player->sev);
 	    evbuffer_remove_buffer(input,
 				   bufferevent_get_output(player->sev),pktlen);
-	    //bufferevent_unlock(player->sev);
+	    bufferevent_unlock(player->sev);
 	  }else
 	  {
 	    //if(player->sev)
 	      //bufferevent_lock(player->sev);
 	    packet = packetdecoder(pkttype, pktlen, bev);
+	    //evbuffer_lock(output);
 	    process_proxypacket(player,pkttype,packet);
+	    //evbuffer_unlock(output);
 	    packetfree(pkttype,packet);
 	    //if(player->sev)
 	      //bufferevent_unlock(player->sev);
@@ -173,7 +172,9 @@ void
 	else
 	{
 	  packet = packetdecoder(pkttype, pktlen, bev);
+	  //evbuffer_lock(output);
 	  process_packet(player,pkttype,packet);
+	  //evbuffer_unlock(output);
 	  packetfree(pkttype,packet);
 	}
 	
@@ -181,18 +182,21 @@ void
       else if(workitem->worktype ==WQ_PROXY)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
-	//bufferevent_lock(player->bev);
+	bufferevent_lock(player->sev);
 	if(process_isproxyserverpassthrough(pkttype))
 	{
-	    evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);  
+	    evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);
 	}
 	else
 	{
 	  packet = packetdecoder(pkttype, pktlen, bev);
-	  process_proxyserverpacket(player,pkttype,packet);;
+	  //evbuffer_lock(output);
+	  process_proxyserverpacket(player,pkttype,packet);
+	  //evbuffer_unlock(output);
 	  packetfree(pkttype,packet);
 	}
-	//bufferevent_unlock(player->bev);
+	bufferevent_unlock(player->sev);
+	
       } else { goto WORKER_ERR; }
       /* On decoding errors, punt the client for now */
       
@@ -209,7 +213,7 @@ void
 
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
-    evbuffer_unlock(input);
+    bufferevent_unlock(player->bev);
     free(workitem);
     continue;
 
@@ -220,7 +224,7 @@ WORKER_ERR:
 
     bstring wmsg = bfromcstr("Error in packet sequence.");
     send_kick(player, wmsg);
-    evbuffer_unlock(input);
+    bufferevent_unlock(player->bev);
     bstrFree(wmsg);
 
     continue;
