@@ -57,6 +57,10 @@ struct
   int workpool_size;
   char *motd_file;
   char *world_dir;
+  int dayrate;
+  int sunsetrate;
+  int nightrate;
+  int sunriserate;
   
   // httpd settings
   bool httpd_enabled;

@@ -42,7 +42,7 @@
 
 /* Private Data */
 static const int timepktinterval = 30;
-pthread_spinlock_t gametime_spinlock;
+static pthread_spinlock_t gametime_spinlock;
 static int gametime = 0;
 
 /* Public Accessors */
@@ -67,7 +67,7 @@ int TL_get_gametime()
 /**
  * Mutator the private gametime
  * 
- * @remarks Public accessor
+ * @remarks Public mutator
  * 
  * @returns gametime in game format(0-24000)
  */
@@ -154,28 +154,26 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 static void
 timeincrease_cb(evutil_socket_t fd, short event, void *arg)
 {
-    const int dayrate = 20, sunsetrate = 20, nightrate = 20, sunriserate = 20;
-
     int timecpy = TL_get_gametime();
     
     if (timecpy >= 0 && timecpy <= 11999)
     {
-	TL_set_gametime(timecpy + dayrate);
+	TL_set_gametime(timecpy + Config.dayrate);
         return;
     }
     else if (timecpy >= 12000 && timecpy <= 13799)
     {
-        TL_set_gametime(timecpy + sunsetrate);
+        TL_set_gametime(timecpy + Config.sunsetrate);
         return;
     }
     else if (timecpy >= 13800 && timecpy <= 22199)
     {
-        TL_set_gametime(timecpy + nightrate);
+        TL_set_gametime(timecpy + Config.nightrate);
         return;
     }
     else if (timecpy >= 22200 && timecpy <= 23999)
     {
-        timecpy += sunriserate;
+        timecpy += Config.sunriserate;
 
         if (timecpy >= 24000)
         {

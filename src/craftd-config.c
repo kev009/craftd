@@ -80,6 +80,10 @@ craftd_config_setdefaults()
   Config.motd_file = motddefault;
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
+  Config.dayrate = 20;
+  Config.sunsetrate = 20;
+  Config.nightrate = 20;
+  Config.sunriserate = 20;
   
   // httpd settings
   Config.httpd_enabled = true;
