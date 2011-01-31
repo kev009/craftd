@@ -117,7 +117,7 @@ void
      do
      {
       evbuffer_copyout(input, &pkttype, 1);
-      LOG(LOG_DEBUG,"got packet %d",pkttype);
+      //LOG(LOG_DEBUG,"got packet %d",pkttype);
       pktlen = len_statemachine(pkttype, input);
       
       /* On exception conditions, negate the return value to get correct errno */
@@ -146,10 +146,9 @@ void
       
       if(workitem->worktype == WQ_GAME)
       {
-	LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
-	
 	if(Config.proxy_enabled)
 	{
+	  LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
 	    bufferevent_lock(player->sev);
