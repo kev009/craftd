@@ -103,8 +103,10 @@ send_keepalive_cb(evutil_socket_t fd, short event, void *arg)
 
     SLIST_FOREACH(player, &PL_head, PL_entries)
     {
+	bufferevent_lock(player->bev);
         struct evbuffer *output = bufferevent_get_output(player->bev);
         evbuffer_add(output, &keepalivepkt, sizeof(keepalivepkt));
+	bufferevent_unlock(player->bev);
     }
 
     pthread_rwlock_unlock(&PL_rwlock);
@@ -137,7 +139,9 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 
     SLIST_FOREACH(player, &PL_head, PL_entries)
     {
+	bufferevent_lock(player->bev);
         send_timeupdate(player, timecpy);
+	bufferevent_unlock(player->bev);
     }
 
     pthread_rwlock_unlock(&PL_rwlock);
@@ -203,26 +207,31 @@ void *run_timeloop(void *arg)
         exit(1);
     }
 
-    /* Register the keepalive handler */
-    struct event *keepalive_event;
-    struct timeval keepalive_interval = {10, 0}; // 10 Second Interval
+    //We do not need to update time when connecting to a proxy
+    if(!Config.proxy_enabled)
+    {
+      /* Register the keepalive handler */
+      struct event *keepalive_event;
+      struct timeval keepalive_interval = {10, 0}; // 10 Second Interval
 
-    keepalive_event = event_new(tlbase, -1, EV_PERSIST, send_keepalive_cb, NULL);
-    evtimer_add(keepalive_event, &keepalive_interval);
+      keepalive_event = event_new(tlbase, -1, EV_PERSIST, send_keepalive_cb, NULL);
+      evtimer_add(keepalive_event, &keepalive_interval);
 
-    /* Register the time packet update handler */
-    struct event *timeupdate_event;
-    struct timeval timeupdate_interval = {timepktinterval,0};
 
-    timeupdate_event = event_new(tlbase, -1, EV_PERSIST, send_timeupdate_cb, NULL);
-    evtimer_add(timeupdate_event, &timeupdate_interval);
-    
-     /* Register the time update handler */
-    struct event *timeincrease_event;
-    struct timeval timeincrease_interval = {1,0};
+      /* Register the time packet update handler */
+      struct event *timeupdate_event;
+      struct timeval timeupdate_interval = {timepktinterval,0};
 
-    timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
-    evtimer_add(timeincrease_event, &timeincrease_interval);
+      timeupdate_event = event_new(tlbase, -1, EV_PERSIST, send_timeupdate_cb, NULL);
+      evtimer_add(timeupdate_event, &timeupdate_interval);
+      
+      /* Register the time update handler */
+      struct event *timeincrease_event;
+      struct timeval timeincrease_interval = {1,0};
+
+      timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
+      evtimer_add(timeincrease_event, &timeincrease_interval);
+    }
 
     /* Initialize the time loop tail queue.  Work items are added on to the end
      * and a void pointer provides access to heap data

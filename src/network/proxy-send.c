@@ -135,10 +135,10 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	  if(strcmp(Config.proxy_servers[i]->name,Config.proxy_default_server)==0)
 	    server = Config.proxy_servers[i];
 	}
-	//if(server == NULL)
+	if(server == NULL)
 	  LOG(LOG_CRIT,"Error getting server struct");
 	
-	//if(server != NULL)
+	if(server != NULL)
 	  player->sev = create_servercon(player,server);
 	
 	
@@ -195,7 +195,6 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	send_proxychat(player,cpacket->message);
       break;
     }
-    
   }
   return;
 }
@@ -217,6 +216,10 @@ void process_proxyserverpacket(struct PL_entry *player, uint8_t pkttype, void * 
     case PID_LOGIN:
     {
       return; //do nothing.. for now
+    }
+    case PID_KEEPALIVE:
+    {
+      return; //do nothing
     }
   }
 }

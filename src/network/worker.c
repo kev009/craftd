@@ -97,9 +97,12 @@ void
     }
 
     /* Do work */
+    //bufferevent_lock(bev);
     input = bufferevent_get_input(bev);
     output = bufferevent_get_output(bev);
-    bufferevent_lock(bev);
+    evbuffer_enable_locking(input,NULL);
+    evbuffer_enable_locking(output,NULL);
+    evbuffer_lock(input);
     
     inlen = evbuffer_get_length(input);
     
@@ -113,11 +116,11 @@ void
      * We add pktlen for each iteration until inlen is reached or we jump
      * to the EAGAIN handler.
      */
-    size_t processed = 0;
-    do
-    {
+     size_t processed = 0;
+     do
+     {
       evbuffer_copyout(input, &pkttype, 1);
-      //LOG(LOG_DEBUG,"got packet %d",pkttype);
+      LOG(LOG_DEBUG,"got packet %d",pkttype);
       pktlen = len_statemachine(pkttype, input);
       
       /* On exception conditions, negate the return value to get correct errno */
@@ -152,10 +155,10 @@ void
 	{
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
-	    bufferevent_lock(player->sev);
+	    evbuffer_lock(bufferevent_get_output(player->sev));
 	    evbuffer_remove_buffer(input,
 				   bufferevent_get_output(player->sev),pktlen);
-	    bufferevent_unlock(player->sev);
+	    //bufferevent_unlock(player->sev);
 	  }else
 	  {
 	    //if(player->sev)
@@ -178,19 +181,18 @@ void
       else if(workitem->worktype ==WQ_PROXY)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
-	bufferevent_lock(player->bev);
+	//bufferevent_lock(player->bev);
 	if(process_isproxyserverpassthrough(pkttype))
 	{
-	  evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);  
+	    evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);  
 	}
 	else
 	{
 	  packet = packetdecoder(pkttype, pktlen, bev);
 	  process_proxyserverpacket(player,pkttype,packet);;
 	  packetfree(pkttype,packet);
-	  
 	}
-	bufferevent_unlock(player->bev);
+	//bufferevent_unlock(player->bev);
       } else { goto WORKER_ERR; }
       /* On decoding errors, punt the client for now */
       
@@ -201,23 +203,24 @@ void
         goto WORKER_ERR;
       }*/
       
-      processed += pktlen;
-    }
-    while(processed < inlen);
+       processed += pktlen;
+     }
+     while(processed < inlen);
 
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
-    bufferevent_unlock(bev);
+    evbuffer_unlock(input);
     free(workitem);
     continue;
 
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
-    bufferevent_unlock(bev);
+
     free(workitem);
 
     bstring wmsg = bfromcstr("Error in packet sequence.");
     send_kick(player, wmsg);
+    evbuffer_unlock(input);
     bstrFree(wmsg);
 
     continue;
