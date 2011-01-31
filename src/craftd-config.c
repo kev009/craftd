@@ -278,6 +278,10 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
     Config.motd_file = parseJString(jsongame, "motd-file");
     Config.world_dir = parseJString(jsongame, "world-dir");
+    parseJInt(&Config.dayrate,jsongame,"day-rate");
+    parseJInt(&Config.sunsetrate,jsongame,"sunset-rate");
+    parseJInt(&Config.nightrate,jsongame,"night-rate");
+    parseJInt(&Config.sunriserate,jsongame,"sunrise-rate");
   }
   else
   {
