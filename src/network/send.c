@@ -240,6 +240,11 @@ process_handshake(struct PL_entry *player, bstring username)
 
 /**
  * Process a chat message or command
+ *
+ * @remarks Scope: private
+ *
+ * @param player Player List player pointer
+ * @param message Chat message
  */
 void
 process_chat(struct PL_entry *player, bstring message)
@@ -303,6 +308,14 @@ send_loginresp(struct PL_entry *player)
   return;
 }
 
+/**
+ * Send a chat packet to the player.
+ * 
+ * @remarks Scope: public API method
+ *
+ * @param player Player List player pointer
+ * @param message Chat message
+ */
 void
 send_directchat(struct PL_entry *player, bstring message)
 {
@@ -322,6 +335,14 @@ send_directchat(struct PL_entry *player, bstring message)
   return;
 }
 
+/**
+ * Send chat message to all online players.
+ * 
+ * @remarks Scope: public API method
+ *
+ * @param player Player List player pointer
+ * @param message Chat message
+ */
 void
 send_chat(struct PL_entry *player, bstring message)
 {
@@ -343,6 +364,13 @@ send_chat(struct PL_entry *player, bstring message)
   return;
 }
 
+/**
+ * Send system message to all online players.
+ * 
+ * @remarks Scope: public API method
+ *
+ * @param message Chat message
+ */
 void
 send_syschat(bstring message)
 {
@@ -668,6 +696,34 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   evbuffer_free(tempbuf);
   
   errorcb(player->bev, BEV_EVENT_EOF, player);
+  
+  return;
+}
+
+/**
+ * Send time update packet to specified player
+ * 
+ * @remarks Scope: public API method
+ * 
+ * @param player Player List player pointer
+ * @param time Time in raw game format.
+ */
+void
+send_timeupdate(struct PL_entry *player, int time)
+{
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
+  
+  uint8_t pid = PID_TIMEUPDATE;
+  int64_t ntime = htonll(time);
+
+
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &ntime, sizeof(ntime));
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  
   
   return;
 }

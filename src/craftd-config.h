@@ -67,6 +67,10 @@ struct
   bool proxy_enabled;
   char *proxy_default_server;
   Server **proxy_servers;
+  int dayrate;
+  int sunsetrate;
+  int nightrate;
+  int sunriserate;
 
   // httpd settings
   bool httpd_enabled; 

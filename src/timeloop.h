@@ -47,6 +47,8 @@ struct TLQ_entry
 
 /* Public interfaces */
 void *run_timeloop(void *arg);
+int TL_get_gametime();
+int TL_set_gametime(int time);
 
 #endif
 

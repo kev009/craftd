@@ -80,6 +80,10 @@ craftd_config_setdefaults()
   Config.motd_file = motddefault;
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
+  Config.dayrate = 20;
+  Config.sunsetrate = 20;
+  Config.nightrate = 20;
+  Config.sunriserate = 20;
   
   // Proxy Settings
   Config.proxy_enabled = false;
@@ -286,6 +290,10 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
     Config.motd_file = parseJString(jsongame, "motd-file",Config.motd_file);
     Config.world_dir = parseJString(jsongame, "world-dir",Config.world_dir);
+    parseJInt(&Config.dayrate,jsongame,"day-rate");
+    parseJInt(&Config.sunsetrate,jsongame,"sunset-rate");
+    parseJInt(&Config.nightrate,jsongame,"night-rate");
+    parseJInt(&Config.sunriserate,jsongame,"sunrise-rate");
     Config.proxy_default_server = parseJString(jsongame,"default-server",Config.proxy_default_server);
     parseJBool(&Config.proxy_enabled,jsongame,"proxy-enabled");
     
