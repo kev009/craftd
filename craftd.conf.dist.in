@@ -3,9 +3,13 @@
   "server": {
     "daemonize": true,
     "game-port": 25565,
-    "minecraft-stringmax": 100,
     "max-listenbacklog": 16,
+    "minecraft-stringmax": 100,
     "worker-pool-size": 2,
+    "day-rate": 20,
+    "sunset-rate": 20,
+    "night-rate": 20,
+    "sunrise-rate": 20,
     "motd-file": "@sysconfdir@/craftd/motd.conf.dist",
     "world-dir": "@datadir@/craftd/world"
   },
