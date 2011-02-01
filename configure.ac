@@ -79,7 +79,7 @@ AC_TYPE_UINT8_T
 AC_TYPE_SIZE_T
 
 AC_C_BIGENDIAN
-
+AM_PROG_CC_C_O
 AC_CHECK_DECLS([be64toh,htobe64], [], [],
 [#ifdef HAVE_ENDIAN_H
 #include <endian.h>
@@ -103,18 +103,12 @@ AC_ARG_ENABLE(cdgame, AC_HELP_STRING([--enable-craftd],
               [enable the craftd minecraft server (default is yes)]),
               ac_enable_cdgame=$enableval,
               ac_enable_cdgame=yes)
-if test "$ac_enable_cdgame" = yes; then
-  AC_DEFINE(USE_CDGAME, 1, [use gameserver])
-fi
 AM_CONDITIONAL(CDGAME, test $ac_enable_cdgame = yes)
 
 AC_ARG_ENABLE(cdproxy, AC_HELP_STRING([--enable-proxy],
               [enable the craftd minecraft proxy (default is yes)]),
               ac_enable_cdproxy=$enableval,
               ac_enable_cdproxy=yes)
-if test "$ac_enable_cdproxy" = yes; then
-  AC_DEFINE(USE_CDPROXY, 1, [use proxy])
-fi
 AM_CONDITIONAL(CDPROXY, test $ac_enable_cdproxy = yes)
 
 AC_OUTPUT

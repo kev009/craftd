@@ -160,18 +160,6 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
           /* The user hasn't gotten far enough to register a username */
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         }
-        if (player->loginpacket)
-	{
-	  free(player->loginpacket);
-	}
-        if (player->handshakepacket)
-	{
-	  free(player->handshakepacket);
-	}
-	if (player->sev)
-	{
-	  bufferevent_free(player->sev);
-	}
 
         //TODO: Add mutual exclusion so a worker doesn't get a null ptr
         //TODO: Convert this to a SLIST_FOREACH
@@ -256,9 +244,6 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->bev = bev;
     player->username = NULL;
     player->eid = newEid();
-    player->sev = NULL;
-    player->loginpacket = NULL;
-    player->handshakepacket = NULL;
     player->loadedchunks = Set_new(0, chunkcoordcmp, chunkcoordhash);
 
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
@@ -284,7 +269,7 @@ run_server(void)
 
     base = event_base_new();
     
-    if(Config.proxy_enabled)
+    if(MODE==PROXY)
       dns_base = evdns_base_new(base,1);
     
     if (!base)

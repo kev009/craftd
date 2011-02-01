@@ -146,8 +146,7 @@ void
       
       if(workitem->worktype == WQ_GAME)
       {
-	if(Config.proxy_enabled)
-	{
+#ifdef USE_CDPROXY
 	  LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
@@ -168,17 +167,15 @@ void
 	    //if(player->sev)
 	      //bufferevent_unlock(player->sev);
 	  }
-	}
-	else
-	{
+#else
 	  packet = packetdecoder(pkttype, pktlen, bev);
 	  //evbuffer_lock(output);
 	  process_packet(player,pkttype,packet);
 	  //evbuffer_unlock(output);
 	  packetfree(pkttype,packet);
-	}
-	
+#endif
       }
+#ifdef USE_CDPROXY
       else if(workitem->worktype == WQ_PROXY)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
@@ -198,10 +195,11 @@ void
 	bufferevent_unlock(player->sev);
 	
       }
-      else 
-      { 
-        goto WORKER_ERR; 
-      }
+#endif
+       else 
+       { 
+         goto WORKER_ERR; 
+       }
       /* On decoding errors, punt the client for now */
       
       /* Remove this temporarally until we have a sane way to handle decoder problems

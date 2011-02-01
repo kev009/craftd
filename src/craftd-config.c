@@ -78,15 +78,16 @@ craftd_config_setdefaults()
   Config.workpool_size = 2;
   char *motddefault = "motd.conf";
   Config.motd_file = motddefault;
+#ifdef USE_CDGAME
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
   Config.dayrate = 20;
   Config.sunsetrate = 20;
   Config.nightrate = 20;
   Config.sunriserate = 20;
-  
+#endif 
+#ifdef USE_CDPROXY
   // Proxy Settings
-  Config.proxy_enabled = false;
   char *defaultservername = "Default Server";
   Config.proxy_default_server = defaultservername;
   Server **defaultproxyservers = Malloc(sizeof(Server *)*2);
@@ -96,6 +97,7 @@ craftd_config_setdefaults()
   defaultproxyservers[0]->port = 25565;
   defaultproxyservers[1] = NULL;
   Config.proxy_servers = defaultproxyservers;
+#endif
 
   // httpd settings
   Config.httpd_enabled = true;
@@ -248,7 +250,7 @@ parseJString(const json_t *obj, const char *key, char *defaultvalue)
 void
 craftd_config_parse(const char *file)
 {
-  json_t *json, *jsongame, *jsonhttp;
+  json_t *json, *jsonhttp;
   json_error_t error;
 
   /* If we didn't get a config file passed as an argument, check search path */
@@ -281,7 +283,8 @@ craftd_config_parse(const char *file)
   }
   
   /* Get the general game server configuration */
-  jsongame = json_object_get(json, "server");
+#ifdef USE_CDGAME
+  json_t *jsongame = json_object_get(json, "server");
   if (json_is_object(jsongame))
   {
     parseJBool(&Config.daemonize, jsongame, "daemonize");
@@ -294,10 +297,25 @@ craftd_config_parse(const char *file)
     parseJInt(&Config.sunsetrate,jsongame,"sunset-rate");
     parseJInt(&Config.nightrate,jsongame,"night-rate");
     parseJInt(&Config.sunriserate,jsongame,"sunrise-rate");
-    Config.proxy_default_server = parseJString(jsongame,"default-server",Config.proxy_default_server);
-    parseJBool(&Config.proxy_enabled,jsongame,"proxy-enabled");
+  }
+  else
+  {
+    LOG(LOG_INFO, "Config: no server section, skipping.");
+  }
+#endif
+  
+#ifdef USE_CDPROXY
+  json_t *jsonproxy = json_object_get(json, "proxy");
+  if(json_is_object(jsonproxy))
+  {
+    parseJBool(&Config.daemonize, jsonproxy, "daemonize");
+    parseJInt(&Config.game_port, jsonproxy, "game-port");
+    parseJInt(&Config.mcstring_max, jsonproxy, "minecraft-stringmax");
+    parseJInt(&Config.workpool_size, jsonproxy, "worker-pool-size");
+    Config.motd_file = parseJString(jsonproxy, "motd-file",Config.motd_file);
+    Config.proxy_default_server = parseJString(jsonproxy,"default-server",Config.proxy_default_server);
     
-    json_t *jsonpservers = json_object_get(jsongame,"servers");
+    json_t *jsonpservers = json_object_get(jsonproxy,"servers");
     
     if(json_is_array(jsonpservers))
     {
@@ -325,9 +343,10 @@ craftd_config_parse(const char *file)
   }
   else
   {
-    LOG(LOG_INFO, "Config: no server section, skipping.");
+    LOG(LOG_INFO, "Config: no proxy section, skipping.");
   }
-  
+#endif
+
   /* Get the httpd server configuration */
   jsonhttp = json_object_get(json, "httpd");
   if(json_is_object(jsonhttp))

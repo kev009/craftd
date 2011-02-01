@@ -148,6 +148,7 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
     return;
 }
 
+#ifdef USE_CDGAME
 /**
  * Internal method to increase raw time every second. Used only by
  * by the timeloop.
@@ -191,7 +192,7 @@ timeincrease_cb(evutil_socket_t fd, short event, void *arg)
     }
     return;
 }
-
+#endif
 /* Public */
 void *run_timeloop(void *arg)
 {
@@ -215,23 +216,21 @@ void *run_timeloop(void *arg)
     evtimer_add(keepalive_event, &keepalive_interval);
 
     //We do not need to update time when connecting to a proxy
-    if(!Config.proxy_enabled)
-    {
-      /* Register the time packet update handler */
-      struct event *timeupdate_event;
-      struct timeval timeupdate_interval = {timepktinterval,0};
+#ifdef CD_GAME
+    /* Register the time packet update handler */
+    struct event *timeupdate_event;
+    struct timeval timeupdate_interval = {timepktinterval,0};
 
-      timeupdate_event = event_new(tlbase, -1, EV_PERSIST, send_timeupdate_cb, NULL);
-      evtimer_add(timeupdate_event, &timeupdate_interval);
-      
-      /* Register the time update handler */
-      struct event *timeincrease_event;
-      struct timeval timeincrease_interval = {1,0};
+    timeupdate_event = event_new(tlbase, -1, EV_PERSIST, send_timeupdate_cb, NULL);
+    evtimer_add(timeupdate_event, &timeupdate_interval);
+    
+    /* Register the time update handler */
+    struct event *timeincrease_event;
+    struct timeval timeincrease_interval = {1,0};
 
-      timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
-      evtimer_add(timeincrease_event, &timeincrease_interval);
-    }
-
+    timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
+    evtimer_add(timeincrease_event, &timeincrease_interval);
+#endif
     /* Initialize the time loop tail queue.  Work items are added on to the end
      * and a void pointer provides access to heap data
      */
