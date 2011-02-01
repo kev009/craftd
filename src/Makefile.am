@@ -35,7 +35,9 @@ libcdnbt_la_includedir = $(cdnbtdir)/
 libcdnbt_la_SOURCES = $(cdnbtdir)/nbt.c $(cdnbtdir)/nbt.h
 
 bstringdir = $(top_srcdir)/third-party/bstring
-bin_PROGRAMS = craftd
+
+bin_PROGRAMS = craftd craftd-proxy
+
 craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
 craftd_SOURCES += craftd.c craftd.h
@@ -51,3 +53,19 @@ craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
+
+craftd_proxy_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
+craftd_proxy_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
+craftd_proxy_SOURCES += craftd.c craftd.h
+craftd_proxy_SOURCES += craftd-config.c craftd-config.h
+craftd_proxy_SOURCES += algos/set.h algos/set.c algos/arith.h
+craftd_proxy_SOURCES += network/network.h network/network-private.h network/packets.h
+craftd_proxy_SOURCES += network/worker.c network/decoder.c network/send.c
+craftd_proxy_SOURCES += network/length.c
+craftd_proxy_SOURCES += network/proxy-send.c proxy.c proxy.h
+craftd_proxy_SOURCES += util.c util.h version.c javaendian.h
+craftd_proxy_SOURCES += timeloop.c timeloop.h
+craftd_proxy_SOURCES += mapchunk.c mapchunk.h
+craftd_proxy_SOURCES += httpd.c httpd.h
+craftd_proxy_LDFLAGS = $(libevent2_pthreads_LIBS)
+craftd_proxy_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
