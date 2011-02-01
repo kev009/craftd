@@ -36,7 +36,15 @@ libcdnbt_la_SOURCES = $(cdnbtdir)/nbt.c $(cdnbtdir)/nbt.h
 
 bstringdir = $(top_srcdir)/third-party/bstring
 
-bin_PROGRAMS = craftd craftd-proxy
+bin_PROGRAMS = 
+
+if CDGAME
+  bin_PROGRAMS += craftd
+endif
+
+if CDPROXY
+  bin_PROGRAMS += craftd-proxy
+endif
 
 craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
