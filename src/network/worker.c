@@ -155,7 +155,8 @@ void
 	    evbuffer_remove_buffer(input,
 				   bufferevent_get_output(player->sev),pktlen);
 	    bufferevent_unlock(player->sev);
-	  }else
+	  }
+          else
 	  {
 	    //if(player->sev)
 	      //bufferevent_lock(player->sev);
@@ -178,7 +179,7 @@ void
 	}
 	
       }
-      else if(workitem->worktype ==WQ_PROXY)
+      else if(workitem->worktype == WQ_PROXY)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
 	bufferevent_lock(player->sev);
@@ -196,10 +197,14 @@ void
 	}
 	bufferevent_unlock(player->sev);
 	
-      } else { goto WORKER_ERR; }
+      }
+      else 
+      { 
+        goto WORKER_ERR; 
+      }
       /* On decoding errors, punt the client for now */
       
-      /* Remove this temporarally untill we have a sane way to handle decoder problems
+      /* Remove this temporarally until we have a sane way to handle decoder problems
       if (status != 0)
       {
 	LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);

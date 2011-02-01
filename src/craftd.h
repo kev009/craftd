@@ -35,11 +35,9 @@
 #include <event2/dns.h>
 #include <bstrlib.h>
 
-
 #include "algos/set.h"
 #include "craftd-config.h"
 #include "util.h"
-
 
 /* Public data */
 

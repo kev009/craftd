@@ -216,7 +216,7 @@ parseJInt(int *storage, const json_t *obj, const char *key)
  * @param key key to read
  */
 char *
-parseJString(const json_t *obj, const char *key, const char *defaultvalue)
+parseJString(const json_t *obj, const char *key, char *defaultvalue)
 {
   const char *strval;
   json_t *strobj = json_object_get(obj, key);
@@ -301,20 +301,22 @@ craftd_config_parse(const char *file)
     
     if(json_is_array(jsonpservers))
     {
-      Server **proxyservers = (Server**)malloc((json_array_size(jsonpservers)+1)*sizeof(Server*));
+      Server **proxyservers = (Server**)Malloc((json_array_size(jsonpservers) + 1) 
+                            * sizeof(Server*));
       int aIndex = 0;
       for(; aIndex < json_array_size(jsonpservers); aIndex++)
       {
 	json_t *serverelement = json_array_get(jsonpservers, aIndex);
-	proxyservers[aIndex] = (Server *) malloc(sizeof(Server));	
-	//Remember to free()/realloc() proxyservers when a server context is deleted or added during runtime
+	proxyservers[aIndex] = (Server *) Malloc(sizeof(Server));	
+	/* Remember to free()/realloc() proxyservers when a server context is deleted
+         * or added during runtime */
 	bzero(proxyservers[aIndex],sizeof(Server));
 	proxyservers[aIndex]->host = parseJString(serverelement,"host","127.0.0.1");
 	proxyservers[aIndex]->name = parseJString(serverelement,"name","undefined");
 	parseJInt(&proxyservers[aIndex]->port,serverelement,"port");
       }
-      proxyservers[aIndex] = NULL; //Null terminate the list
-      Config.proxy_servers = proxyservers; //Save changes
+      proxyservers[aIndex] = NULL; // Null terminate the list
+      Config.proxy_servers = proxyservers; // Save changes
     }
     else
     {

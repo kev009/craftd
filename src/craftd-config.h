@@ -48,7 +48,7 @@ extern bstring Config_motd[MOTD_LINES];
 int Config_motdsz;
 typedef struct Server
 {
-  //Server Definitions
+  // Server Definitions
   char *host;
   int port;
   char *name;
@@ -77,6 +77,5 @@ struct
   int httpd_port;
   char *docroot;
 } Config;
-
 
 #endif

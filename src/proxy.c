@@ -36,20 +36,19 @@
 
 // For sys info, maybe getrusage()
 //#include <sys/resource.h>
-#include "proxy.h"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
 #include <event2/util.h>
 #include "network/network-private.h"
 
-#include "bstrlib.h"
-#include "bstraux.h"
+#include <bstrlib.h>
+#include <bstraux.h>
 
 #include "craftd.h"
 #include "craftd-config.h"
 #include "util.h"
-
+#include "proxy.h"
 
 void proxy_readcb(struct bufferevent *bev, void *ctx)
 {

@@ -54,7 +54,6 @@ typedef struct MCitem
   MCshort uses;
 } MCitem;
 
-
 /**
  * Global logging and error handling macros
  */

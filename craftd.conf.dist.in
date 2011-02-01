@@ -12,6 +12,13 @@
     "sunrise-rate": 20,
     "motd-file": "@sysconfdir@/craftd/motd.conf.dist",
     "world-dir": "@datadir@/craftd/world"
+    "proxy-enabled": false,
+    "default-server": "Local",
+    "servers" : [ {
+        "host" : "127.0.0.1",
+        "name" : "Default Server",
+        "port" : 25565 }
+    ]
   },
   "httpd": {
     "enabled": true,

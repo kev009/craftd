@@ -56,8 +56,8 @@ void send_proxyhandshake(struct PL_entry *player)
   
   evbuffer_add_buffer(output,tempbuf);
   evbuffer_free(tempbuf);
-  
 }
+
 /**
  * This method sends a chat message to a connected server via proxy
  * The sever connection is handled with player->bev
@@ -83,6 +83,7 @@ void send_proxychat(struct PL_entry *player,bstring message)
   evbuffer_free(tempbuf);
   
 }
+
 /**
  * This method sends login packets to a connected server via proxy
  * The sever connection is handled with player->bev
@@ -111,11 +112,9 @@ void send_proxylogin(struct PL_entry *player)
   evbuffer_add(tempbuf, &mapseed, sizeof(mapseed));
   evbuffer_add(tempbuf, &dimension, sizeof(dimension));
   
-  
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
 }
-
 
 /**
  * This internal method proxy packets from a pointer to a struct and
@@ -135,8 +134,7 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
     {
         // TODO: Future, async check of minecraft.net for user validity
 	// TODO: Future, check against local ACL
-	struct packet_login* lpacket = (struct packet_login*) packet;
-	
+	struct packet_login* lpacket = (struct packet_login*) packet;	
 	
 	/* Check if the client version is compatible with the craftd version */
 	if (lpacket->version != PROTOCOL_VERSION)
@@ -150,8 +148,7 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	
 	/* Otherwise, finish populating their Player List entry */
 	pthread_rwlock_wrlock(&player->rwlock);
-	player->username = bstrcpy(lpacket->username);
-	
+	player->username = bstrcpy(lpacket->username);	
 	
 	Server *server = NULL;
 	for(int i = 0; Config.proxy_servers[i] != NULL;i++)
@@ -164,27 +161,22 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	
 	if(server != NULL)
 	  player->sev = create_servercon(player,server);
-	
-	
-	
-	
+		
 	player->loginpacket = Malloc(sizeof(struct packet_login));
 	
 	memcpy(player->loginpacket, lpacket, sizeof(struct packet_login));
 	
 	pthread_rwlock_unlock(&player->rwlock);
 	send_loginresp(player);
-	//send_prechunk(player, 0, 0, true); // TODO: pull spwan position from file
-	//send_chunk(player, 0, 0, 0, 16, 128, 16);  // TODO: pull spawn position
 	
 	/* Login message */
  	bstring loginmsg = bformat("Player %s has joined the proxy server!", 
-	    player->username->data);
+	                           player->username->data);
 	send_syschat(loginmsg);
 	bstrFree(loginmsg);
 
 	/* Send player MOTD */
-	for(int i=0; i < Config_motdsz; ++i)
+	for(int i = 0; i < Config_motdsz; ++i)
 	{
 	  send_directchat(player, Config_motd[i]);
 	}
@@ -203,7 +195,7 @@ void process_proxypacket(struct PL_entry *player, uint8_t pkttype, void * packet
 	bstring lcmd = bfromcstr("\\login");
 	if(binstrr(cpacket->message,lcmd->slen,lcmd) != BSTR_ERR)
  	{
-	  /* Don't do anything untill properly tested
+	  /* Don't do anything until properly tested
 	  //process_handshake(player,player->username);
 	  send_loginresp(player);
 	  //sleep(2);
@@ -233,7 +225,7 @@ void process_proxyserverpacket(struct PL_entry *player, uint8_t pkttype, void * 
     case PID_HANDSHAKE:
     {
       struct packet_handshake* hpacket = (struct packet_handshake*) packet;
-      if(bstrcmp(hpacket->username,bfromcstr("-"))!=0)
+      if(bstrcmp(hpacket->username,bfromcstr("-")) != 0)
       {
 	LOGT(LOG_INFO, "Remote server requires authentication");
 	bufferevent_free(player->sev);
@@ -243,11 +235,11 @@ void process_proxyserverpacket(struct PL_entry *player, uint8_t pkttype, void * 
     }
     case PID_LOGIN:
     {
-      return; //do nothing.. for now
+      return; // do nothing.. for now
     }
     case PID_KEEPALIVE:
     {
-      return; //do nothing
+      return; // do nothing
     }
   }
 }

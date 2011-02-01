@@ -42,7 +42,6 @@
 
 #define MAX_CHUNKARRAY (81920)
 
-
 enum packetid
 {
   PID_KEEPALIVE         = 0x00,
@@ -363,7 +362,7 @@ struct packet_pickupspawn
   MCbyte roll;
 };
 static const int packet_pickupspawnsz = 5 * sizeof(MCbyte) 
-				      + 4 * sizeof(MCint) + 2 *sizeof(MCshort);
+				      + 4 * sizeof(MCint) + 2 * sizeof(MCshort);
 
 /* pid 0x16 */
 struct packet_collectitem
@@ -551,7 +550,7 @@ static const struct
   const int base;
   const int sizelocation;
 } packet_mapchunksz = {
-  .base       = 4 * sizeof(MCbyte) + 3 * sizeof(MCint) + sizeof(MCshort),
+  .base         = 4 * sizeof(MCbyte) + 3 * sizeof(MCint) + sizeof(MCshort),
   .sizelocation = 4 * sizeof(MCbyte) + 2 * sizeof(MCint) + sizeof(MCshort)
 };
 
@@ -566,7 +565,8 @@ struct packet_multiblockchange
   MCbyte *type;
   MCbyte *metadata;
 };
-static const int packet_multiblockchangeszbase = sizeof(MCbyte) + 2 *sizeof(MCint);
+static const int packet_multiblockchangeszbase = sizeof(MCbyte)
+                                               + 2 * sizeof(MCint);
 
 /* pid 0x35 */
 struct packet_blockchange
@@ -590,8 +590,8 @@ struct packet_noteblockplay
   MCbyte itype;
   MCbyte pitch;
 };
-const static int packet_noteblockplaysz = 3 * sizeof(MCbyte) + sizeof(MCshort)
-					  + 2* sizeof(MCint);
+static const int packet_noteblockplaysz = 3 * sizeof(MCbyte) + sizeof(MCshort)
+				        + 2 * sizeof(MCint);
 
 /* pid 0x3c */
 struct packet_explosion
@@ -675,8 +675,8 @@ static const struct
   const int item;
 } packet_setslotsz = {
   .itemidoffset = 2 * sizeof(MCbyte) + 1 * sizeof(MCshort),
-  .itemnull = 2 * sizeof(MCbyte) + 2 * sizeof(MCshort),
-  .item = 3 * sizeof(MCbyte) + 3 * sizeof(MCshort)
+  .itemnull     = 2 * sizeof(MCbyte) + 2 * sizeof(MCshort),
+  .item         = 3 * sizeof(MCbyte) + 3 * sizeof(MCshort)
 };
 
 /* pid 0x68 */
@@ -694,8 +694,8 @@ static const struct
   const int itemsize;
 } packet_windowitemssz = {
   .itemcountoffset = 2 * sizeof(MCbyte),
-  .itemnullsize = 1 * sizeof(MCshort),
-  .itemsize = 1 * sizeof(MCbyte) + 2 * sizeof(MCshort)
+  .itemnullsize    = 1 * sizeof(MCshort),
+  .itemsize        = 1 * sizeof(MCbyte) + 2 * sizeof(MCshort)
 };
 
 /* pid 0x69 */

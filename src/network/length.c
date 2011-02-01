@@ -27,11 +27,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "network.h"
 #include "network-private.h"
 #include "packets.h"
-#include <stdlib.h>
 
 /**
  * A utility function for the length state machine to return the correct length
@@ -151,15 +151,15 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_chatsz.base + mlen;
 	return len_returncode(inlen, totalsize);
     }
-    case PID_TIMEUPDATE:
+    case PID_TIMEUPDATE: // Update client time packet 0x04
     {
       return len_returncode(inlen, packet_timesz);
     }
-    case PID_ENTITYEQUIPMENT: //Entity equipment packet 0x05
+    case PID_ENTITYEQUIPMENT: // Entity equipment packet 0x05
     {
       return len_returncode(inlen, packet_entityequipmentsz);
     }
-    case PID_SPAWNPOS: //Spawn position packet 0x06
+    case PID_SPAWNPOS: // Spawn position packet 0x06
     {
         return len_returncode(inlen,packet_spawnpossz);
     }
@@ -259,11 +259,11 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
     {
 	return len_returncode(inlen,packet_collectitemsz);
     }
-    case PID_SPAWNOBJECT: //Spawn objects (ex minecarts) 0x17
+    case PID_SPAWNOBJECT: // Spawn objects (ex minecarts) 0x17
     {
         return len_returncode(inlen, packet_spawnobjectsz);
     }
-    case PID_SPAWNMOB:
+    case PID_SPAWNMOB: // Spawn mob 0x18
     {
       	struct evbuffer_ptr ptr;
 	uint8_t byte = 0;
@@ -271,7 +271,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	
 
 	int size = 1;
-	do//this loop should always run at least once
+	do //this loop should always run at least once
 	{
 	  if(evbuffer_ptr_set(input, &ptr, packet_spawnmobszbase+size, 
 		    EVBUFFER_PTR_SET) != 0)
@@ -283,12 +283,14 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  //evbuffer_unlock(b);
 	  if (status != 0)
 	    return -status;
-	  LOG(LOG_DEBUG,"Decoding metadata %d : %d",size,byte);
+	  LOG(LOG_DEBUG,"Decoding metadata %d : %d", size, byte);
 	  size++;
-	}while(byte != 127);
-	return len_returncode(inlen, packet_spawnmobszbase + size);
+	}
+        while(byte != 127);
+	
+        return len_returncode(inlen, packet_spawnmobszbase + size);
     }
-    case PID_PAINTING:
+    case PID_PAINTING: // Entity painting 0x19
     {
 	struct evbuffer_ptr ptr;
 	uint16_t mlen;
@@ -308,43 +310,43 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_paintingsz.base + mlen;
 	return len_returncode(inlen, totalsize);
     }
-    case PID_ENTITYVELOCITY:
+    case PID_ENTITYVELOCITY: // 0x1C
     {
 	return len_returncode(inlen, packet_entityvelocitysz);
     }
-    case PID_ENTITYDESTROY:
+    case PID_ENTITYDESTROY: // 0x1D
     {
         return len_returncode(inlen, packet_entitydestroysz);
     }
-    case PID_ENTITYINIT:
+    case PID_ENTITYINIT: // 0x1E
     {
 	return len_returncode(inlen, packet_entityinitsz);
     }
-    case PID_ENTITYRELMOVE:
+    case PID_ENTITYRELMOVE: // 0x1F
     {
 	return len_returncode(inlen, packet_entityrelmovesz);
     }
-    case PID_ENTITYLOOK:
+    case PID_ENTITYLOOK: // 0x20
     {
 	return len_returncode(inlen, packet_entitylooksz);
     }
-    case PID_ENTITYLOOKMOVE:
+    case PID_ENTITYLOOKMOVE: // 0x21
     {
 	return len_returncode(inlen, packet_entitylookmovesz);
     }
-    case PID_ENTITYPOS:
+    case PID_ENTITYPOS: // 0x22
     {
 	return len_returncode(inlen, packet_entitypossz);
     }
-    case PID_ENTITYSTATUS:
+    case PID_ENTITYSTATUS: // 0x26
     {
 	return len_returncode(inlen, packet_entitystatussz);
     }
-    case PID_ENTITYATTACH:
+    case PID_ENTITYATTACH: // 0x27
     {
 	return len_returncode(inlen, packet_entityattachsz);
     }
-    case PID_MULTIBLOCKCHANGE:
+    case PID_MULTIBLOCKCHANGE: // 0x34
     {
         struct evbuffer_ptr ptr;
 	int16_t asize;
@@ -362,19 +364,18 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	asize = ntohs(asize);
 	
 	totalsize = packet_multiblockchangeszbase + sizeof(asize) 
-	  + (asize*(sizeof(MCshort)+2*sizeof(MCbyte)));
+	          + (asize*(sizeof(MCshort)+2*sizeof(MCbyte)));
 	return len_returncode(inlen, totalsize);
     }
-    case PID_BLOCKCHANGE:
+    case PID_BLOCKCHANGE: // 0x35
     {
 	return len_returncode(inlen,packet_blockchangesz);
     }
-    case PID_ENTITYMETA:
+    case PID_ENTITYMETA: // 0x28
     {
       	struct evbuffer_ptr ptr;
 	uint8_t byte = 0;
-	int status;
-	
+	int status;	
 
 	int size = 0;
 	do //this loop should always run at least once
@@ -390,8 +391,9 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  //evbuffer_unlock(b);
 	  if (status != 0)
 	    return -status;
-	  size++; //even increment after an 0xf7 byte 
-	}while(byte != 127);
+	  size++; // even increment after an 0xf7 byte 
+	}
+        while(byte != 127);
 	
 	return len_returncode(inlen, packet_entitymetaszbase + size);
     }
@@ -418,7 +420,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	totalsize = packet_mapchunksz.base + mlen;
 	return len_returncode(inlen, totalsize);	
     }
-    case PID_OPENWINDOW: //Open window 0x64
+    case PID_OPENWINDOW: // Open window 0x64
     {
 	struct evbuffer_ptr ptr;
 	uint16_t mlen;
@@ -463,7 +465,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
       else
         return len_returncode(inlen, packet_windowclicksz.click);
     }
-    case PID_SETSLOT:
+    case PID_SETSLOT: // 0x67
     {
 	struct evbuffer_ptr ptr;
 	int status;
@@ -492,8 +494,8 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 			    EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
-	status =  CRAFTD_evbuffer_copyout_from(input,&itemcountraw,sizeof(itemcountraw),
-					       &ptr);
+	status =  CRAFTD_evbuffer_copyout_from(input, &itemcountraw, 
+                                               sizeof(itemcountraw), &ptr);
 	
 	if(status != 0)
 	  return -status;
@@ -501,13 +503,14 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	LOG(LOG_DEBUG,"Number of window items: %d", itemcount);
 	
 	if(itemcount == 0)
-	  return len_returncode(inlen,packet_windowitemssz.itemcountoffset+
+	  return len_returncode(inlen, packet_windowitemssz.itemcountoffset +
 				sizeof(itemcount));
-	int runningsize = 0; //running size total
+	
+        int runningsize = 0; // running size total
 	for(int i = 0; i < itemcount; i++)
 	{
-	  if(evbuffer_ptr_set(input, &ptr,packet_windowitemssz.itemcountoffset+2+runningsize,
-			      EVBUFFER_PTR_SET) != 0)
+	  if(evbuffer_ptr_set(input, &ptr, packet_windowitemssz.itemcountoffset 
+                + 2 + runningsize, EVBUFFER_PTR_SET) != 0)
 	    return -EAGAIN;
 
 	  status =  CRAFTD_evbuffer_copyout_from(input,&itemid,sizeof(itemid),
@@ -515,22 +518,23 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  if(status != 0)
 	    return -status;
 	  
-	  if(itemid == -1)
-	    runningsize += packet_windowitemssz.itemnullsize; //add only 2 bytes (MCshort) to total size if itemid is -1
+	  if(itemid == -1) // add only 2 bytes (MCshort) to total size if itemid is -1
+	    runningsize += packet_windowitemssz.itemnullsize; 
 	  else
 	    runningsize += packet_windowitemssz.itemsize;
 	}
-	return len_returncode(inlen,packet_windowitemssz.itemcountoffset+runningsize+2);
+	return len_returncode(inlen, packet_windowitemssz.itemcountoffset
+                              + runningsize + 2);
     }
-    case PID_UPDATEPROGBAR:
+    case PID_UPDATEPROGBAR: // 0x69
     {
 	return len_returncode(inlen,packet_updateprogbarsz);
     }
-    case PID_TRANSACTION:
+    case PID_TRANSACTION: // 0x6A
     {
 	return len_returncode(inlen,packet_transactionsz);
     }
-    case PID_UPDATESIGN:
+    case PID_UPDATESIGN: // 0x82
     {
 	struct evbuffer_ptr ptr;
 	uint16_t len1;  // Size of the line 1 string
@@ -541,7 +545,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	int status;
 
 	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str1offset, 
-		  EVBUFFER_PTR_SET) != 0)
+                            EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
 	status = CRAFTD_evbuffer_copyout_from(input, &len1, sizeof(len1), &ptr);
@@ -549,8 +553,8 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  return -status;
 	len1 = ntohs(len1);
 
-	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str2offset+len1, 
-		  EVBUFFER_PTR_SET) != 0)
+	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str2offset + len1, 
+		            EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
 	status = CRAFTD_evbuffer_copyout_from(input, &len2, sizeof(len2), &ptr);
@@ -558,8 +562,8 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	  return -status;
 	len2 = ntohs(len2);
 	
-	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str3offset+len1+len2, 
-			EVBUFFER_PTR_SET) != 0)
+	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str3offset + len1 + len2,
+			    EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
 	status = CRAFTD_evbuffer_copyout_from(input, &len3, sizeof(len3), &ptr);
@@ -568,7 +572,7 @@ len_statemachine(uint8_t pkttype, struct evbuffer* input)
 	len3 = ntohs(len3);
 	
 	if(evbuffer_ptr_set(input, &ptr, packet_updatesignsz.str4offset+len1+len2+len3, 
-			EVBUFFER_PTR_SET) != 0)
+			    EVBUFFER_PTR_SET) != 0)
 	  return -EAGAIN;
 	
 	status = CRAFTD_evbuffer_copyout_from(input, &len4, sizeof(len4), &ptr);

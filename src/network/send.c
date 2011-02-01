@@ -44,9 +44,6 @@
 // Temp for send radius
 const int RADIUS = 10;
 
-
-
-
 /**
  * This internal method process packets from a pointer to a struct and
  * a packet type

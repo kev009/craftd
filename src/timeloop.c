@@ -207,7 +207,6 @@ void *run_timeloop(void *arg)
         exit(1);
     }
 
-
     /* Register the keepalive handler */
     struct event *keepalive_event;
     struct timeval keepalive_interval = {10, 0}; // 10 Second Interval
