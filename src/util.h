@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
@@ -91,9 +92,63 @@ bstring getMCString(struct evbuffer *buf, int16_t len);
 char *itoa(int value, char *result, int base);
 
 /* Public memory management wrappers */
-void *Malloc(size_t size);
-void *Calloc(size_t num, size_t size);
-void *Realloc(void *ptr, size_t size);
+/**
+ * Simple calloc wrapper w/error handling
+ *
+ * @param num number of objects to allocate
+ * @param size size of each object
+ * @return valid pointer to heap memory
+ */
+static inline void *
+Calloc(size_t num, size_t size)
+{
+  void *ptr;
+  if ( (ptr = calloc(num, size)) == NULL )
+    ERR("calloc null ptr error!");
+  return ptr;
+}
+
+/**
+ * Simple malloc wrapper w/error handling
+ *
+ * @param size allocation size
+ * @return valid pointer to heap memory
+ */
+static inline void *
+Malloc(size_t size)
+{
+  void *ptr;
+  if ( (ptr = malloc(size)) == NULL )
+    ERR("malloc null ptr error!");
+  return ptr;
+}
+
+/**
+ * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
+ * 
+ * @param ptr pointer to the heap address to reallocate
+ * @param size reallocation size
+ * @return resized valid pointer to heap memory
+ */
+static inline void *
+Realloc(void *ptr, size_t size)
+{
+  void *newptr;
+  
+  if (ptr == NULL)
+    return Malloc(size);
+  else if (size == 0)
+  {
+    free(ptr);
+    return NULL;
+  }
+  else
+  {
+    if( (newptr = realloc(ptr, size)) == NULL)
+      ERR("realloc null ptr error!");
+    return newptr;
+  }
+}
 
 /* Daemonize implementation */
 int CRAFTD_daemonize(int nochdir, int noclose);

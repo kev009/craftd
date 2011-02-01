@@ -221,64 +221,6 @@ char *itoa(int value, char *result, int base)
 }
 
 /**
- * Simple calloc wrapper w/error handling
- *
- * @param num number of objects to allocate
- * @param size size of each object
- * @return valid pointer to heap memory
- */
-void *
-Calloc(size_t num, size_t size)
-{
-  void *ptr;
-  if ( (ptr = calloc(num, size)) == NULL )
-    ERR("calloc null ptr error!");
-  return ptr;
-}
-
-/**
- * Simple malloc wrapper w/error handling
- *
- * @param size allocation size
- * @return valid pointer to heap memory
- */
-void *
-Malloc(size_t size)
-{
-  void *ptr;
-  if ( (ptr = malloc(size)) == NULL )
-    ERR("malloc null ptr error!");
-  return ptr;
-}
-
-/**
- * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
- * 
- * @param ptr pointer to the heap address to reallocate
- * @param size reallocation size
- * @return resized valid pointer to heap memory
- */
-void *
-Realloc(void *ptr, size_t size)
-{
-  void *newptr;
-  
-  if (ptr == NULL)
-    return Malloc(size);
-  else if (size == 0)
-  {
-    free(ptr);
-    return NULL;
-  }
-  else
-  {
-    if( (newptr = realloc(ptr, size)) == NULL)
-      ERR("realloc null ptr error!");
-    return newptr;
-  }
-}
-
-/**
  * Code to fork, close extra FDs, become session leader, etc.
  */
 int
