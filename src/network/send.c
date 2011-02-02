@@ -73,17 +73,14 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   pthread_rwlock_unlock(&player->rwlock);
   
   send_loginresp(player);
-  
-  // Temp
-  const int spawnx = -264;
-  const int spawnz = 261;
-  
+
   const int spawnradius = 5;
-  send_chunk_radius(player, spawnx, spawnz, spawnradius);
+  send_chunk_radius(player, Config.spawn.x, Config.spawn.z, spawnradius);
   
-  send_spawnpos(player, spawnx, 65, spawnz); // TODO: pull spawn position from file
+  send_spawnpos(player, Config.spawn.x, Config.spawn.y, Config.spawn.z);
   //send inv
-  send_movelook(player, spawnx, 70.1, 70.2, spawnz, 0, 0, false); //TODO: pull position from file
+  send_movelook(player, Config.spawn.x, Config.spawn.y + 6.1, Config.spawn.y
+		+ 6.2, Config.spawn.z, 0, 0, false);
 
   /* Login message */
   bstring loginmsg = bformat("Player %s has joined the game!", 

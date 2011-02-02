@@ -34,6 +34,7 @@
 
 #include "craftd-config.h"
 #include "util.h"
+#include "mapchunk.h"
 
 /* Networking knobs */
 const int MAX_LISTENBACKLOG = 16;
@@ -84,6 +85,9 @@ craftd_config_setdefaults()
   Config.sunsetrate = 20;
   Config.nightrate = 20;
   Config.sunriserate = 20;
+  Config.spawn.x = 0;
+  Config.spawn.y = 0;
+  Config.spawn.z = 0;
   
   // Proxy Settings
   Config.proxy_enabled = false;
@@ -340,6 +344,11 @@ craftd_config_parse(const char *file)
   {
     LOG(LOG_INFO, "Config: no httpd section, skipping.");
   }
+  
+  /* Read in NBT spawn position */
+  /* FIXME - use correct runtime check and also allow override from craftd.c */
+  if (WQ_GAME)
+    loadLevelDat();
   
   /* Release the file reader */
   json_decref(json);

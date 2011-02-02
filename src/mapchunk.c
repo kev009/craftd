@@ -35,6 +35,7 @@
 #include "craftd.h"
 #include "util.h"
 #include "mapchunk.h"
+#include "timeloop.h"
 #include "nbt/nbt.h"
 
 /* Map Chunk */
@@ -42,7 +43,7 @@
 static const int WORLDBASE = 36;
 
 /**
- * Check if two chunk coordinate pairs for equality
+ * Check two chunk coordinate pairs for equality
  * 
  * @returns 0 if equal, 1 otherwise
  */
@@ -89,7 +90,7 @@ int valid_chunk(nbt_tag *nbtroot)
     nbt_tag *root = nbt_find_tag_by_name("Level", nbtroot);
 
     if ((root != NULL) &&
-        (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND))
+            (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND))
     {
         nbt_tag *blocks = nbt_find_tag_by_name("Blocks", root);
 
@@ -98,11 +99,54 @@ int valid_chunk(nbt_tag *nbtroot)
             nbt_byte_array *arr = (nbt_byte_array *)blocks->value;
 
             if (arr->length == 32768)
+            {
                 return 0; /* Valid at last. */
+            }
         }
     }
-
+    
     return 1;
+}
+
+/**
+ * Run at server startup to initialize Config.SpawnPos struct with default spawn
+ * coordinates
+ *
+ * @returns 0 on success, -1 otherwise
+ */
+int loadLevelDat()
+{
+  char leveldatpath[PATH_MAX];
+  nbt_file *nf;
+  nbt_tag *data;
+
+  if (nbt_init(&nf) != NBT_OK)
+  {
+    LOG(LOG_ERR, "Cannot init level.dat struct");
+    return -1;
+  }
+
+  evutil_snprintf(leveldatpath, PATH_MAX, "%s/level.dat", Config.world_dir);
+
+  if (nbt_parse(nf, leveldatpath) != NBT_OK)
+  {
+    LOG(LOG_ERR, "Cannot parse %d.", leveldatpath);
+    return -1;
+  }
+  
+  data = nbt_find_tag_by_name("Data", nf->root);
+  
+  //nbt_tag *t_gametime = nbt_find_tag_by_name("Time", data);
+  nbt_tag *t_spawnX =  nbt_find_tag_by_name("SpawnX", data);
+  nbt_tag *t_spawnY = nbt_find_tag_by_name("SpawnY", data);
+  nbt_tag *t_spawnZ = nbt_find_tag_by_name("SpawnZ", data);
+  
+  //TL_set_gametime(xx);
+  Config.spawn.x = *(nbt_cast_int(t_spawnX));
+  Config.spawn.y = *(nbt_cast_int(t_spawnY));
+  Config.spawn.z = *(nbt_cast_int(t_spawnZ));
+  
+  return 0;
 }
 
 int loadChunk(int x, int z, uint8_t *mapdata)

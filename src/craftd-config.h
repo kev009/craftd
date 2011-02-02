@@ -46,13 +46,22 @@ void craftd_config_readmotd(char *file);
 #define MOTD_LINES (20) // Max MOTD line count
 extern bstring Config_motd[MOTD_LINES];
 int Config_motdsz;
-typedef struct Server
+
+typedef struct _Server
 {
   // Server Definitions
   char *host;
   int port;
   char *name;
 } Server;
+
+typedef struct _Spawnpos
+{
+  // Default spawn coordinates
+  int x;
+  int y;
+  int z;
+} Spawnpos;
 
 struct
 {
@@ -71,6 +80,7 @@ struct
   int sunsetrate;
   int nightrate;
   int sunriserate;
+  Spawnpos spawn;
 
   // httpd settings
   bool httpd_enabled; 

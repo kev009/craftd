@@ -41,6 +41,7 @@ struct chunk_coord
 int chunkcoordcmp(const void *a, const void *b);
 uint chunkcoordhash(const void *a);
 
+int loadLevelDat();
 int loadChunk(int x, int z, uint8_t *mapdata);
 
 #endif
