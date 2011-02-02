@@ -146,7 +146,7 @@ void
       
       if(workitem->worktype == WQ_GAME)
       {
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
 	  LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
 	  if(process_isproxypassthrough(pkttype) && player->sev)
 	  {
@@ -175,7 +175,7 @@ void
 	  packetfree(pkttype,packet);
 #endif
       }
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
       else if(workitem->worktype == WQ_PROXY)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);

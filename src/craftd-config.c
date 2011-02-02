@@ -78,7 +78,7 @@ craftd_config_setdefaults()
   Config.workpool_size = 2;
   char *motddefault = "motd.conf";
   Config.motd_file = motddefault;
-#ifdef USE_CDGAME
+#ifdef BUILDING_CDGAME
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
   Config.dayrate = 20;
@@ -86,7 +86,7 @@ craftd_config_setdefaults()
   Config.nightrate = 20;
   Config.sunriserate = 20;
 #endif 
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
   // Proxy Settings
   char *defaultservername = "Default Server";
   Config.proxy_default_server = defaultservername;
@@ -283,7 +283,7 @@ craftd_config_parse(const char *file)
   }
   
   /* Get the general game server configuration */
-#ifdef USE_CDGAME
+#ifdef BUILDING_CDGAME
   json_t *jsongame = json_object_get(json, "server");
   if (json_is_object(jsongame))
   {
@@ -304,7 +304,7 @@ craftd_config_parse(const char *file)
   }
 #endif
   
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
   json_t *jsonproxy = json_object_get(json, "proxy");
   if(json_is_object(jsonproxy))
   {

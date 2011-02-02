@@ -48,10 +48,10 @@ enum ServiceType {
   GAME,
   PROXY
 };
-#ifdef USE_CDGAME
+#ifdef BUILDING_CDGAME
 const static enum ServiceType MODE = GAME;
 #endif
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
 const static enum ServiceType MODE = PROXY;
 #endif
 

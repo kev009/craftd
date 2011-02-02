@@ -148,7 +148,7 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
     return;
 }
 
-#ifdef USE_CDGAME
+#ifdef BUILDING_CDGAME
 /**
  * Internal method to increase raw time every second. Used only by
  * by the timeloop.
@@ -216,7 +216,7 @@ void *run_timeloop(void *arg)
     evtimer_add(keepalive_event, &keepalive_interval);
 
     //We do not need to update time when connecting to a proxy
-#ifdef CD_GAME
+#ifdef BUILDING_CDGAME
     /* Register the time packet update handler */
     struct event *timeupdate_event;
     struct timeval timeupdate_interval = {timepktinterval,0};

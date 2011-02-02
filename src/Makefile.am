@@ -60,7 +60,7 @@ craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
-craftd_CFLAGS = -DUSE_CDGAME
+craftd_CFLAGS = -DBUILDING_CDGAME
 
 craftd_proxy_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_proxy_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
@@ -77,4 +77,4 @@ craftd_proxy_SOURCES += mapchunk.c mapchunk.h
 craftd_proxy_SOURCES += httpd.c httpd.h
 craftd_proxy_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_proxy_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
-craftd_proxy_CFLAGS = -DUSE_CDPROXY
+craftd_proxy_CFLAGS = -DBUILDING_CDPROXY

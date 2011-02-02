@@ -46,7 +46,7 @@ void craftd_config_readmotd(char *file);
 #define MOTD_LINES (20) // Max MOTD line count
 extern bstring Config_motd[MOTD_LINES];
 int Config_motdsz;
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
 typedef struct Server
 {
   // Server Definitions
@@ -65,7 +65,7 @@ struct
   int mcstring_max;
   int workpool_size;
   char *motd_file;
-#ifdef USE_CDGAME
+#ifdef BUILDING_CDGAME
   char *world_dir;
   int dayrate;
   int sunsetrate;
@@ -73,7 +73,7 @@ struct
   int sunriserate;
 #endif
 
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
   char *proxy_default_server;
   Server **proxy_servers;
 #endif
