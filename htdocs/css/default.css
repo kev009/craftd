@@ -1,5 +1,8 @@
 html, body {
     background: #fff;
     color: #454545;
-    font-family: sans-serif;
+}
+
+html {
+    background: #e5e5e5 url('../images/bg_header.png') repeat-x;
 }
