@@ -8,6 +8,7 @@ restrictions which apply to that code.
 * craftd content is licensed under the Simplified BSD License.
 * jquery dual licensed; we prefer the MIT license http://jquery.org/license
 * html5reset was released to the public domain: http://html5doctor.com/html-5-reset-stylesheet/
+* 960 grid system is dual licensed; we prefer the MIT license: http://960.gs
 
 =============================================================================
 craftd Simplified BSD License, see http://www.opensource.org/licenses/
