@@ -28,11 +28,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "network.h"
-#include "network-private.h"
-#include "packets.h"
-#include "proxy.h"
 #include "craftd.h"
+#include "proxy.h"
+#include "network/network.h"
+#include "network/network-private.h"
+#include "network/packets.h"
 
 /**
  * This method sends a handshake to a connected server via proxy

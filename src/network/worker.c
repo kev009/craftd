@@ -30,8 +30,8 @@
 #include <sys/queue.h>
 #include <pthread.h>
 
-#include "network.h"
-#include "network-private.h"
+#include "network/network.h"
+#include "network/network-private.h"
 
 /*
  * The length and decoder state machines could possibly use callbacks/fuction

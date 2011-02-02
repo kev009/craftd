@@ -73,7 +73,7 @@ struct PL_entry
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
   struct bufferevent *bev;
-#ifdef USE_CDPROXY
+#ifdef BUILDING_CDPROXY
   struct bufferevent *sev;
   void * loginpacket;
   void * handshakepacket;

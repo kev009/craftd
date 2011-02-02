@@ -28,9 +28,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "network.h"
-#include "network-private.h"
-#include "packets.h"
+#include "network/network.h"
+#include "network/network-private.h"
+#include "network/packets.h"
 
 /**
  * The free packet memory method destroys a packet struct
@@ -61,11 +61,6 @@ void packetfree(uint8_t pkttype, void * packet)
   }
   free(packet);
 }
-
-
-
-
-
 
 /**
  * The decoder pulls data out of the buffer and populates a packet struct
