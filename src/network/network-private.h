@@ -28,7 +28,7 @@
 
 #endif
 
-#include "network.h"
+#include "network/network.h"
 
 /* Private method forward declarations */
 void process_packet(struct PL_entry *player, uint8_t pkttype, void * packet);

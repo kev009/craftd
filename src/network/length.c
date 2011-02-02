@@ -29,9 +29,9 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "network.h"
-#include "network-private.h"
-#include "packets.h"
+#include "network/network.h"
+#include "network/network-private.h"
+#include "network/packets.h"
 
 /**
  * A utility function for the length state machine to return the correct length
