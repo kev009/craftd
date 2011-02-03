@@ -1,5 +1,5 @@
-#ifndef __MAPGEN_H__
-#define __MAPGEN_H__
+#ifndef __MAPGEN_PLUGIN_H__
+#define __MAPGEN_PLUGIN_H__
 
 struct mapgen
 {

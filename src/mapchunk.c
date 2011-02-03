@@ -38,6 +38,7 @@
 #include "mapchunk.h"
 #include "timeloop.h"
 #include "nbt/nbt.h"
+#include "mapgen/mapgen.h"
 
 /* Map Chunk */
 // Temp
@@ -167,6 +168,7 @@ int loadChunk(int x, int z, uint8_t *mapdata)
   char dir1[bufsize], dir2[bufsize];
   char cname1[bufsize], cname2[bufsize];
   nbt_file *nf;
+  struct MG_entry *mapgen_item;
 
   /* Chunk directory and subdir location */
   itoa((x & 63), dir1, WORLDBASE);
@@ -186,9 +188,22 @@ int loadChunk(int x, int z, uint8_t *mapdata)
 
   if (nbt_parse(nf, chunkpath) != NBT_OK)
   {
-    LOG(LOG_ERR, "cannot parse chunk '%s'", chunkpath);
-    goto CHUNKRDERR;
+    LOG(LOG_INFO, "chunk '%s' needs to be generated", chunkpath);
+    pthread_mutex_lock(&mapgen_cvmutex);
+    mapgen_item = calloc(1, sizeof(struct MG_entry));
+    mapgen_item->x = x;
+    mapgen_item->z = z;
+    mapgen_item->dim = "./";
+    STAILQ_INSERT_TAIL(&mapgen_head, mapgen_item, entries);
+    pthread_mutex_unlock(&mapgen_cvmutex);
+    pthread_cond_signal(&mapgen_cv);
   }
+  /* FIXME: this ugly hack makes us wait until the
+   * generator is done with the chunk, but active
+   * waiting should definitely be avoided in some way
+   * Maybe we could delay the sending of the chunk? */
+  while ((nbt_parse(nf, chunkpath) != NBT_OK) ||
+         (valid_chunk(nf->root) != 0));
 
   if (valid_chunk(nf->root) == 0)
   {

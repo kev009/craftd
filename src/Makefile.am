@@ -60,6 +60,7 @@ craftd_SOURCES += util.c util.h version.c javaendian.h
 craftd_SOURCES += timeloop.c timeloop.h
 craftd_SOURCES += mapchunk.c mapchunk.h
 craftd_SOURCES += httpd.c httpd.h
+craftd_SOURCES += mapgen/mapgen.c
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
 
@@ -79,3 +80,9 @@ craftd_proxy_SOURCES += timeloop.c timeloop.h
 craftd_proxy_SOURCES += httpd.c httpd.h
 craftd_proxy_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_proxy_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
+
+lib_LTLIBRARIES = libmg_trivial.la
+libmg_trivial_la_LDFLAGS = $(libevent2_pthreads_LIBS)
+libmg_trivial_la_SOURCES = mapgen/trivial.c util.c
+libmg_trivial_la_CFLAGS = -D_FIX_UTIL
+libmg_trivial_la_LIBADD = libcdnbt.la

@@ -53,6 +53,7 @@
 #include "network/network.h"
 #include "timeloop.h"
 #include "httpd.h"
+#include "mapgen/mapgen.h"
 
 /**
  * Try and perform cleanup with an atexit call
@@ -324,6 +325,7 @@ int
 main(int argc, char *argv[])
 {
   pthread_t httpd_thread_id;
+  pthread_t mg_thread_id;
   pthread_attr_t httpd_thread_attr;
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
@@ -455,6 +457,9 @@ main(int argc, char *argv[])
     if(status != 0)
       ERR("Cannot start httpd");
   }
+
+  /* Start map generator worker */
+  pthread_create(&mg_thread_id, NULL, &mg_run_worker, NULL);
 
   /* Start packet handler pool */
   pthread_attr_init(&WP_thread_attr);
