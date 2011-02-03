@@ -8,8 +8,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "mapgen.h"
+#include "mapgen_plugin.h"
 #include "../nbt/nbt.h"
 #include "../algos/arith.h"
 
@@ -55,9 +57,11 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	/* test if x directory exists or create it */
 	strcat(full_path, "/");
 	strcat(full_path, x_dir);
+	mkdir(full_path, 0755);
 	/* test if z directory exists or create it */
 	strcat(full_path, "/");
 	strcat(full_path, z_dir);
+	mkdir(full_path, 0755);
 	/* test if file exists */
 	strcat(full_path, "/");
 	snprintf(filename, 24, "c.%s.%s.dat", x_file, z_file);
