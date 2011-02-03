@@ -1,6 +1,3 @@
-#ifndef CRAFTD_MAPCHUNK_H
-#define CRAFTD_MAPCHUNK_H
-
 /*
  * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
@@ -28,20 +25,46 @@
 
 #include <config.h>
 
-#include "craftd.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 
-/* Map Chunk */
-typedef struct chunk_coord chunk_coord;
-struct chunk_coord
+#include "craftd-config.h"
+#include "network/network.h"
+#include "network/network-private.h"
+#include "network/packets.h"
+
+/**
+ * Internal method that sends a handshake response packet
+ *
+ * @remarks Scope: private
+ *
+ * @param player Player List player pointer
+ * @param username mcstring of the handshake username
+ */
+void
+process_handshake(struct PL_entry *player, bstring username)
 {
-  int x;
-  int z;
-};
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
 
-int chunkcoordcmp(const void *a, const void *b);
-uint chunkcoordhash(const void *a);
-
-int loadLevelDat();
-int loadChunk(int x, int z, uint8_t *mapdata);
-
-#endif
+  /* Use a non-authenticating handshake for now 
+   * XXX: just a hack to get a login.
+   * XXX  This needs to be added to the worker pool for computing hash
+   * from minecraft.net
+   */
+  
+  uint8_t pid = PID_HANDSHAKE;
+  bstring hashreply = bfromcstr("-");
+  int16_t n_hlen = htons(hashreply->slen);
+  
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
+  evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  bstrFree(hashreply);
+  
+  return;
+}

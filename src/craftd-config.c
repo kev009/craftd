@@ -34,6 +34,7 @@
 
 #include "craftd-config.h"
 #include "util.h"
+#include "mapchunk.h"
 
 /* Networking knobs */
 const int MAX_LISTENBACKLOG = 16;
@@ -78,15 +79,19 @@ craftd_config_setdefaults()
   Config.workpool_size = 2;
   char *motddefault = "motd.conf";
   Config.motd_file = motddefault;
-#ifdef BUILDING_CDGAME
+#ifdef USE_CDGAME
   char *worlddefault = "world/";
   Config.world_dir = worlddefault;
   Config.dayrate = 20;
   Config.sunsetrate = 20;
   Config.nightrate = 20;
   Config.sunriserate = 20;
-#endif 
-#ifdef BUILDING_CDPROXY
+  Config.spawn.x = 0;
+  Config.spawn.y = 0;
+  Config.spawn.z = 0;
+#endif
+
+#ifdef USE_CDPROXY
   // Proxy Settings
   char *defaultservername = "Default Server";
   Config.proxy_default_server = defaultservername;

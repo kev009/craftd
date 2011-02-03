@@ -326,7 +326,10 @@ main(int argc, char *argv[])
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
   int status = 0;
+  // Setup game server specifics
   base = NULL; //initialize eventbase to null
+  worker_handler=workergame;
+
 
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
@@ -387,6 +390,7 @@ main(int argc, char *argv[])
   /* Initialize the configuration */
   craftd_config_setdefaults();
   craftd_config_parse(argconfigfile);
+  loadLevelDat();
   craftd_config_readmotd(Config.motd_file);
 
   /* Tell libevent to use our logging functions */

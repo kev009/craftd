@@ -32,6 +32,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
@@ -45,6 +47,11 @@
 
 /* Public methods */
 void *run_worker(void *arg);
+
+int workerproxy(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem);
+int workergame(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem);
+
+static int (*worker_handler)(uint8_t,size_t,struct WQ_entry*);
 
 /* Public protocol functions that can be exposed to APIs */
 void send_directchat(struct PL_entry *player, bstring message);

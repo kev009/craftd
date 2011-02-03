@@ -48,12 +48,8 @@ enum ServiceType {
   GAME,
   PROXY
 };
-#ifdef BUILDING_CDGAME
-const static enum ServiceType MODE = GAME;
-#endif
-#ifdef BUILDING_CDPROXY
-const static enum ServiceType MODE = PROXY;
-#endif
+static enum ServiceType MODE;
+
 
 /**
  * Declare the player list as a singly-linked list 
@@ -66,6 +62,7 @@ struct evdns_base* dns_base;
 
 /**
  * This is a player entry in the singly-linked list
+ * TODO: move this into a player.h
  */
 
 struct PL_entry
@@ -73,10 +70,8 @@ struct PL_entry
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
   struct bufferevent *bev;
-#ifdef BUILDING_CDPROXY
+#ifdef USE_CDPROXY
   struct bufferevent *sev;
-  void * loginpacket;
-  void * handshakepacket;
 #endif
   char ip[128];
   //uint64_t mapseed;

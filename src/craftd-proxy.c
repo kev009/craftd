@@ -48,7 +48,6 @@
 #include "craftd-config.h"
 #include "craftd.h"
 #include "util.h"
-#include "mapchunk.h"
 #include "network/network.h"
 #include "timeloop.h"
 #include "httpd.h"
@@ -160,14 +159,6 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
           /* The user hasn't gotten far enough to register a username */
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         }
-        if (player->loginpacket)
-	{
-	  free(player->loginpacket);
-	}
-        if (player->handshakepacket)
-	{
-	  free(player->handshakepacket);
-	}
 	if (player->sev)
 	{
 	  bufferevent_free(player->sev);
@@ -257,9 +248,7 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->username = NULL;
     player->eid = newEid();
     player->sev = NULL;
-    player->loginpacket = NULL;
-    player->handshakepacket = NULL;
-    player->loadedchunks = Set_new(0, chunkcoordcmp, chunkcoordhash);
+    player->loadedchunks = NULL;
 
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
@@ -342,6 +331,7 @@ main(int argc, char *argv[])
   pthread_attr_t timeloop_thread_attr;
   int status = 0;
   base = NULL; //initialize eventbase to null
+  worker_handler=workerproxy;
 
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout

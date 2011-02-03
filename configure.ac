@@ -79,7 +79,6 @@ AC_TYPE_UINT8_T
 AC_TYPE_SIZE_T
 
 AC_C_BIGENDIAN
-AM_PROG_CC_C_O
 AC_CHECK_DECLS([be64toh,htobe64], [], [],
 [#ifdef HAVE_ENDIAN_H
 #include <endian.h>
