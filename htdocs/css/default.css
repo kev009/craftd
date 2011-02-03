@@ -104,7 +104,7 @@ html, body {
 }
 
 .box {
-    padding-bottom: 10px;
+    padding: 10px 0 1px 0;
     margin-bottom: 12px;
 }
 
@@ -120,6 +120,13 @@ html, body {
     border-left: 5px solid #353535;
 }
 
+.managing h1 {
+    font-size: 150%;
+    font-weight: normal;
+    padding-left: 20px;
+    padding-bottom: 10px;
+}
+
 .left .box {
     font-size: 100%;
 }
@@ -129,14 +136,22 @@ html, body {
 }
 
 .box p {
+    margin: 0 auto 14px auto;
+    line-height: 1.3em;
+}
+
+.left .box p {
+    width: 96%;
+}
+
+.right .box p {
     width: 92%;
-    margin: 0 auto;
 }
 
 .box .box_title {
     width: 92%;
     margin: 0 auto;
-    padding: 6px 0;
+    padding: 0 0 6px 0;
     border-bottom: 1px solid #e5e5e5;
     margin-bottom: 6px;
 }
@@ -150,7 +165,18 @@ html, body {
     font-weight: normal;
 }
 
-.box table {
+.box .table_wrap {
+    padding-bottom: 10px;
+}
+
+.left .box table {
+    width: 96%;
+    margin: 0 auto;
+    font-size: 80%;
+    text-align: center;
+}
+
+.right .box table {
     width: 92%;
     margin: 0 auto;
 }
