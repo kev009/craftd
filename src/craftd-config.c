@@ -288,69 +288,70 @@ craftd_config_parse(const char *file)
   }
   
   /* Get the general game server configuration */
-#ifdef BUILDING_CDGAME
-  json_t *jsongame = json_object_get(json, "server");
-  if (json_is_object(jsongame))
+  if(MODE==GAME)
   {
-    parseJBool(&Config.daemonize, jsongame, "daemonize");
-    parseJInt(&Config.game_port, jsongame, "game-port");
-    parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
-    parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
-    Config.motd_file = parseJString(jsongame, "motd-file",Config.motd_file);
-    Config.world_dir = parseJString(jsongame, "world-dir",Config.world_dir);
-    parseJInt(&Config.dayrate,jsongame,"day-rate");
-    parseJInt(&Config.sunsetrate,jsongame,"sunset-rate");
-    parseJInt(&Config.nightrate,jsongame,"night-rate");
-    parseJInt(&Config.sunriserate,jsongame,"sunrise-rate");
-  }
-  else
-  {
-    LOG(LOG_INFO, "Config: no server section, skipping.");
-  }
-#endif
-  
-#ifdef BUILDING_CDPROXY
-  json_t *jsonproxy = json_object_get(json, "proxy");
-  if(json_is_object(jsonproxy))
-  {
-    parseJBool(&Config.daemonize, jsonproxy, "daemonize");
-    parseJInt(&Config.game_port, jsonproxy, "game-port");
-    parseJInt(&Config.mcstring_max, jsonproxy, "minecraft-stringmax");
-    parseJInt(&Config.workpool_size, jsonproxy, "worker-pool-size");
-    Config.motd_file = parseJString(jsonproxy, "motd-file",Config.motd_file);
-    Config.proxy_default_server = parseJString(jsonproxy,"default-server",Config.proxy_default_server);
-    
-    json_t *jsonpservers = json_object_get(jsonproxy,"servers");
-    
-    if(json_is_array(jsonpservers))
+    json_t *jsongame = json_object_get(json, "server");
+    if (json_is_object(jsongame))
     {
-      Server **proxyservers = (Server**)Malloc((json_array_size(jsonpservers) + 1) 
-                            * sizeof(Server*));
-      int aIndex = 0;
-      for(; aIndex < json_array_size(jsonpservers); aIndex++)
-      {
-	json_t *serverelement = json_array_get(jsonpservers, aIndex);
-	proxyservers[aIndex] = (Server *) Malloc(sizeof(Server));	
-	/* Remember to free()/realloc() proxyservers when a server context is deleted
-         * or added during runtime */
-	bzero(proxyservers[aIndex],sizeof(Server));
-	proxyservers[aIndex]->host = parseJString(serverelement,"host","127.0.0.1");
-	proxyservers[aIndex]->name = parseJString(serverelement,"name","undefined");
-	parseJInt(&proxyservers[aIndex]->port,serverelement,"port");
-      }
-      proxyservers[aIndex] = NULL; // Null terminate the list
-      Config.proxy_servers = proxyservers; // Save changes
+      parseJBool(&Config.daemonize, jsongame, "daemonize");
+      parseJInt(&Config.game_port, jsongame, "game-port");
+      parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
+      parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
+      Config.motd_file = parseJString(jsongame, "motd-file",Config.motd_file);
+      Config.world_dir = parseJString(jsongame, "world-dir",Config.world_dir);
+      parseJInt(&Config.dayrate,jsongame,"day-rate");
+      parseJInt(&Config.sunsetrate,jsongame,"sunset-rate");
+      parseJInt(&Config.nightrate,jsongame,"night-rate");
+      parseJInt(&Config.sunriserate,jsongame,"sunrise-rate");
     }
     else
     {
-      LOG(LOG_INFO, "Config: no proxy-servers section, skipping");
+      LOG(LOG_INFO, "Config: no server section, skipping.");
     }
   }
-  else
+  if(MODE==PROXY)
   {
-    LOG(LOG_INFO, "Config: no proxy section, skipping.");
+    json_t *jsonproxy = json_object_get(json, "proxy");
+    if(json_is_object(jsonproxy))
+    {
+      parseJBool(&Config.daemonize, jsonproxy, "daemonize");
+      parseJInt(&Config.game_port, jsonproxy, "game-port");
+      parseJInt(&Config.mcstring_max, jsonproxy, "minecraft-stringmax");
+      parseJInt(&Config.workpool_size, jsonproxy, "worker-pool-size");
+      Config.motd_file = parseJString(jsonproxy, "motd-file",Config.motd_file);
+      Config.proxy_default_server = parseJString(jsonproxy,"default-server",Config.proxy_default_server);
+      
+      json_t *jsonpservers = json_object_get(jsonproxy,"servers");
+      
+      if(json_is_array(jsonpservers))
+      {
+	Server **proxyservers = (Server**)Malloc((json_array_size(jsonpservers) + 1) 
+			      * sizeof(Server*));
+	int aIndex = 0;
+	for(; aIndex < json_array_size(jsonpservers); aIndex++)
+	{
+	  json_t *serverelement = json_array_get(jsonpservers, aIndex);
+	  proxyservers[aIndex] = (Server *) Malloc(sizeof(Server));	
+	  /* Remember to free()/realloc() proxyservers when a server context is deleted
+	  * or added during runtime */
+	  bzero(proxyservers[aIndex],sizeof(Server));
+	  proxyservers[aIndex]->host = parseJString(serverelement,"host","127.0.0.1");
+	  proxyservers[aIndex]->name = parseJString(serverelement,"name","undefined");
+	  parseJInt(&proxyservers[aIndex]->port,serverelement,"port");
+	}
+	proxyservers[aIndex] = NULL; // Null terminate the list
+	Config.proxy_servers = proxyservers; // Save changes
+      }
+      else
+      {
+	LOG(LOG_INFO, "Config: no proxy-servers section, skipping");
+      }
+    }
+    else
+    {
+      LOG(LOG_INFO, "Config: no proxy section, skipping.");
+    }
   }
-#endif
 
   /* Get the httpd server configuration */
   jsonhttp = json_object_get(json, "httpd");

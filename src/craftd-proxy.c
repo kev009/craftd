@@ -332,6 +332,7 @@ main(int argc, char *argv[])
   int status = 0;
   base = NULL; //initialize eventbase to null
   worker_handler=workerproxy;
+  MODE=PROXY;
 
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout

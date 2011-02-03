@@ -329,6 +329,7 @@ main(int argc, char *argv[])
   // Setup game server specifics
   base = NULL; //initialize eventbase to null
   worker_handler=workergame;
+  MODE=GAME;
 
 
   atexit(exit_handler);
