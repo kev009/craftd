@@ -44,7 +44,10 @@
 #include "javaendian.h"
 
 /* Public methods */
+void worker_init();
 void *run_worker(void *arg);
+void processLogoutcb(evutil_socket_t fd, short what, void *arg);
+void deferLogout(struct PL_entry *player);
 
 /* Public protocol functions that can be exposed to APIs */
 void send_directchat(struct PL_entry *player, bstring message);

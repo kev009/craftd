@@ -589,7 +589,7 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   evbuffer_add_buffer(output, tempbuf);
   evbuffer_free(tempbuf);
   
-  errorcb(player->bev, BEV_EVENT_EOF, player);
+  deferLogout(player);
   
   return;
 }
