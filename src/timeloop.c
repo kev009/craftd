@@ -159,10 +159,10 @@ static void
 timeincrease_cb(evutil_socket_t fd, short event, void *arg)
 {
     int timecpy = TL_get_gametime();
-    
+
     if (timecpy >= 0 && timecpy <= 11999)
     {
-	TL_set_gametime(timecpy + Config.dayrate);
+        TL_set_gametime(timecpy + Config.dayrate);
         return;
     }
     else if (timecpy >= 12000 && timecpy <= 13799)
@@ -177,17 +177,17 @@ timeincrease_cb(evutil_socket_t fd, short event, void *arg)
     }
     else if (timecpy >= 22200 && timecpy <= 23999)
     {
-        timecpy += Config.sunriserate;
-
+        TL_set_gametime(timecpy += Config.sunriserate);
         if (timecpy >= 24000)
         {
-            TL_set_gametime(0);
+            TL_set_gametime(timecpy-24000);
         }
+
         return;
     }
     else if (gametime >= 24000)
     {
-        TL_set_gametime(0);
+        TL_set_gametime(timecpy-24000);
     }
     return;
 }
