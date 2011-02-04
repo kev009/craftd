@@ -48,7 +48,6 @@
 #include "craftd-config.h"
 #include "craftd.h"
 #include "util.h"
-#include "mapchunk.h"
 #include "network/network.h"
 #include "timeloop.h"
 #include "httpd.h"
@@ -160,6 +159,10 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
           /* The user hasn't gotten far enough to register a username */
           LOG(LOG_INFO, "Connection closed ip: %s", player->ip);
         }
+	if (player->sev)
+	{
+	  bufferevent_free(player->sev);
+	}
 
         //TODO: Add mutual exclusion so a worker doesn't get a null ptr
         //TODO: Convert this to a SLIST_FOREACH
@@ -244,7 +247,8 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->bev = bev;
     player->username = NULL;
     player->eid = newEid();
-    player->loadedchunks = Set_new(0, chunkcoordcmp, chunkcoordhash);
+    player->sev = NULL;
+    player->loadedchunks = NULL;
 
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
@@ -326,11 +330,9 @@ main(int argc, char *argv[])
   pthread_t timeloop_thread_id;
   pthread_attr_t timeloop_thread_attr;
   int status = 0;
-  // Setup game server specifics
   base = NULL; //initialize eventbase to null
-  worker_handler=workergame;
-  MODE=GAME;
-
+  worker_handler=workerproxy;
+  MODE=PROXY;
 
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
@@ -391,7 +393,6 @@ main(int argc, char *argv[])
   /* Initialize the configuration */
   craftd_config_setdefaults();
   craftd_config_parse(argconfigfile);
-  loadLevelDat();
   craftd_config_readmotd(Config.motd_file);
 
   /* Tell libevent to use our logging functions */
@@ -472,8 +473,6 @@ main(int argc, char *argv[])
     if(status != 0)
       ERR("Worker pool startup failed!");
   }
-  
-  worker_init();
 
   /* Start inbound game server*/
   sleep(1);

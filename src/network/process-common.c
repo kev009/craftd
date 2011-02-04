@@ -1,6 +1,3 @@
-#ifndef CRAFTD_CONFIG_H
-#define CRAFTD_CONFIG_H
-
 /*
  * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
@@ -28,70 +25,46 @@
 
 #include <config.h>
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include "bstrlib.h"
+#include "craftd-config.h"
+#include "network/network.h"
+#include "network/network-private.h"
+#include "network/packets.h"
 
-/* Networking knobs */
-const int MAX_LISTENBACKLOG;
-const int MAX_BUF;
-
-/* Public methods */
-void craftd_config_setdefaults();
-void craftd_config_parse(const char *file);
-void craftd_config_readmotd(char *file);
-
-/* Public data */
-#define MOTD_LINES (20) // Max MOTD line count
-extern bstring Config_motd[MOTD_LINES];
-int Config_motdsz;
-
-#ifdef USE_CDPROXY
-typedef struct _Server
+/**
+ * Internal method that sends a handshake response packet
+ *
+ * @remarks Scope: private
+ *
+ * @param player Player List player pointer
+ * @param username mcstring of the handshake username
+ */
+void
+process_handshake(struct PL_entry *player, bstring username)
 {
-  // Server Definitions
-  char *host;
-  int port;
-  char *name;
-} Server;
-#endif
+  struct evbuffer *output = bufferevent_get_output(player->bev);
+  struct evbuffer *tempbuf = evbuffer_new();
 
-#ifdef USE_CDGAME
-typedef struct _Spawnpos
-{
-  // Default spawn coordinates
-  int x;
-  int y;
-  int z;
-} Spawnpos;
-#endif
-struct
-{
-  // Server settings
-  bool daemonize;
-  int game_port;
-  int max_listenbacklog;
-  int mcstring_max;
-  int workpool_size;
-  char *motd_file;
-#ifdef USE_CDGAME
-  char *world_dir;
-  int dayrate;
-  int sunsetrate;
-  int nightrate;
-  int sunriserate;
-  Spawnpos spawn;
-#endif
-
-#ifdef USE_CDPROXY
-  char *proxy_default_server;
-  Server **proxy_servers;
-#endif
-  // httpd settings
-  bool httpd_enabled; 
-  int httpd_port;
-  char *docroot;
-} Config;
-
-#endif
+  /* Use a non-authenticating handshake for now 
+   * XXX: just a hack to get a login.
+   * XXX  This needs to be added to the worker pool for computing hash
+   * from minecraft.net
+   */
+  
+  uint8_t pid = PID_HANDSHAKE;
+  bstring hashreply = bfromcstr("-");
+  int16_t n_hlen = htons(hashreply->slen);
+  
+  evbuffer_add(tempbuf, &pid, sizeof(pid));
+  evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
+  evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
+  
+  evbuffer_add_buffer(output, tempbuf);
+  evbuffer_free(tempbuf);
+  bstrFree(hashreply);
+  
+  return;
+}

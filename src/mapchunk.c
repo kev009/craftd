@@ -164,10 +164,8 @@ int loadChunk(int x, int z, uint8_t *mapdata)
   /* Chunk file name */
   itoa(x, cname1, WORLDBASE);
   itoa(z, cname2, WORLDBASE);
-
   evutil_snprintf(chunkpath, PATH_MAX, "%s/%s/%s/c.%s.%s.dat", 
       Config.world_dir, dir1, dir2, cname1, cname2);
-
   LOGT(LOG_DEBUG, "Loading chunk %s", chunkpath);
 
   if (nbt_init(&nf) != NBT_OK)

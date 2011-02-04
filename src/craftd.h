@@ -40,6 +40,16 @@
 #include "util.h"
 
 /* Public data */
+/**
+ * Declare a global variable to determine if the 
+ * service is running as proxy or game
+ */
+enum ServiceType {
+  GAME,
+  PROXY
+};
+enum ServiceType MODE;
+
 
 /**
  * Declare the player list as a singly-linked list 
@@ -52,6 +62,7 @@ struct evdns_base* dns_base;
 
 /**
  * This is a player entry in the singly-linked list
+ * TODO: move this into a player.h
  */
 
 struct PL_entry
@@ -59,9 +70,9 @@ struct PL_entry
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
   struct bufferevent *bev;
+#ifdef USE_CDPROXY
   struct bufferevent *sev;
-  void * loginpacket;
-  void * handshakepacket;
+#endif
   char ip[128];
   //uint64_t mapseed;
   //uint8_t dimension;

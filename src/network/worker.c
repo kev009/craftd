@@ -186,64 +186,9 @@ void
       
       /* Invariant: else we received a full packet of pktlen */
       
-      if(workitem->worktype == WQ_GAME)
-      {
-	if(Config.proxy_enabled)
-	{
-	  LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
-	  if(process_isproxypassthrough(pkttype) && player->sev)
-	  {
-	    bufferevent_lock(player->sev);
-	    evbuffer_remove_buffer(input,
-				   bufferevent_get_output(player->sev),pktlen);
-	    bufferevent_unlock(player->sev);
-	  }
-          else
-	  {
-	    //if(player->sev)
-	      //bufferevent_lock(player->sev);
-	    packet = packetdecoder(pkttype, pktlen, bev);
-	    //evbuffer_lock(output);
-	    process_proxypacket(player,pkttype,packet);
-	    //evbuffer_unlock(output);
-	    packetfree(pkttype,packet);
-	    //if(player->sev)
-	      //bufferevent_unlock(player->sev);
-	  }
-	}
-	else
-	{
-	  packet = packetdecoder(pkttype, pktlen, bev);
-	  //evbuffer_lock(output);
-	  process_packet(player,pkttype,packet);
-	  //evbuffer_unlock(output);
-	  packetfree(pkttype,packet);
-	}
-	
-      }
-      else if(workitem->worktype == WQ_PROXY)
-      {
-	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
-	bufferevent_lock(player->sev);
-	if(process_isproxyserverpassthrough(pkttype))
-	{
-	    evbuffer_remove_buffer(input,bufferevent_get_output(player->bev),pktlen);
-	}
-	else
-	{
-	  packet = packetdecoder(pkttype, pktlen, bev);
-	  //evbuffer_lock(output);
-	  process_proxyserverpacket(player,pkttype,packet);
-	  //evbuffer_unlock(output);
-	  packetfree(pkttype,packet);
-	}
-	bufferevent_unlock(player->sev);
-	
-      }
-      else 
-      { 
+      if(!worker_handler(pkttype,pktlen,workitem))
         goto WORKER_ERR; 
-      }
+      
       /* On decoding errors, punt the client for now */
       
       /* Remove this temporarally until we have a sane way to handle decoder problems

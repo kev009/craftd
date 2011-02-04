@@ -33,141 +33,12 @@
 #include "network/network.h"
 #include "network/network-private.h"
 #include "network/packets.h"
-#include "mapchunk.h"
 
 // Hack zlib in to test chunk sending
 #include <stdio.h>
 #include <zlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
-/**
- * This internal method checks login predicates, populates the rest of the
- * Player List entry, and sends the initial packet stream to spawn the player.
- * 
- * @remarks Scope: private
- * 
- * @param player Player List player pointer
- * @param username inbound username from client login packet
- * @param ver inbound version from client login packet
- */
-void
-process_login(struct PL_entry *player, bstring username, uint32_t ver)
-{
-  // TODO: Future, async check of minecraft.net for user validity
-  // TODO: Future, check against local ACL
-  
-  /* Check if the client version is compatible with the craftd version */
-  if (ver != PROTOCOL_VERSION)
-  {
-    bstring dconmsg;
-    dconmsg = bfromcstr("Client version is incompatible with this server.");
-    send_kick(player, dconmsg);
-    bstrFree(dconmsg);
-    return;
-  }
-  
-  /* Otherwise, finish populating their Player List entry */
-  pthread_rwlock_wrlock(&player->rwlock);
-  player->username = bstrcpy(username);
-  pthread_rwlock_unlock(&player->rwlock);
-  
-  send_loginresp(player);
-
-  const int spawnradius = 5;
-  send_chunk_radius(player, Config.spawn.x, Config.spawn.z, spawnradius);
-  
-  send_spawnpos(player, Config.spawn.x, Config.spawn.y, Config.spawn.z);
-  //send inv
-  send_movelook(player, Config.spawn.x, Config.spawn.y + 6.1, Config.spawn.y
-		+ 6.2, Config.spawn.z, 0, 0, false);
-
-  /* Login message */
-  bstring loginmsg = bformat("Player %s has joined the game!", 
-      player->username->data);
-  send_syschat(loginmsg);
-  bstrFree(loginmsg);
-
-  /* Send player MOTD */
-  for(int i=0; i < Config_motdsz; ++i)
-  {
-    send_directchat(player, Config_motd[i]);
-  }
-  
-  return;
-}
-
-/**
- * Internal method that sends a handshake response packet
- *
- * @remarks Scope: private
- *
- * @param player Player List player pointer
- * @param username mcstring of the handshake username
- */
-void
-process_handshake(struct PL_entry *player, bstring username)
-{
-  struct evbuffer *output = bufferevent_get_output(player->bev);
-  struct evbuffer *tempbuf = evbuffer_new();
-
-  /* Use a non-authenticating handshake for now 
-   * XXX: just a hack to get a login.
-   * XXX  This needs to be added to the worker pool for computing hash
-   * from minecraft.net
-   */
-  
-  uint8_t pid = PID_HANDSHAKE;
-  bstring hashreply = bfromcstr("-");
-  int16_t n_hlen = htons(hashreply->slen);
-  
-  evbuffer_add(tempbuf, &pid, sizeof(pid));
-  evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
-  evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
-  
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
-  bstrFree(hashreply);
-  
-  return;
-}
-
-/**
- * Process a chat message or command
- *
- * @remarks Scope: private
- *
- * @param player Player List player pointer
- * @param message Chat message
- */
-void
-process_chat(struct PL_entry *player, bstring message)
-{
-  if (message->data[0] == '/')
-  {
-    LOG(LOG_INFO, "Command: %s", message->data);
-    send_directchat(player, message);
-    
-    // TODO: temporary who cmd
-    bstring whocmd = bfromcstr("/who");
-    bstring lcmd = bfromcstr("/login");
-    if (binstrr(message, (whocmd->slen), whocmd) != BSTR_ERR)
-    {
-      pthread_rwlock_rdlock(&PL_rwlock);
-      bstring whomsg = bformat("There are %d players online", PL_count);
-      send_directchat(player, whomsg);
-      pthread_rwlock_unlock(&PL_rwlock);
-      bstrFree(whomsg);
-    } else if(binstrr(message, (lcmd->slen), lcmd) != BSTR_ERR)
-    {
-      send_loginresp(player);
-    }
-  }
-  else
-  {
-    send_chat(player, message);
-  }
-}
 
 /**
  * Internal method that sends a login response packet
@@ -283,73 +154,6 @@ send_syschat(bstring message)
 }
 
 /**
- * A wrapper to send and delete changed packets within a client's tracked
- * radius
- */
-// Private utility functions for send_chunk_radius
-static void chunkradiusunload(const void *T, void *ctx)
-{
-  struct PL_entry *player = (void *)ctx;
-  chunk_coord coord = *(chunk_coord *)T;
-  send_prechunk(player, coord.x, coord.z, false);
-}
-static void chunkradiusload(const void *T, void *ctx)
-{
-  // Send full chunk
-  const int sizex = 16, sizey = 128, sizez = 16;
-  
-  struct PL_entry *player = (void *)ctx;
-  chunk_coord coord = *(chunk_coord *)T;
-  
-  send_prechunk(player, coord.x, coord.z, true);
-  send_chunk(player, coord.x, 0, coord.z, sizex, sizey, sizez);
-}
-static void chunkradiusfree(const void *T, void *ctx)
-{
-  chunk_coord *coord = (chunk_coord *)T;
-  free(coord);
-}
-
-void
-send_chunk_radius(struct PL_entry *player, int32_t xin, int32_t zin, int radius)
-{
-  // Get "chunk coords"
-  xin /= 16;
-  zin /= 16;
-  
-  LOG(LOG_DEBUG, "Sending new chunks center:(%d, %d)", xin, zin);
-  
-  Set_T oldchunkset = player->loadedchunks;
-  
-  // Make a new set containing coordinates of all chunks client should have
-  Set_T newchunkset = Set_new(400, chunkcoordcmp, chunkcoordhash);
-  for(int x = -radius; x < radius; x++)
-  {
-    for(int z = -radius; z < radius; z++)
-    {
-      // Use a circular send pattern based on Bravo/MostAwesomeDude's algo
-      if ( x*x + z*z <= radius*radius )
-      {
-	chunk_coord *coord = Malloc(sizeof(chunk_coord));
-	coord->x = x + xin;
-	coord->z = z + zin;
-	Set_put(newchunkset, coord);
-      }
-    }
-  }
-  
-  Set_T toremove = Set_minus(oldchunkset, newchunkset);
-  Set_T toadd = Set_minus(newchunkset, oldchunkset);
-  
-  Set_map(toremove, &chunkradiusunload, (void *)player);
-  Set_map(toadd, &chunkradiusload, (void *)player);
-  
-  player->loadedchunks = newchunkset;
-  Set_map(oldchunkset, &chunkradiusfree, NULL);
-  Set_free(&oldchunkset);
-}
-
-/**
  * Send a prechunk packet to the player
  * 
  * @remarks Scope: public API method
@@ -381,73 +185,7 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
   return;
 }
 
-/**
- * Send the specified chunk to the player
- * 
- * @remarks Scope: public API method
- * @remarks Internally and over the network size{x,y,z} are -1 over the wire
- * 
- * @param player Player List player pointer
- * @param x global chunk x coordinate
- * @param y global chunk y coordinate
- * @param z global chunk z coordinate
- * @param sizex actual x size
- * @param sizey actual y size
- * @param sizez actual z size
- */
-void
-send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
-	   uint8_t sizex, uint8_t sizey, uint8_t sizez)
-{
-  struct evbuffer *output = bufferevent_get_output(player->bev);
-  struct evbuffer *tempbuf = evbuffer_new();
-  int8_t pid = PID_MAPCHUNK;
-  int32_t n_x = htonl(x * 16);
-  int16_t n_y = htons(y);
-  int32_t n_z = htonl(z * 16);
- 
-  /* Check that the chunk size is greater than zero since the protocol must
-   * subtract one before sending.  If so, do it.
-   */
-  assert(sizex > 0 && sizey > 0 && sizez > 0);
-  assert(sizex <= 128 && sizey <= 128 && sizez <= 128);
-  --sizex;
-  --sizey;
-  --sizez;
 
-  uint8_t mapdata[MAX_CHUNKARRAY];
-  if (loadChunk(x, z, &mapdata[0]) != 0)
-  {
-    /* TODO: bad read.  add to mapgen queue if file DNE */
-    return;
-  }
-
-  uLongf written = MAX_CHUNKARRAY;
-  Bytef *buffer = (Bytef*)Malloc(MAX_CHUNKARRAY);
-  if (compress(buffer, &written, &mapdata[0], MAX_CHUNKARRAY) != Z_OK)
-    assert(false);
-  int32_t n_written = htonl(written);
- 
-  evbuffer_add(tempbuf, &pid, sizeof(pid));
-  evbuffer_add(tempbuf, &n_x, sizeof(n_x));
-  evbuffer_add(tempbuf, &n_y, sizeof(n_y));
-  evbuffer_add(tempbuf, &n_z, sizeof(n_z));
-  evbuffer_add(tempbuf, &sizex, sizeof(sizex));
-  evbuffer_add(tempbuf, &sizey, sizeof(sizey));
-  evbuffer_add(tempbuf, &sizez, sizeof(sizez));
-  evbuffer_add(tempbuf, &n_written, sizeof(n_written));
-  evbuffer_add(tempbuf, buffer, written);
-
-  /* TODO: swap to this zero copy method */
-  //evbuffer_add_reference(tempbuf, buffer, written, chunkfree_cb, buffer);
-  
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
-  
-  free(buffer);
- 
-  return;
-}
 
 /**
  * Send the client their spawn position.  Can also be used to later update
@@ -590,7 +328,6 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   evbuffer_free(tempbuf);
   
   deferLogout(player);
-  
   return;
 }
 
