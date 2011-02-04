@@ -33,6 +33,7 @@
 #include <jansson.h>
 
 #include "craftd-config.h"
+#include "craftd.h"
 #include "util.h"
 #include "mapchunk.h"
 

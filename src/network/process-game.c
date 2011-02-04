@@ -162,7 +162,7 @@ process_login(struct PL_entry *player, bstring username, uint32_t ver)
   send_loginresp(player);
 
   const int spawnradius = 5;
-#ifdef BUIDING_CDGAME
+#ifdef USE_CDGAME
   send_chunk_radius(player, Config.spawn.x, Config.spawn.z, spawnradius);
   
   send_spawnpos(player, Config.spawn.x, Config.spawn.y, Config.spawn.z);

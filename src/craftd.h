@@ -48,7 +48,7 @@ enum ServiceType {
   GAME,
   PROXY
 };
-static enum ServiceType MODE;
+enum ServiceType MODE;
 
 
 /**
