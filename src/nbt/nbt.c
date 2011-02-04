@@ -884,7 +884,7 @@ int nbt_write_byte(nbt_file *nbt, char *val)
 int nbt_write_short(nbt_file *nbt, int16_t *val)
 {
     int16_t temp = *val;
-    temp = htonl(temp);
+    temp = htons(temp);
 
     return gzwrite(nbt->fp, &temp, sizeof(int16_t));
 }
