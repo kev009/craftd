@@ -146,6 +146,7 @@ int loadLevelDat()
   Config.spawn.y = *(nbt_cast_int(t_spawnY));
   Config.spawn.z = *(nbt_cast_int(t_spawnZ));
   
+  nbt_free(nf);
   return 0;
 }
 

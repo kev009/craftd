@@ -472,6 +472,8 @@ main(int argc, char *argv[])
     if(status != 0)
       ERR("Worker pool startup failed!");
   }
+  
+  worker_init();
 
   /* Start inbound game server*/
   sleep(1);

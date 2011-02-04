@@ -118,7 +118,7 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
     }
     case PID_DISCONNECT:
     {
-      errorcb(player->bev, BEV_EVENT_EOF, player);
+      deferLogout(player);
       return;
     }
     default:

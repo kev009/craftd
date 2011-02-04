@@ -42,6 +42,48 @@
  * Use more zero copy I/O and peeks if possible
  */
 
+/* Forward declarations */
+void processLogoutcb(evutil_socket_t fd, short what, void *arg);
+
+/* Private instance variables */
+//static pthread_barrier_t logoutbarrier;
+static volatile int logouts = 0;
+
+void
+worker_init()
+{
+  /* TODO move the rest of the startup code out of craftd.c to here */
+}
+
+void
+deferLogout(struct PL_entry *player)
+{
+  ++logouts;
+  
+  struct event *logoutev;
+  struct timeval now = {0,0};
+  
+  logoutev = evtimer_new(base, processLogoutcb, player);
+  event_add(logoutev, &now);
+}
+
+void
+processLogoutcb(evutil_socket_t fd, short what, void *arg)
+{
+  struct PL_entry *player = (struct PL_entry *) arg;
+  LOG(LOG_INFO, "processed logout cb");
+  errorcb(player->bev, BEV_EVENT_EOF, player);
+  --logouts;
+}
+
+void
+waitLogout()
+{
+  if ((volatile int)logouts != 0)
+    while((volatile int)logouts != 0)
+      ; // Spin
+}
+
 /**
  * This is the worker thread's main function and performs packet length
  * detection, decoding, and response.  Work is passed in through the Work
@@ -164,6 +206,7 @@ WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
     bufferevent_unlock(player->bev);
     free(workitem);
+    waitLogout();
     continue;
 
 WORKER_ERR:
@@ -175,7 +218,9 @@ WORKER_ERR:
     send_kick(player, wmsg);
     bufferevent_unlock(player->bev);
     bstrFree(wmsg);
-
+    
+    waitLogout();
+    
     continue;
   }
 
