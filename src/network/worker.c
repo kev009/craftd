@@ -103,7 +103,6 @@ void
   struct WQ_entry *workitem;
   struct PL_entry *player;
   size_t inlen;
-  void * packet;
   int pktlen;
   uint8_t pkttype;
   

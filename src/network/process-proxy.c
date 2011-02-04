@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #include "craftd-config.h"
+#include "proxy.h"
 #include "network/network.h"
 #include "network/network-private.h"
 #include "network/packets.h"

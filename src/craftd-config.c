@@ -289,6 +289,7 @@ craftd_config_parse(const char *file)
   }
   
   /* Get the general game server configuration */
+#ifdef USE_CDGAME
   if(MODE==GAME)
   {
     json_t *jsongame = json_object_get(json, "server");
@@ -310,6 +311,9 @@ craftd_config_parse(const char *file)
       LOG(LOG_INFO, "Config: no server section, skipping.");
     }
   }
+#endif
+  
+#ifdef USE_CDPROXY
   if(MODE==PROXY)
   {
     json_t *jsonproxy = json_object_get(json, "proxy");
@@ -353,6 +357,7 @@ craftd_config_parse(const char *file)
       LOG(LOG_INFO, "Config: no proxy section, skipping.");
     }
   }
+#endif // CDUSE_PROXY
 
   /* Get the httpd server configuration */
   jsonhttp = json_object_get(json, "httpd");

@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <event2/event.h>
+#include <event2/buffer.h>
+#include <event2/bufferevent.h>
+
 #include "craftd.h"
 #include "proxy.h"
 #include "network/network.h"

@@ -216,6 +216,7 @@ void *run_timeloop(void *arg)
     evtimer_add(keepalive_event, &keepalive_interval);
 
     //We do not need to update time when connecting to a proxy
+#ifdef USE_CDGAME
     if(MODE==GAME)
     {
     /* Register the time packet update handler */
@@ -232,6 +233,8 @@ void *run_timeloop(void *arg)
     timeincrease_event = event_new(tlbase, -1, EV_PERSIST, timeincrease_cb, NULL);
     evtimer_add(timeincrease_event, &timeincrease_interval);
     }
+#endif // USE_CDGAME
+    
     /* Initialize the time loop tail queue.  Work items are added on to the end
      * and a void pointer provides access to heap data
      */

@@ -26,8 +26,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#endif
-
 #include <config.h>
 
 #include <stdint.h>
@@ -70,3 +68,11 @@ void send_movelook(struct PL_entry *player, double x, double stance, double y,
 	           double z, float yaw, float pitch, bool flying);
 void send_kick(struct PL_entry *player, bstring dconmsg);
 void send_timeupdate(struct PL_entry *player, int time);
+
+/* Proxy public overrides */
+#ifdef USE_CDPROXY
+void send_proxychat(struct PL_entry *player,bstring message);
+void send_proxylogin(struct PL_entry *player);
+#endif
+
+#endif
