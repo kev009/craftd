@@ -214,6 +214,7 @@ void newProcessWq(struct PL_entry *player,struct bufferevent *bev,struct WQ_proc
   workitem->player = player;
   workitem->worktype = WQ_PROCESS;
   workitem->workdata = pdata;
+  workitem->lock = NULL;
   pthread_mutex_lock(&worker_cvmutex);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
   
