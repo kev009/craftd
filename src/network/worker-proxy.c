@@ -32,49 +32,71 @@
 
 #include "network/network.h"
 #include "network/network-private.h"
+#include <util.h>
 
 int workerproxy(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
 {
-      if(workitem->worktype == WQ_GAME)
+      if(workitem->worktype == WQ_GAME_INPUT)
       {
 	  LOG(LOG_DEBUG,"Recieved packet type: %d from client",pkttype);
 	  if(process_isproxypassthrough(pkttype) && workitem->player->sev)
 	  {
-	    bufferevent_lock(workitem->player->sev);
+	    struct evbuffer *tmpbuf = evbuffer_new();
 	    evbuffer_remove_buffer(bufferevent_get_input(workitem->bev),
-				   bufferevent_get_output(workitem->player->sev),pktlen);
-	    bufferevent_unlock(workitem->player->sev);
+				   tmpbuf,pktlen);
+	    newOutputWq(tmpbuf,workitem->player,workitem->player->sev,
+			workitem->player->sevoutlock);
+	    
 	  }
           else
 	  {
-	    //if(player->sev)
-	      //bufferevent_lock(player->sev);
-	    void *packet = packetdecoder(pkttype, pktlen, workitem->bev);
-	    //evbuffer_lock(output);
-	    process_proxypacket(workitem->player,pkttype,packet);
-	    //evbuffer_unlock(output);
-	    packetfree(pkttype,packet);
-	    //if(player->sev)
-	      //bufferevent_unlock(player->sev);
+	    void *packet = packetdecoder(pkttype, pktlen, workitem->bev); 
+	    struct WQ_process_data *pdata;
+	    pdata = Malloc(sizeof(struct WQ_process_data));
+	    pdata->packet = packet;
+	    pdata->pktlen = pktlen;
+	    pdata->pkttype = pkttype;
+	    newProcessWq(workitem->player,workitem->bev,pdata);
 	  }
       }
-      else if(workitem->worktype == WQ_PROXY)
+      else if(workitem->worktype == WQ_PROXY_INPUT)
       {
 	LOG(LOG_DEBUG,"Recieved packet %d from server",pkttype);
-	bufferevent_lock(workitem->player->sev);
 	if(process_isproxyserverpassthrough(pkttype))
 	{
-	    evbuffer_remove_buffer(bufferevent_get_input(workitem->bev),bufferevent_get_output(workitem->player->bev),pktlen);
+	    struct evbuffer *tmpbuf = evbuffer_new();
+	    evbuffer_remove_buffer(bufferevent_get_input(workitem->bev),
+				   tmpbuf,pktlen);
+	    newOutputWq(tmpbuf,workitem->player,workitem->player->bev,
+		workitem->player->outlock);
 	}
 	else
 	{
-	  void *packet = packetdecoder(pkttype, pktlen, workitem->bev);
-	  //evbuffer_lock(output);
-	  process_proxyserverpacket(workitem->player,pkttype,packet);
-	  //evbuffer_unlock(output);
-	  packetfree(pkttype,packet);
+	    void *packet = packetdecoder(pkttype, pktlen, workitem->bev);
+	    struct WQ_process_data *pdata;
+	    pdata = Malloc(sizeof(struct WQ_process_data));
+	    pdata->packet = packet;
+	    pdata->pktlen = pktlen;
+	    pdata->pkttype = pkttype;
+	    newProcessWq(workitem->player,workitem->bev,pdata);
 	}
-	bufferevent_unlock(workitem->player->sev);
+      }
+      else if(workitem->worktype == WQ_PROCESS)
+      {
+	if(workitem->bev == workitem->player->bev) //Process a client packet
+	{
+	  struct WQ_process_data *pdata = workitem->workdata;
+	  process_proxypacket(workitem->player, pdata->pkttype, pdata->packet);
+	  packetfree(pdata->packet);
+	  free(pdata);
+	}
+	if(workitem->bev == workitem->player->sev) //Process a server packet
+	{
+	  struct WQ_process_data *pdata = workitem->workdata;
+	  process_proxyserverpacket(workitem->player, pdata->pkttype, pdata->packet);
+	  packetfree(pdata->packet);
+	  free(pdata);
+	}
       }
       else {
         return -1;

@@ -70,7 +70,11 @@ struct PL_entry
   pthread_rwlock_t rwlock;
   evutil_socket_t fd;
   struct bufferevent *bev;
+  pthread_rwlock_t inlock;
+  pthread_rwlock_t outlock;
 #ifdef USE_CDPROXY
+  pthread_rwlock_t sevinlock;
+  pthread_rwlock_t sevoutlock;
   struct bufferevent *sev;
 #endif
   char ip[128];
@@ -108,13 +112,38 @@ STAILQ_HEAD(WQ_stailqhead, WQ_entry) WQ_head;
 
 /**
  * This is a work queue entry in the singly-linked tail queue
+ * 
+ * 	GAME: Client to Server
+ * 	PROXY: Server to clieny
+ * WQ_*_INPUT is a work request that gets called on network input
+ * 	Depending on packet type, packets may skip the process stage
+ * 	and get populated into an tempory buffer before network output
+ * 
+ * WQ_OUTPUT is a work request that gets created on packet creation
+ *       to write to the network
+ * 
+ * WQ_PROCESS is a work request to handle various functions like 
+ *       Chunk loading and unloading and handling packet data
+ *       Some values are null for this type of WQ (lock)
  */
-enum WQ_type {WQ_PROXY,WQ_GAME};
+enum WQ_type {WQ_PROXY_INPUT,
+	      WQ_GAME_INPUT,
+	      WQ_PROCESS,
+	      WQ_OUTPUT};
+
+struct WQ_process_data
+{
+  void *packet;
+  size_t pktlen;
+  uint8_t pkttype;
+};
 struct WQ_entry
 {
   struct bufferevent *bev;
   struct PL_entry *player;
   enum WQ_type worktype;
+  pthread_rwlock_t *lock;
+  void *workdata;
   STAILQ_ENTRY(WQ_entry) WQ_entries; // Pointer to next work item
 };
 

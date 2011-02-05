@@ -38,8 +38,10 @@
 
 #include <event2/buffer.h>
 
+
 #include "craftd-config.h"
 #include "util.h"
+#include "craftd.h"
 
 // Logging Routines
 /** Private storage for the console log mask */
@@ -179,7 +181,45 @@ bstring getMCString(struct evbuffer *buf, int16_t len)
 
   return str;
 }
-
+/**
+ * Utility function to create a new output WQ 
+ * 
+ * @param tmpbuf Pointer an evbuffer containing the data to be written
+ * @param player Pointer to the player struct this event descibes
+ * @param bev The bufferevent this WQ should write to
+ * @param lock Pointer to the lock that should be activated when handling the WQ
+ */
+void newOutputWq(struct evbuffer *tmpbuf, struct PL_entry *player,struct bufferevent *bev,
+		 pthread_rwlock_t *lock)
+{
+  struct WQ_entry *workitem;
+  workitem = Malloc(sizeof(struct WQ_entry));
+  workitem->bev = bev;
+  workitem->player = player;
+  workitem->worktype = WQ_OUTPUT;
+  workitem->workdata = tmpbuf;
+  workitem->lock = lock;
+  
+  pthread_mutex_lock(&worker_cvmutex);
+  STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
+  
+  pthread_cond_signal(&worker_cv);
+  pthread_mutex_unlock(&worker_cvmutex);
+}
+void newProcessWq(struct PL_entry *player,struct bufferevent *bev,struct WQ_process_data *pdata)
+{
+  struct WQ_entry *workitem;
+  workitem = Malloc(sizeof(struct WQ_entry));
+  workitem->bev = bev;
+  workitem->player = player;
+  workitem->worktype = WQ_PROCESS;
+  workitem->workdata = pdata;
+  pthread_mutex_lock(&worker_cvmutex);
+  STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
+  
+  pthread_cond_signal(&worker_cv);
+  pthread_mutex_unlock(&worker_cvmutex);
+}
 /**
  * Take an integer and convert it to a base 2 to 36 char representation.
  *

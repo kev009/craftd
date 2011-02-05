@@ -46,7 +46,7 @@
 #include "bstraux.h"
 
 #include "craftd-config.h"
-#include "craftd.h"
+
 #include "util.h"
 #include "mapchunk.h"
 #include "network/network.h"
@@ -84,7 +84,7 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
   workitem->player = player;
-  workitem->worktype = WQ_GAME;
+  workitem->worktype = WQ_GAME_INPUT;
   
   /* Add item to work queue */
   pthread_mutex_lock(&worker_cvmutex);

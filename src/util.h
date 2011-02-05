@@ -1,3 +1,4 @@
+
 #ifndef CRAFTD_UTIL_H
 #define CRAFTD_UTIL_H
 
@@ -33,11 +34,15 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
+#include <event2/bufferevent.h>
 
 #include "bstrlib.h"
+#include "craftd.h"
+
 
 /**
  * Define MC data types 
@@ -90,6 +95,13 @@ bstring getMCString(struct evbuffer *buf, int16_t len);
 
 /* Public utility functions */
 char *itoa(int value, char *result, int base);
+
+/**
+ * Utility function to create a WQ_*_output request
+ */
+void newOutputWq(struct evbuffer *tmpbuf, struct PL_entry *player, struct bufferevent *bev,
+		 pthread_rwlock_t *lock);
+void newProcessWq(struct PL_entry *player,struct bufferevent *bev, struct WQ_process_data *pdata);
 
 /* Public memory management wrappers */
 /**

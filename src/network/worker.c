@@ -130,80 +130,86 @@ void
 
     bev = workitem->bev;
     player = workitem->player;
+    if(workitem->lock!=NULL) //this will auto lock any type of WQ
+      pthread_rwlock_wrlock(&workitem->lock);
     
-    if (bev == NULL || player == NULL)
+    if(workitem==WQ_GAME_INPUT||workitem==WQ_PROXY_INPUT)
     {
-      LOG(LOG_CRIT, "Aaack, null bev or ctx in worker?");
-      goto WORKER_ERR;
-    }
-
-    /* Do work */
-    bufferevent_lock(player->bev);
-    input = bufferevent_get_input(bev);
-    output = bufferevent_get_output(bev);
-    
-    inlen = evbuffer_get_length(input);
-    
-    /* Check another predicate: make sure there is work to do in case of
-     * spurious wakeups
-     */
-    if (inlen == 0)
-      goto WORKER_DONE;
-    
-    /* Drain the buffer in a loop to take care of compound packets.
-     * We add pktlen for each iteration until inlen is reached or we jump
-     * to the EAGAIN handler.
-     */
-     size_t processed = 0;
-     do
-     {
-      evbuffer_copyout(input, &pkttype, 1);
-      //LOG(LOG_DEBUG,"got packet %d",pkttype);
-      pktlen = len_statemachine(pkttype, input);
-      
-      /* On exception conditions, negate the return value to get correct errno */
-      if (pktlen < 0)
+      if (bev == NULL || player == NULL)
       {
-	pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
-        if (pktlen == EAGAIN)
-        {
-	  /* recvd a fragment, wait for another event */
-	  LOGT(LOG_DEBUG,"EAGAIN");
-          goto WORKER_DONE;
-        }
-        else if (pktlen == EILSEQ)
-        {
-	  /* recvd an packet that does not match known parameters
-	   * Punt the client and perform cleanup
-	   */
-	  LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
-	  goto WORKER_ERR;
-         }
-        
-        perror("unhandled readcb error");
+	LOG(LOG_CRIT, "Aaack, null bev or ctx in worker?");
+	goto WORKER_ERR;
       }
+
+      /* Do work */
+      input = bufferevent_get_input(bev);
       
-      /* Invariant: else we received a full packet of pktlen */
+      inlen = evbuffer_get_length(input);
       
-      if(!worker_handler(pkttype,pktlen,workitem))
-        goto WORKER_ERR; 
+      /* Check another predicate: make sure there is work to do in case of
+      * spurious wakeups
+      */
+      if (inlen == 0)
+	goto WORKER_DONE;
       
-      /* On decoding errors, punt the client for now */
-      
-      /* Remove this temporarally until we have a sane way to handle decoder problems
-      if (status != 0)
+      /* Drain the buffer in a loop to take care of compound packets.
+      * We add pktlen for each iteration until inlen is reached or we jump
+      * to the EAGAIN handler.
+      */
+      size_t processed = 0;
+      do
       {
-	LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);
-        goto WORKER_ERR;
-      }*/
-      
-       processed += pktlen;
-     }
-     while(processed < inlen);
+	evbuffer_copyout(input, &pkttype, 1);
+	//LOG(LOG_DEBUG,"got packet %d",pkttype);
+	pktlen = len_statemachine(pkttype, input);
+	
+	/* On exception conditions, negate the return value to get correct errno */
+	if (pktlen < 0)
+	{
+	  pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
+	  if (pktlen == EAGAIN)
+	  {
+	    /* recvd a fragment, wait for another event */
+	    LOGT(LOG_DEBUG,"EAGAIN");
+	    goto WORKER_DONE;
+	  }
+	  else if (pktlen == EILSEQ)
+	  {
+	    /* recvd an packet that does not match known parameters
+	    * Punt the client and perform cleanup
+	    */
+	    LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
+	    goto WORKER_ERR;
+	  }
+	  
+	  perror("unhandled readcb error");
+	}
+	
+	/* Invariant: else we received a full packet of pktlen */
+	
+	if(!worker_handler(pkttype,pktlen,workitem))
+	  goto WORKER_ERR;
+	
+	/* On decoding errors, punt the client for now */
+	
+	/* Remove this temporarally until we have a sane way to handle decoder problems
+	if (status != 0)
+	{
+	  LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);
+	  goto WORKER_ERR;
+	}*/
+	
+	processed += pktlen;
+      }
+      while(processed < inlen);
+    }
+    else if(!worker_handler(NULL,0,workitem))
+      goto WORKER_ERR;
 
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
-    bufferevent_unlock(player->bev);
+    if(workitem->lock!=NULL)
+      pthread_rwlock_unlock(&workitem->lock);
     free(workitem);
     waitLogout();
     continue;
@@ -211,11 +217,12 @@ WORKER_DONE:
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
 
+    if(workitem->lock!=NULL)
+      pthread_rwlock_unlock(&workitem->lock);
     free(workitem);
 
-    bstring wmsg = bfromcstr("Error in packet sequence.");
+    bstring wmsg = bfromcstr("Error in work thread!");
     send_kick(player, wmsg);
-    bufferevent_unlock(player->bev);
     bstrFree(wmsg);
     
     waitLogout();
