@@ -55,10 +55,10 @@
                     <nav>
                         <ul>
                             <li><a href="index.html">Dashboard</a></li>
-                            <li><a href="players.html">Players</a></li>
+                            <li class="selected"><a href="players.html">Players</a></li>
                             <li><a href="schedule.html">Schedule</a></li>
                             <li><a href="logs.html">Logs</a></li>
-                            <li class="selected"><a href="settings.html">Settings</a></li>
+                            <li><a href="settings.html">Settings</a></li>
                             <li><a href="help.html">Help</a></li>
                         </ul>
                     </nav>
@@ -76,11 +76,10 @@
                 <div class="grid_12 shade_nav">
                     <nav>
                         <ul>
-                            <li class="selected"><a href="#">General</a></li>
-                            <li><a href="#">Logging</a></li>
-                            <li><a href="#">Web</a></li>
-                            <li><a href="#">Plug-ins</a></li>
-                            <li><a href="#">Account</a></li>
+                            <li><a href="players.html">Connected</a></li>
+                            <li><a href="#">Groups</a></li>
+                            <li><a href="#">Whitelist</a></li>
+                            <li class="selected"><a href="players_blacklist.html">Blacklist</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -103,6 +102,58 @@
                 </div>
             </div>-->
             
+            <!-- Left Column (Main Content) -->
+            <div class="grid_12 left">
+                <div class="box red shadow_d2">
+                    <h1>Players: Blacklist</h1>
+                    <p>This blacklist is a list of players are not permitted to connect to this server, who banned them, and for what reason.</p>
+                    <div class="table_wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 20px;"><input type="checkbox" /></th>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>Player Name</th>
+                                    <th>Banned</th>
+                                    <th>Length</th>
+                                    <th>By</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00001</td>
+                                    <td>Coestar</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>Forever</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver webscale on time.</td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00003</td>
+                                    <td>dotblank</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>1 week</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver proxy on time.</td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00002</td>
+                                    <td>kev009</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>1 hour</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver craftd on time.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
             <div class="clear"></div>
         </div>
     </div>
@@ -116,13 +167,13 @@
                         <ul>
                             <li><a href="index.html">Dashboard</a></li>
                             <li>|</li>
-                            <li><a href="players.html">Players</a></li>
+                            <li class="selected"><a href="players.html">Players</a></li>
                             <li>|</li>
                             <li><a href="schedule.html">Schedule</a></li>
                             <li>|</li>
                             <li><a href="logs.html">Logs</a></li>
                             <li>|</li>
-                            <li class="selected"><a href="settings.html">Settings</a></li>
+                            <li><a href="settings.html">Settings</a></li>
                             <li>|</li>
                             <li><a href="help.html">Help</a></li>
                         </ul>
