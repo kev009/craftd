@@ -72,7 +72,7 @@ void send_proxyhandshake(struct PL_entry *player)
  */
 void send_proxychat(struct PL_entry *player,bstring message)
 {
-  struct evbuffer *output = bufferevent_get_output(player->sev);
+  //struct evbuffer *output = bufferevent_get_output(player->sev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_CHAT;
@@ -96,7 +96,7 @@ void send_proxychat(struct PL_entry *player,bstring message)
  */
 void send_proxylogin(struct PL_entry *player)
 {
-  struct evbuffer *output = bufferevent_get_output(player->sev);
+  //struct evbuffer *output = bufferevent_get_output(player->sev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_LOGIN;

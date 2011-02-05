@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <sys/queue.h>
 #include <pthread.h>
+#include "util.h"
 
 #include "network/network.h"
 #include "network/network-private.h"
@@ -47,8 +48,6 @@ int workergame(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
   } else if (workitem->worktype == WQ_PROCESS)
   {
     //evbuffer_lock(output);
-    process_packet(workitem->player,pkttype,packet);
-    packetfree(pkttype,packet);
     struct WQ_process_data *pdata = workitem->workdata;
     process_packet(workitem->player,pdata->pkttype,pdata->packet);
     packetfree(pdata->pkttype,pdata->packet);
