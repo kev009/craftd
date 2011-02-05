@@ -35,13 +35,16 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <pthread.h>
-
+#include "craftd.h"
+#include <sys/queue.h>
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
+#include <event2/bufferevent_struct.h>
+#include <event2/thread.h>
 
 #include "bstrlib.h"
-#include "craftd.h"
+
 
 
 /**

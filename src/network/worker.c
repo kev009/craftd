@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <sys/queue.h>
 #include <pthread.h>
-
+#include "util.h"
 #include "network/network.h"
 #include "network/network-private.h"
 
@@ -131,7 +131,7 @@ void
     bev = workitem->bev;
     player = workitem->player;
     if(workitem->lock!=NULL) //this will auto lock any type of WQ
-      pthread_rwlock_wrlock(&workitem->lock);
+      pthread_rwlock_wrlock(workitem->lock);
     
     if(workitem==WQ_GAME_INPUT||workitem==WQ_PROXY_INPUT)
     {
@@ -209,7 +209,7 @@ void
 WORKER_DONE:
     /* On success or EAGAIN, free the work item and clear the worker */
     if(workitem->lock!=NULL)
-      pthread_rwlock_unlock(&workitem->lock);
+      pthread_rwlock_unlock(workitem->lock);
     free(workitem);
     waitLogout();
     continue;
@@ -218,7 +218,7 @@ WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
 
     if(workitem->lock!=NULL)
-      pthread_rwlock_unlock(&workitem->lock);
+      pthread_rwlock_unlock(workitem->lock);
     free(workitem);
 
     bstring wmsg = bfromcstr("Error in work thread!");

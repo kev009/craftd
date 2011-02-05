@@ -37,7 +37,7 @@
 
 #include "algos/set.h"
 #include "craftd-config.h"
-#include "util.h"
+
 
 /* Public data */
 /**
