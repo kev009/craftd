@@ -11,10 +11,14 @@
  * to handle multiple dimensions */
 struct mapgen *(*init_mapgen)(char *seed, char *path);
 
+/* FIXME: ugly define of map generator library */
 #define MAPGEN "./src/libmg_trivial.la"
 
 /**
- * This is the worker thread's for map generation
+ * The worker thread for map generation
+ *
+ * @param arg (unused)
+ * @return (unused)
  */
 void *mg_run_worker(void *arg)
 {
