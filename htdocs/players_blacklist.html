@@ -11,6 +11,7 @@
     <meta charset="utf-8" />
     
     <!-- Links -->
+    <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.8.9.custom.css" />
     <link rel="stylesheet" href="css/html5reset-1.6.1.css" />
     <link rel="stylesheet" href="css/960.css" />
     <link rel="stylesheet" href="css/default.css" />
@@ -53,8 +54,8 @@
                 <header class="grid_12">
                     <nav>
                         <ul>
-                            <li class="selected"><a href="index.html">Dashboard</a></li>
-                            <li><a href="players.html">Players</a></li>
+                            <li><a href="index.html">Dashboard</a></li>
+                            <li class="selected"><a href="players.html">Players</a></li>
                             <li><a href="schedule.html">Schedule</a></li>
                             <li><a href="logs.html">Logs</a></li>
                             <li><a href="settings.html">Settings</a></li>
@@ -69,53 +70,70 @@
     </div>
 
     <div class="content_wrap">
-        <div class="shade shadow_d2"></div>
+        <div class="shade shadow_d2">
+        
+            <div class="container_12">
+                <div class="grid_12 shade_nav">
+                    <nav>
+                        <ul>
+                            <li><a href="players.html">Connected</a></li>
+                            <li><a href="#">Groups</a></li>
+                            <li><a href="#">Whitelist</a></li>
+                            <li class="selected"><a href="players_blacklist.html">Blacklist</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="clear"></div>
+            </div>
+            
+        </div>
         <div class="container_12">
             
             <!-- Left Column (Main Content) -->
-            <div class="grid_8 left">
+            <div class="grid_12 left">
                 <div class="box red shadow_d2">
-                    <h1>Dashboard</h1>
-                    <p>Welcome to the craftd Dashboard.  Below, you'll find a collection of simple tools that will help you to quickly manage your Minecraft server.</p>
-                </div>
-            </div>
-            
-            <!-- Right Column (Sidebar) -->
-            <div class="grid_4 right">
-                <div class="box red shadow_d2">
-                    <div class="box_title">
-                        <h1>Server Health</h1>
-                    </div>
+                    <h1>Players: Blacklist</h1>
+                    <p>This blacklist is a list of players are not permitted to connect to this server, who banned them, and for what reason.</p>
                     <div class="table_wrap">
                         <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 20px;"><input type="checkbox" /></th>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>Player Name</th>
+                                    <th>Banned</th>
+                                    <th>Length</th>
+                                    <th>By</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 <tr>
-                                    <td>Status</td>
-                                    <td style="text-align: right;"><span class="green">On-line</span></td>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00001</td>
+                                    <td>Coestar</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>Forever</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver webscale on time.</td>
                                 </tr>
                                 <tr>
-                                    <td>Players</td>
-                                    <td style="text-align: right;">243/650</td>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00003</td>
+                                    <td>dotblank</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>1 week</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver proxy on time.</td>
                                 </tr>
                                 <tr>
-                                    <td>Uptime</td>
-                                    <td style="text-align: right;">1d, 16h, 33m, 58s</td>
-                                </tr>
-                                <tr>
-                                    <td>Last Update</td>
-                                    <td style="text-align: right;">15:24 MST 2010/02/01</td>
-                                </tr>
-                                <tr>
-                                    <td>Server Time</td>
-                                    <td style="text-align: right;">15:26 MST 2010/02/01</td>
-                                </tr>
-                                <tr>
-                                    <td>Memory Usage</td>
-                                    <td style="text-align: right;"><span class="green">3.5MB</span>/2,048MB</td>
-                                </tr>
-                                <tr>
-                                    <td>CPU Usage</td>
-                                    <td style="text-align: right;"><span class="green">5%</span></td>
+                                    <td><input type="checkbox" /></td>
+                                    <td>00002</td>
+                                    <td>kev009</td>
+                                    <td>17:24:02 2010/02/03</td>
+                                    <td>1 hour</td>
+                                    <td>kev009</td>
+                                    <td>Failed to deliver craftd on time.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -134,9 +152,9 @@
                 <div id="foot_content">
                     <nav id="nav_foot">
                         <ul>
-                            <li class="selected"><a href="index.html">Dashboard</a></li>
+                            <li><a href="index.html">Dashboard</a></li>
                             <li>|</li>
-                            <li><a href="players.html">Players</a></li>
+                            <li class="selected"><a href="players.html">Players</a></li>
                             <li>|</li>
                             <li><a href="schedule.html">Schedule</a></li>
                             <li>|</li>
