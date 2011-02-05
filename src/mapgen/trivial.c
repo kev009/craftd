@@ -22,6 +22,12 @@ static unsigned char _skylight[16384] = {0};
 static unsigned char _blocklight[16384] = {0};
 static unsigned char _heightmap[256] = {0};
 
+/**
+ * Initialize byte arrays for a trivial chunk
+ *
+ * @remarks a "trivial" chunk is just made of
+ * one layer of bedrock
+ */
 static void _init_data()
 {
 	int x, z;
@@ -36,6 +42,16 @@ static void _init_data()
 	}
 }
 
+/**
+ * Generate a chunk based on x and z coordinates
+ *
+ * @remarks this will not return any data, but instead write
+ * directly to the disk
+ *
+ * @param mg the map generator structure where the options are stored
+ * @param x the x coordinate of the chunk
+ * @param z the z coordinate of the chunk
+ */
 static void gen_chunk(struct mapgen* mg, int x, int z)
 {
 	char x_file[8];
@@ -131,12 +147,24 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	free(full_path);
 }
 
+/**
+ * Initializes the Trivial map generator
+ *
+ * @remarks plugin specific data may be stored
+ * in the generic "data" field of the structure
+ *
+ * @param seed the random seed used to generate the map (unused)
+ * @param path the full path of the world (needs to be suffixed with the dimension)
+ * @return an initialized mapgen structure, NULL on failure
+ */
 struct mapgen *init_mapgen(char *seed, char *path)
 {
 	struct mapgen *mg;
 	if (!seed) {
+		return NULL;
 	}
 	if (!path) {
+		return NULL;
 	}
 	
 	mg = calloc(1, sizeof(struct mapgen));
