@@ -391,6 +391,10 @@ thead tr {
     color: #cc0000;
 }
 
+.box #console #output .res {
+    color: #009900;
+}
+
 .box #console #entry {
     background: #ddd;
     padding: 2px 6px;
