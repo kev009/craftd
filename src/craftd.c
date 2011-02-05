@@ -85,6 +85,8 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem->bev = bev;
   workitem->player = player;
   workitem->worktype = WQ_GAME_INPUT;
+  workitem->workdata = NULL;
+  workitem->lock = &player->inlock;
   
   /* Add item to work queue */
   pthread_mutex_lock(&worker_cvmutex);
@@ -245,12 +247,17 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     player->username = NULL;
     player->eid = newEid();
     player->loadedchunks = Set_new(0, chunkcoordcmp, chunkcoordhash);
+    
 
     evutil_inet_ntop(ss.ss_family, inaddr, player->ip, sizeof(player->ip));
 
     /* Initialize the player's internal rwlocks */
     pthread_rwlock_init(&player->rwlock, NULL);
     pthread_rwlock_init(&player->position.rwlock, NULL);
+    
+    /* Initialize the player's IO blocking */
+    pthread_rwlock_init(&player->inlock,NULL);
+    pthread_rwlock_init(&player->outlock,NULL);
 
     /* Lock for the list ptr update and add them to the Player List */
     pthread_rwlock_wrlock(&PL_rwlock);

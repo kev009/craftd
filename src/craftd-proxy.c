@@ -83,7 +83,9 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
   workitem->player = player;
-  workitem->worktype = WQ_GAME;
+  workitem->worktype = WQ_GAME_INPUT;
+  workitem->workdata = NULL;
+  workitem->lock = &player->inlock;
   
   /* Add item to work queue */
   pthread_mutex_lock(&worker_cvmutex);
@@ -255,6 +257,12 @@ do_accept(evutil_socket_t listener, short event, void *arg)
     /* Initialize the player's internal rwlocks */
     pthread_rwlock_init(&player->rwlock, NULL);
     pthread_rwlock_init(&player->position.rwlock, NULL);
+    
+    /* Initialize the player's IO blocking */
+    pthread_rwlock_init(&player->inlock,NULL);
+    pthread_rwlock_init(&player->outlock,NULL);
+    pthread_rwlock_init(&player->sevinlock,NULL);
+    pthread_rwlock_init(&player->sevoutlock,NULL);
 
     /* Lock for the list ptr update and add them to the Player List */
     pthread_rwlock_wrlock(&PL_rwlock);

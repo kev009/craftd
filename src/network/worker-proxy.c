@@ -45,7 +45,7 @@ int workerproxy(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
 	    evbuffer_remove_buffer(bufferevent_get_input(workitem->bev),
 				   tmpbuf,pktlen);
 	    newOutputWq(tmpbuf,workitem->player,workitem->player->sev,
-			workitem->player->sevoutlock);
+			&workitem->player->sevoutlock);
 	    
 	  }
           else
@@ -68,7 +68,7 @@ int workerproxy(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
 	    evbuffer_remove_buffer(bufferevent_get_input(workitem->bev),
 				   tmpbuf,pktlen);
 	    newOutputWq(tmpbuf,workitem->player,workitem->player->bev,
-		workitem->player->outlock);
+		&workitem->player->outlock);
 	}
 	else
 	{
@@ -87,14 +87,14 @@ int workerproxy(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
 	{
 	  struct WQ_process_data *pdata = workitem->workdata;
 	  process_proxypacket(workitem->player, pdata->pkttype, pdata->packet);
-	  packetfree(pdata->packet);
+	  packetfree(pdata->pkttype,pdata->packet);
 	  free(pdata);
 	}
 	if(workitem->bev == workitem->player->sev) //Process a server packet
 	{
 	  struct WQ_process_data *pdata = workitem->workdata;
 	  process_proxyserverpacket(workitem->player, pdata->pkttype, pdata->packet);
-	  packetfree(pdata->packet);
+	  packetfree(pdata->pkttype,pdata->packet);
 	  free(pdata);
 	}
       }

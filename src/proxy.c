@@ -58,7 +58,8 @@ void proxy_readcb(struct bufferevent *bev, void *ctx)
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
   workitem->player = player;
-  workitem->worktype = WQ_PROXY;
+  workitem->worktype = WQ_PROXY_INPUT;
+  workitem->lock = &player->sevinlock;
   
   pthread_mutex_lock(&worker_cvmutex);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);

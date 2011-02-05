@@ -28,13 +28,11 @@
  */
 
 #include <config.h>
-
 #include <errno.h>
 #include <stdint.h>
 #include <syslog.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "craftd.h"
 #include <sys/queue.h>
 #include <event2/event.h>
