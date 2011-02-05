@@ -50,7 +50,7 @@
 void
 send_loginresp(struct PL_entry *player)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_LOGIN;
@@ -67,8 +67,7 @@ send_loginresp(struct PL_entry *player)
   evbuffer_add(tempbuf, &mapseed, sizeof(mapseed));
   evbuffer_add(tempbuf, &dimension, sizeof(dimension));
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
 
   return;
 }
@@ -84,7 +83,7 @@ send_loginresp(struct PL_entry *player)
 void
 send_directchat(struct PL_entry *player, bstring message)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
 
   uint8_t pid = PID_CHAT;
@@ -94,8 +93,7 @@ send_directchat(struct PL_entry *player, bstring message)
   evbuffer_add(tempbuf, &mlen, sizeof(mlen));
   evbuffer_add(tempbuf, message->data, message->slen);
 
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
 
   return;
 }
@@ -166,7 +164,7 @@ send_syschat(bstring message)
 void
 send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   int8_t pid = PID_PRECHUNK;
@@ -179,8 +177,7 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
   evbuffer_add(tempbuf, &n_z, sizeof(n_z));
   evbuffer_add(tempbuf, &n_mode, sizeof(n_mode));
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   
   return;
 }
@@ -199,7 +196,7 @@ send_prechunk(struct PL_entry *player, int32_t x, int32_t z, bool mode)
 void
 send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   int8_t pid = PID_SPAWNPOS;
@@ -212,8 +209,7 @@ send_spawnpos(struct PL_entry *player, int32_t x, int32_t y, int32_t z)
   evbuffer_add(tempbuf, &n_y, sizeof(n_y));
   evbuffer_add(tempbuf, &n_z, sizeof(n_z));
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   
   return;
 }
@@ -237,7 +233,7 @@ void
 send_movelook(struct PL_entry *player, double x, double stance, double y,
 	      double z, float yaw, float pitch, bool flying)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   int8_t pid = PID_PLAYERMOVELOOK;
@@ -258,7 +254,7 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
   evbuffer_add(tempbuf, &n_pitch, sizeof(n_pitch));
   evbuffer_add(tempbuf, &n_flying, sizeof(n_flying));
   
-  evbuffer_add_buffer(output, tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   evbuffer_free(tempbuf);
   
   return;
@@ -275,14 +271,13 @@ send_namedentity(struct PL_entry *player, int32_t eid)
   int16_t slen = htons(0); //eid map to player
   */
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
 }
 
 void
 send_entity(struct PL_entry *player, int32_t eid)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
 
   int8_t pid = PID_ENTITYINIT;
@@ -291,8 +286,7 @@ send_entity(struct PL_entry *player, int32_t eid)
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &eid, sizeof(eid));
 
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
 }
 
 void
@@ -324,8 +318,7 @@ send_kick(struct PL_entry *player, bstring dconmsg)
   evbuffer_add(tempbuf, &slen, sizeof(slen));
   evbuffer_add(tempbuf, dconmsg->data, dconmsg->slen);
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   
   deferLogout(player);
   return;
@@ -342,7 +335,7 @@ send_kick(struct PL_entry *player, bstring dconmsg)
 void
 send_timeupdate(struct PL_entry *player, int time)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_TIMEUPDATE;
@@ -352,9 +345,7 @@ send_timeupdate(struct PL_entry *player, int time)
   evbuffer_add(tempbuf, &pid, sizeof(pid));
   evbuffer_add(tempbuf, &ntime, sizeof(ntime));
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
-  
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   
   return;
 }

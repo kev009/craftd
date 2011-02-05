@@ -58,7 +58,7 @@ void
 send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
 	   uint8_t sizex, uint8_t sizey, uint8_t sizez)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
   int8_t pid = PID_MAPCHUNK;
   int32_t n_x = htonl(x * 16);
@@ -100,8 +100,7 @@ send_chunk(struct PL_entry *player, int32_t x, int16_t y, int32_t z,
   /* TODO: swap to this zero copy method */
   //evbuffer_add_reference(tempbuf, buffer, written, chunkfree_cb, buffer);
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
   
   free(buffer);
  

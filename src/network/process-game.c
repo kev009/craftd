@@ -29,6 +29,7 @@
 #include "network/network-private.h"
 #include "network/packets.h"
 #include "mapchunk.h"
+#include "util.h"
 
 // Temp for send radius
 const int RADIUS = 10;

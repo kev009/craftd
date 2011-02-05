@@ -35,10 +35,24 @@
 
 int workergame(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
 {
-	  void *packet = packetdecoder(pkttype, pktlen, workitem->bev);
-	  //evbuffer_lock(output);
-	  process_packet(workitem->player,pkttype,packet);
-	  //evbuffer_unlock(output);
-	  packetfree(pkttype,packet);
-          return 1;
+  if(workitem->worktype == WQ_GAME_INPUT)
+  {
+    void *packet = packetdecoder(pkttype, pktlen, workitem->bev);
+    struct WQ_process_data *pdata;
+    pdata = Malloc(sizeof(struct WQ_process_data));
+    pdata->packet = packet;
+    pdata->pktlen = pktlen;
+    pdata->pkttype = pkttype;
+    newProcessWq(workitem->player,workitem->bev,pdata);
+  } else if (workitem->worktype == WQ_PROCESS)
+  {
+    //evbuffer_lock(output);
+    process_packet(workitem->player,pkttype,packet);
+    packetfree(pkttype,packet);
+    struct WQ_process_data *pdata = workitem->workdata;
+    process_packet(workitem->player,pdata->pkttype,pdata->packet);
+    packetfree(pdata->pkttype,pdata->packet);
+    free(pdata);
+  }
+  return 1;
 }

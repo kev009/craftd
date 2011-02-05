@@ -48,7 +48,7 @@
  */
 void send_proxyhandshake(struct PL_entry *player)
 {
-  struct evbuffer *output = bufferevent_get_output(player->sev);
+  //struct evbuffer *output = bufferevent_get_output(player->sev);
   struct evbuffer *tempbuf = evbuffer_new();
   
   uint8_t pid = PID_HANDSHAKE;
@@ -58,8 +58,7 @@ void send_proxyhandshake(struct PL_entry *player)
   evbuffer_add(tempbuf, &n_ulen, sizeof(n_ulen));
   evbuffer_add(tempbuf, player->username->data, player->username->slen);
   
-  evbuffer_add_buffer(output,tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->sev,&player->sevoutlock);
 }
 
 /**
@@ -83,8 +82,7 @@ void send_proxychat(struct PL_entry *player,bstring message)
   evbuffer_add(tempbuf, &mlen, sizeof(mlen));
   evbuffer_add(tempbuf, message->data, message->slen);
 
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->sev,&player->sevoutlock);
   
 }
 
@@ -116,8 +114,7 @@ void send_proxylogin(struct PL_entry *player)
   evbuffer_add(tempbuf, &mapseed, sizeof(mapseed));
   evbuffer_add(tempbuf, &dimension, sizeof(dimension));
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->sev,&player->sevoutlock);
 }
 
 

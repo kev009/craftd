@@ -133,7 +133,7 @@ void
     if(workitem->lock!=NULL) //this will auto lock any type of WQ
       pthread_rwlock_wrlock(workitem->lock);
     
-    if(workitem==WQ_GAME_INPUT||workitem==WQ_PROXY_INPUT)
+    if(workitem->worktype==WQ_GAME_INPUT||workitem->worktype==WQ_PROXY_INPUT)
     {
       if (bev == NULL || player == NULL)
       {
@@ -202,6 +202,12 @@ void
 	processed += pktlen;
       }
       while(processed < inlen);
+    }
+    else if (workitem->worktype == WQ_OUTPUT)
+    {
+      evbuffer_remove_buffer(workitem->workdata,bufferevent_get_output(workitem->bev),
+			      evbuffer_get_length(workitem->workdata));
+      evbuffer_free(workitem->workdata);
     }
     else if(!worker_handler(NULL,0,workitem))
       goto WORKER_ERR;
