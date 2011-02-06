@@ -411,11 +411,13 @@ thead tr {
     width: 400px;
 }
 
+#dashboard_alt,
 #dashboard {
     width: 96%;
     margin: 0 auto 10px auto;
 }
 
+#dashboard_alt ul,
 #dashboard ul {
     list-style: none;
 }
@@ -443,30 +445,59 @@ thead tr {
     background: url('../images/db_console.png') 50% 6px no-repeat;
 }
 
+#dashboard ul li:hover {
+/*    background: url('../images/stone.png') 50% 0 no-repeat; */
+    background-position: 50% -142px;
+    cursor: pointer;
+}
+
+
+#dashboard_alt li p,
 #dashboard li p {
     font-size: 90%;
     margin-bottom: 4px;
     color: #656565;
 }
 
+#dashboard_alt li a,
 #dashboard li a {
     text-decoration: none;
     font-weight: bold;
     color: #454545;
 }
 
+#dashboard_alt li:hover a,
 #dashboard li:hover a {
     color: #cc0000;
 /*    text-shadow: #959595 0px 1px 2px; */
 }
 
+#dashboard_alt li:hover p,
 #dashboard li:hover p {
     color: #353535;
 }
 
-#dashboard ul li:hover {
+#dashboard_alt ul li {
+    background: url('../images/db_default.png')  0px 6px no-repeat;
+    min-height: 60px;
+    padding: 16px 0 0 86px;
+}
+
+#dashboard_alt ul li.wiki {
+    background: url('../images/db_wiki.png') 0 6px no-repeat;
+}
+
+#dashboard_alt ul li.plugin {
+    background: url('../images/db_plugin.png') 0 6px no-repeat;
+}
+
+#dashboard_alt ul li.console {
+    background: url('../images/db_console.png') 0 6px no-repeat;
+}
+
+#dashboard_alt ul li:hover {
 /*    background: url('../images/stone.png') 50% 0 no-repeat; */
-    background-position: 50% -142px;
+    background-position: 0 -142px;
     cursor: pointer;
 }
 
