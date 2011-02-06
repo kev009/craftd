@@ -457,9 +457,20 @@ thead tr {
 
 /* Forms */
 
-.left .box form.long {
-    width: 96%;
+.box form {
     margin: 0 auto 14px auto;
+}
+
+.left .box form {
+    width: 96%;
+}
+
+.right .box form {
+    width: 92%;
+}
+
+.box form ol {
+    list-style: none;
 }
 
 .box form.long legend {
@@ -468,21 +479,26 @@ thead tr {
 }
 
 .box form.long ol {
-    list-style: none;
     border-top: 1px solid #ddd;
     padding-top: 10px;
 }
 
-.box form.long ol li {
+.box form ol li {
     margin: 0px 0px 10px 10px;
     vertical-align: top;
 }
 
-.box form.long ol li label {
+.left .box form ol li label {
     float: left;
     width: 200px;
     font-size: 90%;
     padding-top: 2px;
+}
+
+.right .box form ol li label {
+    float: left;
+    width: 70px;
+    padding-top: 4px;
 }
 
 /* Footer */
