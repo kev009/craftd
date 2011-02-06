@@ -255,7 +255,7 @@ send_movelook(struct PL_entry *player, double x, double stance, double y,
   evbuffer_add(tempbuf, &n_flying, sizeof(n_flying));
   
   newOutputWq(tempbuf,player,player->bev,&player->outlock);
-  evbuffer_free(tempbuf);
+  //evbuffer_free(tempbuf);
   
   return;
 }

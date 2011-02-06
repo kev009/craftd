@@ -45,7 +45,7 @@
 void
 process_handshake(struct PL_entry *player, bstring username)
 {
-  struct evbuffer *output = bufferevent_get_output(player->bev);
+  //struct evbuffer *output = bufferevent_get_output(player->bev);
   struct evbuffer *tempbuf = evbuffer_new();
 
   /* Use a non-authenticating handshake for now 
@@ -62,8 +62,9 @@ process_handshake(struct PL_entry *player, bstring username)
   evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
   evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
   
-  evbuffer_add_buffer(output, tempbuf);
-  evbuffer_free(tempbuf);
+  newOutputWq(tempbuf,player,player->bev,&player->outlock);
+  //evbuffer_add_buffer(output, tempbuf);
+  //evbuffer_free(tempbuf);
   bstrFree(hashreply);
   
   return;

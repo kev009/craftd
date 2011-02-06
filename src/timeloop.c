@@ -39,6 +39,7 @@
 #include "timeloop.h"
 #include "network/packets.h"
 #include "network/network.h"
+#include "util.h"
 
 /* Private Data */
 static const int timepktinterval = 30;
@@ -103,10 +104,9 @@ send_keepalive_cb(evutil_socket_t fd, short event, void *arg)
 
     SLIST_FOREACH(player, &PL_head, PL_entries)
     {
-	bufferevent_lock(player->bev);
-        struct evbuffer *output = bufferevent_get_output(player->bev);
-        evbuffer_add(output, &keepalivepkt, sizeof(keepalivepkt));
-	bufferevent_unlock(player->bev);
+        struct evbuffer *tmpbuf = evbuffer_new();
+        evbuffer_add(tmpbuf, &keepalivepkt, sizeof(keepalivepkt));
+	newOutputWq(tmpbuf,player,player->bev,&player->outlock);
     }
 
     pthread_rwlock_unlock(&PL_rwlock);
@@ -139,9 +139,7 @@ send_timeupdate_cb(evutil_socket_t fd, short event, void *arg)
 
     SLIST_FOREACH(player, &PL_head, PL_entries)
     {
-	bufferevent_lock(player->bev);
         send_timeupdate(player, timecpy);
-	bufferevent_unlock(player->bev);
     }
 
     pthread_rwlock_unlock(&PL_rwlock);

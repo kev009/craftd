@@ -205,8 +205,8 @@ void
     }
     else if (workitem->worktype == WQ_OUTPUT)
     {
-      evbuffer_remove_buffer(workitem->workdata,bufferevent_get_output(workitem->bev),
-			      evbuffer_get_length(workitem->workdata));
+      //LOG(LOG_DEBUG,"Sent output");
+      evbuffer_add_buffer(bufferevent_get_output(workitem->bev),workitem->workdata);
       evbuffer_free(workitem->workdata);
     }
     else if(!worker_handler(NULL,0,workitem))
