@@ -95,6 +95,58 @@
                 <div class="box red shadow_d2">
                     <h1>Settings: General</h1>
                     <p>Looks like you'll just have to set yourself for now.</p>
+                    <form action="#" class="long">
+                        <fieldset>
+                            <legend>Basics</legend>
+                            <ol>
+                                <li>
+                                    <label for="basics_server_name">Server Name</label>
+                                    <input id="basics_server_name" type="text" placeholder="craftd Testing Server #1" />
+                                </li>
+                                <li>
+                                    <label for="basics_server_ip">Server IP</label>
+                                    <input id="basics_server_ip" type="text" placeholder="10.0.0.413" />
+                                </li>
+                                <li>
+                                    <label for="basics_server_port">Server Port</label>
+                                    <input id="basics_server_port" type="number" min="20000" max="99999" step="1" value="25566" />
+                                </li>
+                                <li>
+                                    <label for="basics_server_password">Password</label>
+                                    <input id="basics_server_password" type="password" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Configuration</legend>
+                            <ol>
+                                <li>
+                                    <label for="config_world">World</label>
+                                    <select>
+                                        <option>Generate New</option>
+                                        <optgroup label="Saved">
+                                            <option>World 1</option>
+                                            <option>World 2</option>
+                                            <option>World 3</option>
+                                        </optgroup>
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="config_max_players">Maximum Players</label>
+                                    <input id="config_max_players" type="number" min="1" max="2000" step="1" value="200" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label>&nbsp;</label>
+                                    <input type="submit" value="Save" />
+                                    <input type="reset" value="Reset" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
                 </div>
             </div>
             
