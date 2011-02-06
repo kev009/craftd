@@ -421,12 +421,26 @@ thead tr {
 }
 
 #dashboard ul li {
-    background: url('../images/stone.png') 50% 6px no-repeat;
-    padding: 62px 4px 0 4px;
+    background: url('../images/db_default.png') 50% 6px no-repeat;
+    padding: 64px 4px 0 4px;
     margin: 5px;
     float: left;
     text-align: center;
     width: 180px;
+    height: 78px;
+    overflow: hidden;
+}
+
+#dashboard ul li.wiki {
+    background: url('../images/db_wiki.png') 50% 6px no-repeat;
+}
+
+#dashboard ul li.plugin {
+    background: url('../images/db_plugin.png') 50% 6px no-repeat;
+}
+
+#dashboard ul li.console {
+    background: url('../images/db_console.png') 50% 6px no-repeat;
 }
 
 #dashboard li p {
@@ -443,7 +457,7 @@ thead tr {
 
 #dashboard li:hover a {
     color: #cc0000;
-    text-shadow: #959595 0px 1px 2px;
+/*    text-shadow: #959595 0px 1px 2px; */
 }
 
 #dashboard li:hover p {
@@ -451,7 +465,8 @@ thead tr {
 }
 
 #dashboard ul li:hover {
-    background: url('../images/stone.png') 50% 0 no-repeat;
+/*    background: url('../images/stone.png') 50% 0 no-repeat; */
+    background-position: 50% -142px;
     cursor: pointer;
 }
 
@@ -481,6 +496,7 @@ thead tr {
 .box form.long ol {
     border-top: 1px solid #ddd;
     padding-top: 10px;
+    padding-bottom: 5px;
 }
 
 .box form ol li {
