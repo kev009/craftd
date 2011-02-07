@@ -445,6 +445,10 @@ thead tr {
     background: url('../images/db_console.png') 50% 6px no-repeat;
 }
 
+#dashboard ul li.statistics {
+    background: url('../images/db_stats.png') 50% 6px no-repeat;
+}
+
 #dashboard ul li:hover {
 /*    background: url('../images/stone.png') 50% 0 no-repeat; */
     background-position: 50% -142px;
