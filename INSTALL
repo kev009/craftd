@@ -31,4 +31,4 @@ configuring the server, see http://mc.kev009.com/Craftd:Configuration
 
 Please note that unlike the official server, craftd will not generate a world if one is not
 provided. You will need to put valid world data in the world directory specified in the
-server configuration file.
+server configuration file until the mapgen is integrated.

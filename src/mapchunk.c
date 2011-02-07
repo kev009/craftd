@@ -118,9 +118,9 @@ int valid_chunk(nbt_tag *nbtroot)
 int loadLevelDat()
 {
   struct stat buf;
-  int stat_r = stat(Config.world_dir, &buf);
+  int worldstat = stat(Config.world_dir, &buf);
   
-  if (stat_r == -1)
+  if (worldstat == -1)
   {
     LOG(LOG_ERR, "World directory %s does not exist", Config.world_dir);
     return -1;
