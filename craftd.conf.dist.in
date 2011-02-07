@@ -11,7 +11,7 @@
     "night-rate": 20,
     "sunrise-rate": 20,
     "motd-file": "@sysconfdir@/craftd/motd.conf.dist",
-    "world-dir": "@datadir@/craftd/world"
+    "world-dir": "@datadir@/craftd/world",
     "proxy-enabled": false,
     "default-server": "Local",
     "servers" : [ {

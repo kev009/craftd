@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <zlib.h>
 
 #include <khash.h>
@@ -116,13 +117,22 @@ int valid_chunk(nbt_tag *nbtroot)
  */
 int loadLevelDat()
 {
+  struct stat buf;
+  int stat_r = stat(Config.world_dir, &buf);
+  
+  if (stat_r == -1)
+  {
+    LOG(LOG_ERR, "World directory %s does not exist", Config.world_dir);
+    return -1;
+  }
+  
   char leveldatpath[PATH_MAX];
   nbt_file *nf;
   nbt_tag *data;
 
   if (nbt_init(&nf) != NBT_OK)
   {
-    LOG(LOG_ERR, "Cannot init level.dat struct");
+    LOG(LOG_ERR, "Cannot initialize level.dat structure");
     return -1;
   }
 
@@ -130,7 +140,7 @@ int loadLevelDat()
 
   if (nbt_parse(nf, leveldatpath) != NBT_OK)
   {
-    LOG(LOG_ERR, "Cannot parse %d.", leveldatpath);
+    LOG(LOG_ERR, "Cannot parse level.dat (%d).", leveldatpath);
     return -1;
   }
   
