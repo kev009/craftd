@@ -5,7 +5,7 @@
 
     <!-- Please refer to /LICENSES.txt for important licensing conditions -->
     
-    <title>Logs: Live Console | craftd Minecraft Server</title>
+    <title>Settings: Account | craftd Minecraft Server</title>
 
     <!-- Meta -->
     <meta charset="utf-8" />
@@ -57,8 +57,8 @@
                             <li><a href="index.html">Dashboard</a></li>
                             <li><a href="players.html">Players</a></li>
                             <li><a href="schedule.html">Schedule</a></li>
-                            <li class="selected"><a href="logs.html">Logs</a></li>
-                            <li><a href="settings.html">Settings</a></li>
+                            <li><a href="logs.html">Logs</a></li>
+                            <li class="selected"><a href="settings.html">Settings</a></li>
                             <li><a href="help.html">Help</a></li>
                         </ul>
                     </nav>
@@ -76,8 +76,11 @@
                 <div class="grid_12 shade_nav">
                     <nav>
                         <ul>
-                            <li class="selected"><a href="logs.html">Live Console</a></li>
-                            <li><a href="#">Filter</a></li>
+                            <li><a href="settings.html">General</a></li>
+                            <li><a href="#">Logging</a></li>
+                            <li><a href="#">Web</a></li>
+                            <li><a href="#">Plug-ins</a></li>
+                            <li class="selected"><a href="settings_account.html">Account</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -90,49 +93,68 @@
             <!-- Left Column (Main Content) -->
             <div class="grid_12 left">
                 <div class="box red shadow_d2">
-                    <h1>Logs: Live Console</h1>
-                    <div id="console">
-                        <div id="outwrap">
-                            <div id="output">
-                                <ul>
-                                    <li>[USER] 14:32:06 [SAY] Coestar: "what was that warp again?"</li>
-                                    <li>[USER] 14:32:09 [SAY] dotblank: "castle"</li>
-                                    <li class="cmd">[USER] 14:32:15 [CMD] Coestar used command "/warp castle"</li>
-                                    <li class="cmd">[CONS] 14:32:15 [CMD] Warp user Coestar from (320,-2043, 55) to (-1043,-343, 34)</li>
-                                    <li class="err">[CONS] 14:32:15 [ERR] Value out of bounds, aborted</li>
-                                    <li class="msg">[CONS] 14:33:01 [MSG] kev009 connected</li>
-                                    <li class="msg">[CONS] 14:33:03 [MSG] kev009 disconnected</li>
-                                    <li class="msg">[CONS] 14:33:11 [MSG] kev009 connected</li>
-                                    <li class="cmd">[WEBS] 14:34:33 [CMD] Admin used command "/kick Coestar 'just testing'"</li>
-                                    <li class="msg">[CONS] 14:34:33 [MSG] Coestar disconnected (kicked: 'just testing')</li>
-                                    <li>[WEBS] 14:34:36 [SAY] Admin: "MUAHAHAHAHAHA"</li>
-                                    <li class="msg">[CONS] 14:34:40 [MSG] Coestar connected</li>
-                                    <li>[USER] 14:34:43 [SAY] Coestar: ":("</li>
-                                    <li class="cmd">[WEBS] 14:36:18 [CMD] Admin used command "/save"</li>
-                                    <li class="msg">[CONS] 14:36:18 [MSG] Server saving, please wait...</li>
-                                    <li class="msg">[CONS] 14:36:20 [MSG] Save completed (2s)!</li>
-                                    <li class="res">[WEBS] 14:36:20 [RES] Save successful!</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div id="entry">
-                            <select>
-                                <option>*</option>
-                                <option>/help</option>
-                                <optgroup label="Users">
-                                    <option>/kick</option>
-                                    <option>/ban</option>
-                                </optgroup>
-                                <optgroup label="Server">
-                                    <option>/save</option>
-                                    <option>/restart</option>
-                                    <option>/stop</option>
-                                </optgroup>
-                            </select>
-                            <input type="text" />
-                            <input type="submit" value="Run" />
-                        </div>
-                    </div>
+                    <h1>Settings: Account</h1>
+                    <p>Configuration options for your craftd administration account.</p>
+                    <form action="#" class="long">
+                        <fieldset>
+                            <legend>Profile</legend>
+                            <ol>
+                                <li>
+                                    <label for="account_name_mc">Minecraft Name</label>
+                                    <input id="account_name_mc" type="text" placeholder="kev009" />
+                                </li>
+                                <li>
+                                    <label for="account_password_mc">Minecraft Password</label>
+                                    <input id="account_password_mc" type="password" />
+                                </li>
+                                <li>
+                                    <label for="account_name_display">Display Name</label>
+                                    <select id="account_name_display">
+                                        <option>Admin</option>
+                                        <option>kev009 (Minecraft Name)</option>
+                                    </select>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Profile</legend>
+                            <ol>
+                                <li>
+                                    <label for="account_email">E-mail</label>
+                                    <input id="account_email" type="email" placeholder="you@domain.com" />
+                                </li>
+                                <li>
+                                    <label for="account_notify">Server Notifications</label>
+                                    <input id="account_notify" type="checkbox" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Admin Password</legend>
+                            <ol>
+                                <li>
+                                    <label for="account_password_current">Current Password</label>
+                                    <input id="account_password_current" type="password" required />
+                                </li>
+                                <li>
+                                    <label for="account_password_new">New Password</label>
+                                    <input id="account_password_new" type="password" />
+                                </li>
+                                <li>
+                                    <label for="account_password_confirm">Confirm Password</label>
+                                    <input id="account_password_confirm" type="password" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label>&nbsp;</label>
+                                    <input type="submit" value="Save" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
                 </div>
             </div>
             
@@ -153,9 +175,9 @@
                             <li>|</li>
                             <li><a href="schedule.html">Schedule</a></li>
                             <li>|</li>
-                            <li class="selected"><a href="logs.html">Logs</a></li>
+                            <li><a href="logs.html">Logs</a></li>
                             <li>|</li>
-                            <li><a href="settings.html">Settings</a></li>
+                            <li class="selected"><a href="settings.html">Settings</a></li>
                             <li>|</li>
                             <li><a href="help.html">Help</a></li>
                         </ul>
