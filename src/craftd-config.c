@@ -74,7 +74,13 @@ craftd_config_setdefaults()
 
   // Game settings
   Config.daemonize = true;
+
   Config.game_port = 25565;
+  memset(&Config.game_bind4, 0, sizeof(Config.game_bind4));
+  Config.game_bind4.sin_family = AF_INET;
+  Config.game_bind4.sin_addr.s_addr = INADDR_ANY;
+  Config.game_bind4.sin_port = htons(Config.game_port); 
+  
   Config.max_listenbacklog = 16;
   Config.mcstring_max = 100;
   Config.workpool_size = 2;
@@ -296,7 +302,13 @@ craftd_config_parse(const char *file)
     if (json_is_object(jsongame))
     {
       parseJBool(&Config.daemonize, jsongame, "daemonize");
+      
       parseJInt(&Config.game_port, jsongame, "game-port");
+
+      char *bind4p = parseJString(jsongame, "game-bind", "0.0.0.0");
+      evutil_inet_pton(AF_INET, bind4p, &Config.game_bind4.sin_addr);
+      Config.game_bind4.sin_port = htons(Config.game_port);
+      
       parseJInt(&Config.mcstring_max, jsongame, "minecraft-stringmax");
       parseJInt(&Config.workpool_size, jsongame, "worker-pool-size");
       Config.motd_file = parseJString(jsongame, "motd-file",Config.motd_file);
@@ -364,6 +376,9 @@ craftd_config_parse(const char *file)
   if(json_is_object(jsonhttp))
   {
     parseJBool(&Config.httpd_enabled, jsonhttp, "enabled");
+    
+    Config.httpd_bind4 = parseJString(jsonhttp, "httpd-bind", "0.0.0.0");
+    
     parseJInt(&Config.httpd_port, jsonhttp, "httpd-port");
     Config.docroot = parseJString(jsonhttp, "static-docroot",Config.docroot);
   }
