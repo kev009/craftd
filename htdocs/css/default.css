@@ -312,20 +312,20 @@ thead tr {
     padding-bottom: 10px;
 }
 
-.left .box table {
+.left .box .table_wrap table {
     width: 96%;
     margin: 0 auto;
     font-size: 80%;
     text-align: center;
 }
 
-.right .box table {
+.right .box .table_wrap table {
     width: 92%;
     margin: 0 auto;
 }
 
-.box table td,
-.box table th {
+.box .table_wrap table td,
+.box .table_wrap table th {
     padding: 4px;
 }
 
