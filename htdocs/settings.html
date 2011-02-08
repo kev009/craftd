@@ -5,7 +5,7 @@
 
     <!-- Please refer to /LICENSES.txt for important licensing conditions -->
     
-    <title>craftd Minecraft Server</title>
+    <title>Settings: General | craftd Minecraft Server</title>
 
     <!-- Meta -->
     <meta charset="utf-8" />
@@ -44,7 +44,7 @@
         <div id="account">
             <div class="container_12">
                 <div class="grid_12">
-                    <p>You are currently logged in as <strong>Admin</strong>.  You may <a href="#">edit your account</a>, or <a href="#">log out</a>.</p>
+                    <p>You are currently logged in as <strong>Admin</strong>.  You may <a href="settings_account.html">edit your account</a>, or <a href="#">log out</a>.</p>
                 </div>
                 <div class="clear"></div>
             </div>
@@ -76,11 +76,11 @@
                 <div class="grid_12 shade_nav">
                     <nav>
                         <ul>
-                            <li class="selected"><a href="#">General</a></li>
+                            <li class="selected"><a href="settings.html">General</a></li>
                             <li><a href="#">Logging</a></li>
                             <li><a href="#">Web</a></li>
                             <li><a href="#">Plug-ins</a></li>
-                            <li><a href="#">Account</a></li>
+                            <li><a href="settings_account.html">Account</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -91,10 +91,161 @@
         <div class="container_12">
             
             <!-- Left Column (Main Content) -->
-            <div class="grid_12 left">
+            <div class="grid_8 left">
                 <div class="box red shadow_d2">
                     <h1>Settings: General</h1>
-                    <p>Looks like you'll just have to set yourself for now.</p>
+                    <p>What follows are the most basic settings necessary for craftd to operate.  Please review them carefully.</p>
+                    <form action="#" class="long">
+                        <fieldset>
+                            <legend>Connection</legend>
+                            <ol>
+                                <li>
+                                    <label for="connect_server_name">Server Name</label>
+                                    <input id="connect_server_name" type="text" placeholder="craftd Testing Server #1" />
+                                </li>
+                                <li>
+                                    <label for="connect_server_ip">Server IP</label>
+                                    <input id="connect_server_ip" type="text" placeholder="10.0.0.413" />
+                                </li>
+                                <li>
+                                    <label for="connect_server_url">Server URL</label>
+                                    <input id="connect_server_url" type="url" placeholder="mc.kev009.com" />
+                                </li>
+                                <li>
+                                    <label for="connect_server_port">Server Port</label>
+                                    <input id="connect_server_port" type="number" min="20000" max="99999" step="1" value="25566" />
+                                </li>
+                                <li>
+                                    <label for="connect_broadcast">Broadcast</label>
+                                    <input id="connect_broadcast" type="checkbox" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Configuration</legend>
+                            <ol>
+                                <li>
+                                    <label for="config_max_players">Maximum Players</label>
+                                    <input id="config_max_players" type="number" min="1" max="2000" step="1" value="200" />
+                                </li>
+                                <li>
+                                    <label for="config_reserved">Reserved Slots</label>
+                                    <input id="config_reserved" type="number" min="0" max="2000" step="1" value="10" />
+                                </li>
+                                <li>
+                                    <label for="connect_reserved_grow">Reserved Grows Max</label>
+                                    <input id="connect_reserved_grow" type="checkbox" />
+                                </li>
+                                <li>
+                                    <label for="config_motd">Message of the Day</label>
+                                    <textarea id="config_motd" rows="6" cols="30" placeholder="Welcome to craftd!"></textarea>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>World</legend>
+                            <ol>
+                                <li>
+                                    <label for="world_load">Load World</label>
+                                    <select id="world_load">
+                                        <option>Generate New</option>
+                                        <optgroup label="Saved">
+                                            <option>World 1</option>
+                                            <option>World 2</option>
+                                            <option>World 3</option>
+                                        </optgroup>
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="world_nether">Enable Nether</label>
+                                    <input id="world_nether" type="checkbox" />
+                                </li>
+                                <li>
+                                    <label for="world_mutable">Mutable</label>
+                                    <input id="world_mutable" type="checkbox" />
+                                </li>
+                                <li>
+                                    <label for="world_npcs">Non-Playable Characters</label>
+                                    <select id="world_npcs">
+                                        <option>All NPCs</option>
+                                        <option>No NPCs</option>
+                                        <option>Only Neutrals</option>
+                                        <option>Only Hostiles</option>
+                                    </select>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label>&nbsp;</label>
+                                    <input type="submit" value="Save" />
+                                    <input type="reset" value="Reset" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Column (Sidebar) -->
+            <div class="grid_4 right">
+                <div class="box red shadow_d2">
+                    <div class="box_title">
+                        <h1>Save Template</h1>
+                    </div>
+                    <p>You can save "templates" of your settings that can be loaded later for quicker, easier configuration.  If "Name" is left blank, a timestamped template file will be generated.</p>
+                    <form action="#" class="small">
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label for="template_name">Name</label>
+                                    <input id="template_name" type="text" placeholder="My Template" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label><img src="images/arrow_right.png" /></label>
+                                    <input type="submit" value="Save" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="box red shadow_d2">
+                    <div class="box_title">
+                        <h1>Load Template</h1>
+                    </div>
+                    <p>Load a previously saved template into the form on the left.</p>
+                    <form action="#" class="small">
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label for="template_list">Template</label>
+                                    <select id="template_list">
+                                        <option>My Template 1</option>
+                                        <option>My Template 2</option>
+                                        <option>2010/02/05 08:43:23</option>
+                                    </select>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label><img src="images/arrow_left.png" /></label>
+                                    <input type="submit" value="Load" />
+                                    <input type="submit" value="Delete" />
+                                </li>
+                                <li>
+                                    <label>&nbsp;</label>
+                                    <input type="submit" value="Clear Templates" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
                 </div>
             </div>
             
