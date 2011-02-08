@@ -357,7 +357,7 @@ thead tr {
 }
 
 .box #console #outwrap {
-    height: 150px;
+    height: 200px;
     padding-bottom: 6px;
     background: #ccc;
 }
@@ -454,7 +454,6 @@ thead tr {
     background-position: 50% -142px;
     cursor: pointer;
 }
-
 
 #dashboard_alt li p,
 #dashboard li p {
