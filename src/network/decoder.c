@@ -187,9 +187,13 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     {
         LOG(LOG_DEBUG, "recvd flying packet");
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+		struct packet_playerfly *fly = Malloc(sizeof(struct packet_playerfly));
+        memset(fly,0,sizeof(struct packet_playerfly));
 	
-        break;
+		evbuffer_drain(input, sizeof(fly->pid));
+		evbuffer_remove(input, &fly->onground, sizeof(bool));
+		
+		return fly;
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
@@ -246,42 +250,74 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     case PID_PLAYERDIG: // Block dig packet 0x0E
     {
         LOG(LOG_DEBUG, "recvd block dig packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+        
+		struct packet_dig *dig = Malloc(sizeof(struct packet_dig));
+		memset(dig,0,sizeof(struct packet_dig));
+		
+		evbuffer_drain(input, sizeof(dig->pid));
+		evbuffer_remove(input, &dig->status, sizeof(MCbyte));
+		evbuffer_remove(input, &dig->x, sizeof(MCint));
+		evbuffer_remove(input, &dig->y, sizeof(MCbyte));
+		evbuffer_remove(input, &dig->z, sizeof(MCint));
+		evbuffer_remove(input, &dig->face, sizeof(MCbyte));
+		
+        return dig;
     }
     case PID_BLOCKPLACE: // Place packet 0x0F
     {
         LOG(LOG_DEBUG, "recvd place packet");
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+		struct packet_blockplace *bp = Malloc(sizeof(struct packet_blockplace));
+		memset(bp,0,sizeof(struct packet_blockplace));
+		
+		evbuffer_drain(input, sizeof(bp->pid));
+		evbuffer_remove(input, &bp->x, sizeof(MCint));
+		evbuffer_remove(input, &bp->y, sizeof(MCbyte));
+		evbuffer_remove(input, &bp->z, sizeof(MCint));
+		evbuffer_remove(input, &bp->direction, sizeof(MCbyte));
+		evbuffer_remove(input, &bp->itemid, sizeof(MCshort));
+		evbuffer_remove(input, &bp->amount, sizeof(MCbyte));
+		evbuffer_remove(input, &bp->damage, sizeof(MCshort));
+		
+		return bp;
     }
     case PID_HOLDCHANGE: // Block/item switch packet 0x10
     {
         LOG(LOG_DEBUG, "recvd block/item switch packet");
+        
+        struct packet_holdchange *hc = Malloc(sizeof(struct packet_holdchange));
+		memset(hc,0,sizeof(struct packet_holdchange));
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-        break;
+		evbuffer_drain(input, sizeof(hc->pid));
+		evbuffer_remove(input, &hc->itemid, sizeof(MCshort));
+		
+		return hc;
     }
     case PID_ARMANIMATE: // Arm animate 0x12
     {
         LOG(LOG_DEBUG, "recvd arm animate packet");
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+		struct packet_armanimate *aa = Malloc(sizeof(struct packet_armanimate));
+        memset(aa,0,sizeof(struct packet_armanimate));
 	
-	break;
+		evbuffer_drain(input, sizeof(aa->pid));
+		evbuffer_remove(input, &aa->eid, sizeof(MCint));
+		evbuffer_remove(input, &aa->animate, sizeof(MCbyte));
+		
+		return aa;
     }
     case PID_ENTITYACTION: // Entity action (crouch) 0x13
     {
-	LOG(LOG_DEBUG, "recvd entity action packet");
+		LOG(LOG_DEBUG, "recvd entity action packet");
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+		struct packet_entityaction *ea = Malloc(sizeof(struct packet_entityaction));
+        memset(ea,0,sizeof(struct packet_entityaction));
 	
-	break;
+		evbuffer_drain(input, sizeof(ea->pid));
+		evbuffer_remove(input, &ea->eid, sizeof(MCint));
+		evbuffer_remove(input, &ea->action, sizeof(MCbyte));
+		
+		return ea;
     }
     case PID_PICKUPSPAWN:
     {
