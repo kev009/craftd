@@ -83,9 +83,8 @@ int sent = 0;
 void*
 packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 {
-  struct evbuffer *input, *output;
+  struct evbuffer *input;
   input = bufferevent_get_input(bev);
-  output = bufferevent_get_output(bev);
 
     switch (pkttype)
     {
