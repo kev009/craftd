@@ -99,7 +99,7 @@ void
   LOG(LOG_INFO, "Worker %d started!", id);
   
   struct bufferevent *bev;
-  struct evbuffer *input, *output;
+  struct evbuffer *input;
   struct WQ_entry *workitem;
   struct PL_entry *player;
   size_t inlen;
@@ -209,7 +209,7 @@ void
       evbuffer_add_buffer(bufferevent_get_output(workitem->bev),workitem->workdata);
       evbuffer_free(workitem->workdata);
     }
-    else if(!worker_handler(NULL,0,workitem))
+    else if(!worker_handler((uint8_t)NULL,0,workitem))
       goto WORKER_ERR;
 
 WORKER_DONE:
