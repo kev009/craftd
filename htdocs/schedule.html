@@ -5,7 +5,7 @@
 
     <!-- Please refer to /LICENSES.txt for important licensing conditions -->
     
-    <title>craftd Minecraft Server</title>
+    <title>Schedule | craftd Minecraft Server</title>
 
     <!-- Meta -->
     <meta charset="utf-8" />
@@ -44,7 +44,7 @@
         <div id="account">
             <div class="container_12">
                 <div class="grid_12">
-                    <p>You are currently logged in as <strong>Admin</strong>.  You may <a href="#">edit your account</a>, or <a href="#">log out</a>.</p>
+                    <p>You are currently logged in as <strong>Admin</strong>.  You may <a href="settings_account.html">edit your account</a>, or <a href="#">log out</a>.</p>
                 </div>
                 <div class="clear"></div>
             </div>
@@ -76,8 +76,7 @@
                 <div class="grid_12 shade_nav">
                     <nav>
                         <ul>
-                            <li class="selected"><a href="schedule.html">Server</a></li>
-                            <li><a href="#">Messages</a></li>
+                            <li class="selected"><a href="schedule.html">Add Event</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -90,8 +89,79 @@
             <!-- Left Column (Main Content) -->
             <div class="grid_12 left">
                 <div class="box red shadow_d2">
-                    <h1>Schedule</h1>
+                    <h1>Schedule: Add Event</h1>
                     <p>Looks like you'll just have to schedule yourself for now.</p>
+                    <form action="#" class="long">
+                        <fieldset>
+                            <legend>Event Configuration</legend>
+                            <ol>
+                                <li>
+                                    <label for="schedule_event_name">Event Name</label>
+                                    <input id="schedule_event_name" type="text" placeholder="Event Name" />
+                                </li>
+                                <li>
+                                    <label for="schedule_event_command">Command</label>
+                                    <select id="schedule_event_command">
+                                        <option>/say</option>
+                                        <option>/start</option>
+                                        <option>/stop</option>
+                                        <option>/restart</option>
+                                        <option>/save</option>
+                                    </select>
+                                    <input type="text" placeholder="Command options" />
+                                </li>
+                                <li>
+                                    <label for="schedule_event_advanced">Advanced Command</label>
+                                    <textarea id="schedule_event_advanced" rows="6" cols="50" placeholder="Enter commands and options, one per line."></textarea>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Event Schedule</legend>
+                            <ol>
+                                <li>
+                                    <label for="schedule_event_freq">Frequency</label>
+                                    <select id="schedule_event_freq">
+                                        <option>Once</option>
+                                        <option>Random</option>
+                                        <optgroup label="Real Time">
+                                            <option>Every 15 minutes</option>
+                                            <option>Every 30 minutes</option>
+                                            <option>Hourly</option>
+                                            <option>Daily</option>
+                                            <option>Weekly</option>
+                                            <option>Monthly</option>
+                                        </optgroup>
+                                        <optgroup label="Minecraft Time">
+                                            <option>Daily, at dawn</option>
+                                            <option>Daily, at noon</option>
+                                            <option>Daily, at dusk</option>
+                                            <option>Daily, at midnight</option>
+                                            <option>Every 1000 ticks</option>
+                                            <option>Every 5000 ticks</option>
+                                            <option>Every 10000 ticks </option>
+                                        </optgroup>
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="schedule_event_range">Date Range</label>
+                                    From
+                                    <input id="schedule_event_range" type="date" value="2011-02-07" />
+                                    until
+                                    <input type="date" value="2011-02-08" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset>
+                            <ol>
+                                <li>
+                                    <label>&nbsp;</label>
+                                    <input type="submit" value="Schedule" />
+                                    <input type="reset" value="Clear" />
+                                </li>
+                            </ol>
+                        </fieldset>
+                    </form>
                 </div>
             </div>
             
