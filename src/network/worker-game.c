@@ -45,9 +45,9 @@ int workergame(uint8_t pkttype, size_t pktlen, struct WQ_entry *workitem)
     pdata->pktlen = pktlen;
     pdata->pkttype = pkttype;
     newProcessWq(workitem->player,workitem->bev,pdata);
-  } else if (workitem->worktype == WQ_PROCESS)
+  } 
+  else if (workitem->worktype == WQ_PROCESS)
   {
-    //evbuffer_lock(output);
     struct WQ_process_data *pdata = workitem->workdata;
     process_packet(workitem->player,pdata->pkttype,pdata->packet);
     packetfree(pdata->pkttype,pdata->packet);

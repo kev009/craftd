@@ -156,36 +156,36 @@ void
       * We add pktlen for each iteration until inlen is reached or we jump
       * to the EAGAIN handler.
       */
-	evbuffer_copyout(input, &pkttype, 1);
-	//LOG(LOG_DEBUG,"got packet %d",pkttype);
-	pktlen = len_statemachine(pkttype, input);
-	
-	/* On exception conditions, negate the return value to get correct errno */
-	if (pktlen < 0)
+      evbuffer_copyout(input, &pkttype, 1);
+      //LOG(LOG_DEBUG,"got packet %d",pkttype);
+      pktlen = len_statemachine(pkttype, input);
+      
+      /* On exception conditions, negate the return value to get correct errno */
+      if (pktlen < 0)
+      {
+	pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
+	if (pktlen == EAGAIN)
 	{
-	  pktlen = -pktlen;  /* NOTE: Inverted to get error states! */
-	  if (pktlen == EAGAIN)
-	  {
-	    /* recvd a fragment, wait for another event */
-	    LOGT(LOG_DEBUG,"EAGAIN");
-	    goto WORKER_DONE;
-	  }
-	  else if (pktlen == EILSEQ)
-	  {
-	    /* recvd an packet that does not match known parameters
-	    * Punt the client and perform cleanup
-	    */
-	    LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
-	    goto WORKER_ERR;
-	  }
-	  
-	  perror("unhandled readcb error");
+	  /* recvd a fragment, wait for another event */
+	  LOGT(LOG_DEBUG,"EAGAIN");
+	  goto WORKER_DONE;
+	}
+	else if (pktlen == EILSEQ)
+	{
+	  /* recvd an packet that does not match known parameters
+	  * Punt the client and perform cleanup
+	  */
+	  LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
+	  goto WORKER_ERR;
 	}
 	
-	/* Invariant: else we received a full packet of pktlen */
-	
-	if(!worker_handler(pkttype,pktlen,workitem))
-	  goto WORKER_ERR;
+	perror("unhandled readcb error");
+      }
+      
+      /* Invariant: else we received a full packet of pktlen */
+      
+      if(!worker_handler(pkttype,pktlen,workitem))
+	goto WORKER_ERR;
 	
     }
     else if (workitem->worktype == WQ_OUTPUT)
@@ -207,8 +207,7 @@ WORKER_DONE:
 
 WORKER_ERR:
     /* On exception, remove all client allocations in correct order */
-
-    if(workitem->lock!=NULL)
+    if(workitem->lock != NULL)
       pthread_rwlock_unlock(workitem->lock);
     free(workitem);
 
@@ -223,3 +222,4 @@ WORKER_ERR:
 
   return NULL;
 }
+

@@ -55,13 +55,13 @@
 #include "httpd.h"
 
 /**
- * Try and perform cleanup with a atexit call
+ * Try and perform cleanup with an atexit call
  */
 void
 exit_handler(void)
 {
   LOG(LOG_INFO, "Exiting.");
-  //closelog();
+  closelog();
 }
 
 /**
@@ -79,8 +79,7 @@ void
 readcb(struct bufferevent *bev, void *ctx)
 {
   struct WQ_entry *workitem;
-  struct PL_entry *player = ctx;
-  
+  struct PL_entry *player = ctx;  
   
   /* Allocate and construct new work item */
   workitem = Malloc(sizeof(struct WQ_entry));
@@ -143,7 +142,6 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
             free(workitem);
 	  }
 	}
-	//pthread_mutex_unlock(&worker_cvmutex);
 
         if (player->username != NULL)
         {
@@ -277,7 +275,7 @@ run_server(void)
 
     base = event_base_new();
     
-    if(MODE==PROXY)
+    if(MODE == PROXY)
       dns_base = evdns_base_new(base,1);
     
     if (!base)
@@ -332,13 +330,12 @@ main(int argc, char *argv[])
   int status = 0;
   // Setup game server specifics
   base = NULL; //initialize eventbase to null
-  worker_handler=workergame;
-  MODE=GAME;
+  worker_handler = workergame;
+  MODE = GAME;
 
-
+  openlog(PACKAGE_TARNAME, LOG_PID, LOG_DAEMON);
   atexit(exit_handler);
   //setvbuf(stdout, NULL, _IONBF, 0); // set nonblocking stdout
-  openlog(PACKAGE_TARNAME, LOG_PID, LOG_DAEMON);
 
   /* We initialize with stdout logging until config is loaded and the process
    * daemonizes.
@@ -358,18 +355,18 @@ main(int argc, char *argv[])
   {
     switch(opt)
     {
-      case 'd':
+      case 'd':  // debugging mode
         debugging = 1;
         break;
-      case 'v':
+      case 'v': // print version
         exit(EXIT_SUCCESS); // Version header already printed
-      case 'n':
+      case 'n': // don't fork or daemonize, use stdout for logging
         dontfork = 1;
         break;
-      case 'c':
-        argconfigfile = optarg; // User specified conf file
+      case 'c': // use the specified config file
+        argconfigfile = optarg;
         break;
-      case 'h':
+      case 'h': // print help message
       default:
         fprintf(stderr, "\nUsage: %s [OPTION]...\n"
             "-c <conf file>\tspecify a conf file location\n"

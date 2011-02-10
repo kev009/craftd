@@ -62,7 +62,7 @@ process_handshake(struct PL_entry *player, bstring username)
   evbuffer_add(tempbuf, &n_hlen, sizeof(n_hlen));
   evbuffer_add(tempbuf, hashreply->data, hashreply->slen);
   
-  newOutputWq(tempbuf,player,player->bev,&player->outlock);
+  newOutputWq(tempbuf, player,player->bev, &player->outlock);
   //evbuffer_add_buffer(output, tempbuf);
   //evbuffer_free(tempbuf);
   bstrFree(hashreply);
