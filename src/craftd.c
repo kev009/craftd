@@ -40,7 +40,6 @@
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
-#include <event2/listener.h>
 #include <event2/thread.h>
 
 #include "bstrlib.h"
@@ -281,6 +280,7 @@ void
 run_server(void)
 {
     evutil_socket_t listener;
+    struct sockaddr_in sin;
     struct event *listener_event;
 
     base = event_base_new();
@@ -293,6 +293,11 @@ run_server(void)
         LOG(LOG_CRIT, "Could not create MC libevent base!");
         exit(EXIT_FAILURE);
     }
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_port = htons(Config.game_port);
 
     if ((listener = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -309,8 +314,7 @@ run_server(void)
     }
 #endif
 
-    if (bind(listener, (struct sockaddr*)&Config.game_bind4, 
-      sizeof(Config.game_bind4)) < 0)
+    if (bind(listener, (struct sockaddr*)&sin, sizeof(sin)) < 0)
     {
         PERR("cannot bind");
         return;

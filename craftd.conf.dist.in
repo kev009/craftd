@@ -2,8 +2,6 @@
   "00": "craftd config file.  Must be valid JSON.",
   "server": {
     "daemonize": true,
-    "game-bind": "0.0.0.0",
-    "game-bind6": "::",
     "game-port": 25565,
     "max-listenbacklog": 16,
     "minecraft-stringmax": 100,
@@ -24,8 +22,6 @@
   },
   "httpd": {
     "enabled": true,
-    "httpd-bind": "127.0.0.1",
-    "httpd-bind6": "::1",
     "httpd-port": 25566,
     "static-docroot": "@datadir@/craftd/htdocs/"
   }

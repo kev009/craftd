@@ -297,12 +297,11 @@ void *run_httpd(void *arg)
     evhttp_set_gencb(httpd, send_staticdoc_cb, NULL);
     
     
-    hthandle = evhttp_bind_socket_with_handle(httpd, Config.httpd_bind4, 
+    hthandle = evhttp_bind_socket_with_handle(httpd , INADDR_ANY, 
 					      Config.httpd_port);
     if(!hthandle)
     {
-      LOG(LOG_CRIT, "cannot bind httpd on %s:d!", Config.httpd_bind4, 
-	  Config.httpd_port);
+      LOG(LOG_CRIT, "cannot bind httpd!");
       exit(1);
     }
 

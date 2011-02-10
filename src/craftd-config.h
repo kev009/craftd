@@ -30,7 +30,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <netinet/in.h>
 
 #include "bstrlib.h"
 
@@ -71,8 +70,6 @@ struct
 {
   // Server settings
   bool daemonize;
-  struct sockaddr_in game_bind4;
-  struct sockaddr_in6 game_bind6;
   int game_port;
   int max_listenbacklog;
   int mcstring_max;
@@ -91,11 +88,8 @@ struct
   char *proxy_default_server;
   Server **proxy_servers;
 #endif
-  
   // httpd settings
-  bool httpd_enabled;
-  char *httpd_bind4;
-  char *httpd_bind6;
+  bool httpd_enabled; 
   int httpd_port;
   char *docroot;
 } Config;
