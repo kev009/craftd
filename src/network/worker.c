@@ -117,7 +117,8 @@ void
     do
     {
       LOGT(LOG_DEBUG, "Worker %d ready", id);
-      pthread_cond_wait(&worker_cv, &worker_cvmutex);
+      if(STAILQ_EMPTY(&WQ_head))
+	pthread_cond_wait(&worker_cv, &worker_cvmutex);
     }
     while (STAILQ_EMPTY(&WQ_head));
     
