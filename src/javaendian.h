@@ -94,26 +94,35 @@
 #define Cswapf(f) (f)
 #else
 /* We need to convert native floating-point types */
+
+static union uint32orfloat
+{
+  uint32_t uint32val;
+  float floatval;
+};
+
+static union uint64ordouble
+{
+  uint64_t uint64val;
+  double doubleval;
+};
+
 static inline double 
 Cswapd(double d)
 {
-  uint64_t tmp = 0;
-  double out = 0;
-  memcpy(&tmp, &d, sizeof(tmp));
-  tmp = ntohll(tmp);
-  memcpy(&out, &tmp, sizeof(tmp));
-  return out;
+  union uint64ordouble tmp;
+  tmp.doubleval = d;
+  tmp.uint64val = ntohll(tmp.uint64val);
+  return tmp.doubleval;
 }
 
 static inline float
 Cswapf(float f)
 {
-  uint32_t tmp = 0;
-  float out = 0;
-  memcpy(&tmp, &f, sizeof(tmp));
-  tmp = ntohl(tmp);
-  memcpy(&out, &tmp, sizeof(tmp));
-  return out;
+  union uint32orfloat tmp;
+  tmp.floatval = f;
+  tmp.uint32val = ntohl(tmp.uint32val);
+  return tmp.floatval;
 }
 #endif /* FLOAT_WORDS_BIGENDIAN */
 

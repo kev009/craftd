@@ -1,6 +1,7 @@
 htdocsdir = $(datadir)/craftd/htdocs
 dist_htdocs_DATA = LICENSES.txt
-dist_noinst_DATA = index.html jquery-1.4.4.min.js
+dist_noinst_DATA = js css images index.html schedule.html settings.html
+dist_noinst_DATA += logs.html help.html players_blacklist.html players.html
 
 install-data-hook:
 	if ! test -d $(htdocsdir); then \

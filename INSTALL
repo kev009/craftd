@@ -1,1 +1,34 @@
-/usr/share/automake-1.11/INSTALL
+Installation Instructions
+
+== Linux
+
+You will need zlib and autotools installed to compile craftd.
+
+First, download the latest libevent from http://monkey.org/~provos/libevent/.
+Extract the archive and run the following commands inside the resulting folder:
+
+./configure
+make
+make install
+ldconfig
+
+Note that users of sudo will probably need to wrap the last two commands with
+sudo.
+
+Next, change to your craftd directory. If you obtained the code from our git repo
+and you have not done so, run autoreconf -i. This will create a configure script
+for you.
+
+Run the following commands to install the server:
+
+./configure
+make
+make install
+
+Now you can configure your server. Copy the file /usr/local/etc/craftd/craftd.conf.dist
+to /usr/local/etc/craftd/craftd.conf and edit the resulting file. For more information on
+configuring the server, see http://mc.kev009.com/Craftd:Configuration
+
+Please note that unlike the official server, craftd will not generate a world if one is not
+provided. You will need to put valid world data in the world directory specified in the
+server configuration file until the mapgen is integrated.
