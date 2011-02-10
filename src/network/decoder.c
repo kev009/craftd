@@ -250,15 +250,15 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     {
         LOG(LOG_DEBUG, "recvd block dig packet");
         
-		struct packet_dig *dig = Malloc(sizeof(struct packet_dig));
-		memset(dig,0,sizeof(struct packet_dig));
-		
-		evbuffer_drain(input, sizeof(dig->pid));
-		evbuffer_remove(input, &dig->status, sizeof(MCbyte));
-		evbuffer_remove(input, &dig->x, sizeof(MCint));
-		evbuffer_remove(input, &dig->y, sizeof(MCbyte));
-		evbuffer_remove(input, &dig->z, sizeof(MCint));
-		evbuffer_remove(input, &dig->face, sizeof(MCbyte));
+	struct packet_dig *dig = Malloc(sizeof(struct packet_dig));
+	memset(dig,0,sizeof(struct packet_dig));
+	
+	evbuffer_drain(input, sizeof(dig->pid));
+	evbuffer_remove(input, &dig->status, sizeof(MCbyte));
+	evbuffer_remove(input, &dig->x, sizeof(MCint));
+	evbuffer_remove(input, &dig->y, sizeof(MCbyte));
+	evbuffer_remove(input, &dig->z, sizeof(MCint));
+	evbuffer_remove(input, &dig->face, sizeof(MCbyte));
 		
         return dig;
     }

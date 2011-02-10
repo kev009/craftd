@@ -114,13 +114,12 @@ void
      * Prevent a nasty race condition if the client disconnects
      * Works in tandem with errorcb FOREACH bev removal loop
      */
-    do
+    while (STAILQ_EMPTY(&WQ_head))
     {
       LOGT(LOG_DEBUG, "Worker %d ready", id);
-      if(STAILQ_EMPTY(&WQ_head))
-	pthread_cond_wait(&worker_cv, &worker_cvmutex);
+      pthread_cond_wait(&worker_cv, &worker_cvmutex);
     }
-    while (STAILQ_EMPTY(&WQ_head));
+    
     
     LOGT(LOG_DEBUG, "in worker: %d", id);
     
