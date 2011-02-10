@@ -156,9 +156,6 @@ void
       * We add pktlen for each iteration until inlen is reached or we jump
       * to the EAGAIN handler.
       */
-      size_t processed = 0;
-      do
-      {
 	evbuffer_copyout(input, &pkttype, 1);
 	//LOG(LOG_DEBUG,"got packet %d",pkttype);
 	pktlen = len_statemachine(pkttype, input);
@@ -190,18 +187,6 @@ void
 	if(!worker_handler(pkttype,pktlen,workitem))
 	  goto WORKER_ERR;
 	
-	/* On decoding errors, punt the client for now */
-	
-	/* Remove this temporarally until we have a sane way to handle decoder problems
-	if (status != 0)
-	{
-	  LOG(LOG_ERR, "Decode error, punting client.  errno: %d", status);
-	  goto WORKER_ERR;
-	}*/
-	
-	processed += pktlen;
-      }
-      while(processed < inlen);
     }
     else if (workitem->worktype == WQ_OUTPUT)
     {
