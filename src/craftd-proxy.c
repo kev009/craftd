@@ -145,7 +145,7 @@ errorcb(struct bufferevent *bev, short error, void *ctx)
         if (player->username != NULL)
         {
           /* In-band disconnect message */
-          bstring dconmsg = bformat("%s has disconnected", 
+          bstring dconmsg = bformat("Player %s has left the game.", 
               player->username->data);
           send_syschat(dconmsg);
           bstrFree(dconmsg);

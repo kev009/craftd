@@ -271,6 +271,23 @@ struct packet_dig
  MCint z;
  MCbyte face;
 };
+enum dig_status
+{
+	STATUS_STARTED = 0x00,
+	STATUS_DIGGING = 0x01,
+	STATUS_STOPPED = 0x02,
+	STATUS_BROKEN = 0x03,
+	STATUS_ITEMDROP = 0x04
+};
+enum block_faces
+{
+	FACE_Y_NEG = 0x00,
+	FACE_Y_POS = 0x01,
+	FACE_Z_NEG = 0x02,
+	FACE_Z_POS = 0x03,
+	FACE_X_NEG = 0x04,
+	FACE_X_POS = 0x05
+};
 static const int packet_digsz = 4 * sizeof(MCbyte) + 2 * sizeof(MCint);
 
 /* pid 0x0F */
@@ -750,8 +767,8 @@ static const struct
 struct packet_disconnect
 {
   MCbyte pid;
-  MCshort slen;
-  bstring message;
+  MCshort rlen;
+  bstring reason;
 };
 // Chat size/offset information (C99 initialized struct)
 static const struct

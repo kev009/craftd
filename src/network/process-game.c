@@ -117,6 +117,38 @@ process_packet(struct PL_entry *player, uint8_t pkttype, void * packet)
       
       return;
     }
+    case PID_PLAYERDIG:
+    {
+		switch(((struct packet_dig*) packet)->status)
+		{
+			case STATUS_STARTED:
+			{
+				LOG(LOG_DEBUG, "block dig STARTED");
+				break;
+			}
+			case STATUS_DIGGING:
+			{
+				LOG(LOG_DEBUG, "block dig DIGGING");
+				break;
+			}
+			case STATUS_STOPPED:
+			{
+				LOG(LOG_DEBUG, "block dig STOPPED");
+				break;
+			}
+			case STATUS_BROKEN:
+			{
+				LOG(LOG_DEBUG, "block dig BROKEN");
+				break;
+			}
+			case STATUS_ITEMDROP:
+			{
+				LOG(LOG_DEBUG, "block dig ITEMDROP");
+				break;
+			}
+		}
+		return;
+	}
     case PID_DISCONNECT:
     {
       deferLogout(player);
