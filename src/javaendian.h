@@ -95,13 +95,13 @@
 #else
 /* We need to convert native floating-point types */
 
-static union uint32orfloat
+union uint32orfloat
 {
   uint32_t uint32val;
   float floatval;
 };
 
-static union uint64ordouble
+union uint64ordouble
 {
   uint64_t uint64val;
   double doubleval;
