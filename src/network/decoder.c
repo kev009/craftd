@@ -311,7 +311,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 		LOG(LOG_DEBUG, "recvd entity action packet");
 	
 		struct packet_entityaction *ea = Malloc(sizeof(struct packet_entityaction));
-        memset(ea,0,sizeof(struct packet_entityaction));
+		memset(ea,0,sizeof(struct packet_entityaction));
 	
 		evbuffer_drain(input, sizeof(ea->pid));
 		evbuffer_remove(input, &ea->eid, sizeof(MCint));
@@ -323,17 +323,34 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     {
         LOG(LOG_DEBUG, "recvd pickup spawn packet");
 	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
+		struct packet_pickupspawn *ps = Malloc(sizeof(struct packet_pickupspawn));
+		memset(ps,0,sizeof(struct packet_pickupspawn));
 	
-	break;
+		evbuffer_drain(input, sizeof(ps->pid));
+		evbuffer_remove(input, &ps->eid, sizeof(MCint));
+		evbuffer_remove(input, &ps->item, sizeof(MCshort));
+		evbuffer_remove(input, &ps->count, sizeof(MCbyte));
+		evbuffer_remove(input, &ps->damage, sizeof(MCshort));
+		evbuffer_remove(input, &ps->x, sizeof(MCint));
+		evbuffer_remove(input, &ps->y, sizeof(MCint));
+		evbuffer_remove(input, &ps->z, sizeof(MCint));
+		evbuffer_remove(input, &ps->rotation, sizeof(MCbyte));
+		evbuffer_remove(input, &ps->pitch, sizeof(MCbyte));
+		evbuffer_remove(input, &ps->roll, sizeof(MCbyte));
+		
+		return ps;
     }
     case PID_CLOSEWINDOW: // Close window packet 0x65
     {
         LOG(LOG_DEBUG, "recvd close window packet");
 
-        evbuffer_drain(input, pktlen);
-
-        break;
+        struct packet_closewindow *cw = Malloc(sizeof(struct packet_closewindow));
+		memset(cw,0,sizeof(struct packet_closewindow));
+		
+		evbuffer_drain(input, sizeof(cw->pid));
+		evbuffer_remove(input, &cw->winid, sizeof(MCbyte));
+		
+		return cw;
     }
     case PID_WINDOWCLICK: // Window click 0x66
     {
@@ -346,10 +363,19 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     case PID_DISCONNECT: // Disconnect packet 0xFF
     {
         LOG(LOG_DEBUG, "recvd disconnect packet");
-
-        evbuffer_drain(input, pktlen);
-
-        break;
+        
+		struct packet_disconnect *dc = Malloc(sizeof(struct packet_disconnect));
+		memset(dc,0,sizeof(struct packet_disconnect));
+		
+		int16_t rlen;
+		
+		evbuffer_drain(input, sizeof(dc->pid));
+		evbuffer_remove(input, &rlen, sizeof(rlen));
+		rlen = ntohs(rlen);
+		
+        dc->reason = getMCString(input, rlen);
+		
+		return dc;
     }
     default:
     {
