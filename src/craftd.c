@@ -80,14 +80,6 @@ readcb(struct bufferevent *bev, void *ctx)
 {
   struct WQ_entry *workitem;
   struct PL_entry *player = ctx;
-  STAILQ_FOREACH(workitem, &WQ_head, WQ_entries)
-  {
-    if(workitem != NULL)
-    {
-      if(workitem->worktype == WQ_GAME_INPUT && workitem->player == player)
-	return;
-    }
-  }
   
   
   /* Allocate and construct new work item */
