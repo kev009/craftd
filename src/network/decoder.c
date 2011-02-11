@@ -60,7 +60,7 @@ void packetfree(uint8_t pkttype, void * packet)
 		}
 		case PID_DISCONNECT:
 		{
-			bstrFree((struct packet_disconnect*) packet)->reason);
+			bstrFree(((struct packet_disconnect*) packet)->reason);
 			break;
 		}
 	}
