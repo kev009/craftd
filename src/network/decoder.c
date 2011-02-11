@@ -40,26 +40,31 @@
  */
 void packetfree(uint8_t pkttype, void * packet)
 {
-  switch(pkttype)
-  {
-    case PID_LOGIN:
-    {
-      bstrFree(((struct packet_login*) packet)->username);
-      bstrFree(((struct packet_login*) packet)->password);
-      break;
-    }
-    case PID_HANDSHAKE:
-    {
-      bstrFree(((struct packet_handshake*) packet)->username);
-      break;
-    }
-    case PID_CHAT:
-    {
-      bstrFree(((struct packet_chat*) packet)->message);
-      break;
-    }
-  }
-  free(packet);
+	switch(pkttype)
+	{
+		case PID_LOGIN:
+		{
+			bstrFree(((struct packet_login*) packet)->username);
+			bstrFree(((struct packet_login*) packet)->password);
+			break;
+		}
+		case PID_HANDSHAKE:
+		{
+			bstrFree(((struct packet_handshake*) packet)->username);
+			break;
+		}
+		case PID_CHAT:
+		{
+			bstrFree(((struct packet_chat*) packet)->message);
+			break;
+		}
+		case PID_DISCONNECT:
+		{
+			bstrFree((struct packet_disconnect*) packet)->reason);
+			break;
+		}
+	}
+	free(packet);
 }
 
 /**
@@ -138,32 +143,32 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     }
     case PID_HANDSHAKE: // Handshake packet 0x02
     {
-        LOG(LOG_DEBUG, "decoded handshake packet");
-	
-	struct packet_handshake *u_hs = Malloc(sizeof(struct packet_handshake));
-	memset(u_hs,0,sizeof(struct packet_handshake));
-	
-        u_hs->username = NULL;
-        int16_t ulen;
+		LOG(LOG_DEBUG, "decoded handshake packet");
 
-        evbuffer_drain(input, sizeof(u_hs->pid));
-	evbuffer_remove(input, &ulen, sizeof(ulen));
-	ulen = ntohs(ulen);
+		struct packet_handshake *u_hs = Malloc(sizeof(struct packet_handshake));
+		memset(u_hs,0,sizeof(struct packet_handshake));
 
-        u_hs->username = getMCString(input, ulen);
-        if(!u_hs->username)
-          exit(4); // TODO punt
-	
-        LOG(LOG_DEBUG, "Handshake from: %s", u_hs->username->data);
+		u_hs->username = NULL;
+		int16_t ulen;
 
-	return u_hs;
+		evbuffer_drain(input, sizeof(u_hs->pid));
+		evbuffer_remove(input, &ulen, sizeof(ulen));
+		ulen = ntohs(ulen);
+
+		u_hs->username = getMCString(input, ulen);
+		if(!u_hs->username)
+			exit(4); // TODO punt
+
+		LOG(LOG_DEBUG, "Handshake from: %s", u_hs->username->data);
+
+		return u_hs;
     }
     case PID_CHAT: // Chat packet 0x03
     {
         LOG(LOG_DEBUG, "recvd chat packet");
 
-	struct packet_chat *chat = Malloc(sizeof(struct packet_chat));
-	memset(chat,0,sizeof(struct packet_chat));
+		struct packet_chat *chat = Malloc(sizeof(struct packet_chat));
+		
         int16_t mlen;
 
         evbuffer_drain(input, sizeof(chat->pid));
@@ -176,18 +181,22 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     }
     case PID_USEENTITY: // Use entity packet 0x07
     {
-	LOG(LOG_DEBUG, "recvd use entity packet");
-	
-	evbuffer_drain(input, pktlen); // TODO: implement actual handler
-	
-	break;
+		LOG(LOG_DEBUG, "recvd use entity packet");
+		
+		struct packet_useentity *ue = Malloc(sizeof(struct packet_useentity));
+		
+		evbuffer_drain(input, sizeof(ue->pid));
+		evbuffer_remove(input, &ue->user, sizeof(MCint));
+		evbuffer_remove(input, &ue->target, sizeof(MCint));
+		evbuffer_remove(input, &ue->leftclick, sizeof(bool));
+		
+		return ue;
     }
     case PID_PLAYERFLY: // "Flying"/Player packet 0x0A
     {
         LOG(LOG_DEBUG, "recvd flying packet");
 	
 		struct packet_playerfly *fly = Malloc(sizeof(struct packet_playerfly));
-        memset(fly,0,sizeof(struct packet_playerfly));
 	
 		evbuffer_drain(input, sizeof(fly->pid));
 		evbuffer_remove(input, &fly->onground, sizeof(bool));
@@ -196,43 +205,40 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     }
     case PID_PLAYERPOS: // Player position packet 0x0B
     {
-	LOG(LOG_DEBUG, "recvd player position packet");
+		LOG(LOG_DEBUG, "recvd player position packet");
 
-	struct packet_playerpos *pos = Malloc(sizeof(struct packet_playerpos));
-	memset(pos,0,sizeof(struct packet_playerpos));
+		struct packet_playerpos *pos = Malloc(sizeof(struct packet_playerpos));
 
-	evbuffer_drain(input, sizeof(pos->pid));
-	evbuffer_remove(input, &pos->x, sizeof(pos->x));
-	evbuffer_remove(input, &pos->y, sizeof(pos->y));
-	/* Throw away stance */
-	evbuffer_drain(input, sizeof(pos->stance));
-	evbuffer_remove(input, &pos->z, sizeof(pos->z));
-	/* Throw away flying */
-	evbuffer_drain(input, sizeof(MCbyte));
-	
-	return pos;
+		evbuffer_drain(input, sizeof(pos->pid));
+		evbuffer_remove(input, &pos->x, sizeof(pos->x));
+		evbuffer_remove(input, &pos->y, sizeof(pos->y));
+		/* Throw away stance */
+		evbuffer_drain(input, sizeof(pos->stance));
+		evbuffer_remove(input, &pos->z, sizeof(pos->z));
+		/* Throw away flying */
+		evbuffer_drain(input, sizeof(MCbyte));
+		
+		return pos;
     }
     case PID_PLAYERLOOK: // Player look packet 0x0C
     {
-	LOG(LOG_DEBUG, "recvd player look packet");
+		LOG(LOG_DEBUG, "recvd player look packet");
 
-	struct packet_look *look = Malloc(sizeof(struct packet_look));
-	memset(look,0,sizeof(struct packet_look));
+		struct packet_look *look = Malloc(sizeof(struct packet_look));
 
-	evbuffer_drain(input, sizeof(look->pid));
-	evbuffer_remove(input, &look->yaw, sizeof(look->yaw));
-	evbuffer_remove(input, &look->pitch, sizeof(look->pitch));
-	/* Throw away flying */
-	evbuffer_drain(input, sizeof(MCbyte));
-	  
-	return look;
+		evbuffer_drain(input, sizeof(look->pid));
+		evbuffer_remove(input, &look->yaw, sizeof(look->yaw));
+		evbuffer_remove(input, &look->pitch, sizeof(look->pitch));
+		/* Throw away flying */
+		evbuffer_drain(input, sizeof(MCbyte));
+		  
+		return look;
     }
     case PID_PLAYERMOVELOOK: // Player move+look packet 0x0D
     {
         LOG(LOG_DEBUG, "recvd move+look packet");
         
-	struct packet_movelook *ml = Malloc(sizeof(struct packet_movelook));
-	memset(ml,0,sizeof(struct packet_movelook));
+		struct packet_movelook *ml = Malloc(sizeof(struct packet_movelook));
 
         evbuffer_drain(input, sizeof(ml->pid));
         evbuffer_remove(input, &ml->x, sizeof(ml->x));
@@ -250,15 +256,14 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     {
         LOG(LOG_DEBUG, "recvd block dig packet");
         
-	struct packet_dig *dig = Malloc(sizeof(struct packet_dig));
-	memset(dig,0,sizeof(struct packet_dig));
-	
-	evbuffer_drain(input, sizeof(dig->pid));
-	evbuffer_remove(input, &dig->status, sizeof(MCbyte));
-	evbuffer_remove(input, &dig->x, sizeof(MCint));
-	evbuffer_remove(input, &dig->y, sizeof(MCbyte));
-	evbuffer_remove(input, &dig->z, sizeof(MCint));
-	evbuffer_remove(input, &dig->face, sizeof(MCbyte));
+		struct packet_dig *dig = Malloc(sizeof(struct packet_dig));
+		
+		evbuffer_drain(input, sizeof(dig->pid));
+		evbuffer_remove(input, &dig->status, sizeof(MCbyte));
+		evbuffer_remove(input, &dig->x, sizeof(MCint));
+		evbuffer_remove(input, &dig->y, sizeof(MCbyte));
+		evbuffer_remove(input, &dig->z, sizeof(MCint));
+		evbuffer_remove(input, &dig->face, sizeof(MCbyte));
 		
         return dig;
     }
@@ -267,7 +272,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd place packet");
 	
 		struct packet_blockplace *bp = Malloc(sizeof(struct packet_blockplace));
-		memset(bp,0,sizeof(struct packet_blockplace));
 		
 		evbuffer_drain(input, sizeof(bp->pid));
 		evbuffer_remove(input, &bp->x, sizeof(MCint));
@@ -285,7 +289,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd block/item switch packet");
         
         struct packet_holdchange *hc = Malloc(sizeof(struct packet_holdchange));
-		memset(hc,0,sizeof(struct packet_holdchange));
 	
 		evbuffer_drain(input, sizeof(hc->pid));
 		evbuffer_remove(input, &hc->itemid, sizeof(MCshort));
@@ -297,7 +300,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd arm animate packet");
 	
 		struct packet_armanimate *aa = Malloc(sizeof(struct packet_armanimate));
-        memset(aa,0,sizeof(struct packet_armanimate));
 	
 		evbuffer_drain(input, sizeof(aa->pid));
 		evbuffer_remove(input, &aa->eid, sizeof(MCint));
@@ -310,7 +312,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
 		LOG(LOG_DEBUG, "recvd entity action packet");
 	
 		struct packet_entityaction *ea = Malloc(sizeof(struct packet_entityaction));
-		memset(ea,0,sizeof(struct packet_entityaction));
 	
 		evbuffer_drain(input, sizeof(ea->pid));
 		evbuffer_remove(input, &ea->eid, sizeof(MCint));
@@ -323,7 +324,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd pickup spawn packet");
 	
 		struct packet_pickupspawn *ps = Malloc(sizeof(struct packet_pickupspawn));
-		memset(ps,0,sizeof(struct packet_pickupspawn));
 	
 		evbuffer_drain(input, sizeof(ps->pid));
 		evbuffer_remove(input, &ps->eid, sizeof(MCint));
@@ -344,7 +344,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd close window packet");
 
         struct packet_closewindow *cw = Malloc(sizeof(struct packet_closewindow));
-		memset(cw,0,sizeof(struct packet_closewindow));
 		
 		evbuffer_drain(input, sizeof(cw->pid));
 		evbuffer_remove(input, &cw->winid, sizeof(MCbyte));
@@ -355,7 +354,7 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
     {
         LOG(LOG_DEBUG, "recvd window click packet");
 
-        evbuffer_drain(input, pktlen);
+        evbuffer_drain(input, pktlen); //TODO: write handler
 
         break;
     }
@@ -364,7 +363,6 @@ packetdecoder(uint8_t pkttype, int pktlen, struct bufferevent *bev)
         LOG(LOG_DEBUG, "recvd disconnect packet");
         
 		struct packet_disconnect *dc = Malloc(sizeof(struct packet_disconnect));
-		memset(dc,0,sizeof(struct packet_disconnect));
 		
 		int16_t rlen;
 		
