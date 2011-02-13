@@ -16,9 +16,6 @@
 #include "../nbt/nbt.h"
 #include "../algos/arith.h"
 
-#define MAX(a, b) \
-(a < b ? b : a)
-
 static unsigned char _blocks[32768] = {0};
 static unsigned char _data[16384] = {0};
 static unsigned char _skylight[16384] = {0};
@@ -34,7 +31,7 @@ static unsigned char _heightmap[256] = {0};
 static void _init_data(int ch_x, int ch_z)
 {
 	int x, z, y;
-	int light_val = MAX(0x0F - abs(ch_x) - abs(ch_z), 0);
+	int light_val = Arith_max(0x0F - abs(ch_x) - abs(ch_z), 0);
 	/* this should only put 1 layer of bedrock */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
