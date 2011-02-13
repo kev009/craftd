@@ -63,7 +63,7 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	nbt_file *nbt;
 	nbt_tag *level_tag;
 	nbt_tag *sub_tag;
-	struct stat *sbuf;
+	struct stat sbuf;
 
 	itoa(x, x_file, 36);
 	itoa(z, z_file, 36);
