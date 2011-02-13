@@ -16,6 +16,9 @@
 #include "../nbt/nbt.h"
 #include "../algos/arith.h"
 
+#define MAX(a, b) \
+(a < b ? b : a)
+
 static unsigned char _blocks[32768] = {0};
 static unsigned char _data[16384] = {0};
 static unsigned char _skylight[16384] = {0};
@@ -28,16 +31,18 @@ static unsigned char _heightmap[256] = {0};
  * @remarks a "trivial" chunk is just made of
  * one layer of bedrock
  */
-static void _init_data()
+static void _init_data(int ch_x, int ch_z)
 {
-	int x, z;
-
+	int x, z, y;
+	int light_val = MAX(0x0F - abs(ch_x) - abs(ch_z), 0);
 	/* this should only put 1 layer of bedrock */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			_blocks[(z*128) + (x*128*16)] = 7; /* one layer bedrock */
-			_skylight[(z*128) + (x*128*16)/2] = 255; /* full light for first 2 layers */
-			_heightmap[z+(x*16)] = 1; /* max height is 1 */
+			_heightmap[x+(z*16)] = 1; /* max height is 1 */
+			for (y = 1 ; y < 128 ; y++) {
+				_skylight[((z*128) + (x*128*16)+y)/2] = (light_val | (light_val << 4)); /* full light for first 2 layers */
+			}
 		}
 	}
 }
@@ -88,6 +93,10 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 		printf("File %s already exists\n", full_path);
 		return;
 	}
+
+	/* we use nearly static data here */
+	_init_data(x, z);
+
 	printf("Generating chunk : %s\n", full_path);
 	/* generate the chunk */
 	nbt_init(&nbt);
@@ -172,8 +181,6 @@ struct mapgen *init_mapgen(char *seed, char *path)
 	mg->seed = strdup(seed);
 	mg->path = strdup(path);
 	mg->generate_chunk = &gen_chunk;
-	/* we use static data here */
-	_init_data();
 
 	return mg;
 }
@@ -183,6 +190,10 @@ struct mapgen *init_mapgen(char *seed, char *path)
 int main()
 {
 	struct mapgen *mg = init_mapgen("", "./");
+
+	/* we use nearly static data here */
+	_init_data(x, z);
+
 	mg->generate_chunk(mg, 0, 0);
 }
 
