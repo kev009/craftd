@@ -86,3 +86,5 @@ libmg_trivial_la_LDFLAGS = $(libevent2_pthreads_LIBS)
 libmg_trivial_la_SOURCES = mapgen/trivial.c util.c
 libmg_trivial_la_CFLAGS = -D_FIX_UTIL
 libmg_trivial_la_LIBADD = libcdnbt.la
+
+SUBDIRS=noise

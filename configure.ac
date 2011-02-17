@@ -24,7 +24,8 @@ AC_SUBST(LIBTOOL_DEPS)
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
-                 third-party/jansson/src/jansson_config.h])
+                 third-party/jansson/src/jansson_config.h \
+		 src/noise/Makefile])
 AC_CONFIG_SRCDIR([src/mapchunk.h])
 
 # Checks for libraries.
