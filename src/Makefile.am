@@ -81,10 +81,15 @@ craftd_proxy_SOURCES += httpd.c httpd.h
 craftd_proxy_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_proxy_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
 
-lib_LTLIBRARIES = libmg_trivial.la
+lib_LTLIBRARIES = libmg_trivial.la libmg_classic.la
 libmg_trivial_la_LDFLAGS = $(libevent2_pthreads_LIBS)
 libmg_trivial_la_SOURCES = mapgen/trivial.c util.c
 libmg_trivial_la_CFLAGS = -D_FIX_UTIL
 libmg_trivial_la_LIBADD = libcdnbt.la
+
+libmg_classic_la_LDFLAGS = $(libevent2_pthreads_LIBS) -lm
+libmg_classic_la_SOURCES = mapgen/classic.c util.c
+libmg_classic_la_CFLAGS = -D_FIX_UTIL
+libmg_classic_la_LIBADD = libcdnbt.la noise/libnoise_simplex.la
 
 SUBDIRS=noise

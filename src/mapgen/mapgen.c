@@ -12,7 +12,7 @@
 struct mapgen *(*init_mapgen)(char *seed, char *path);
 
 /* FIXME: ugly define of map generator library */
-#define MAPGEN "./src/libmg_trivial.la"
+#define MAPGEN "./src/libmg_classic.la"
 
 /**
  * The worker thread for map generation
