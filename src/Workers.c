@@ -25,12 +25,12 @@
 
 #include "Workers.h"
 #include "Server.h"
-#include "List.h"
+#include "common.h"
 
 CDWorkers*
 CD_CreateWorkers (CDServer* server)
 {
-    CDWorkers* object = malloc(sizeof(CDWorkers));
+    CDWorkers* object = CD_malloc(sizeof(CDWorkers));
 
     if (!object) {
         return NULL;
@@ -38,7 +38,7 @@ CD_CreateWorkers (CDServer* server)
 
     object->server = server;
     object->length = 0;
-    object->item   = malloc(0);
+    object->item   = NULL;
 
     pthread_attr_init(&object->attributes);
     pthread_attr_setdetachstate(&object->attributes, PTHREAD_CREATE_DETACHED);
@@ -46,16 +46,29 @@ CD_CreateWorkers (CDServer* server)
     pthread_mutex_init(&object->mutex, NULL);
     
     if (pthread_cond_init(&object->condition, NULL) != 0) {
-        return NULL;
+        return CD_DestroyWorkers(object);
     }
 
     return object;
 }
 
+void
+CD_DestroyWorkers (CDWorkers* object)
+{
+    size_t i;
+
+    for (i = 0; i < object->length; i++) {
+        CD_DestroyWorker(object->item[i]);
+    }
+
+    CD_free(object->item);
+    CD_free(object);
+}
+
 CDWorker**
 CD_SpawnWorkers (CDWorkers* workers, size_t number)
 {
-    CDWorker** result = malloc(sizeof(CDWorker*) * number);
+    CDWorker** result = CD_malloc(sizeof(CDWorker*) * number);
     size_t i;
 
     for (i = 0; i < number; i++) {
@@ -67,21 +80,29 @@ CD_SpawnWorkers (CDWorkers* workers, size_t number)
         }
     }
 
-    CD_AppendWorkers(workers, result, number)
+    CD_ConcatWorkers(workers, result, number)
 
     return result;
 }
 
 CDWorkers*
-CD_AppendWorkers (CDWorkers* workers, CDWorker** items, size_t length)
+CD_ConcatWorkers (CDWorkers* workers, CDWorker** items, size_t length)
 {
     size_t i;
 
-    workers->item = realloc(workers->item, sizeof(CDWorker*) * workers->length + length);
-
-    for (i = workers->length; i < workers->length + length; i++) {
-        workers->item[i] = items[i - workers->length];
+    for (i = 0; i < length; i++) {
+        CD_AppendWorker(workers, items[i]);
     }
+
+    return workers;
+}
+
+CDWorkers*
+CD_AppendWorker (CDWorkers* workers, CDWorker* worker)
+{
+    workers->item = CD_realloc(workers->item, sizeof(CDWorker*) * ++workers->length);
+
+    workers->item[workers->length - 1] = worker;
 
     return workers;
 }

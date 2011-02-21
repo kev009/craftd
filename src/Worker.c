@@ -24,11 +24,12 @@
  */
 
 #include "Worker.h"
+#include "common.h"
 
 CDWorker*
 CD_CreateWorker (void)
 {
-    CDWorker* object = malloc(sizeof(CDWorker));
+    CDWorker* object = CD_malloc(sizeof(CDWorker));
 
     if (!object) {
         return NULL;
@@ -36,6 +37,20 @@ CD_CreateWorker (void)
 
     object->id      = 0;
     object->working = NULL;
+    object->thread  = NULL;
+
+    return object;
+}
+
+void
+CD_DestroyWorker (CDWorker* object)
+{
+    if (object->thread) {
+        pthread_cancel(object->thread);
+    }
+
+    CD_free(object->working);
+    CD_free(object);
 }
 
 void*

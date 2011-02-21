@@ -23,9 +23,38 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#ifndef CRAFTD_WORKER_H
+#define CRAFTD_WORKER_H
 
-typedef uint32_t CDEid;
+#include "Packet.h"
+#include "Job.h"
+
+struct _CDWorkers;
+
+typedef struct _CDWorker {
+    int       id;
+    pthread_t thread;
+
+    struct _CDWorkers* workers;
+
+    CDJob* working;
+} CDWorker;
+
+/**
+ * Create a Worker object
+ */
+CDWorker* CD_CreateWorker (void);
+
+/**
+ * Destroy a Worker object and its eventual working Job
+ *
+ * @param worker The worker object to destroy
+ */
+void CD_DestroyWorker (CDWorker* object);
+
+/**
+ * Main thread function, pass the result of CD_CreateWorker as argument.
+ */
+void* CD_RunWorker (void* arg);
 
 #endif

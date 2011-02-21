@@ -23,32 +23,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#ifndef CRAFTD_COMMON_H
+#define CRAFTD_COMMON_H
 
-#include "Eid.h"
-#include "Packet.h"
-#include "Job.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
+#include "memory.h"
+#include "bstrlib.h"
 
-struct _CDWorkers;
+typedef struct _CDLocks {
+    pthread_rwlock_t rw;
+    pthread_rwlock_t in;
+    pthread_rwlock_t out;
+} CDLocks;
 
-typedef struct _CDWorker {
-    CDEid          id;
-    pthread_t      thread;
-
-    struct _CDWorkers* workers;
-
-    CDJob* working;
-} CDWorker;
-
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (void);
-
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-void* CD_RunWorker (void* arg);
 
 #endif

@@ -24,6 +24,7 @@
  */
 
 #include "Packet.h"
+#include "common.h"
 
 CDPacket*
 CD_PacketFromEvent (struct bufferevent* event)
@@ -36,7 +37,7 @@ CD_PacketFromEvent (struct bufferevent* event)
         return NULL;
     }
 
-    CDPacket* object = malloc(sizeof(CDPacket));
+    CDPacket* object = CD_malloc(sizeof(CDPacket));
 
     if (!object) {
         CDError = CDFail;
@@ -52,22 +53,20 @@ CD_PacketFromEvent (struct bufferevent* event)
                 CDError = CDNone;
 
                 LOGT(LOG_DEBUG, "EAGAIN");
-                return NULL;
-            }
+            } break;
 
             case EILSEQ: {
                 CDError = CDFail;
 
-                LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", pkttype);
-                return NULL;
-            }
+                LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", object->type);
+            } break;
 
             default: {
                 CDError = CDUnknown;
-
-                return NULL;
             }
         }
+
+        return CD_DestroyPacket(object);
     }
 
     object->data = CD_GetPacketDataFromEvent(object, event);
@@ -75,24 +74,60 @@ CD_PacketFromEvent (struct bufferevent* event)
     return object;
 }
 
+void
+CD_DestroyPacket (CDPacket* object)
+{
+    switch (object->type) {
+        case CDLogin: {
+            MC_DestroyString(((CDPacketLogin*) object->data)->username);
+            MC_DestroyString(((CDPacketLogin*) object->data)->password);
+        } break;
+
+        case CDHandshake: {
+            MC_DestroyString(((CDPacketHandshake*) object->data)->username);
+        } break;
+
+        case CDChat: {
+            MC_DestroyString(((CDPacketChat*) object->data)->message);
+        } break;
+
+        case CDNamedEntitySpawn: {
+            MC_DestroyString(((CDPacketNamedEntitySpawn*) object->data)->name);
+        } break;
+
+        case CDSpawnMob: {
+            MC_DestroyMetadata(((CDPacketSpawnMob*) object->data)->metadata);
+        } break;
+
+        case CDPainting: {
+            MC_DestroyString(((CDPacketPainting*) object->data)->title);
+        } break;
+
+        case CDEntityMetadata: {
+            MC_DestroyMetadata(((CDPacketEntityMetadata*) object->data)->metadata);
+        } break;
+    }
+
+    CD_free(object->data);
+    CD_free(object);
+}
+
 void*
 CD_GetPacketDataFromEvent (CDPacket* packet, struct bufferevent* event)
 {
-    char*  data   = malloc(0);
+    void*  data   = NULL;
     size_t length = 0;
 
     switch (packet->type) {
         case CDKeepAlive: {
             evbuffer_drain(input, 1);
-
-            return NULL;
-        }
+        } break;
 
         case CDLogin: {
             int16_t leng;
 
-            evbuffer_remove(input, data
-        }
+            evbuffer_remove(input, data);
+        } break;
     }
 
     return data;

@@ -23,28 +23,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKERS_H
-#define CRAFTD_WORKERS_H
+#ifndef CRAFTD_PLAYER_H
+#define CRAFTD_PLAYER_H
 
-#include "Worker.h"
+#include "minecraft.h"
 
-struct _CDServer;
+typedef struct _CDPlayer {
+    bstring   name;
+    char[128] ip;
 
-typedef struct _CDWorkers {
-    size_t     length;
-    CDWorker** item;
+    MCEntity entity;
 
-    struct _CDServer* server;
+    MCPosition position;
 
-    pthread_attr_t  attributes;
-    pthread_cond_t  condition;
-    pthread_mutex_t mutex;
-} CDWorkers;
+    pthread_rwlock_t lock;
 
-CDWorkers* CD_CreateWorkers (struct _CDServer* server);
+    evutil_socket_t     fd;
+    struct bufferevent* event;
 
-CDWorker** CD_SpawnWorkers (CDWorkers* workers, size_t number);
+    CDLocks locks;
 
-CDWorkers* CD_AppendWorkers (CDWorkers* workers, CDWorker** array, size_t number);
+    #ifdef USE_CDPROXY
+    struct {
+        struct bufferevent* event;
+
+        CDLocks locks;
+    } proxy;
+    #endif
+
+    SLIST_ENTRY(_CDPlayer) entries;
+} CDPlayer;
+
+CDPlayer* CD_CreatePlayer ();
 
 #endif

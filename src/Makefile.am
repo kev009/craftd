@@ -5,6 +5,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/klib
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
+AM_CPPFLAGS += -I$(top_srcdir)/include
 
 extra_DIST = algos/LICENSE-MIT
 
