@@ -106,6 +106,39 @@ CD_DestroyPacket (CDPacket* object)
         case CDEntityMetadata: {
             MC_DestroyMetadata(((CDPacketEntityMetadata*) object->data)->metadata);
         } break;
+
+        case CDMapChunk: {
+            CD_free(((CDPacketMapChunk*) object->data)->item);
+        } break;
+
+        case CDMultiBlockChange: {
+            CD_free(((CDPacketMultiBlockChange*) object->data)->coordinate);
+            CD_free(((CDPacketMultiBlockChange*) object->data)->type);
+            CD_free(((CDPacketMultiBlockChange*) object->data)->metadata);
+        } break;
+
+        case CDExplosion: {
+            CD_free(((CDPacketExplosion*) object->data)->item);
+        } break;
+
+        case CDOpenWindow: {
+            MC_DestroyString(((CDPacketOpenWindow*) object->data)->title);
+        } break;
+
+        case CDWindowItems: {
+            CD_free(((CDPacketWindowItems*) object->data)->item);
+        } break;
+
+        case CDUpdateSign: {
+            MC_DestroyString(((CDPacketUpdateSign*) object->data)->first);
+            MC_DestroyString(((CDPacketUpdateSign*) object->data)->second);
+            MC_DestroyString(((CDPacketUpdateSign*) object->data)->third);
+            MC_DestroyString(((CDPacketUpdateSign*) object->data)->fourth);
+        } break;
+
+        case CDDisconnect: {
+            MC_DestroyString(((CDPacketDisconnect*) object->data)->reason);
+        } break;
     }
 
     CD_free(object->data);

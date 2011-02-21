@@ -62,6 +62,12 @@ typedef struct _MCItem {
   MCShort uses;
 } MCItem;
 
+typedef struct _MCSize {
+    MCByte x;
+    MCByte y;
+    MCByte z;
+} MCSize;
+
 typedef struct _MCPosition {
     MCInteger x;
     MCInteger y;

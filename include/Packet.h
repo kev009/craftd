@@ -72,6 +72,7 @@ typedef enum _CDPacketType {
     CDMapChunk             = 0x33,
     CDMultiBlockChange     = 0x34,
     CDBlockChange          = 0x35,
+    CDPlayNoteBlock        = 0x36,
     CDExplosion            = 0x3C,
     CDOpenWindow           = 0x64,
     CDCloseWindow          = 0x65,
@@ -378,7 +379,130 @@ typedef struct _CDPacketEntityAttach {
 typedef struct _CDPacketEntityMetadata {
     MCEntity    entity;
     MCMetadata* metadata;
-}
+} CDPacketEntityMetadata;
+
+typedef struct _CDPacketPreChunk {
+    MCInteger x;
+    MCInteger z;
+
+    MCBoolean mode;
+} CDPacketPreChunk;
+
+typedef struct _CDPacketMapChunk {
+    MCPosition position;
+    MCSize     size;
+
+    MCInteger length;
+    MCByte*   item;
+} CDPacketMapChunk;
+
+typedef struct _CDPacketMultiBlockChange {
+    MCInteger x;
+    MCInteger z;
+
+    MCShort length;
+
+    MCShort* coordinate;
+    MCByte*  type;
+    MCByte*  metadata;
+} CDPacketMultiBlockChange;
+
+typedef struct _CDPacketBlockChange {
+    MCPosition position;
+
+    MCByte type;
+    MCByte metadata;
+} CDPacketBlockChange;
+
+typedef struct _CDPacketPlayNoteBlock {
+    MCPosition position;
+
+    enum {
+        CDHarp,
+        CDDoubleBass,
+        CDSnareDrum,
+        CDClicksSticks,
+        CDBassDrum
+    } instrument;
+
+    MCByte pitch;
+} CDPacketPlayNoteBlock;
+
+typedef struct _CDPacketExplosion { // Not sure yet
+    MCPrecisePosition position;
+
+    MCFloat radius; // unsure
+
+    MCInteger   length;
+    MCPosition* item;
+} CDPacketExplosion;
+
+typedef struct _CDPacketOpenWindow {
+    MCByte id;
+    
+    enum {
+        CDChest,
+        CDWorkbench,
+        CDFurnace,
+        CDDispenser
+    } type;
+
+    MCString title;
+
+    MCByte slots;
+} CDPacketOpenWindow;
+
+typedef struct _CDPacketCloseWindow {
+    MCByte id;
+} CDPacketCloseWindow;
+
+typedef struct _CDPacketWindowClick {
+    MCByte  id;
+    MCShort slot;
+    MCByte  rightClick;
+    MCShort action;
+
+    MCItem item; // if the first of the 3 values is -1 the packet ends there
+} CDPacketWindowClick;
+
+typedef struct _CDPacketSetSlot {
+    MCByte  id;
+    MCShort slot;
+
+    MCItem item; // if the first of the 3 values is -1 the packet ends there
+} CDPacketSetSlot;
+
+typedef struct _CDPacketWindowItems {
+    MCByte id;
+
+    MCShort length;
+    MCItem* item;
+} CDPacketWindowItems;
+
+typedef struct _CDPacketUpdateProgressBar {
+    MCByte  id;
+    MCShort bar;
+    MCShort value;
+} CDPacketUpdateProgressBar;
+
+typedef struct _CDPacketTransaction {
+    MCByte    id;
+    MCShort   action;
+    MCBoolean accepted;
+} CDPacketTransaction;
+
+typedef struct _CDPacketUpdateSign {
+    MCPosition position;
+
+    MCString first;
+    MCString secod;
+    MCString third;
+    MCString fourth;
+} CDPacketUpdateSign;
+
+typedef struct _CDPacketDisconnect {
+    MCString reason;
+} CDPacketDisconnect;
 
 CDPacket* CD_PacketFromEvent (struct bufferevent* event);
 
