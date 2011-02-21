@@ -465,15 +465,13 @@ main(int argc, char *argv[])
   if(status !=0)
     ERR("Worker condition var init failed!");
   
-  for (int i = 0; i < Config.workpool_size; ++i)
-  {
-    WP_id[i] = i;
-    status = pthread_create(&WP_thread_id[i], &WP_thread_attr,
+  for (int i = 0; i < Config.workpool_size; ++i) {
+    status = pthread_create(&CDWorkers.threads[i], &WP_thread_attr,
         run_worker, (void *) &WP_id[i]);
     if(status != 0)
       ERR("Worker pool startup failed!");
   }
-  
+
   worker_init();
 
   /* Start inbound game server*/
