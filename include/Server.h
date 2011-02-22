@@ -30,19 +30,39 @@
 #include "Workers.h"
 #include "Plugins.h"
 #include "Logger.h"
+#include "Players.h"
 
 typedef struct _CDServer {
+    char* name;
+
     CDWorkers* workers;
     CDConfig*  config;
     CDPlugins* plugins;
+    CDPlayers* players;
+    CDLogger   logger;
 
-    CDLogger logger;
+    struct {
+        struct event_base* base;
+        struct event*      listener;
+    } event;
+
+    evutil_socket_t socket;
+
+    CDHash* _private;
 } CDServer;
 
 CDServer* CD_CreateServer (const char* path);
 
 void CD_DestroyServer (CDServer* self);
 
+char* CD_ServerToString (CDServer* self);
+
 void CD_RunServer (CDServer* self);
+
+bool CD_EventDispatch (CDServer* self, const char* name, ...);
+
+#ifndef CRAFTD_SERVER_IGNORE_EXTERN
+extern CDServer* CDMainServer;
+#endif
 
 #endif

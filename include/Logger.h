@@ -34,7 +34,30 @@ typedef struct _CDLogger {
     void (*closelog)   (void)
 } CDLogger;
 
-static CDLogger CDConsoleLogger;
-static CDLogger CDSystemLogger;
+#ifndef CRAFTD_LOGGER_IGNORE_EXTERN
+extern CDLogger CDConsoleLogger;
+extern CDLogger CDSystemLogger;
+extern CDLogger CDDefaultLogger;
+#endif
+
+#define LOG(priority, format, ...) \
+    ((CDMainServer != NULL) \
+        ? CDMainServer->logger.log(priority, "%s> " format, CD_ServerToString(CDMainServer), __VA_ARGS__) \
+        : CDDefaultLogger.log(priority, format, __VA_ARGS__))
+
+#define ERR(...) LOG(LOG_CRIT, __VA_ARGS__)
+
+#define LOG_CLOSE() do { \
+    if (CDMainServer) CDMainServer.logger.close(); \
+    if (CDDefaultLogger) CDDefaultLogger.close(); \
+} while (0)
+
+#define SLOG(server, priority, format, ...) \
+    server->logger.log(priority, "%s> " format, CD_ServerToString(server), __VA_ARGS__)
+
+#define SERR(...) SLOG(LOG_CRIT, __VA_ARGS__)
+
+#define SLOG_CLOSE(server) server->logger.close()
+
 
 #endif

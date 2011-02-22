@@ -1,4 +1,4 @@
-/*
+o/*
  * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
  *
@@ -34,11 +34,6 @@
 #include "bstrlib.h"
 #include "bstraux.h"
 
-typedef struct _CDLocks {
-    pthread_rwlock_t rw;
-    pthread_rwlock_t in;
-    pthread_rwlock_t out;
-} CDLocks;
-
+#include "PrivateData.h"
 
 #endif

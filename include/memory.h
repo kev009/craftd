@@ -56,8 +56,8 @@ CD_calloc (size_t number, size_t size)
 {
     void* pointer;
 
-    if ((pointer = calloc(number, size)) == NULL) {
-        ERR("calloc returned NULL!");
+    if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
+        ERR("could not allocate memory with a calloc");
     }
 
     return pointer;
@@ -77,7 +77,7 @@ CD_malloc (size_t size)
     void* pointer;
 
     if ((pointer = malloc(size)) == NULL) {
-        ERR("malloc returned NULL!");
+        ERR("could not allocate memory with a malloc");
     }
 
     return pointer;
@@ -85,7 +85,7 @@ CD_malloc (size_t size)
 
 /**
  * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
- * 
+ *
  * @param pointer pointer to the heap address to reallocate
  * @param size reallocation size
  *
@@ -96,7 +96,7 @@ void*
 CD_realloc (void* pointer, size_t size)
 {
     void* newPointer;
-  
+
     if (pointer == NULL) {
         return CD_malloc(size);
     }
@@ -106,7 +106,7 @@ CD_realloc (void* pointer, size_t size)
     }
 
     if ((newPointer = realloc(pointer, size)) == NULL) {
-      ERR("realloc returned NULL!");
+      ERR("could not allocate memory with a realloc");
     }
 
     return newPointer;

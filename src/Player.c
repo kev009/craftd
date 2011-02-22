@@ -25,4 +25,30 @@
 
 #include "Player.h"
 
+CDPlayer*
+CD_CreatePlayer (struct _CDServer* server)
+{
+    CDPlayer* self = CD_malloc(sizeof(CDPlayer));
 
+    if (!self) {
+        SERR(server, "could not instantiate a Player object");
+        return NULL;
+    }
+
+    self->server   = server;
+    self->_private = CD_CreateHash();
+
+    return self;
+}
+
+void
+CD_DestroyPlayer (CDPlayer* self)
+{
+    bdestroy(self->name);
+
+    CD_EventDispatch(self->server, "Player.destroy", self);
+
+    CD_DestroyHash(self->_private);
+
+    CD_free(self);
+}

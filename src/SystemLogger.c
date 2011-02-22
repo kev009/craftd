@@ -24,7 +24,9 @@
  */
 
 
+#define CRAFTD_LOGGER_IGNORE_EXTERN
 #include "Logger.h"
+#undef CRAFTD_LOGGER_IGNORE_EXTERN
 
 CDLogger CDSystemLogger = {
     .log        = syslog,

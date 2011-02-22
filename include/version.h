@@ -23,10 +23,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef CRAFTD_VERSION_H
+#define CRAFTD_VERSION_H
+
+static inline
 void
-craftd_version (const char* executable)
+cd_Version (const char* executable)
 {
     LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
     LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
 		    "http://mc.kev009.com/craftd/");
 }
+
+#endif

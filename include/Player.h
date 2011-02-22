@@ -27,8 +27,13 @@
 #define CRAFTD_PLAYER_H
 
 #include "minecraft.h"
+#include "Hash.h"
+
+struct _CDServer;
 
 typedef struct _CDPlayer {
+    struct _CDServer* server;
+
     bstring   name;
     char[128] ip;
 
@@ -36,24 +41,14 @@ typedef struct _CDPlayer {
 
     MCPosition position;
 
-    pthread_rwlock_t lock;
-
     evutil_socket_t     fd;
     struct bufferevent* event;
 
-    CDLocks locks;
-
-    #ifdef USE_CDPROXY
-    struct {
-        struct bufferevent* event;
-
-        CDLocks locks;
-    } proxy;
-    #endif
-
-    SLIST_ENTRY(_CDPlayer) entries;
+    CDHash* _private;
 } CDPlayer;
 
-CDPlayer* CD_CreatePlayer ();
+CDPlayer* CD_CreatePlayer (struct _CDServer* server);
+
+void CD_SetPlayerName (const char* name),
 
 #endif

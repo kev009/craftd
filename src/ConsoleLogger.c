@@ -24,7 +24,9 @@
  */
 
 
+#define CRAFTD_LOGGER_IGNORE_EXTERN
 #include "Logger.h"
+#undef CRAFTD_LOGGER_IGNORE_EXTERN
 
 static int cd_mask = 0;
 
@@ -81,3 +83,5 @@ CDLogger CDConsoleLogger = {
     .setlogmask = cd_ConsoleSetLogMask,
     .closelog   = cd_ConsoleCloseLog,
 };
+
+CDLogger CDDefaultLogger = CDConsoleLogger;

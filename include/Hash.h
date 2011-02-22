@@ -23,10 +23,29 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_PRIVATEDATA_H
+#define CRAFTD_PRIVATEDATA_H
+
+#include "khash.h"
+
+KHASH_MAP_INIT_STR(cdHash, void*);
+
+typedef struct _CDHash {
+    khash_t(cdHash)* hash;
+
+    pthread_rwlock_t lock;
+} CDHash
+
+CDHash* CD_CreateHash (void);
+
+void CD_DestroyHash (CDHash* self);
+
+void* CD_HashGet (CDHash* self, const char* name);
+
+void* CD_HashSet (CDHash* self, const char* name, void* data);
+
+void* CD_HashDelete (CDHash* self, const char* name);
+
+void** CD_HashClear (CDHash* self);
+
+#endif

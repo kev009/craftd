@@ -23,7 +23,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define CRAFTD_SERVER_IGNORE_EXTERN
 #include "Server.h"
+#undef CRAFTD_SERVER_IGNORE_EXTERN
+
+CDServer* CDMainServer = NULL;
 
 CDServer*
 CD_CreateServer (const char* path)
@@ -43,6 +47,7 @@ CD_CreateServer (const char* path)
     if (!self->config || !self->workers) {
         CD_DestroyServer(self)
     }
+
 /*
     size_t i;
 
@@ -50,6 +55,8 @@ CD_CreateServer (const char* path)
         CD_LoadPlugin(self->plugins, self->config->plugins->item[i]);
     }
 */
+
+    self->_private = CD_CreatePrivateData();
 
     return self;
 }
@@ -60,10 +67,73 @@ CD_DestroyServer (CDServer* self)
     CD_DestroyConfig(self->config)
     CD_DestroyWorkers(self->workers)
     CD_DestroyPlugins(self->plugins);
+
+    CD_DestroyPrivateData(self->_private);
+
+    CD_free(self->name);
 }
 
+char*
+CD_ServerToString (CDServer* self)
+{
+    return self->name;
+}
+
+static
 void
+cd_Accept (evutil_socket_t listener, short event, void* arg)
+{
+    struct sockaddr_storage storage;
+    CDPlayer*               player;
+    CDServer*               self   = arg;
+
+    if (self->players->length >= self->config->max_players) {
+        SERR(self, "too many clients");
+        return;
+    }
+
+    socklen_t length = sizeof(storage);
+    int       fd     = accept(listener, (struct sockaddr*) &storage, &length);
+
+    if (fd < 0) {
+        SERR(self, "accept error");
+        return;
+    }
+
+  else if (fd > FD_SETSIZE)
+  {
+    LOG(LOG_CRIT, "too many clients");
+    close(fd);
+  }
+}
+
+bool
 CD_RunServer (CDServer* self)
 {
+    if ((self->event.base = event_base_new()) == NULL) {
+        ERR("could not create MC libevent base!");
 
+        return false;
+    }
+
+    if ((self->socket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        ERR("could not create socket!");
+
+        return false;
+    }
+
+    evutil_make_socket_nonblocking(listener);
+
+    #ifndef WIN32
+    {
+        int one = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+    }
+    #endif
+
+    self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
+
+    event_add(self->event.listener, NULL);
+    
+    return event_base_dispatch(self->event.base) != 0;
 }
