@@ -38,7 +38,7 @@
  * PROTOCOL_VERSION controls the allowed client version
  */
 
-#define PROTOCOL_VERSION (8)
+#define PROTOCOL_VERSION (9)
 
 #define MAX_CHUNKARRAY (81920)
 
