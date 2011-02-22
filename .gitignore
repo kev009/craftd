@@ -162,3 +162,7 @@ ClientBin
 stylecop.*
 ~$*
 *.dbmdl
+
+# Submodules
+third-party/klib
+third-party/jansson

@@ -1,0 +1,3 @@
+[submodule "third-party/klib"]
+	path = third-party/klib
+	url = git://github.com/attractivechaos/klib.git
