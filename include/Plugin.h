@@ -23,34 +23,29 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKERS_H
-#define CRAFTD_WORKERS_H
+#ifndef CRAFTD_PLUGIN_H
+#define CRAFTD_PLUGIN_H
 
-#include "Worker.h"
+#include <ltdl.h>
 
+struct _CDPlugin;
 struct _CDServer;
 
-typedef struct _CDWorkers {
-    int64_t last;
+typedef bool (*CDPluginInitalizer) (struct _CDPlugin*, struct _CDServer*);
+typedef bool (*CDPluginFinalizer) (struct _CDPlugin*, struct _CDServer*);
 
-    size_t     length;
-    CDWorker** item;
+typedef struct _CDPlugin {
+    bstring path;
+    bstring name;
 
-    struct _CDServer* server;
+    void* handle;
 
-    pthread_attr_t  attributes;
-    pthread_cond_t  condition;
-    pthread_mutex_t mutex;
-} CDWorkers;
+    CDPluginInitializer* initialize;
+    CDPluginFinalizer*   finalize;
+} CDPlugin;
 
-CDWorkers* CD_CreateWorkers (struct _CDServer* server);
+CDPlugin* CD_CreatePlugin (bstring path, CDPluginInitializer* initialize, CDPluginFinalizer* finalize);
 
-void CD_DestroyWorkers (CDWorkers* self);
-
-CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
-
-CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
-
-CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
+void CD_DestroyPlugin (CDPlugin* self);
 
 #endif

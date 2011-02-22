@@ -27,7 +27,7 @@
 #include "common.h"
 
 CDPacket*
-CD_PacketFromEvent (struct bufferevent* event)
+CD_PacketFromEvent (CDServer* server, struct bufferevent* event)
 {
     struct evbuffer* input  = bufferevent_get_input(event);
     size_t           length = evbuffer_get_length(input);
@@ -37,15 +37,15 @@ CD_PacketFromEvent (struct bufferevent* event)
         return NULL;
     }
 
-    CDPacket* object = CD_malloc(sizeof(CDPacket));
+    CDPacket* self = CD_malloc(sizeof(CDPacket));
 
-    if (!object) {
+    if (!self) {
         CDError = CDFail;
         return NULL;
     }
 
-    evbuffer_remove(input, &object->type, 1);
-    length = len_statemachine(object->type, input);
+    evbuffer_remove(input, &self->type, 1);
+    length = len_statemachine(self->type, input);
 
     if (length < 0) {
         case (-length) {
@@ -58,7 +58,7 @@ CD_PacketFromEvent (struct bufferevent* event)
             case EILSEQ: {
                 CDError = CDFail;
 
-                LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", object->type);
+                LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", self->type);
             } break;
 
             default: {
@@ -66,92 +66,93 @@ CD_PacketFromEvent (struct bufferevent* event)
             }
         }
 
-        return CD_DestroyPacket(object);
+        return CD_DestroyPacket(self);
     }
 
-    object->data = CD_GetPacketDataFromEvent(object, event);
+    self->server = server;
+    self->data   = CD_GetPacketDataFromEvent(self, event);
 
-    return object;
+    return self;
 }
 
 void
-CD_DestroyPacket (CDPacket* object)
+CD_DestroyPacket (CDPacket* self)
 {
-    switch (object->type) {
+    switch (self->type) {
         case CDLogin: {
-            MC_DestroyString(((CDPacketLogin*) object->data)->username);
-            MC_DestroyString(((CDPacketLogin*) object->data)->password);
+            MC_DestroyString(((CDPacketLogin*) self->data)->username);
+            MC_DestroyString(((CDPacketLogin*) self->data)->password);
         } break;
 
         case CDHandshake: {
-            MC_DestroyString(((CDPacketHandshake*) object->data)->username);
+            MC_DestroyString(((CDPacketHandshake*) self->data)->username);
         } break;
 
         case CDChat: {
-            MC_DestroyString(((CDPacketChat*) object->data)->message);
+            MC_DestroyString(((CDPacketChat*) self->data)->message);
         } break;
 
         case CDNamedEntitySpawn: {
-            MC_DestroyString(((CDPacketNamedEntitySpawn*) object->data)->name);
+            MC_DestroyString(((CDPacketNamedEntitySpawn*) self->data)->name);
         } break;
 
         case CDSpawnMob: {
-            MC_DestroyMetadata(((CDPacketSpawnMob*) object->data)->metadata);
+            MC_DestroyMetadata(((CDPacketSpawnMob*) self->data)->metadata);
         } break;
 
         case CDPainting: {
-            MC_DestroyString(((CDPacketPainting*) object->data)->title);
+            MC_DestroyString(((CDPacketPainting*) self->data)->title);
         } break;
 
         case CDEntityMetadata: {
-            MC_DestroyMetadata(((CDPacketEntityMetadata*) object->data)->metadata);
+            MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->metadata);
         } break;
 
         case CDMapChunk: {
-            CD_free(((CDPacketMapChunk*) object->data)->item);
+            CD_free(((CDPacketMapChunk*) self->data)->item);
         } break;
 
         case CDMultiBlockChange: {
-            CD_free(((CDPacketMultiBlockChange*) object->data)->coordinate);
-            CD_free(((CDPacketMultiBlockChange*) object->data)->type);
-            CD_free(((CDPacketMultiBlockChange*) object->data)->metadata);
+            CD_free(((CDPacketMultiBlockChange*) self->data)->coordinate);
+            CD_free(((CDPacketMultiBlockChange*) self->data)->type);
+            CD_free(((CDPacketMultiBlockChange*) self->data)->metadata);
         } break;
 
         case CDExplosion: {
-            CD_free(((CDPacketExplosion*) object->data)->item);
+            CD_free(((CDPacketExplosion*) self->data)->item);
         } break;
 
         case CDOpenWindow: {
-            MC_DestroyString(((CDPacketOpenWindow*) object->data)->title);
+            MC_DestroyString(((CDPacketOpenWindow*) self->data)->title);
         } break;
 
         case CDWindowItems: {
-            CD_free(((CDPacketWindowItems*) object->data)->item);
+            CD_free(((CDPacketWindowItems*) self->data)->item);
         } break;
 
         case CDUpdateSign: {
-            MC_DestroyString(((CDPacketUpdateSign*) object->data)->first);
-            MC_DestroyString(((CDPacketUpdateSign*) object->data)->second);
-            MC_DestroyString(((CDPacketUpdateSign*) object->data)->third);
-            MC_DestroyString(((CDPacketUpdateSign*) object->data)->fourth);
+            MC_DestroyString(((CDPacketUpdateSign*) self->data)->first);
+            MC_DestroyString(((CDPacketUpdateSign*) self->data)->second);
+            MC_DestroyString(((CDPacketUpdateSign*) self->data)->third);
+            MC_DestroyString(((CDPacketUpdateSign*) self->data)->fourth);
         } break;
 
         case CDDisconnect: {
-            MC_DestroyString(((CDPacketDisconnect*) object->data)->reason);
+            MC_DestroyString(((CDPacketDisconnect*) self->data)->reason);
         } break;
     }
 
-    CD_free(object->data);
-    CD_free(object);
+    CD_free(self->data);
+    CD_free(self);
 }
 
 void*
-CD_GetPacketDataFromEvent (CDPacket* packet, struct bufferevent* event)
+CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event)
 {
     void*  data   = NULL;
     size_t length = 0;
 
-    switch (packet->type) {
+    switch (self->type) {
         case CDKeepAlive: {
             evbuffer_drain(input, 1);
         } break;
@@ -164,4 +165,10 @@ CD_GetPacketDataFromEvent (CDPacket* packet, struct bufferevent* event)
     }
 
     return data;
+}
+
+bstring
+CD_PacketToRaw (CDPacket* self)
+{
+
 }

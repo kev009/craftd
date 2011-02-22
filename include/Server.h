@@ -28,12 +28,21 @@
 
 #include "Config.h"
 #include "Workers.h"
+#include "Plugins.h"
+#include "Logger.h"
 
 typedef struct _CDServer {
     CDWorkers* workers;
     CDConfig*  config;
+    CDPlugins* plugins;
+
+    CDLogger logger;
 } CDServer;
 
 CDServer* CD_CreateServer (const char* path);
+
+void CD_DestroyServer (CDServer* self);
+
+void CD_RunServer (CDServer* self);
 
 #endif

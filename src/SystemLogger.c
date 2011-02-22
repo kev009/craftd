@@ -23,34 +23,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKERS_H
-#define CRAFTD_WORKERS_H
 
-#include "Worker.h"
+#include "Logger.h"
 
-struct _CDServer;
-
-typedef struct _CDWorkers {
-    int64_t last;
-
-    size_t     length;
-    CDWorker** item;
-
-    struct _CDServer* server;
-
-    pthread_attr_t  attributes;
-    pthread_cond_t  condition;
-    pthread_mutex_t mutex;
-} CDWorkers;
-
-CDWorkers* CD_CreateWorkers (struct _CDServer* server);
-
-void CD_DestroyWorkers (CDWorkers* self);
-
-CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
-
-CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
-
-CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
-
-#endif
+CDLogger CDSystemLogger = {
+    .log        = syslog,
+    .setlogmask = setlogmask,
+    .closelog   = closelog,
+};

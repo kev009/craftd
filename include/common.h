@@ -32,6 +32,7 @@
 #include <errno.h>
 #include "memory.h"
 #include "bstrlib.h"
+#include "bstraux.h"
 
 typedef struct _CDLocks {
     pthread_rwlock_t rw;

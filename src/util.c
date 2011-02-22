@@ -136,9 +136,7 @@ ev_log_callback(int severity, const char *msg)
 int
 ismc_utf8(const char *str)
 { 
-  const char *MC_UTF8 = 
-  "\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghi"
-  " jklmnopqrstuvwxyz{|}~.???????????????????????????????.?????Ѫ?????????";
+  static const char *MC_UTF8 = "#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»";
 
   if( strspn(str, MC_UTF8) == strlen(str) )
     return 1; // Valid

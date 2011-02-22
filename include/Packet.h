@@ -495,7 +495,7 @@ typedef struct _CDPacketUpdateSign {
     MCPosition position;
 
     MCString first;
-    MCString secod;
+    MCString second;
     MCString third;
     MCString fourth;
 } CDPacketUpdateSign;
@@ -506,10 +506,10 @@ typedef struct _CDPacketDisconnect {
 
 CDPacket* CD_PacketFromEvent (struct bufferevent* event);
 
-void CD_DestroyPacket (CDPacket* packet);
+void CD_DestroyPacket (CDPacket* self);
 
-void* CD_GetPacketDataFromEvent (CDPacket* packet, struct bufferevent* event);
+void* CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event);
 
-MCString CD_PacketToRaw (CDPacket* packet);
+bstring CD_PacketToRaw (CDPacket* self);
 
 #endif

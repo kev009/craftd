@@ -31,19 +31,15 @@
 /**
  * Simple free wrapper
  *
- * @param pointer the pointer to free
- *
- * @return NULL
+ * @param pointer The pointer to free
  */
 static inline
-void*
+void
 CD_free (void* pointer)
 {
     if (pointer) {
         free(pointer);
     }
-
-    return NULL;
 }
 
 /**

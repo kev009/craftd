@@ -23,34 +23,61 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKERS_H
-#define CRAFTD_WORKERS_H
 
-#include "Worker.h"
+#include "Logger.h"
 
-struct _CDServer;
+static int cd_mask = 0;
 
-typedef struct _CDWorkers {
-    int64_t last;
+static
+void
+cd_ConsoleLog (int priority, const char* format, ...)
+{
+    static const char* names[] = {
+        "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
+    };
 
-    size_t     length;
-    CDWorker** item;
+    va_list ap;
 
-    struct _CDServer* server;
+    va_start(ap, format);
+  
+    /* Return on MASKed log priorities */
+    if (LOG_MASK(priority) & cd_mask) {
+        return;
+    }
 
-    pthread_attr_t  attributes;
-    pthread_cond_t  condition;
-    pthread_mutex_t mutex;
-} CDWorkers;
+    if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
+        printf("UNKNOWN: ");
+    }
+    else {
+        printf("%s", names[priority]);
+    }
 
-CDWorkers* CD_CreateWorkers (struct _CDServer* server);
+    vprintf(format, ap);
+    printf("\n");
+  
+    va_end(ap);
+}
 
-void CD_DestroyWorkers (CDWorkers* self);
+static
+int cd_ConsoleSetLogMask (int mask)
+{
+    int old = cd_mask;
 
-CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
+    if (mask != 0) {
+        cd_mask = mask;
+    }
 
-CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
+    return old;
+}
 
-CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
+static
+void cd_ConsoleCloseLog (void)
+{
+    fflush(stdout);
+}
 
-#endif
+CDLogger CDConsoleLogger = {
+    .log        = cd_ConsoleLog,
+    .setlogmask = cd_ConsoleSetLogMask,
+    .closelog   = cd_ConsoleCloseLog,
+};

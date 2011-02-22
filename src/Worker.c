@@ -29,28 +29,29 @@
 CDWorker*
 CD_CreateWorker (void)
 {
-    CDWorker* object = CD_malloc(sizeof(CDWorker));
+    CDWorker* self = CD_malloc(sizeof(CDWorker));
 
     if (!object) {
         return NULL;
     }
 
-    object->id      = 0;
-    object->working = NULL;
-    object->thread  = NULL;
+    self->id      = 0;
+    self->working = NULL;
+    self->thread  = NULL;
 
     return object;
 }
 
 void
-CD_DestroyWorker (CDWorker* object)
+CD_DestroyWorker (CDWorker* self)
 {
-    if (object->thread) {
-        pthread_cancel(object->thread);
+    if (self->thread) {
+        self->working = false;
+        pthread_cancel(self->thread);
     }
 
-    CD_free(object->working);
-    CD_free(object);
+    CD_free(self->working);
+    CD_free(self);
 }
 
 void*
@@ -76,22 +77,22 @@ CD_RunWorker (void* arg)
 
         LOGT(LOG_DEBUG, "in worker: %d", self->id);
 
-        self->working = STAILQ_FIRST(&CDJobs);
+        self->job = STAILQ_FIRST(&CDJobs);
         STAILQ_REMOVE_HEAD(&CDJobs, entries);
         pthread_mutex_unlock(self->workers->mutex);
 
-        if (self->working->lock != NULL) { //this will auto lock any type of WQ
-            pthread_rwlock_wrlock(self->working->lock);
+        if (self->job->lock != NULL) { //this will auto lock any type of WQ
+            pthread_rwlock_wrlock(self->job->lock);
         }
 
-        if (self->working->type == CDGameInput || self->working->type == CDProxyInput) {
-            if (!self->working->event || !self->working->player) {
+        if (self->job->type == CDGameInput || self->job->type == CDProxyInput) {
+            if (!self->job->event || !self->job->player) {
                 LOG(LOG_CRIT, "Aaack, null event or context in worker?");
 
                 goto WORKER_ERR;
             }
 
-            self->working->packet = CD_PacketFromEvent(self->working->event);
+            self->job->packet = CD_PacketFromEvent(self->workers->server, self->job->event);
         }
     }
 

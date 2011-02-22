@@ -28,18 +28,42 @@
 CDServer*
 CD_CreateServer (const char* path)
 {
-    CDServer* object = malloc(sizeof(CDServer));
+    CDServer* self = CD_malloc(sizeof(CDServer));
 
-    if (!object) {
+    if (!self) {
         return NULL;
     }
 
-    object->config  = CD_ParseConfig(path);
-    object->workers = CD_CreateWorkers(object);
+    self->logger = CDConsoleLogger;
 
-    if (!object->config || !object->workers) {
-        free(object);
+    self->config  = CD_ParseConfig(path);
+    self->workers = CD_CreateWorkers(self);
+    self->plugins = CD_CreatePlugins(self)
+
+    if (!self->config || !self->workers) {
+        CD_DestroyServer(self)
     }
+/*
+    size_t i;
 
-    return object;
+    for (i = 0; i < self->config->plugins->length) {
+        CD_LoadPlugin(self->plugins, self->config->plugins->item[i]);
+    }
+*/
+
+    return self;
+}
+
+void
+CD_DestroyServer (CDServer* self)
+{
+    CD_DestroyConfig(self->config)
+    CD_DestroyWorkers(self->workers)
+    CD_DestroyPlugins(self->plugins);
+}
+
+void
+CD_RunServer (CDServer* self)
+{
+
 }

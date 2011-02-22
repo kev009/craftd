@@ -30,79 +30,81 @@
 CDWorkers*
 CD_CreateWorkers (CDServer* server)
 {
-    CDWorkers* object = CD_malloc(sizeof(CDWorkers));
+    CDWorkers* self = CD_malloc(sizeof(CDWorkers));
 
-    if (!object) {
+    if (!self) {
         return NULL;
     }
 
-    object->server = server;
-    object->length = 0;
-    object->item   = NULL;
+    self->server = server;
+    self->last   = 0;
+    self->length = 0;
+    self->item   = NULL;
 
-    pthread_attr_init(&object->attributes);
-    pthread_attr_setdetachstate(&object->attributes, PTHREAD_CREATE_DETACHED);
+    pthread_attr_init(&self->attributes);
+    pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
 
-    pthread_mutex_init(&object->mutex, NULL);
+    pthread_mutex_init(&self->mutex, NULL);
     
-    if (pthread_cond_init(&object->condition, NULL) != 0) {
-        return CD_DestroyWorkers(object);
+    if (pthread_cond_init(&self->condition, NULL) != 0) {
+        return CD_DestroyWorkers(self);
     }
 
-    return object;
+    return self;
 }
 
 void
-CD_DestroyWorkers (CDWorkers* object)
+CD_DestroyWorkers (CDWorkers* self)
 {
     size_t i;
 
-    for (i = 0; i < object->length; i++) {
-        CD_DestroyWorker(object->item[i]);
+    for (i = 0; i < self->length; i++) {
+        CD_DestroyWorker(self->item[i]);
     }
 
-    CD_free(object->item);
-    CD_free(object);
+    CD_free(self->item);
+    CD_free(self);
 }
 
 CDWorker**
-CD_SpawnWorkers (CDWorkers* workers, size_t number)
+CD_SpawnWorkers (CDWorkers* self, size_t number)
 {
     CDWorker** result = CD_malloc(sizeof(CDWorker*) * number);
     size_t i;
 
     for (i = 0; i < number; i++) {
-        result[i]     = CD_CreateWorker();
-        result[i]->id = workers->length + i;
+        result[i]          = CD_CreateWorker();
+        result[i]->id      = ++self->last;
+        result[i]->working = true;
         
-        if (pthread_create(&result[i]->thread, &workers->attributes, CD_RunWorker, result[i]) != 0) {
+        if (pthread_create(&result[i]->thread, &self->attributes, CD_RunWorker, result[i]) != 0) {
             ERR("Worker pool startup failed!");
         }
     }
 
-    CD_ConcatWorkers(workers, result, number)
+    CD_ConcatWorkers(self, result, number)
 
     return result;
 }
 
 CDWorkers*
-CD_ConcatWorkers (CDWorkers* workers, CDWorker** items, size_t length)
+CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t length)
 {
     size_t i;
 
     for (i = 0; i < length; i++) {
-        CD_AppendWorker(workers, items[i]);
+        CD_AppendWorker(self, workers[i]);
     }
 
-    return workers;
+    return self;
 }
 
 CDWorkers*
-CD_AppendWorker (CDWorkers* workers, CDWorker* worker)
+CD_AppendWorker (CDWorkers* self, CDWorker* worker)
 {
-    workers->item = CD_realloc(workers->item, sizeof(CDWorker*) * ++workers->length);
+    self->item = CD_realloc(self->item, sizeof(CDWorker*) * ++self->length);
 
-    workers->item[workers->length - 1] = worker;
+    self->item[self->length - 1] = worker;
 
-    return workers;
+    return self;
 }

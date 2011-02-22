@@ -37,7 +37,8 @@ typedef struct _CDWorker {
 
     struct _CDWorkers* workers;
 
-    CDJob* working;
+    CDJob* job;
+    bool   working;
 } CDWorker;
 
 /**
@@ -50,7 +51,7 @@ CDWorker* CD_CreateWorker (void);
  *
  * @param worker The worker object to destroy
  */
-void CD_DestroyWorker (CDWorker* object);
+void CD_DestroyWorker (CDWorker* self);
 
 /**
  * Main thread function, pass the result of CD_CreateWorker as argument.

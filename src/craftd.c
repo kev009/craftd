@@ -26,10 +26,7 @@
 #include <config.h>
  
 #include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <syslog.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -43,36 +40,23 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
-#include "bstrlib.h"
-#include "bstraux.h"
-
 #include "craftd-config.h"
-
-#include "util.h"
-#include "mapchunk.h"
-#include "network/network.h"
-#include "timeloop.h"
-#include "httpd.h"
+#include "common.h"
 
 /**
  * Try and perform cleanup with an atexit call
  */
 void
-exit_handler(void)
+cd_ExitHandler (void)
 {
   LOG(LOG_INFO, "Exiting.");
   closelog();
 }
 
-/**
- * Temporary entity ID creation
- */
 int
-newEid()
+main (int argc, char** argv)
 {
-  static int eid = 0;
-  eid++;
-  return eid;
+
 }
 
 void
