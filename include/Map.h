@@ -23,52 +23,52 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_HASH_H
-#define CRAFTD_HASH_H
+#ifndef CRAFTD_MAP_H
+#define CRAFTD_MAP_H
 
 #include <stdbool.h>
 #include "khash.h"
 
-KHASH_MAP_INIT_STR(cdHash, void*);
+KHASH_MAP_INIT_INT(cdMap, void*);
 
-typedef struct _CDHash {
-    khash_t(cdHash)* hash;
+typedef struct _CDMap {
+    khash_t(cdMap)* map;
 
     pthread_rwlock_t lock;
-} CDHash;
+} CDMap;
 
-typedef khiter_t CDHashIterator;
+typedef khiter_t CDMapIterator;
 
-CDHash* CD_CreateHash (void);
+CDMap* CD_CreateMap (void);
 
-void CD_DestroyHash (CDHash* self);
+void CD_DestroyMap (CDMap* self);
 
-CDHashIterator CD_HashBegin (CDHash* self);
+CDMapIterator CD_MapBegin (CDMap* self);
 
-CDHashIterator CD_HashEnd (CDHash* self);
+CDMapIterator CD_MapEnd (CDMap* self);
 
-size_t CD_HashLength (CDHash* self);
+size_t CD_MapLength (CDMap* self);
 
-const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
+int CD_MapIteratorKey (CDMapIterator iterator);
 
-void* CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
+void* CD_MapIteratorValue (CDMapIterator iterator);
 
-bool CD_HashIteratorValid (CDHash* self, CDHashIterator iterator);
+bool CD_MapIteratorValid (CDMap* self, CDHashIterator iterator);
 
-void* CD_HashGet (CDHash* self, const char* name);
+void* CD_MapGet (CDMap* self, int id);
 
-void* CD_HashSet (CDHash* self, const char* name, void* data);
+void* CD_MapSet (CDMap* self, int id, void* data);
 
-void* CD_HashDelete (CDHash* self, const char* name);
+void* CD_MapDelete (CDMap* self, int id);
 
-void** CD_HashClear (CDHash* self);
+void** CD_MapClear (CDMap* self);
 
-#define CD_HASH_FOREACH_BEGIN(hash, it) \
-    for (CDHashIterator it = CD_HashEnd(hash); it != CD_HashBegin(hash); it--) {    \
-        if (!CD_HashIteratorValid(hash, it)) {                                      \
-            continue;                                                               \
+#define CD_MAP_FOREACH_BEGIN(map, it) \
+    for (CDMapIterator it = CD_MapEnd(map); it != CD_MapBegin(map); it--) { \
+        if (!CD_MapIteratorValid(map, it)) {                                \
+            continue;                                                       \
         }
 
-#define CD_HASH_FOREACH_END(hash) }
+#define CD_MAP_FOREACH_END(map) }
 
 #endif

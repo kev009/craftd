@@ -162,3 +162,4 @@ ClientBin
 stylecop.*
 ~$*
 *.dbmdl
+test

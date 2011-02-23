@@ -52,6 +52,9 @@ CD_CreateServer (const char* path)
         CD_DestroyServer(self)
     }
 
+    self->entiies = CD_CreateMap();
+    self->players = CD_CreateHash();
+
     self->event.callbacks = CD_CreateHash();
 
 /*
@@ -119,19 +122,27 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
         SERR(self, "too many clients");
         return;
     }
+
+    if (getpeername(fd, (struct sockaddr*) &storage, &length) < 0) {
+        SERR("could not get peer IP");
+        close(fd);
+        return;
+    }
+
+    player = CD_CreatePlayer(server);
 }
 
 bool
 CD_RunServer (CDServer* self)
 {
     if ((self->event.base = event_base_new()) == NULL) {
-        ERR("could not create MC libevent base!");
+        SERR(self, "could not create MC libevent base!");
 
         return false;
     }
 
     if ((self->socket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-        ERR("could not create socket!");
+        SERR(self, "could not create socket!");
 
         return false;
     }
@@ -150,6 +161,31 @@ CD_RunServer (CDServer* self)
     event_add(self->event.listener, NULL);
 
     return event_base_dispatch(self->event.base) != 0;
+}
+
+MCEntityId
+CD_ServerGetNewEntityId (CDServer* self)
+{
+    MCEntityId    result;
+    CDMapIterator it
+    size_t        i;
+
+    if (CD_MapLength(self->entities) != 0) {
+        it = CD_MapEnd() - 1;
+
+        if ((result = CD_MapIteratorValue(it)) >= INT_MAX) {
+            for (it = CD_MapBegin(self->entities); it != CD_MapEnd(self->entities); it++) {
+                if (CD_MapIteratorValue) {
+
+                }
+            }
+        }
+    }
+    else {
+        result = INT_MIN;
+    }
+
+    return result;
 }
 
 bool

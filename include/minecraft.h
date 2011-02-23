@@ -52,16 +52,6 @@ typedef bstring MCString;
 
 void MC_DestroyString (MCString object);
 
-typedef struct _MCEntity {
-    MCInteger id;
-}
-
-typedef struct _MCItem {
-  MCShort id;
-  MCByte  count;
-  MCShort uses;
-} MCItem;
-
 typedef struct _MCSize {
     MCByte x;
     MCByte y;
@@ -84,7 +74,7 @@ typedef struct _MCPrecisePosition {
     MCDouble x;
     MCDouble y;
     MCDouble z;
-} MCPosition;
+} MCPrecisePosition;
 
 typedef enum _MCWoolColor {
     MCWhiteWool,
@@ -105,12 +95,35 @@ typedef enum _MCWoolColor {
     MCBlackWool
 } MCWoolColor;
 
-typedef struct MCData {
+typedef MCInteger MCEntityId;
+
+const MCEntityId MCMaxEntityId = INT_MAX;
+
+typedef enum _MCEntityType {
+    MCPlayer,
+    MCDPickup,
+    MCMob,
+    MCObject
+} MCEntityType;
+
+typedef struct _MCEntity {
+    MCEntityId   id;
+    MCEntityType type;
+    MCPosition   position;
+} MCEntity;
+
+typedef struct _MCItem {
+  MCShort id;
+  MCByte  count;
+  MCShort uses;
+} MCItem;
+
+typedef struct _MCData {
     enum {
         MCTypeByte,
         MCTypeShort,
-        MCTypeInteger
-        MCTypeFloat
+        MCTypeInteger,
+        MCTypeFloat,
         MCTypeString,
         MCTypeShortByteShort
     } type;
@@ -120,7 +133,7 @@ typedef struct MCData {
         MCShort   s;
         MCInteger i;
         MCFloat   f;
-        MCString  s;
+        MCString  S;
 
         struct {
             MCShort first;
@@ -128,12 +141,12 @@ typedef struct MCData {
             MCShort third;
         } sbs;
     } data;
-}
+} MCData;
 
-typedef struct MCMetadata {
+typedef struct _MCMetadata {
     size_t   length;
     MCData** item;
-}
+} MCMetadata;
 
 MCMetadata* MC_CreateMetadata (void);
 

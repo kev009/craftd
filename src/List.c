@@ -24,6 +24,8 @@
  */
 
 #include "List.h"
+#include "memory.h"
+#include "pthread.h"
 
 CDList*
 CD_CreateList (void)
@@ -42,14 +44,18 @@ CD_CreateList (void)
     return self;
 }
 
-void
+void**
 CD_DestroyList (CDList* self)
 {
+    void** result = CD_ListClear(self);
+
     kl_destroy(cdList, self->list);
 
     pthread_rwlock_destroy(&self->lock);
 
     CD_free(self);
+
+    return result;
 }
 
 CDListIterator

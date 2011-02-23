@@ -119,9 +119,9 @@ MC_MetadataFromEvent (struct bufferevent* event)
         if (type == 127) {
             break;
         }
-        
+
         current       = MC_CreateData();
-        current->type = type;
+        current->type = type >> 5;
 
         if (current->type == MCTypeString) {
             evbuffer_remove(input, &length, 2);

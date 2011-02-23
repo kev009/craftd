@@ -23,21 +23,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Hash.h"
+#include "Map.h"
 #include "memory.h"
 #include "pthread.h"
 
-CDHash*
-CD_CreateHash (void)
+CDMap*
+CD_CreateMap (void)
 {
-    CDHash* self = CD_malloc(sizeof(CDHash));
+    CDMap* self = CD_malloc(sizeof(CDMap));
 
     if (!self) {
-//        ERR("could not allocate a Hash object");
+        ERR("could not allocate a Map object");
         return NULL;
     }
 
-    self->hash = kh_init(cdHash);
+    self->map = kh_init(cdMap);
 
     pthread_rwlock_init(&self->lock, NULL);
 
@@ -45,98 +45,98 @@ CD_CreateHash (void)
 }
 
 void
-CD_DestroyHash (CDHash* self)
+CD_DestroyMap (CDMap* self)
 {
-    kh_destroy(cdHash, self->hash);
+    kh_destroy(cdMap, self->map);
 
     pthread_rwlock_destroy(&self->lock);
 
     CD_free(self);
 }
 
-CDHashIterator
-CD_HashBegin (CDHash* self)
+CDMapIterator
+CD_MapBegin (CDMap* self)
 {
-    CDHashIterator it;
+    CDMapIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_begin(self->hash);
+    it = kh_begin(self->map);
     pthread_rwlock_unlock(&self->lock);
 
     return it;
 }
 
-CDHashIterator
-CD_HashEnd (CDHash* self)
+CDMapIterator
+CD_MapEnd (CDMap* self)
 {
-    CDHashIterator it;
+    CDMapIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_end(self->hash);
+    it = kh_end(self->map);
     pthread_rwlock_unlock(&self->lock);
 
     return it;
 }
 
 size_t
-CD_HashLength (CDHash* self)
+CD_MapLength (CDMap* self)
 {
     size_t result;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_size(self->hash);
+    result = kh_size(self->map);
     pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
 
-const char*
-CD_HashIteratorKey (CDHash* self, CDHashIterator iterator)
+int
+CD_MapIteratorKey (CDMapIterator iterator)
 {
-    const char* result = NULL;
+    int result = NULL;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_key(self->hash, iterator);
+    result = kh_key(self->map, iterator);
     pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
 
 void*
-CD_HashIteratorValue (CDHash* self, CDHashIterator iterator)
+CD_MapIteratorValue (CDMapIterator iterator)
 {
     void* result = NULL;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_value(self->hash, iterator);
+    result = kh_value(self->map, iterator);
     pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
 
 bool
-CD_HashIteratorValid (CDHash* self, CDHashIterator iterator)
+CD_MapIteratorValid (CDMap* self, CDHashIterator iterator)
 {
     bool result = false;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_exist(self->hash, iterator);
+    result = kh_exist(self->map, iterator);
     pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
 
 void*
-CD_HashGet (CDHash* self, const char* name)
+CD_MapGet (CDMap* self, int id)
 {
     void*    result = NULL;
     khiter_t it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_get(cdHash, self->hash, name);
+    it = kh_get(cdMap, self->map, id);
 
-    if (it != kh_end(self->hash) && kh_exist(self->hash, it)) {
-        result = kh_value(self->hash, it);
+    if (it != kh_end(self->map) && kh_exist(self->map, it)) {
+        result = kh_value(self->map, it)
     }
     pthread_rwlock_unlock(&self->lock);
 
@@ -144,42 +144,42 @@ CD_HashGet (CDHash* self, const char* name)
 }
 
 void*
-CD_HashSet (CDHash* self, const char* name, void* data)
+CD_MapSet (CDMap* self, int id, void* data)
 {
     void*    old = NULL;
     khiter_t it;
     int      ret;
 
     pthread_rwlock_wrlock(&self->lock);
-    it                       = kh_put(cdHash, self->hash, name, &ret);
-    old                      = kh_value(self->hash, it);
-    kh_value(self->hash, it) = data;
+    it                       = kh_put(cdMap, self->map, id, &ret);
+    old                      = kh_value(self->map, it);
+    kh_value(self->map, it) = data;
     pthread_rwlock_unlock(&self->lock);
 
     return old;
 }
 
 void*
-CD_HashDelete (CDHash* self, const char* name)
+CD_MapDelete (CDMap* self, int id)
 {
     void*    old = NULL;
     khiter_t it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_get(cdHash, self->hash, name);
+    it = kh_get(cdMap, self->map, id);
 
-    if (it != kh_end(self->hash) && kh_exist(self->hash, it)) {
-        old = kh_value(self->hash, it);
+    if (it != kh_end(self->map) && kh_exist(self->map, it)) {
+        old = kh_value(self->map, it)
     }
 
-    kh_del(cdHash, self->hash, it);
+    kh_del(cdMap, self->map, it);
     pthread_rwlock_unlock(&self->lock);
 
     return old;
 }
 
 void**
-CD_HashClear (CDHash* self)
+CD_MapClear (CDMap* self)
 {
     void**   result = NULL;
     size_t   i      = 0;
@@ -187,18 +187,18 @@ CD_HashClear (CDHash* self)
 
     pthread_rwlock_wrlock(&self->lock);
 
-    for (it = kh_begin(self->hash); it != kh_end(self->hash); it++) {
-        if (kh_exist(self->hash, it)) {
+    for (it = kh_begin(self->map); it != kh_end(self->map); it++) {
+        if (kh_exist(self->map, it)) {
             i++;
 
             result        = CD_realloc(result, sizeof(void*) * (i + 1));
-            result[i - 1] = kh_value(self->hash, it);
+            result[i - 1] = kh_value(self->map, it);
         }
     }
 
     result[i] = NULL;
 
-    kh_clear(cdHash, self->hash);
+    kh_clear(cdMap, self->map);
     pthread_rwlock_unlock(&self->lock);
 
     return result;

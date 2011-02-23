@@ -32,16 +32,14 @@
 struct _CDServer;
 
 typedef struct _CDPlayer {
+    MCEntity entity;
+
     struct _CDServer* server;
 
     bstring   name;
     char[128] ip;
 
-    MCEntity entity;
-
-    MCPosition position;
-
-    evutil_socket_t     fd;
+    evutil_socket_t     socket;
     struct bufferevent* event;
 
     CDHash* _private;

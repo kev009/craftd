@@ -28,7 +28,9 @@
 
 #include "klist.h"
 
-KLIST_INIT(cdList, void*);
+#define __cdList_free(x)
+
+KLIST_INIT(cdList, void*, __cdList_free);
 
 typedef struct _CDList {
     klist_t(cdList)* _list;
@@ -40,7 +42,7 @@ typedef kliter_t(cdList)* CDListIterator;
 
 CDList* CD_CreateList (void);
 
-void CD_DestroyList (CDList* self);
+void** CD_DestroyList (CDList* self);
 
 CDListIterator CD_ListBegin (CDList* self);
 
@@ -59,5 +61,10 @@ void* CD_ListDelete (CDList* self, void* data);
 void* CD_ListDeleteAll (CDList* self, void* data);
 
 void** CD_ListClear (CDList* self);
+
+#define CD_LIST_FOREACH_BEGIN(list, it) \
+    for (CDListIterator it = CD_ListBegin(list); it != CD_ListEnd(list); it = CD_ListNext(it)) {
+
+#define CD_LIST_FOREACH_END(list) }
 
 #endif

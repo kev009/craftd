@@ -26,7 +26,7 @@
 #ifndef CRAFTD_MEMORY_H
 #define CRAFTD_MEMORY_H
 
-#include "common.h"
+#include <stdlib.h>
 
 /**
  * Simple free wrapper
@@ -57,7 +57,7 @@ CD_calloc (size_t number, size_t size)
     void* pointer;
 
     if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
-        ERR("could not allocate memory with a calloc");
+//        CERR("could not allocate memory with a calloc");
     }
 
     return pointer;
@@ -77,7 +77,7 @@ CD_malloc (size_t size)
     void* pointer;
 
     if ((pointer = malloc(size)) == NULL) {
-        ERR("could not allocate memory with a malloc");
+//        CERR("could not allocate memory with a malloc");
     }
 
     return pointer;
@@ -102,15 +102,15 @@ CD_realloc (void* pointer, size_t size)
     }
 
     if (size == 0) {
-        return CD_free(pointer);
+        CD_free(pointer);
+        return NULL;
     }
 
     if ((newPointer = realloc(pointer, size)) == NULL) {
-      ERR("could not allocate memory with a realloc");
+//      CERR("could not allocate memory with a realloc");
     }
 
     return newPointer;
-  }
 }
 
 #endif
