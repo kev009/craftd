@@ -32,6 +32,8 @@
 #include "Logger.h"
 #include "Players.h"
 
+#include "List.h"
+
 typedef struct _CDServer {
     char* name;
 
@@ -44,7 +46,14 @@ typedef struct _CDServer {
     struct {
         struct event_base* base;
         struct event*      listener;
+
+
+        CDHash* callbacks;
     } event;
+
+    struct {
+        pthread
+    } lock;
 
     evutil_socket_t socket;
 
@@ -59,7 +68,35 @@ char* CD_ServerToString (CDServer* self);
 
 void CD_RunServer (CDServer* self);
 
-bool CD_EventDispatch (CDServer* self, const char* name, ...);
+typedef void (*CDEventCallback)();
+
+bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
+
+bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
+
+#define CD_EventDispatch (server, eventName, ...)                                           \
+    do {                                                                                    \
+        if (!cd_EventBeforeDispatch(server, eventName, __VA_ARGS__)) {                      \
+            break;                                                                          \
+        }                                                                                   \
+                                                                                            \
+        CDList*        callbacks = CD_HashGet(server->events, eventName);                   \
+        CDListIterator it;                                                                  \
+                                                                                            \
+        if (callbacks) {                                                                    \
+            for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {   \
+                if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, __VA_ARGS__)) {    \
+                    break;                                                                  \
+                }                                                                           \
+            }                                                                               \
+        }                                                                                   \
+                                                                                            \
+        cd_EventAfterDispatch(server, eventName, __VA_ARGS__);                              \
+    } while (0)
+
+void CD_EventRegister (CDServer* server, const char* eventName, CDEventCallback callback);
+
+void CD_EventUnregister (CDServer* server, const char* eventName, CDEventCallback callback);
 
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN
 extern CDServer* CDMainServer;

@@ -27,6 +27,8 @@
 #include "Server.h"
 #undef CRAFTD_SERVER_IGNORE_EXTERN
 
+#include "List.h"
+
 CDServer* CDMainServer = NULL;
 
 CDServer*
@@ -38,6 +40,8 @@ CD_CreateServer (const char* path)
         return NULL;
     }
 
+    pthread_rwlock_init(&self->lock.events, NULL);
+
     self->logger = CDConsoleLogger;
 
     self->config  = CD_ParseConfig(path);
@@ -48,6 +52,8 @@ CD_CreateServer (const char* path)
         CD_DestroyServer(self)
     }
 
+    self->event.callbacks = CD_CreateHash();
+
 /*
     size_t i;
 
@@ -56,7 +62,7 @@ CD_CreateServer (const char* path)
     }
 */
 
-    self->_private = CD_CreatePrivateData();
+    self->_private = CD_CreateHash();
 
     return self;
 }
@@ -64,11 +70,25 @@ CD_CreateServer (const char* path)
 void
 CD_DestroyServer (CDServer* self)
 {
+    pthread_rwlock_destroy(&self->lock.events);
+
     CD_DestroyConfig(self->config)
     CD_DestroyWorkers(self->workers)
     CD_DestroyPlugins(self->plugins);
 
-    CD_DestroyPrivateData(self->_private);
+    if (self->event.base) {
+        event_base_free(self->event.base);
+        self->event.base = NULL;
+    }
+
+    if (self->event.listener) {
+        event_free(self->event.listener);
+        self->event.listener = NULL;
+    }
+
+    CD_DestroyHash(self->event.callbacks);
+
+    CD_DestroyHash(self->_private);
 
     CD_free(self->name);
 }
@@ -83,28 +103,22 @@ static
 void
 cd_Accept (evutil_socket_t listener, short event, void* arg)
 {
-    struct sockaddr_storage storage;
+    CDServer*               self = arg;
     CDPlayer*               player;
-    CDServer*               self   = arg;
-
-    if (self->players->length >= self->config->max_players) {
-        SERR(self, "too many clients");
-        return;
-    }
-
-    socklen_t length = sizeof(storage);
-    int       fd     = accept(listener, (struct sockaddr*) &storage, &length);
+    struct sockaddr_storage storage;
+    socklen_t               length = sizeof(storage);
+    int                     fd     = accept(listener, (struct sockaddr*) &storage, &length);
 
     if (fd < 0) {
         SERR(self, "accept error");
         return;
     }
 
-  else if (fd > FD_SETSIZE)
-  {
-    LOG(LOG_CRIT, "too many clients");
-    close(fd);
-  }
+    if (self->players->length >= self->config->max_players) {
+        close(fd);
+        SERR(self, "too many clients");
+        return;
+    }
 }
 
 bool
@@ -134,6 +148,75 @@ CD_RunServer (CDServer* self)
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
 
     event_add(self->event.listener, NULL);
-    
+
     return event_base_dispatch(self->event.base) != 0;
+}
+
+bool
+cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
+{
+    CDList*        callbacks = CD_HashGet(self->events, "Event.dispatch:before");
+    CDListIterator it;
+    va_list        ap;
+
+    va_start(ap, eventName);
+
+    for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {
+        if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, eventName, ap)) {
+            va_end(ap);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
+cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
+{
+    CDList*        callbacks = CD_HashGet(self->events, "Event.dispatch:after");
+    CDListIterator it;
+    va_list        ap;
+
+    va_start(ap, eventName);
+
+    for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {
+        if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, eventName, ap)) {
+            va_end(ap);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void
+CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callback)
+{
+    CDList* callbacks = CD_HashGet(self->events, eventName);
+
+    if (!callbacks) {
+        callbacks = CD_ListCreate();
+    }
+
+    CD_ListPush(callbacks, callback);
+
+    CD_HashSet(self->events, eventName, callbacks);
+}
+
+void
+CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callback)
+{
+    CDList* callbacks = CD_HashGt(self->events, eventName);
+
+    if (!callbacks) {
+        return;
+    }
+
+    if (callback) {
+        CD_ListDeleteAll(callbacks, callback);
+    }
+    else {
+        CD_ListClear(callbacks);
+    }
 }

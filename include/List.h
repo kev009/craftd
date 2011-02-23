@@ -23,43 +23,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PRIVATEDATA_H
-#define CRAFTD_PRIVATEDATA_H
+#ifndef CRAFTD_LIST_H
+#define CRAFTD_LIST_H
 
-#include "khash.h"
+#include "klist.h"
 
-KHASH_MAP_INIT_STR(cdHash, void*);
+KLIST_INIT(cdList, void*);
 
-typedef struct _CDHash {
-    khash_t(cdHash)* hash;
+typedef struct _CDList {
+    klist_t(cdList)* _list;
 
     pthread_rwlock_t lock;
-} CDHash
+} CDList;
 
-typedef khiter_t CDHashIterator;
+typedef kliter_t(cdList)* CDListIterator;
 
-CDHash* CD_CreateHash (void);
+CDList* CD_CreateList (void);
 
-void CD_DestroyHash (CDHash* self);
+void CD_DestroyList (CDList* self);
 
-CDHashIterator CD_HashBegin (CDHash* self);
+CDListIterator CD_ListBegin (CDList* self);
 
-CDHashIterator CD_HashEnd (CDHash* self);
+CDListIterator CD_ListEnd (CDList* self);
 
-size_t CD_HashLength (CDHash* self);
+CDListIterator CD_ListNext (CDList* self);
 
-alias(CD_HashLength, CD_HashSize);
+size_t CD_ListLength (CDList* self);
 
-const char* CD_HashIteratorKey (CDHashIterator iterator);
+CDList* CD_ListPush (CDList* self, void* data);
 
-void* CD_HashIteratorValue (CDHashIterator iterator);
+void* CD_ListShift (CDList* self);
 
-void* CD_HashGet (CDHash* self, const char* name);
+void* CD_ListDelete (CDList* self, void* data);
 
-void* CD_HashSet (CDHash* self, const char* name, void* data);
+void* CD_ListDeleteAll (CDList* self, void* data);
 
-void* CD_HashDelete (CDHash* self, const char* name);
-
-void** CD_HashClear (CDHash* self);
+void** CD_ListClear (CDList* self);
 
 #endif
