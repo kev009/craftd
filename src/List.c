@@ -44,6 +44,9 @@ CD_CreateList (void)
     return self;
 }
 
+CDList*
+CD_CloneList
+
 void**
 CD_DestroyList (CDList* self)
 {

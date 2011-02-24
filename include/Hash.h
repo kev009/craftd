@@ -41,11 +41,17 @@ typedef khiter_t CDHashIterator;
 
 CDHash* CD_CreateHash (void);
 
+CDHash* CD_CloneHash (CDHash* self);
+
 void CD_DestroyHash (CDHash* self);
 
 CDHashIterator CD_HashBegin (CDHash* self);
 
 CDHashIterator CD_HashEnd (CDHash* self);
+
+CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
+
+CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
 
 size_t CD_HashLength (CDHash* self);
 
@@ -61,14 +67,13 @@ void* CD_HashSet (CDHash* self, const char* name, void* data);
 
 void* CD_HashDelete (CDHash* self, const char* name);
 
+void* CD_HashFirst (CDHash* self);
+
+void* CD_HashLast (CDHash* self);
+
 void** CD_HashClear (CDHash* self);
 
-#define CD_HASH_FOREACH_BEGIN(hash, it) \
-    for (CDHashIterator it = CD_HashEnd(hash); it != CD_HashBegin(hash); it--) {    \
-        if (!CD_HashIteratorValid(hash, it)) {                                      \
-            continue;                                                               \
-        }
-
-#define CD_HASH_FOREACH_END(hash) }
+#define CD_HASH_FOREACH(hash, it) \
+    for (CDHashIterator it = CD_HashBegin(hash), end = CD_HashEnd(hash); it != end; it = CD_HashNext(hash, it))
 
 #endif

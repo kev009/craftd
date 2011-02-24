@@ -35,7 +35,11 @@ CD_CreatePlayer (struct _CDServer* server)
         return NULL;
     }
 
-    self->server   = server;
+    self->server          = server;
+    self->entity.id       = CD_ServerGenerateEntityId(server);
+    self->entity.type     = CDPlayer;
+    self->entity.position = { 0, 0, 0 };
+
     self->_private = CD_CreateHash();
 
     return self;

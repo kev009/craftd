@@ -44,6 +44,18 @@ CD_CreateHash (void)
     return self;
 }
 
+CDHash*
+CD_CloneHash (CDHash* self)
+{
+    CDHash* cloned = CD_CreateHash();
+
+    CD_HASH_FOREACH(self, it) {
+        CD_HashSet(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
+    }
+
+    return cloned;
+}
+
 void
 CD_DestroyHash (CDHash* self)
 {
@@ -60,7 +72,11 @@ CD_HashBegin (CDHash* self)
     CDHashIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_begin(self->hash);
+    it = kh_end(self->hash);
+
+    if (!kh_exist(self->hash, it)) {
+        it = CD_HashNext(self, it);
+    }
     pthread_rwlock_unlock(&self->lock);
 
     return it;
@@ -72,10 +88,46 @@ CD_HashEnd (CDHash* self)
     CDHashIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_end(self->hash);
+    it = kh_begin(self->hash) - 1;
     pthread_rwlock_unlock(&self->lock);
 
     return it;
+}
+
+CDHashIterator
+CD_HashNext (CDHash* self, CDHashIterator iterator)
+{
+    iterator--;
+
+    pthread_rwlock_rdlock(&self->lock);
+    for (; iterator != kh_begin(self->hash) && !kh_exist(self->hash, iterator); iterator--) {
+        continue;
+    }
+    pthread_rwlock_unlock(&self->lock);
+
+    if (!kh_exist(self->hash, iterator)) {
+        iterator = CD_HashEnd(self);
+    }
+
+    return iterator;
+}
+
+CDHashIterator
+CD_HashPrevious (CDHash* self, CDHashIterator iterator)
+{
+    iterator++;
+
+    pthread_rwlock_rdlock(&self->lock);
+    for (; iterator != CD_HashBegin(self) && !CD_HashIteratorValid(self, iterator); iterator++) {
+        continue;
+    }
+    pthread_rwlock_unlock(&self->lock);
+
+    if (!kh_exist(self->hash, iterator)) {
+        iterator = CD_HashBegin(self);
+    }
+
+    return iterator;
 }
 
 size_t
@@ -176,6 +228,18 @@ CD_HashDelete (CDHash* self, const char* name)
     pthread_rwlock_unlock(&self->lock);
 
     return old;
+}
+
+void*
+CD_HashFirst (CDHash* self)
+{
+    return CD_HashIteratorValue(self, CD_HashBegin(self));
+}
+
+void*
+CD_HashLast (CDHash* self)
+{
+    return CD_HashIteratorValue(self, CD_HashPrevious(self, CD_HashEnd(self)));
 }
 
 void**

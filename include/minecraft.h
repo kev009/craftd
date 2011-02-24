@@ -101,15 +101,15 @@ const MCEntityId MCMaxEntityId = INT_MAX;
 
 typedef enum _MCEntityType {
     MCPlayer,
-    MCDPickup,
+    MCPickup,
     MCMob,
     MCObject
 } MCEntityType;
 
 typedef struct _MCEntity {
-    MCEntityId   id;
-    MCEntityType type;
-    MCPosition   position;
+    MCEntityId        id;
+    MCEntityType      type;
+    MCPrecisePosition position;
 } MCEntity;
 
 typedef struct _MCItem {

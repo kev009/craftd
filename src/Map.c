@@ -44,6 +44,18 @@ CD_CreateMap (void)
     return self;
 }
 
+CDMap*
+CD_CloneMap (CDMap* self)
+{
+    CDMap* cloned = CD_CreateMap();
+
+    CD_MAP_FOREACH(self, it) {
+        CD_MapSet(cloned, CD_MapIteratorKey(it), CD_MapIteratorValue(it));
+    }
+
+    return cloned;
+}
+
 void
 CD_DestroyMap (CDMap* self)
 {
@@ -60,7 +72,11 @@ CD_MapBegin (CDMap* self)
     CDMapIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_begin(self->map);
+    it = kh_end(self->map);
+
+    if (!kh_exist(self->map, it)) {
+        it = CD_MapNext(self, it);
+    }
     pthread_rwlock_unlock(&self->lock);
 
     return it;
@@ -72,10 +88,46 @@ CD_MapEnd (CDMap* self)
     CDMapIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_end(self->map);
+    it = kh_begin(self->map) - 1;
     pthread_rwlock_unlock(&self->lock);
 
     return it;
+}
+
+CDMapIterator
+CD_MapNext (CDMap* self, CDMapIterator iterator)
+{
+    iterator--;
+
+    pthread_rwlock_rdlock(&self->lock);
+    for (; iterator != kh_begin(self->map) && !kh_exist(self->map, iterator); iterator--) {
+        continue;
+    }
+    pthread_rwlock_unlock(&self->lock);
+
+    if (!kh_exist(self->map, iterator)) {
+        iterator = CD_MapEnd(self);
+    }
+
+    return iterator;
+}
+
+CDMapIterator
+CD_MapPrevious (CDMap* self, CDMapIterator iterator)
+{
+    iterator++;
+
+    pthread_rwlock_rdlock(&self->lock);
+    for (; iterator != CD_MapBegin(self) && !CD_MapIteratorValid(self, iterator); iterator++) {
+        continue;
+    }
+    pthread_rwlock_unlock(&self->lock);
+
+    if (!kh_exist(self->map, iterator)) {
+        iterator = CD_MapBegin(self);
+    }
+
+    return iterator;
 }
 
 size_t
@@ -115,7 +167,7 @@ CD_MapIteratorValue (CDMapIterator iterator)
 }
 
 bool
-CD_MapIteratorValid (CDMap* self, CDHashIterator iterator)
+CD_MapIteratorValid (CDMap* self, CDMapIterator iterator)
 {
     bool result = false;
 
@@ -176,6 +228,18 @@ CD_MapDelete (CDMap* self, int id)
     pthread_rwlock_unlock(&self->lock);
 
     return old;
+}
+
+void*
+CD_MapFirst (CDMap* self)
+{
+    return CD_MapIteratorValue(self, CD_MapBegin(self));
+}
+
+void*
+CD_MapLast (CDMap* self)
+{
+    return CD_MapIteratorValue(self, CD_MapPrevious(self, CD_MapEnd(self)));
 }
 
 void**

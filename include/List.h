@@ -42,6 +42,8 @@ typedef kliter_t(cdList)* CDListIterator;
 
 CDList* CD_CreateList (void);
 
+CDList* CD_CloneList (CDList* self);
+
 void** CD_DestroyList (CDList* self);
 
 CDListIterator CD_ListBegin (CDList* self);
@@ -60,11 +62,13 @@ void* CD_ListDelete (CDList* self, void* data);
 
 void* CD_ListDeleteAll (CDList* self, void* data);
 
+void* CD_MapFirst (CDMap* self);
+
+void* CD_MapLast (CDMap* self);
+
 void** CD_ListClear (CDList* self);
 
-#define CD_LIST_FOREACH_BEGIN(list, it) \
-    for (CDListIterator it = CD_ListBegin(list); it != CD_ListEnd(list); it = CD_ListNext(it)) {
-
-#define CD_LIST_FOREACH_END(list) }
+#define CD_LIST_FOREACH(list, it) \
+    for (CDListIterator it = CD_ListBegin(list), end = CD_ListEnd(list); it != end; it = CD_ListNext(it))
 
 #endif

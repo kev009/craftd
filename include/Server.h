@@ -62,7 +62,7 @@ char* CD_ServerToString (CDServer* self);
 
 void CD_RunServer (CDServer* self);
 
-MCEntityId CD_ServerGetNewEntityId (CDServer* self);
+MCEntityId CD_ServerGenerateEntityId (CDServer* self);
 
 typedef void (*CDEventCallback)();
 

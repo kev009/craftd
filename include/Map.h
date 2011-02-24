@@ -41,11 +41,17 @@ typedef khiter_t CDMapIterator;
 
 CDMap* CD_CreateMap (void);
 
+CDMap* CD_CloneMap (CDMap* self);
+
 void CD_DestroyMap (CDMap* self);
 
 CDMapIterator CD_MapBegin (CDMap* self);
 
 CDMapIterator CD_MapEnd (CDMap* self);
+
+CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
+
+CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
 
 size_t CD_MapLength (CDMap* self);
 
@@ -61,14 +67,13 @@ void* CD_MapSet (CDMap* self, int id, void* data);
 
 void* CD_MapDelete (CDMap* self, int id);
 
+void* CD_MapFirst (CDMap* self);
+
+void* CD_MapLast (CDMap* self);
+
 void** CD_MapClear (CDMap* self);
 
-#define CD_MAP_FOREACH_BEGIN(map, it) \
-    for (CDMapIterator it = CD_MapEnd(map); it != CD_MapBegin(map); it--) { \
-        if (!CD_MapIteratorValid(map, it)) {                                \
-            continue;                                                       \
-        }
-
-#define CD_MAP_FOREACH_END(map) }
+#define CD_MAP_FOREACH(map, it) \
+    for (CDMapIterator it = CD_MapBegin(hash), end = CD_MapEnd(hash); it != end; it = CD_MapNext(hash, it))
 
 #endif

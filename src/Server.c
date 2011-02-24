@@ -117,7 +117,7 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
         return;
     }
 
-    if (self->players->length >= self->config->max_players) {
+    if (CD_HashLength(self->players) >= self->config->max_players) {
         close(fd);
         SERR(self, "too many clients");
         return;
@@ -130,6 +130,26 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
     }
 
     player = CD_CreatePlayer(server);
+
+    if (storage.ss_family == AF_INET) {
+        evutil_inet_ntop(socket.ss_family, &((struct sockaddr_in*) &storage)->sin_addr, player->ip, sizeof(player->ip));
+    }
+    else if (storage.ss_family == AF_INET6) {
+        evutil_inet_ntop(socket.ss_family, &((struct sockaddr_in6*) &storage)->sin_addr, player->ip, sizeof(player->ip));
+    }
+    else {
+        SERR(self, "weird address family");
+        close(fd);
+        CD_DestroyPlayer(player);
+    }
+
+    player->fd = fd;
+
+    evutil_make_socket_nonblocking(player->fd);
+    player->event = bufferevent_socket_new(server->event.base, player->fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+    bufferevent_enable(player->event, EV_READ | EV_WRITE);
+
+    CD_MapSet(server->entities, player->entity.id, player);
 }
 
 bool
@@ -163,23 +183,16 @@ CD_RunServer (CDServer* self)
     return event_base_dispatch(self->event.base) != 0;
 }
 
+// FIXME: This is just a dummy function
 MCEntityId
-CD_ServerGetNewEntityId (CDServer* self)
+CD_ServerGenerateEntityId (CDServer* self)
 {
     MCEntityId    result;
     CDMapIterator it
     size_t        i;
 
     if (CD_MapLength(self->entities) != 0) {
-        it = CD_MapEnd() - 1;
-
-        if ((result = CD_MapIteratorValue(it)) >= INT_MAX) {
-            for (it = CD_MapBegin(self->entities); it != CD_MapEnd(self->entities); it++) {
-                if (CD_MapIteratorValue) {
-
-                }
-            }
-        }
+        result = ((MCEntity*) CD_MapLast())->id + 1;
     }
     else {
         result = INT_MIN;
@@ -216,7 +229,7 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 
     va_start(ap, eventName);
 
-    for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {
+    CD_LIST_FOREACH(callbacks, it) {
         if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, eventName, ap)) {
             va_end(ap);
             return false;
@@ -240,19 +253,27 @@ CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callbac
     CD_HashSet(self->events, eventName, callbacks);
 }
 
-void
+CDEntityCallback*
 CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
-    CDList* callbacks = CD_HashGt(self->events, eventName);
+    CDList* callbacks = CD_HashGet(self->events, eventName);
+    void*   result    = NULL;
 
     if (!callbacks) {
         return;
     }
 
     if (callback) {
-        CD_ListDeleteAll(callbacks, callback);
+        result    = CD_calloc(2, sizeof(CDEntityCallback));
+        result[0] = CD_ListDeleteAll(callbacks, callback);
     }
     else {
-        CD_ListClear(callbacks);
+        result = CD_ListClear(callbacks);
     }
+
+    if (CD_ListLength(callbacks) == 0) {
+        CD_ListDestroy(callbacks);
+    }
+
+    return result;
 }
