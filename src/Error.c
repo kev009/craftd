@@ -23,10 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#include "Error.h"
+
+CDErrorType CDError;

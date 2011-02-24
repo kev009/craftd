@@ -38,31 +38,31 @@
 
 #include <event2/buffer.h>
 
-
 #include "craftd-config.h"
 #include "util.h"
 #include "craftd.h"
 
-// Logging Routines
 /** Private storage for the console log mask */
-static int log_consolemask = 0;
+static int cd_logConsoleMask = 0;
 
 /**
  * Provides a syslog style setlogmask() used by the console logger.  Usually
  * accessed through the LOG_setlogmask function pointer where setlogmask() and
- * log_console_setlogmask() can be selected at runtime.
+ * CD_logConsole_setlogmask() can be selected at runtime.
  * 
  * @remarks See man setlogmask(3)
  * 
  * @param mask a bit-field mask of types to block
  * @return the old mask, before setting to the param
  */
-int log_console_setlogmask(int mask)
+int CD_logConsole_setlogmask (int mask)
 {
-  int oldmask = log_consolemask;
-  if(mask == 0) // POSIX specification
-    return oldmask;
-  log_consolemask = mask;
+  int oldmask = cd_logConsoleMask;
+  
+  if (mask != 0) { // POSIX specification
+      cd_logConsoleMask = mask;
+  }
+
   return oldmask;
 }
 
@@ -79,51 +79,28 @@ int log_console_setlogmask(int mask)
  */
 void log_console(int priority, const char *format, ...)
 {
-  va_list ap;
-  const char *loglevel;
-  va_start(ap, format);
+    static const char* names[] = {
+        "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
+    };
+
+    va_start(ap, format);
   
-  /* Return on MASKed log priorities */
-  if (LOG_MASK(priority) & log_consolemask)
-    return;
+    /* Return on MASKed log priorities */
+    if (LOG_MASK(priority) & log_consolemask) {
+        return;
+    }
+
+    if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
+        printf("UNKNOWN: ");
+    }
+    else {
+        printf("%s", names[priority]);
+    }
+
+    vprintf(format, ap);
+    printf("\n");
   
-  switch(priority)
-  {
-    case LOG_ALERT:
-      loglevel = "ALERT: ";
-      break;
-    case LOG_CRIT:
-      loglevel = "CRIT: ";
-      break;
-    case LOG_DEBUG:
-      loglevel = "DEBUG: ";
-      break;
-    case LOG_EMERG:
-      loglevel = "EMERG: ";
-      break;
-    case LOG_ERR:
-      loglevel = "ERR: ";
-      break;
-    case LOG_INFO:
-      loglevel = "INFO: ";
-      break;
-    case LOG_NOTICE:
-      loglevel = "NOTICE: ";
-      break;
-    case LOG_WARNING:
-      loglevel = "WARNING: ";
-      break;
-    default:
-      loglevel = "UNKNOWN: ";
-      break;
-  }
-  
-  printf("%s", loglevel);
-  vprintf(format, ap);
-  printf("\n");
-  
-  va_end(ap);
-  return;
+    va_end(ap);
 }
 
 /**
@@ -159,9 +136,7 @@ ev_log_callback(int severity, const char *msg)
 int
 ismc_utf8(const char *str)
 { 
-  const char *MC_UTF8 = 
-  "\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghi"
-  " jklmnopqrstuvwxyz{|}~.ЗьйвдаезклипомДЕЙжЖфцтыщяЦЬшЈШЧ.бнуъсСЄєї®¬ЅјЎ«»";
+  static const char *MC_UTF8 = "#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}~вЊ‚Г‡ГјГ©ГўГ¤Г ГҐГ§ГЄГ«ГЁГЇГ®Г¬Г„Г…Г‰Г¦Г†ГґГ¶ГІГ»Г№ГїГ–ГњГёВЈГГ—Ж’ГЎГ­ГіГєГ±Г‘ВЄВєВїВ®В¬ВЅВјВЎВ«В»";
 
   if( strspn(str, MC_UTF8) == strlen(str) )
     return 1; // Valid

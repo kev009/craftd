@@ -23,10 +23,38 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
+#ifndef CRAFTD_JOB_H
+#define CRAFTD_JOB_H
+
+/**
+ * Declare CDJobs as a singly-linked tail queue for player work reqs
+ * Uses the worker_cv and worker_cvmutex for syncronization
+ */
+STAILQ_HEAD(CDJobsTail, CDJob) CDJobs;
+
+typedef enum _CDJobType {
+    CDProxyInput,
+    CDGameInput,
+    CDProcess,
+    CDOutput
+} CDJobType;
+
+typedef struct _CDJobData {
+    void*        packet;
+    size_t       length;
+    CDPacketType type;
 }
+
+typedef struct _CDJob {
+    CDPlayers      players;
+    enum CDJobType type;
+    void*          data;
+
+    struct bufferevent* event;
+
+    pthread_rwlock_t* lock;
+    
+    STAILQ_ENTRY(_CDJob) entries;
+} CDJob;
+
+#endif

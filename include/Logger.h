@@ -23,10 +23,46 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_LOGGER_H
+#define CRAFTD_LOGGER_H
+
+#include <syslog.h>
+
+#include "common.h"
+
+typedef struct _CDLogger {
+    void (*log)        (int, const char*, ...);
+    int  (*setlogmask) (int);
+    void (*closelog)   (void)
+} CDLogger;
+
+#ifndef CRAFTD_LOGGER_IGNORE_EXTERN
+extern CDLogger CDConsoleLogger;
+extern CDLogger CDSystemLogger;
+extern CDLogger CDDefaultLogger;
+#endif
+
+#define LOG(priority, format, ...) \
+    ((CDMainServer != NULL) \
+        ? CDMainServer->logger.log(priority, "%s> " format, CD_ServerToString(CDMainServer), ##__VA_ARGS__) \
+        : CDDefaultLogger.log(priority, format, ##__VA_ARGS__))
+
+#define ERR(format, ...) LOG(LOG_CRIT, format, ##__VA_ARGS__)
+
+#define LOG_CLOSE() do { \
+    if (CDMainServer) CDMainServer.logger.close(); \
+    if (CDDefaultLogger) CDDefaultLogger.close(); \
+} while (0)
+
+#define CLOG(priority, format, ...) CDConsoleLogger.log(priority, format, ##__VA_ARGS__)
+
+#define CERR(format, ...) CLOG(LOG_CRIT, format, ##__VA_ARGS__)
+
+#define SLOG(server, priority, format, ...) \
+    server->logger.log(priority, "%s> " format, CD_ServerToString(server), ##__VA_ARGS__)
+
+#define SERR(format, ...) SLOG(LOG_CRIT, format, ##__VA_ARGS__)
+
+#define SLOG_CLOSE(server) server->logger.close()
+
+#endif

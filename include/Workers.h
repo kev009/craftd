@@ -23,10 +23,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_WORKERS_H
+#define CRAFTD_WORKERS_H
+
+#include "Worker.h"
+
+struct _CDServer;
+
+typedef struct _CDWorkers {
+    int64_t last;
+
+    size_t     length;
+    CDWorker** item;
+
+    struct _CDServer* server;
+
+    pthread_attr_t  attributes;
+    pthread_cond_t  condition;
+    pthread_mutex_t mutex;
+} CDWorkers;
+
+CDWorkers* CD_CreateWorkers (struct _CDServer* server);
+
+void CD_DestroyWorkers (CDWorkers* self);
+
+CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
+
+CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
+
+CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
+
+#endif

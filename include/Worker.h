@@ -23,10 +23,39 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_WORKER_H
+#define CRAFTD_WORKER_H
+
+#include "Packet.h"
+#include "Job.h"
+
+struct _CDWorkers;
+
+typedef struct _CDWorker {
+    int       id;
+    pthread_t thread;
+
+    struct _CDWorkers* workers;
+
+    CDJob* job;
+    bool   working;
+} CDWorker;
+
+/**
+ * Create a Worker object
+ */
+CDWorker* CD_CreateWorker (void);
+
+/**
+ * Destroy a Worker object and its eventual working Job
+ *
+ * @param worker The worker object to destroy
+ */
+void CD_DestroyWorker (CDWorker* self);
+
+/**
+ * Main thread function, pass the result of CD_CreateWorker as argument.
+ */
+void* CD_RunWorker (void* arg);
+
+#endif

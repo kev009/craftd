@@ -23,10 +23,65 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#define CRAFTD_LOGGER_IGNORE_EXTERN
+#include "Logger.h"
+#undef CRAFTD_LOGGER_IGNORE_EXTERN
+
+static int cd_mask = 0;
+
+static
 void
-craftd_version (const char* executable)
+cd_ConsoleLog (int priority, const char* format, ...)
 {
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
+    static const char* names[] = {
+        "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
+    };
+
+    va_list ap;
+
+    va_start(ap, format);
+  
+    /* Return on MASKed log priorities */
+    if (LOG_MASK(priority) & cd_mask) {
+        return;
+    }
+
+    if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
+        printf("UNKNOWN: ");
+    }
+    else {
+        printf("%s", names[priority]);
+    }
+
+    vprintf(format, ap);
+    printf("\n");
+  
+    va_end(ap);
 }
+
+static
+int cd_ConsoleSetLogMask (int mask)
+{
+    int old = cd_mask;
+
+    if (mask != 0) {
+        cd_mask = mask;
+    }
+
+    return old;
+}
+
+static
+void cd_ConsoleCloseLog (void)
+{
+    fflush(stdout);
+}
+
+CDLogger CDConsoleLogger = {
+    .log        = cd_ConsoleLog,
+    .setlogmask = cd_ConsoleSetLogMask,
+    .closelog   = cd_ConsoleCloseLog,
+};
+
+CDLogger CDDefaultLogger = CDConsoleLogger;

@@ -23,10 +23,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_PLUGINS_H
+#define CRAFTD_PLUGINS_H
+
+#include "Plugin.h"
+
+struct _CDServer;
+
+typedef struct _CDPlugins {
+    struct _CDServer* server;
+
+    size_t     length;
+    CDPlugin** item;
+} CDPlugins;
+
+CDPlugin* CD_LoadPlugin (CDPlugins* self, const char* path);
+
+#endif

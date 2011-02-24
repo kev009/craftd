@@ -1,0 +1,6 @@
+[submodule "third-party/klib"]
+	path = third-party/klib
+	url = git://github.com/attractivechaos/klib.git
+[submodule "third-party/jansson"]
+	path = third-party/jansson
+	url = git://github.com/akheron/jansson.git

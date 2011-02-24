@@ -41,6 +41,8 @@ Please contact me and let me know what parts you intend to work on first.
 NOTE: You must run autoreconf -i after checking out the git repo to generate a
 configure script.
 
+NOTE: You must pull the submodules with: git submodule init && git submodule update
+
 Developer Documentation:
 Coding style and architecture notes are on the wiki - 
 http://mc.kev009.com/wiki/Craftd:Main_Page

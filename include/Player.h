@@ -23,10 +23,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_PLAYER_H
+#define CRAFTD_PLAYER_H
+
+#include "minecraft.h"
+#include "Hash.h"
+
+struct _CDServer;
+
+typedef struct _CDPlayer {
+    MCEntity entity;
+
+    struct _CDServer* server;
+
+    bstring   name;
+    char[128] ip;
+
+    evutil_socket_t     socket;
+    struct bufferevent* event;
+
+    CDHash* _private;
+} CDPlayer;
+
+CDPlayer* CD_CreatePlayer (struct _CDServer* server);
+
+void CD_SetPlayerName (const char* name),
+
+#endif

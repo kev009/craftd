@@ -23,10 +23,57 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_HASH_H
+#define CRAFTD_HASH_H
+
+#include <stdbool.h>
+#include "khash.h"
+
+KHASH_MAP_INIT_STR(cdHash, void*);
+
+typedef struct _CDHash {
+    khash_t(cdHash)* hash;
+
+    pthread_rwlock_t lock;
+} CDHash;
+
+typedef khiter_t CDHashIterator;
+
+CDHash* CD_CreateHash (void);
+
+CDHash* CD_CloneHash (CDHash* self);
+
+void CD_DestroyHash (CDHash* self);
+
+CDHashIterator CD_HashBegin (CDHash* self);
+
+CDHashIterator CD_HashEnd (CDHash* self);
+
+CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
+
+CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
+
+size_t CD_HashLength (CDHash* self);
+
+const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
+
+void* CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
+
+bool CD_HashIteratorValid (CDHash* self, CDHashIterator iterator);
+
+void* CD_HashGet (CDHash* self, const char* name);
+
+void* CD_HashSet (CDHash* self, const char* name, void* data);
+
+void* CD_HashDelete (CDHash* self, const char* name);
+
+void* CD_HashFirst (CDHash* self);
+
+void* CD_HashLast (CDHash* self);
+
+void** CD_HashClear (CDHash* self);
+
+#define CD_HASH_FOREACH(hash, it) \
+    for (CDHashIterator it = CD_HashBegin(hash), end = CD_HashEnd(hash); it != end; it = CD_HashNext(hash, it))
+
+#endif

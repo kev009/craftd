@@ -23,10 +23,52 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CRAFTD_LIST_H
+#define CRAFTD_LIST_H
+
+#include "klist.h"
+
+#define __cdList_free(x)
+
+KLIST_INIT(cdList, void*, __cdList_free);
+
+typedef struct _CDList {
+    klist_t(cdList)* _list;
+
+    pthread_rwlock_t lock;
+} CDList;
+
+typedef kliter_t(cdList)* CDListIterator;
+
+CDList* CD_CreateList (void);
+
+CDList* CD_CloneList (CDList* self);
+
+void** CD_DestroyList (CDList* self);
+
+CDListIterator CD_ListBegin (CDList* self);
+
+CDListIterator CD_ListEnd (CDList* self);
+
+CDListIterator CD_ListNext (CDList* self);
+
+size_t CD_ListLength (CDList* self);
+
+CDList* CD_ListPush (CDList* self, void* data);
+
+void* CD_ListShift (CDList* self);
+
+void* CD_ListDelete (CDList* self, void* data);
+
+void* CD_ListDeleteAll (CDList* self, void* data);
+
+void* CD_MapFirst (CDMap* self);
+
+void* CD_MapLast (CDMap* self);
+
+void** CD_ListClear (CDList* self);
+
+#define CD_LIST_FOREACH(list, it) \
+    for (CDListIterator it = CD_ListBegin(list), end = CD_ListEnd(list); it != end; it = CD_ListNext(it))
+
+#endif

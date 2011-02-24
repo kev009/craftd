@@ -26,10 +26,7 @@
 #include <config.h>
  
 #include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <syslog.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -43,44 +40,118 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
-#include "bstrlib.h"
-#include "bstraux.h"
-
 #include "craftd-config.h"
-
-#include "util.h"
-#include "mapchunk.h"
-#include "network/network.h"
-#include "timeloop.h"
-#include "httpd.h"
+#include "common.h"
+#include "version.h"
 
 /**
  * Try and perform cleanup with an atexit call
  */
 void
-exit_handler(void)
+cd_ExitHandler (void)
 {
   LOG(LOG_INFO, "Exiting.");
-  closelog();
+  LOG_CLOSE();
 }
 
-/**
- * Temporary entity ID creation
- */
 int
-newEid()
+main (int argc, char** argv)
 {
-  static int eid = 0;
-  eid++;
-  return eid;
+    CDServer* server;
+    int       opt;
+    bool      noFork    = false;
+    bool      debugging = false;
+    char*     config    = NULL;
+
+    static const char* configSearchPath[] = {
+      "%s/.craftd/craftd.conf", // %s is replace with $HOME
+      "/etc/craftd/craftd.conf",
+      "/usr/local/etc/craftd/craftd.conf",
+      "craftd.conf", // Current working directory (for devs)
+      NULL
+    };
+
+    atexit(cd_ExitHandler);
+
+    cd_Version(argv[0]);
+
+    while ((opt = getopt(argc, argv, "c:dhnv")) != -1) {
+        switch (opt) {
+            case 'd': {  // debugging mode
+                debugging = true;
+            } break;
+
+            case 'v': { // print version
+                exit(EXIT_SUCCESS); // Version header already printed
+            } break;
+
+            case 'n': { // don't fork or daemonize, use stdout for logging
+                noFork = true;
+            } break;
+
+            case 'c': { // use the specified config file
+                config = optarg;
+            } break;
+
+            case 'h': // print help message
+            default: {
+                fprintf(stderr, "\nUsage: %s [OPTION]...\n"
+                    "-c <conf file>\tspecify a conf file location\n"
+                    "-d\t\tenable verbose debugging messages\n"
+                    "-h\t\tdisplay this help and exit\n"
+                    "-n\t\tdon't fork/daemonize (overrides config file)\n"
+                    "-v\t\toutput version information and exit\n"
+                    "\nFor complete documentation, visit the wiki.\n\n", argv[0]);
+
+                exit((opt == 'h') ? EXIT_SUCCESS : EXIT_FAILURE);
+            }
+        }
+    }
+
+    if (!config) {
+        char[FILENAME_MAX] path;
+        char* current = configSearchPath - 1;
+
+        do {
+            snprintf(path, FILENAME_MAX, current, getenv("HOME"));
+
+            current++;
+        } while (*current != NULL && access(path, R_OK) != 0);
+
+        if (access(path, R_OK) != 0) {
+            ERR("The config file could not be found");
+
+            exit(EXIT_FAILURE);
+        }
+        else {
+            config = path
+        }
+    }
+    else {
+        if (access(config, R_OK) != 0) {
+            ERR("%s could not be read", config);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    CDMainServer = server = CD_CreateServer(config);
+
+    /* By default, mask debugging messages */
+    if (!debugging) {
+        server.logger.setlogmask(LOG_MASK(LOG_DEBUG));
+    }
+
+    CD_RunServer(server);
+
+    CD_DestroyServer(server);
 }
 
 void
 readcb(struct bufferevent *bev, void *ctx)
 {
   struct WQ_entry *workitem;
-  struct PL_entry *player = ctx;  
-  
+  struct PL_entry *player = ctx;
+
   /* Allocate and construct new work item */
   workitem = Malloc(sizeof(struct WQ_entry));
   workitem->bev = bev;
@@ -88,7 +159,7 @@ readcb(struct bufferevent *bev, void *ctx)
   workitem->worktype = WQ_GAME_INPUT;
   workitem->workdata = NULL;
   workitem->lock = &player->inlock;
-  
+
   /* Add item to work queue */
   pthread_mutex_lock(&worker_cvmutex);
   STAILQ_INSERT_TAIL(&WQ_head, workitem, WQ_entries);
@@ -465,15 +536,13 @@ main(int argc, char *argv[])
   if(status !=0)
     ERR("Worker condition var init failed!");
   
-  for (int i = 0; i < Config.workpool_size; ++i)
-  {
-    WP_id[i] = i;
-    status = pthread_create(&WP_thread_id[i], &WP_thread_attr,
+  for (int i = 0; i < Config.workpool_size; ++i) {
+    status = pthread_create(&CDWorkers.threads[i], &WP_thread_attr,
         run_worker, (void *) &WP_id[i]);
     if(status != 0)
       ERR("Worker pool startup failed!");
   }
-  
+
   worker_init();
 
   /* Start inbound game server*/

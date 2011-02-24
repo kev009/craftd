@@ -23,10 +23,36 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
+#include "Player.h"
+
+CDPlayer*
+CD_CreatePlayer (struct _CDServer* server)
 {
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
+    CDPlayer* self = CD_malloc(sizeof(CDPlayer));
+
+    if (!self) {
+        SERR(server, "could not instantiate a Player object");
+        return NULL;
+    }
+
+    self->server          = server;
+    self->entity.id       = CD_ServerGenerateEntityId(server);
+    self->entity.type     = CDPlayer;
+    self->entity.position = { 0, 0, 0 };
+
+    self->_private = CD_CreateHash();
+
+    return self;
+}
+
+void
+CD_DestroyPlayer (CDPlayer* self)
+{
+    bdestroy(self->name);
+
+    CD_EventDispatch(self->server, "Player.destroy", self);
+
+    CD_DestroyHash(self->_private);
+
+    CD_free(self);
 }
