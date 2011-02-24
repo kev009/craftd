@@ -26,7 +26,7 @@ libjansson_la_SOURCES = \
         $(jsondir)/utf.c \
         $(jsondir)/utf.h \
         $(jsondir)/value.c \
-        $(jsondir)/variadic.c
+        $(jsondir)/pack_unpack.c
 libjansson_la_LDFLAGS = \
         -export-symbols-regex '^json_'
 
