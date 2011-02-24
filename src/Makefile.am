@@ -21,12 +21,13 @@ libjansson_la_SOURCES = \
 	$(jsondir)/jansson_config.h \
         $(jsondir)/jansson.h \
         $(jsondir)/load.c \
+        $(jsondir)/memory.c \
+        $(jsondir)/pack_unpack.c \
         $(jsondir)/strbuffer.c \
         $(jsondir)/strbuffer.h \
         $(jsondir)/utf.c \
         $(jsondir)/utf.h \
-        $(jsondir)/value.c \
-        $(jsondir)/pack_unpack.c
+        $(jsondir)/value.c
 libjansson_la_LDFLAGS = \
         -export-symbols-regex '^json_'
 
