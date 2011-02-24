@@ -23,35 +23,27 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#include "Job.h"
 
-#include "minecraft.h"
-#include "Hash.h"
+CDJob*
+CD_CreateJob (CDJobType type, void* data)
+{
+    CDJob* self = CD_malloc(sizeof(CDJob));
 
-struct _CDServer;
+    if (!self) {
+        return NULL;
+    }
 
-typedef struct _CDPlayer {
-    MCEntity entity;
+    self->type = type;
+    self->data = data;
+}
 
-    struct _CDServer* server;
+void*
+CD_DestroyJob (CDJob* self)
+{
+    void* result = self->data;
 
-    bstring   name;
-    char[128] ip;
+    CD_free(self)
 
-    evutil_socket_t     socket;
-    struct bufferevent* event;
-
-    CDHash* _private;
-
-    struct {
-        pthread_mutex_t input;
-        pthread_mutex_t output;
-    } lock;
-} CDPlayer;
-
-CDPlayer* CD_CreatePlayer (struct _CDServer* server);
-
-void CD_SetPlayerName (const char* name),
-
-#endif
+    return result;
+}

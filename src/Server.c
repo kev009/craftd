@@ -104,6 +104,20 @@ CD_ServerToString (CDServer* self)
 
 static
 void
+cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
+{
+    CD_AddJob(player->server->workers, CD_CreateJob(CDGameInput, player));
+}
+
+static
+void
+cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
+{
+
+}
+
+static
+void
 cd_Accept (evutil_socket_t listener, short event, void* arg)
 {
     CDServer*               self = arg;
@@ -144,9 +158,10 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
     }
 
     player->fd = fd;
-
     evutil_make_socket_nonblocking(player->fd);
+
     player->event = bufferevent_socket_new(server->event.base, player->fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+    bufferevent_setcb(player->event, cd_ReadCallback, NULL, cd_ErrorCallback, player);
     bufferevent_enable(player->event, EV_READ | EV_WRITE);
 
     CD_MapSet(server->entities, player->entity.id, player);

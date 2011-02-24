@@ -69,7 +69,7 @@ CD_RunWorker (void* arg)
          * Prevent a nasty race condition if the client disconnects
          * Works in tandem with errorcb FOREACH bev removal loop
          */
-        while (STAILQ_EMPTY(&CDJobsHead)) {
+        while (CD_ListLength(self->workers->jobs) == 0) {
             LOGT(LOG_DEBUG, "Worker %d ready", self->id);
 
             pthread_cond_wait(&self->workers->condition, &self->workers->mutex);
@@ -77,8 +77,7 @@ CD_RunWorker (void* arg)
 
         LOGT(LOG_DEBUG, "in worker: %d", self->id);
 
-        self->job = STAILQ_FIRST(&CDJobs);
-        STAILQ_REMOVE_HEAD(&CDJobs, entries);
+        self->job = CD_ListShift(self->workers->jobs);
         pthread_mutex_unlock(self->workers->mutex);
 
         if (self->job->lock != NULL) { //this will auto lock any type of WQ
@@ -92,7 +91,7 @@ CD_RunWorker (void* arg)
                 goto WORKER_ERR;
             }
 
-            self->job->packet = CD_PacketFromEvent(self->workers->server, self->job->event);
+            CD_SetPrivateData(self->player, "packet", CD_PacketFromEvent(self->workers->server, self->job->event));
         }
     }
 

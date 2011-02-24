@@ -31,12 +31,14 @@
 struct _CDServer;
 
 typedef struct _CDWorkers {
+    struct _CDServer* server;
+
     int64_t last;
 
     size_t     length;
     CDWorker** item;
 
-    struct _CDServer* server;
+    CDList* jobs;
 
     pthread_attr_t  attributes;
     pthread_cond_t  condition;
@@ -52,5 +54,7 @@ CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
 CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
 
 CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
+
+void CD_AddJob (CDWorkers* self, CDJob* job);
 
 #endif
