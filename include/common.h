@@ -47,4 +47,6 @@
 #include "Map.h"
 #include "Hash.h"
 
+#define PRIVATE(data) ((data)->_private)
+
 #endif

@@ -58,9 +58,8 @@ void*
 CD_RunWorker (void* arg)
 {
     CDWorker* self = arg;
-    CDPacket* packet;
 
-    LOG(LOG_INFO, "Worker %d started!", id);
+    LOG(LOG_INFO, "worker %d started", id);
 
     while (self->working) {
         pthread_mutex_lock(&self->workers->mutex);
@@ -70,28 +69,113 @@ CD_RunWorker (void* arg)
          * Works in tandem with errorcb FOREACH bev removal loop
          */
         while (CD_ListLength(self->workers->jobs) == 0) {
-            LOGT(LOG_DEBUG, "Worker %d ready", self->id);
+            LOG(LOG_DEBUG, "worker %d ready", self->id);
 
             pthread_cond_wait(&self->workers->condition, &self->workers->mutex);
         }
 
-        LOGT(LOG_DEBUG, "in worker: %d", self->id);
-
-        self->job = CD_ListShift(self->workers->jobs);
-        pthread_mutex_unlock(self->workers->mutex);
-
-        if (self->job->lock != NULL) { //this will auto lock any type of WQ
-            pthread_rwlock_wrlock(self->job->lock);
+        if (!self->working) {
+            LOG(LOG_DEBUG, "worker %d stopped", self->id);
+            pthread_mutex_unlock(self->workers->mutex);
+            break;
         }
 
-        if (self->job->type == CDGameInput || self->job->type == CDProxyInput) {
-            if (!self->job->event || !self->job->player) {
-                LOG(LOG_CRIT, "Aaack, null event or context in worker?");
+        LOG(LOG_DEBUG, "in worker: %d", self->id);
 
-                goto WORKER_ERR;
+        do {
+            self->job = CD_NextJob(self->workers);
+
+            if (CD_JOB_IS_PLAYER(self->job)) {
+                CDPlayer* player = self->job->data;
+
+                pthread_rwlock_rdlock(&player->lock.status);
+
+                switch (self->job->type) {
+                    case CDPlayerInputJob: {
+                        if (player->status != CDPlayerIdle) {
+                            CD_AddJob(self->workers, self->job);
+                            self->job = NULL;
+                        }
+                    } break;
+
+                    case CDPlayerProcessJob: {
+                        if (player->status != CDPlayerInput) {
+                            CD_AddJob(self->workers, self->job);
+                            self->job = NULL;
+                        }
+                    } break;
+
+                    case CDPlayerOutputJob: {
+
+                    } break;
+                }
+
+                pthread_rwlock_unlock(&player->lock.status);
+            }
+        } while (!self->job);
+
+        pthread_mutex_unlock(self->workers->mutex);
+
+        if (CD_JOB_IS_PLAYER(self->job)) {
+            CDPlayer* player = self->job->data;
+
+            pthread_rwlock_wrlock(&player->lock.pending);
+            pthread_rwlock_wrlock(&player->lock.status);
+
+            switch (self->job->type) {
+                case CDPlayerInput: {
+                    if (!self->job->event || !self->job->player) {
+                        LOG(LOG_CRIT, "Aaack, null event or context in worker?");
+
+                        goto PLAYER_JOB_ERROR;
+                    }
+
+                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(self->workers->server, player->event));
+
+                    if (evbuffer_get_length(player->event->input) > 0) {
+                        player->pending = true;
+
+                        CD_AddJob(player->server->workers, self->job);
+                    }
+                    else {
+                        player->pending = false;
+
+                        CD_DestroyJob(self->job);
+                    }
+
+                    player->status = CDPlayerInput;
+                } break;
+
+                case CDPlayerProcess: {
+                    player->status = CDPlayerProcess;
+                    pthread_rwlock_unlock(&player->lock.status);
+                    CD_EventDispatch(player->server, "Player.process", player);
+                    pthread_rwlock_wrlock(&player->lock.status);
+                    player->status = CDPlayerIdle;
+                } break;
+
+                default: {
+                    CD_DestroyJob(self->job);
+                }
             }
 
-            CD_SetPrivateData(self->player, "packet", CD_PacketFromEvent(self->workers->server, self->job->event));
+            PLAYER_JOB_DONE: {
+                self->job = NULL;
+
+                pthread_rwlock_unlock(&player->lock.pending);
+                pthread_rwlock_unlock(&player->lock.status);
+            }
+
+            PLAYER_JOB_ERROR: {
+                self->job = NULL;
+
+                pthread_rwlock_unlock(&player->lock.pending);
+                pthread_rwlock_unlock(&player->lock.status);
+            }
+        }
+        else {
+            CD_DestroyJob(self->job);
+            self->job = NULL;
         }
     }
 

@@ -78,7 +78,7 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
         result[i]          = CD_CreateWorker();
         result[i]->id      = ++self->last;
         result[i]->working = true;
-        
+
         if (pthread_create(&result[i]->thread, &self->attributes, CD_RunWorker, result[i]) != 0) {
             ERR("Worker pool startup failed!");
         }
@@ -117,4 +117,10 @@ CD_AddJob (CDWorkers* self, CDJob* job)
     CD_ListPush(self->jobs, job);
 
     pthread_cond_signal(self->condition);
+}
+
+CDJob*
+CD_NextJob (CDWorkers* self)
+{
+    return CD_ListShift(self->jobs);
 }

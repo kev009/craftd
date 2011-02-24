@@ -45,7 +45,16 @@ CD_CreateList (void)
 }
 
 CDList*
-CD_CloneList
+CD_CloneList (CDList* self)
+{
+    CDList* cloned = CD_CreateList();
+
+    CD_LIST_FOREACH(self, it) {
+        CD_ListPush(cloned, CD_ListIteratorValue(it));
+    }
+
+    return cloned;
+}
 
 void**
 CD_DestroyList (CDList* self)

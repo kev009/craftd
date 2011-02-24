@@ -27,17 +27,16 @@
 #define CRAFTD_JOB_H
 
 typedef enum _CDJobType {
-    CDProxyInput,
-    CDGameInput,
-    CDProcess,
-    CDOutput
+    CDPlayerInputJob,
+    CDPlayerProcessJob,
+    CDPlayerOutputJob
 } CDJobType;
+
+#define CD_JOB_IS_PLAYER(job) (job->type == CDPlayerInputJob || job->type == CDPlayerProcessJob || job->type == CDPlayerOutputJob)
 
 typedef struct _CDJob {
     CDJobType type;
     void*     data;
-
-    struct bufferevent* event;
 } CDJob;
 
 CDJob* CD_CreateJob (CDJobType type, void* data);

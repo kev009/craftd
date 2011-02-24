@@ -52,7 +52,7 @@ CD_CreateServer (const char* path)
         CD_DestroyServer(self)
     }
 
-    self->entiies = CD_CreateMap();
+    self->entities = CD_CreateMap();
     self->players = CD_CreateHash();
 
     self->event.callbacks = CD_CreateHash();
@@ -106,7 +106,13 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
-    CD_AddJob(player->server->workers, CD_CreateJob(CDGameInput, player));
+    pthread_rwlock_wrlock(&player->lock.pending);
+    if (!player->pending) {
+        player->pending = true;
+
+        CD_AddJob(player->server->workers, CD_CreateJob(CDGameInput, player));
+    }
+    pthread_rwlock_unlock(&player->lock.pending);
 }
 
 static
@@ -160,7 +166,7 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
     player->fd = fd;
     evutil_make_socket_nonblocking(player->fd);
 
-    player->event = bufferevent_socket_new(server->event.base, player->fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+    player->buffer = bufferevent_socket_new(server->event.base, player->fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
     bufferevent_setcb(player->event, cd_ReadCallback, NULL, cd_ErrorCallback, player);
     bufferevent_enable(player->event, EV_READ | EV_WRITE);
 

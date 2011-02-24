@@ -40,6 +40,12 @@ CD_CreatePlayer (struct _CDServer* server)
     self->entity.type     = CDPlayer;
     self->entity.position = { 0, 0, 0 };
 
+    self->status.current  = CDPlayerIdle;
+    self->status.previous = CDPlayerIdle;
+
+    pthread_rwlock_init(&self->lock.status, NULL);
+    pthread_rwlock_init(&self->lock.pending, NULL);
+
     self->_private = CD_CreateHash();
 
     return self;
@@ -51,6 +57,9 @@ CD_DestroyPlayer (CDPlayer* self)
     bdestroy(self->name);
 
     CD_EventDispatch(self->server, "Player.destroy", self);
+
+    pthread_rwlock_destroy(&self->lock.status);
+    pthread_rwlock_destroy(&self->lock.pending);
 
     CD_DestroyHash(self->_private);
 

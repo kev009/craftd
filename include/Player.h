@@ -31,6 +31,12 @@
 
 struct _CDServer;
 
+typedef enum _CDPlayerStatus {
+    CDPlayerIdle,
+    CDPlayerInput,
+    CDPlayerProcess
+} CDPlayerStatus;
+
 typedef struct _CDPlayer {
     MCEntity entity;
 
@@ -40,13 +46,17 @@ typedef struct _CDPlayer {
     char[128] ip;
 
     evutil_socket_t     socket;
-    struct bufferevent* event;
+    struct bufferevent* buffer;
 
     CDHash* _private;
 
+    CDPlayerStatus status;
+
+    bool pending;
+
     struct {
-        pthread_mutex_t input;
-        pthread_mutex_t output;
+        pthread_rwlock_t status;
+        pthread_rwlock_t pending;
     } lock;
 } CDPlayer;
 

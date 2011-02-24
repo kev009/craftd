@@ -457,10 +457,10 @@ typedef struct _CDPacketCloseWindow {
 } CDPacketCloseWindow;
 
 typedef struct _CDPacketWindowClick {
-    MCByte  id;
-    MCShort slot;
-    MCByte  rightClick;
-    MCShort action;
+    MCByte    id;
+    MCShort   slot;
+    MCBoolean rightClick;
+    MCShort   action;
 
     MCItem item; // if the first of the 3 values is -1 the packet ends there
 } CDPacketWindowClick;

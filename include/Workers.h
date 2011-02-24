@@ -57,4 +57,6 @@ CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
 
 void CD_AddJob (CDWorkers* self, CDJob* job);
 
+CDJob* CD_NextJob (CDWorkers* self);
+
 #endif
