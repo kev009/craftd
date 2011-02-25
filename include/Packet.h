@@ -26,10 +26,6 @@
 #ifndef CRAFTD_PACKET_H
 #define CRAFTD_PACKET_H
 
-#include "Entity.h"
-#include "Position.h"
-#include "Item.h"
-
 #include "minecraft.h"
 
 typedef enum _CDPacketType {
@@ -90,14 +86,6 @@ typedef struct _CDPacket {
     size_t       length;
     void*        data;
 } CDPacket;
-
-typedef struct _MCEntity {
-    MCInteger id;
-} MCEntity;
-
-typedef struct _MCItem {
-    MCShort id;
-} MCItem;
 
 typedef struct _CDPacketKeepAlive {
     // This packet has no data
@@ -216,8 +204,8 @@ typedef struct _CDPacketArmAnimate {
 
     enum {
         CDNoAnimation,
-        CDSwingArm
-        
+        CDSwingArm,
+
         CDUnknownAnimation = 102,
 
         CDCrouchAnimation = 104,
@@ -247,9 +235,9 @@ typedef struct _CDPacketNamedEntitySpawn {
 } CDPacketNamedEntitySpawn;
 
 typedef struct _CDPacketPickupSpawn {
-    MCEntity         entity;
-    MCItem           item;
-    CDPacketPosition position;
+    MCEntity   entity;
+    MCItem     item;
+    MCPosition position;
 
     MCByte rotation;
     MCByte pitch;
@@ -263,7 +251,7 @@ typedef struct _CDPacketCollectItem {
 
 typedef struct _CDPacketSpawnObject {
     MCEntity entity;
-    
+
     enum {
         CDBoat = 1,
 
@@ -439,7 +427,7 @@ typedef struct _CDPacketExplosion { // Not sure yet
 
 typedef struct _CDPacketOpenWindow {
     MCByte id;
-    
+
     enum {
         CDChest,
         CDWorkbench,
@@ -510,6 +498,6 @@ void CD_DestroyPacket (CDPacket* self);
 
 void* CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event);
 
-bstring CD_PacketToRaw (CDPacket* self);
+bstring CD_PacketToString (CDPacket* self);
 
 #endif

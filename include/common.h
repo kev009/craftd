@@ -35,6 +35,8 @@
 #include "bstrlib.h"
 #include "bstraux.h"
 
+#include <pthread.h>
+
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>

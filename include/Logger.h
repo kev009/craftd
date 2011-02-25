@@ -50,8 +50,8 @@ extern CDLogger CDDefaultLogger;
 #define ERR(format, ...) LOG(LOG_CRIT, format, ##__VA_ARGS__)
 
 #define LOG_CLOSE() do { \
-    if (CDMainServer) CDMainServer.logger.close(); \
-    if (CDDefaultLogger) CDDefaultLogger.close(); \
+    if (CDMainServer) CDMainServer->logger.closelog(); \
+    CDDefaultLogger.closelog(); \
 } while (0)
 
 #define CLOG(priority, format, ...) CDConsoleLogger.log(priority, format, ##__VA_ARGS__)

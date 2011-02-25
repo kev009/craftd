@@ -31,6 +31,8 @@ typedef enum _CDErrorType {
     CDFail
 } CDErrorType;
 
-static CDErrorType CDError;
+#ifndef CRAFTD_ERROR_IGNORE_EXTERN
+extern CDErrorType CDError;
+#endif
 
 #endif

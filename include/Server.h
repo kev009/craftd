@@ -27,20 +27,24 @@
 #define CRAFTD_SERVER_H
 
 #include "Config.h"
+#include "Logger.h"
+#include "TimeLoop.h"
 #include "Workers.h"
 #include "Plugins.h"
-#include "Logger.h"
 
 typedef struct _CDServer {
     char* name;
 
-    CDWorkers* workers;
-    CDConfig*  config;
-    CDPlugins* plugins;
-    CDLogger   logger;
+    CDTimeLoop* timeloop;
+    CDWorkers*  workers;
+    CDConfig*   config;
+    CDPlugins*  plugins;
+    CDLogger    logger;
 
     CDHash* players;
     CDMap*  entities;
+
+    short time;
 
     struct {
         struct event_base* base;
@@ -48,6 +52,10 @@ typedef struct _CDServer {
 
         CDHash* callbacks;
     } event;
+
+    struct {
+        pthread_spinlock_t time;
+    } lock;
 
     evutil_socket_t socket;
 
@@ -60,11 +68,15 @@ void CD_DestroyServer (CDServer* self);
 
 char* CD_ServerToString (CDServer* self);
 
+short CD_ServerGetTime (CDServer* self);
+
+void CD_ServerSetTime (CDServer* self, short time);
+
 void CD_RunServer (CDServer* self);
 
 MCEntityId CD_ServerGenerateEntityId (CDServer* self);
 
-typedef void (*CDEventCallback)();
+typedef bool (*CDEventCallback)();
 
 bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
@@ -76,15 +88,18 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
             break;                                                                          \
         }                                                                                   \
                                                                                             \
-        CDList*        callbacks = CD_HashGet(server->events, eventName);                   \
-        CDListIterator it;                                                                  \
+        CDList* callbacks = CD_HashGet(server->event.callbacks, eventName);                 \
                                                                                             \
         if (callbacks) {                                                                    \
             CD_LIST_FOREACH(callbacks, it) {                                                \
-                if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, ##__VA_ARGS__)) {  \
+                if (!CD_ListIteratorValue(it)) {                                            \
+                    continue;                                                               \
+                }                                                                           \
+                                                                                            \
+                if (!((CDEventCallback) CD_ListIteratorValue(it))(self, ##__VA_ARGS__)) {   \
                     break;                                                                  \
                 }                                                                           \
-            } CD_LIST_FOREACH_END(callbacks);                                               \
+            }                                                                               \
         }                                                                                   \
                                                                                             \
         cd_EventAfterDispatch(server, eventName, ##__VA_ARGS__);                            \

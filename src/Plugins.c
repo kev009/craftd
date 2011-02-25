@@ -29,5 +29,5 @@
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
-    void* handle = dlopen(path, RTLD_LAZY);
+    return NULL;
 }

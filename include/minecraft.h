@@ -100,10 +100,10 @@ typedef MCInteger MCEntityId;
 const MCEntityId MCMaxEntityId = INT_MAX;
 
 typedef enum _MCEntityType {
-    MCPlayer,
-    MCPickup,
-    MCMob,
-    MCObject
+    MCEntityPlayer,
+    MCEntityPickup,
+    MCEntityMob,
+    MCEntityObject
 } MCEntityType;
 
 typedef struct _MCEntity {

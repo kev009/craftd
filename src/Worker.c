@@ -130,7 +130,7 @@ CD_RunWorker (void* arg)
                         goto PLAYER_JOB_ERROR;
                     }
 
-                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(self->workers->server, player->event));
+                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->event));
 
                     if (evbuffer_get_length(player->event->input) > 0) {
                         player->pending = true;

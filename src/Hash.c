@@ -50,7 +50,7 @@ CD_CloneHash (CDHash* self)
     CDHash* cloned = CD_CreateHash();
 
     CD_HASH_FOREACH(self, it) {
-        CD_HashSet(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
+        CD_HashSet(cloned, CD_HashIteratorKey(self, it), CD_HashIteratorValue(self, it));
     }
 
     return cloned;

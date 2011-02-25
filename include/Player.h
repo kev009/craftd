@@ -43,7 +43,7 @@ typedef struct _CDPlayer {
     struct _CDServer* server;
 
     bstring   name;
-    char[128] ip;
+    char      ip[128];
 
     evutil_socket_t     socket;
     struct bufferevent* buffer;
@@ -62,6 +62,6 @@ typedef struct _CDPlayer {
 
 CDPlayer* CD_CreatePlayer (struct _CDServer* server);
 
-void CD_SetPlayerName (const char* name),
+void CD_SetPlayerName (const char* name);
 
 #endif

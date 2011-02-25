@@ -23,24 +23,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_JOB_H
-#define CRAFTD_JOB_H
+#ifndef CRAFTD_CONFIG_H
+#define CRAFTD_CONFIG_H
 
-typedef enum _CDJobType {
-    CDPlayerInputJob,
-    CDPlayerProcessJob,
-    CDPlayerOutputJob
-} CDJobType;
+typedef struct _CDConfig {
 
-#define CD_JOB_IS_PLAYER(job) (job->type == CDPlayerInputJob || job->type == CDPlayerProcessJob || job->type == CDPlayerOutputJob)
-
-typedef struct _CDJob {
-    CDJobType type;
-    void*     data;
-} CDJob;
-
-CDJob* CD_CreateJob (CDJobType type, void* data);
-
-void* CD_DestroyJob (CDJob* job);
+} CDConfig;
 
 #endif

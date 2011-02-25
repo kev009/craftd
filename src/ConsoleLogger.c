@@ -83,5 +83,3 @@ CDLogger CDConsoleLogger = {
     .setlogmask = cd_ConsoleSetLogMask,
     .closelog   = cd_ConsoleCloseLog,
 };
-
-CDLogger CDDefaultLogger = CDConsoleLogger;

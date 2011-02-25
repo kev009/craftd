@@ -23,11 +23,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "Error.h"
 #include "Packet.h"
 #include "common.h"
 
 CDPacket*
-CD_PacketFromEvent (CDServer* server, struct bufferevent* event)
+CD_PacketFromEvent (struct bufferevent* event)
 {
     struct evbuffer* input  = bufferevent_get_input(event);
     size_t           length = evbuffer_get_length(input);
@@ -45,32 +46,7 @@ CD_PacketFromEvent (CDServer* server, struct bufferevent* event)
     }
 
     evbuffer_remove(input, &self->type, 1);
-    length = len_statemachine(self->type, input);
-
-    if (length < 0) {
-        case (-length) {
-            case EAGAIN: {
-                CDError = CDNone;
-
-                LOGT(LOG_DEBUG, "EAGAIN");
-            } break;
-
-            case EILSEQ: {
-                CDError = CDFail;
-
-                LOG(LOG_ERR, "EILSEQ in recv buffer!, pkttype: 0x%.2x", self->type);
-            } break;
-
-            default: {
-                CDError = CDUnknown;
-            }
-        }
-
-        return CD_DestroyPacket(self);
-    }
-
-    self->server = server;
-    self->data   = CD_GetPacketDataFromEvent(self, event);
+    self->data = CD_GetPacketDataFromEvent(self, event);
 
     return self;
 }
@@ -147,10 +123,11 @@ CD_DestroyPacket (CDPacket* self)
 }
 
 void*
-CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event)
+CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
 {
-    void*  data   = NULL;
-    size_t length = 0;
+    struct evbuffer* input  = bufferevent_get_input(buffer);
+    void*            data   = NULL;
+    size_t           length = 0;
 
     switch (self->type) {
         case CDKeepAlive: {
@@ -158,9 +135,9 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event)
         } break;
 
         case CDLogin: {
-            int16_t leng;
+            int16_t len;
 
-            evbuffer_remove(input, data);
+//            evbuffer_remove(input, data);
         } break;
     }
 
@@ -168,7 +145,7 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event)
 }
 
 bstring
-CD_PacketToRaw (CDPacket* self)
+CD_PacketToString (CDPacket* self)
 {
-
+    return NULL;
 }

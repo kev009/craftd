@@ -33,7 +33,7 @@ CD_CreateMap (void)
     CDMap* self = CD_malloc(sizeof(CDMap));
 
     if (!self) {
-        ERR("could not allocate a Map object");
+//        ERR("could not allocate a Map object");
         return NULL;
     }
 
@@ -50,7 +50,7 @@ CD_CloneMap (CDMap* self)
     CDMap* cloned = CD_CreateMap();
 
     CD_MAP_FOREACH(self, it) {
-        CD_MapSet(cloned, CD_MapIteratorKey(it), CD_MapIteratorValue(it));
+        CD_MapSet(cloned, CD_MapIteratorKey(self, it), CD_MapIteratorValue(self, it));
     }
 
     return cloned;
@@ -143,9 +143,9 @@ CD_MapLength (CDMap* self)
 }
 
 int
-CD_MapIteratorKey (CDMapIterator iterator)
+CD_MapIteratorKey (CDMap* self, CDMapIterator iterator)
 {
-    int result = NULL;
+    int result = 0;
 
     pthread_rwlock_rdlock(&self->lock);
     result = kh_key(self->map, iterator);
@@ -155,7 +155,7 @@ CD_MapIteratorKey (CDMapIterator iterator)
 }
 
 void*
-CD_MapIteratorValue (CDMapIterator iterator)
+CD_MapIteratorValue (CDMap* self, CDMapIterator iterator)
 {
     void* result = NULL;
 
@@ -188,7 +188,7 @@ CD_MapGet (CDMap* self, int id)
     it = kh_get(cdMap, self->map, id);
 
     if (it != kh_end(self->map) && kh_exist(self->map, it)) {
-        result = kh_value(self->map, it)
+        result = kh_value(self->map, it);
     }
     pthread_rwlock_unlock(&self->lock);
 
@@ -221,7 +221,7 @@ CD_MapDelete (CDMap* self, int id)
     it = kh_get(cdMap, self->map, id);
 
     if (it != kh_end(self->map) && kh_exist(self->map, it)) {
-        old = kh_value(self->map, it)
+        old = kh_value(self->map, it);
     }
 
     kh_del(cdMap, self->map, it);

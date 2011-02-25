@@ -49,17 +49,17 @@ CDMapIterator CD_MapBegin (CDMap* self);
 
 CDMapIterator CD_MapEnd (CDMap* self);
 
-CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
+CDMapIterator CD_MapNext (CDMap* self, CDMapIterator iterator);
 
-CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
+CDMapIterator CD_MapPrevious (CDMap* self, CDMapIterator iterator);
 
 size_t CD_MapLength (CDMap* self);
 
-int CD_MapIteratorKey (CDMapIterator iterator);
+int CD_MapIteratorKey (CDMap* self, CDMapIterator iterator);
 
-void* CD_MapIteratorValue (CDMapIterator iterator);
+void* CD_MapIteratorValue (CDMap* self, CDMapIterator iterator);
 
-bool CD_MapIteratorValid (CDMap* self, CDHashIterator iterator);
+bool CD_MapIteratorValid (CDMap* self, CDMapIterator iterator);
 
 void* CD_MapGet (CDMap* self, int id);
 
@@ -74,6 +74,6 @@ void* CD_MapLast (CDMap* self);
 void** CD_MapClear (CDMap* self);
 
 #define CD_MAP_FOREACH(map, it) \
-    for (CDMapIterator it = CD_MapBegin(hash), end = CD_MapEnd(hash); it != end; it = CD_MapNext(hash, it))
+    for (CDMapIterator it = CD_MapBegin(map), end = CD_MapEnd(map); it != end; it = CD_MapNext(map, it))
 
 #endif

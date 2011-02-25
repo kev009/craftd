@@ -24,6 +24,7 @@
  */
 
 #include "Job.h"
+#include "memory.h"
 
 CDJob*
 CD_CreateJob (CDJobType type, void* data)
@@ -36,6 +37,8 @@ CD_CreateJob (CDJobType type, void* data)
 
     self->type = type;
     self->data = data;
+
+    return self;
 }
 
 void*
@@ -43,7 +46,7 @@ CD_DestroyJob (CDJob* self)
 {
     void* result = self->data;
 
-    CD_free(self)
+    CD_free(self);
 
     return result;
 }

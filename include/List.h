@@ -33,7 +33,7 @@
 KLIST_INIT(cdList, void*, __cdList_free);
 
 typedef struct _CDList {
-    klist_t(cdList)* _list;
+    klist_t(cdList)* list;
 
     pthread_rwlock_t lock;
 } CDList;
@@ -50,9 +50,11 @@ CDListIterator CD_ListBegin (CDList* self);
 
 CDListIterator CD_ListEnd (CDList* self);
 
-CDListIterator CD_ListNext (CDList* self);
+CDListIterator CD_ListNext (CDListIterator self);
 
 size_t CD_ListLength (CDList* self);
+
+void* CD_ListIteratorValue (CDListIterator iterator);
 
 CDList* CD_ListPush (CDList* self, void* data);
 
@@ -62,9 +64,9 @@ void* CD_ListDelete (CDList* self, void* data);
 
 void* CD_ListDeleteAll (CDList* self, void* data);
 
-void* CD_MapFirst (CDMap* self);
+void* CD_ListFirst (CDList* self);
 
-void* CD_MapLast (CDMap* self);
+void* CD_ListLast (CDList* self);
 
 void** CD_ListClear (CDList* self);
 

@@ -23,24 +23,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_JOB_H
-#define CRAFTD_JOB_H
+#ifndef CRAFTD_TIMELOOP_H
+#define CRAFTD_TIMELOOP_H
 
-typedef enum _CDJobType {
-    CDPlayerInputJob,
-    CDPlayerProcessJob,
-    CDPlayerOutputJob
-} CDJobType;
+#include "Map.h"
 
-#define CD_JOB_IS_PLAYER(job) (job->type == CDPlayerInputJob || job->type == CDPlayerProcessJob || job->type == CDPlayerOutputJob)
+struct _CDServer;
 
-typedef struct _CDJob {
-    CDJobType type;
-    void*     data;
-} CDJob;
+typedef struct _CDTimeLoop {
+    struct _CDServer* server;
 
-CDJob* CD_CreateJob (CDJobType type, void* data);
+    int    last;
+    CDMap* callbacks;
 
-void* CD_DestroyJob (CDJob* job);
+    struct {
+        struct event_base* base;
+    } event;
+
+    struct {
+        pthread_spinlock_t last;
+    } lock;
+} CDTimeLoop;
+
+CDTimeLoop* CD_CreateTimeLoop (struct _CDServer* server);
+
+void CD_DestroyTimeLoop (CDTimeLoop* self);
+
+void* CD_RunTimeLoop (void* arg);
+
+int CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback);
+
+void CD_ClearTimeout (CDTimeLoop* self, float seconds, int id);
+
+int CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback);
+
+void CD_ClearInterval (CDTimeLoop* self, float seconds, int id);
 
 #endif

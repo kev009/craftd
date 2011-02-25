@@ -50,7 +50,7 @@ endif
 
 craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
-craftd_SOURCES += craftd.c Error.c Packet.c Player.c Server.c Worker.c Workers.c minecraft.c
+craftd_SOURCES += craftd.c ConsoleLogger.c Error.c Hash.c Job.c List.c Map.c Packet.c Player.c Plugins.c Server.c SystemLogger.c TimeLoop.c Worker.c Workers.c minecraft.c
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
 craftd_LDADD = $(PTHREAD_LIBS) libjansson.la libcdnbt.la
 

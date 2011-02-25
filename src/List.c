@@ -33,7 +33,7 @@ CD_CreateList (void)
     CDList* self = CD_malloc(sizeof(CDList));
 
     if (!self) {
-        ERR("could not instantiate List object");
+        //ERR("could not instantiate List object");
         return NULL;
     }
 
@@ -76,7 +76,7 @@ CD_ListBegin (CDList* self)
     CDListIterator iterator;
 
     pthread_rwlock_rdlock(&self->lock);
-    iterator = kl_begin(self->hash);
+    iterator = kl_begin(self->list);
     pthread_rwlock_unlock(&self->lock);
 
     return iterator;
@@ -88,7 +88,7 @@ CD_ListEnd (CDList* self)
     CDListIterator iterator;
 
     pthread_rwlock_rdlock(&self->lock);
-    iterator = kl_end(self->hash);
+    iterator = kl_end(self->list);
     pthread_rwlock_unlock(&self->lock);
 
     return iterator;
@@ -97,11 +97,7 @@ CD_ListEnd (CDList* self)
 CDListIterator
 CD_ListNext (CDListIterator iterator)
 {
-    pthread_rwlock_rdlock(&self->lock);
-    iterator = kl_next(iterator);
-    pthread_rwlock_unlock(&self->lock);
-
-    return iterator;
+    return kl_next(iterator);
 }
 
 size_t
@@ -120,13 +116,7 @@ CD_ListLength (CDList* self)
 void*
 CD_ListIteratorValue (CDListIterator iterator)
 {
-    void* result = NULL;
-
-    pthread_rwlock_rdlock(&self->lock);
-    result = kl_val(iterator);
-    pthread_rwlock_unlock(&self->lock);
-
-    return result;
+    return kl_val(iterator);
 }
 
 CDList*
@@ -146,6 +136,30 @@ CD_ListShift (CDList* self)
 
     pthread_rwlock_wrlock(&self->lock);
     kl_shift(cdList, self->list, &result);
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
+void*
+CD_ListFirst (CDList* self)
+{
+    void* result = NULL;
+
+    pthread_rwlock_rdlock(&self->lock);
+    result = kl_val(kl_begin(self->list));
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
+void*
+CD_ListLast (CDList* self)
+{
+    void* result = NULL;
+
+    pthread_rwlock_rdlock(&self->lock);
+    result = kl_val(kl_begin(self->list));
     pthread_rwlock_unlock(&self->lock);
 
     return result;

@@ -40,20 +40,20 @@ CD_CreateServer (const char* path)
         return NULL;
     }
 
-    pthread_rwlock_init(&self->lock.events, NULL);
+    pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE);
 
-    self->logger = CDConsoleLogger;
-
-    self->config  = CD_ParseConfig(path);
-    self->workers = CD_CreateWorkers(self);
-    self->plugins = CD_CreatePlugins(self)
+    self->logger   = CDConsoleLogger;
+    self->timeloop = CD_CreateTimeLoop(self);
+    self->config   = CD_ParseConfig(path);
+    self->workers  = CD_CreateWorkers(self);
+    self->plugins  = CD_CreatePlugins(self)
 
     if (!self->config || !self->workers) {
         CD_DestroyServer(self)
     }
 
     self->entities = CD_CreateMap();
-    self->players = CD_CreateHash();
+    self->players  = CD_CreateHash();
 
     self->event.callbacks = CD_CreateHash();
 
@@ -65,6 +65,8 @@ CD_CreateServer (const char* path)
     }
 */
 
+    CD_ServerSetTime(self, 0);
+
     self->_private = CD_CreateHash();
 
     return self;
@@ -73,8 +75,6 @@ CD_CreateServer (const char* path)
 void
 CD_DestroyServer (CDServer* self)
 {
-    pthread_rwlock_destroy(&self->lock.events);
-
     CD_DestroyConfig(self->config)
     CD_DestroyWorkers(self->workers)
     CD_DestroyPlugins(self->plugins);
@@ -93,6 +93,8 @@ CD_DestroyServer (CDServer* self)
 
     CD_DestroyHash(self->_private);
 
+    pthread_spin_destroy(&self->lock.time);
+
     CD_free(self->name);
 }
 
@@ -100,6 +102,28 @@ char*
 CD_ServerToString (CDServer* self)
 {
     return self->name;
+}
+
+short
+CD_ServerGetTime (CDServer* self)
+{
+    short result;
+
+    pthread_spin_lock(&self->lock.time);
+    result = self->time;
+    pthread_spin_unlock(&self->lock.time);
+
+    return result;
+}
+
+short
+CD_ServerSetTime (CDServer* self, short time)
+{
+    pthread_spin_lock(&self->lock.time);
+    self->time = time;
+    pthread_spin_unlock(&self->lock.time);
+
+    return time;
 }
 
 static
@@ -196,6 +220,8 @@ CD_RunServer (CDServer* self)
         setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     }
     #endif
+
+    pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
 

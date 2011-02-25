@@ -26,13 +26,14 @@
 #ifndef CRAFTD_VERSION_H
 #define CRAFTD_VERSION_H
 
+// FIXME: Fix this when logging is done properly
 static inline
 void
 cd_Version (const char* executable)
 {
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
+//    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
+//    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
+//		    "http://mc.kev009.com/craftd/");
 }
 
 #endif
