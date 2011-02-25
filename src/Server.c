@@ -163,7 +163,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     if (!player->pending) {
         player->pending = true;
 
-        CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerInput, player));
+        CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerInputJob, player));
     }
     pthread_rwlock_unlock(&player->lock.pending);
 }
@@ -268,11 +268,15 @@ CD_RunServer (CDServer* self)
 
     CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
+    // Start the TimeLoop for timed events
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
 
     event_add(self->event.listener, NULL);
+
+    // TODO: replace this with the plugin load cycle
+    CD_LoadPlugin(self->plugins, "plugins/base.so");
 
     return event_base_dispatch(self->event.base) != 0;
 }

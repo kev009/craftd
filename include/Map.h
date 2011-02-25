@@ -74,6 +74,6 @@ void* CD_MapLast (CDMap* self);
 void** CD_MapClear (CDMap* self);
 
 #define CD_MAP_FOREACH(map, it) \
-    for (CDMapIterator it = CD_MapBegin(map), end = CD_MapEnd(map); it != end; it = CD_MapNext(map, it))
+    if (map) for (CDMapIterator it = CD_MapBegin(map), end = CD_MapEnd(map); it != end; it = CD_MapNext(map, it))
 
 #endif

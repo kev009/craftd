@@ -30,63 +30,61 @@
 
 static
 void
-cd_TimeIncrease (evutil_socket_t, fd, short event, void* arg)
+cd_TimeIncrease (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDServer* self = arg;
-
     short current = CD_ServerGetTime(self);
 
-    if (current >= && current <= 11999) {
-        CD_ServerSetTime(current + self->config->cache.rate.day);
+    if (current >= 0 && current <= 11999) {
+        CD_ServerSetTime(self, current + self->config->cache.rate.day);
     }
-    else if (current >= 12000, && current <= 13799) {
-        CD_ServerSetTime(current + self->config->cache.rate.sunset);
+    else if (current >= 12000 && current <= 13799) {
+        CD_ServerSetTime(self, current + self->config->cache.rate.sunset);
     }
     else if (current >= 13800 && current <= 22199) {
-        CD_ServerSetTime(current + self->config->cache.rate.night);
+        CD_ServerSetTime(self, current + self->config->cache.rate.night);
     }
     else if (current >= 22200 && current <= 23999) {
-        CD_ServerSetTime(current + self->config->cache.rate.sunrise);
+        CD_ServerSetTime(self, current + self->config->cache.rate.sunrise);
     }
 
     current = CD_ServerGetTime(self);
 
     if (current >= 24000) {
-        CD_ServerSetTime(current - 24000);
+        CD_ServerSetTime(self, current - 24000);
     }
 }
 
 static
 void
-cd_TimeUpdate (evutil_socket_t, fd, short event, void* arg)
+cd_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDServer* self = arg;
-
     CDPacketTimeUpdate data   = { CD_ServerGetTime(self) };
     CDPacket           packet = { CDTimeUpdate, &data };
 
     CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
+        CD_PlayerSendPacket(CD_HashIteratorValue(self->players, it), &packet);
     }
 }
 
 static
 void
-cd_KeepAlive (evutil_socket_t, fd, short event, void* arg)
+cd_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDServer* self = arg;
-
     CDPacket packet = { CDKeepAlive, NULL };
 
     CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
+        CD_PlayerSendPacket(CD_HashIteratorValue(self->players, it), &packet);
     }
 }
 
 static
 bool
-cd_PlayerProcess (CDPlayer* player)
+cd_PlayerProcess (CDServer* server, CDPlayer* player)
 {
+    CDPacket* packet = CD_HashGet(PRIVATE(player), "packet");
+
+    printf(":OOO %d\n", packet->type);
+
     return true;
 }
 
@@ -95,8 +93,8 @@ bool
 CD_PluginInitialize (CDPlugin* self)
 {
     CD_HashSet(PRIVATE(self), "Event.timeIncrease", (void*) CD_SetInterval(self->server->timeloop, 1,  cd_TimeIncrease));
-    CD_HashSet(PRIVATE(self), "Event.timeUpdate", (void*) CD_SetInterval(self->server->timeloop, 30, cd_TimeUpdate));
-    CD_HashSet(PRIVATE(self), "Event.keepAlive", (void*) CD_SetInterval(self->server->timeloop, 10, cd_KeepAlive));
+    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   (void*) CD_SetInterval(self->server->timeloop, 30, cd_TimeUpdate));
+    CD_HashSet(PRIVATE(self), "Event.keepAlive",    (void*) CD_SetInterval(self->server->timeloop, 10, cd_KeepAlive));
 
     CD_EventRegister(self->server, "Player.process", cd_PlayerProcess);
 }
@@ -108,4 +106,6 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeIncrease"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
+
+    CD_EventUnregister(self->server, "Player.process", cd_PlayerProcess);
 }

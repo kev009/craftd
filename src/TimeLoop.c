@@ -71,11 +71,11 @@ CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
     struct event*  timeoutEvent = event_new(self->event.base, -1, 0, callback, self->server);
     int            result;
 
-    evtimer_add(timeoutEvent, &timeout);
-
     pthread_spin_lock(&self->lock.last);
     CD_MapSet(self->callbacks, (result = self->last++), timeoutEvent);
     pthread_spin_unlock(&self->lock.last);
+
+    evtimer_add(timeoutEvent, &timeout);
 
     return result;
 }
@@ -83,10 +83,12 @@ CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
 void
 CD_ClearTimeout (CDTimeLoop* self, int id)
 {
-    struct event* clear = CD_MapGet(self->callbacks, id);
+    struct event* clear = CD_MapDelete(self->callbacks, id);
 
-    evtimer_del(clear);
-    event_free(clear);
+    if (clear) {
+        evtimer_del(clear);
+        event_free(clear);
+    }
 }
 
 int
@@ -96,11 +98,11 @@ CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
     struct event*  intervalEvent = event_new(self->event.base, -1, EV_PERSIST, callback, self->server);
     int            result;
 
-    evtimer_add(intervalEvent, &interval);
-
     pthread_spin_lock(&self->lock.last);
     CD_MapSet(self->callbacks, (result = self->last++), intervalEvent);
     pthread_spin_unlock(&self->lock.last);
+
+    evtimer_add(intervalEvent, &interval);
 
     return result;
 }
@@ -108,8 +110,10 @@ CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
 void
 CD_ClearInterval (CDTimeLoop* self, int id)
 {
-    struct event* clear = CD_MapGet(self->callbacks, id);
+    struct event* clear = CD_MapDelete(self->callbacks, id);
 
-    evtimer_del(clear);
-    event_free(clear);
+    if (clear) {
+        evtimer_del(clear);
+        event_free(clear);
+    }
 }

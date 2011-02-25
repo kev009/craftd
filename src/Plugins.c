@@ -58,5 +58,14 @@ CD_DestroyPlugins (CDPlugins* self)
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
-    return CD_CreatePlugin(self->server, path);
+    CDPlugin* plugin = CD_CreatePlugin(self->server, path);
+
+    if (!plugin) {
+        return NULL;
+    }
+
+    self->item                   = CD_realloc(self->item, sizeof(CDPlugin*) * ++self->length);
+    self->item[self->length - 1] = plugin;
+
+    return plugin;
 }

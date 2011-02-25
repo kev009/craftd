@@ -86,8 +86,6 @@ CD_RunWorker (CDWorker* self)
             break;
         }
 
-        SDEBUG(self->server, "in worker: %d", self->id);
-
         do {
             self->job = CD_NextJob(self->workers);
 
@@ -122,19 +120,25 @@ CD_RunWorker (CDWorker* self)
 
         pthread_mutex_unlock(&self->workers->mutex);
 
+        SDEBUG(self->server, "doing job type: %d", self->job->type);
+
         if (CD_JOB_IS_PLAYER(self->job)) {
             CDPlayer* player = self->job->data;
+
+            SDEBUG(self->server, "working on player %s (%s)", player->name, player->ip);
 
             pthread_rwlock_wrlock(&player->lock.pending);
             pthread_rwlock_wrlock(&player->lock.status);
 
             switch (self->job->type) {
-                case CDPlayerInput: {
+                case CDPlayerInputJob: {
                     if (!self->job) {
                         SERR(self->server, "Aaack, null event or context in worker?");
 
                         goto PLAYER_JOB_ERROR;
                     }
+
+                    SDEBUG(self->server, "received packet from %s", player->ip);
 
                     CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->buffer));
 
@@ -150,17 +154,30 @@ CD_RunWorker (CDWorker* self)
                     }
 
                     player->status = CDPlayerInput;
+
+                    CD_AddJob(self->workers, CD_CreateJob (CDPlayerProcessJob, player));
                 } break;
 
-                case CDPlayerProcess: {
+                case CDPlayerProcessJob: {
+                    SDEBUG(self->server, "processing player %d", player->entity.id);
+
                     player->status = CDPlayerProcess;
+                    pthread_rwlock_unlock(&player->lock.pending);
                     pthread_rwlock_unlock(&player->lock.status);
+
+                    puts("^_^");
                     CD_EventDispatch(self->server, "Player.process", player);
+                    puts("v¯v");
+
+                    pthread_rwlock_wrlock(&player->lock.pending);
                     pthread_rwlock_wrlock(&player->lock.status);
                     player->status = CDPlayerIdle;
+
+                    CD_DestroyJob(self->job);
                 } break;
 
                 default: {
+                    SDEBUG(self->server, "destroying job");
                     CD_DestroyJob(self->job);
                 }
             }
@@ -170,6 +187,8 @@ CD_RunWorker (CDWorker* self)
 
                 pthread_rwlock_unlock(&player->lock.pending);
                 pthread_rwlock_unlock(&player->lock.status);
+
+                continue;
             }
 
             PLAYER_JOB_ERROR: {
@@ -177,6 +196,8 @@ CD_RunWorker (CDWorker* self)
 
                 pthread_rwlock_unlock(&player->lock.pending);
                 pthread_rwlock_unlock(&player->lock.status);
+
+                continue;
             }
         }
         else {

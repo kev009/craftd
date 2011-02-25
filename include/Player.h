@@ -28,6 +28,7 @@
 
 #include "minecraft.h"
 #include "Hash.h"
+#include "Packet.h"
 
 struct _CDServer;
 
@@ -65,5 +66,9 @@ CDPlayer* CD_CreatePlayer (struct _CDServer* server);
 void CD_DestroyPlayer (CDPlayer* self);
 
 void CD_SetPlayerName (const char* name);
+
+void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
+
+void CD_PlayerSendRaw (CDPlayer* self, CDString* data);
 
 #endif

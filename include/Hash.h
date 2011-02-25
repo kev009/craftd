@@ -74,6 +74,6 @@ void* CD_HashLast (CDHash* self);
 void** CD_HashClear (CDHash* self);
 
 #define CD_HASH_FOREACH(hash, it) \
-    for (CDHashIterator it = CD_HashBegin(hash), end = CD_HashEnd(hash); it != end; it = CD_HashNext(hash, it))
+    if (hash) for (CDHashIterator it = CD_HashBegin(hash), end = CD_HashEnd(hash); it != end; it = CD_HashNext(hash, it))
 
 #endif

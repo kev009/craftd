@@ -47,7 +47,7 @@ endif
 craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
 craftd_SOURCES += craftd.c Config.c ConsoleLogger.c Error.c Hash.c Job.c List.c Logger.c Map.c Packet.c Player.c Plugins.c Plugin.c Server.c SystemLogger.c String.c TimeLoop.c Worker.c Workers.c minecraft.c
-craftd_LDFLAGS = $(libevent2_pthreads_LIBS)
+craftd_LDFLAGS = $(libevent2_pthreads_LIBS) -export-dynamic
 craftd_LDADD = $(PTHREAD_LIBS) libjansson.la
 
 #craftd_proxy_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h

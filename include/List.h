@@ -71,6 +71,6 @@ void* CD_ListLast (CDList* self);
 void** CD_ListClear (CDList* self);
 
 #define CD_LIST_FOREACH(list, it) \
-    for (CDListIterator it = CD_ListBegin(list), end = CD_ListEnd(list); it != end; it = CD_ListNext(it))
+    if (list) for (CDListIterator it = CD_ListBegin(list), end = CD_ListEnd(list); it != end; it = CD_ListNext(it))
 
 #endif

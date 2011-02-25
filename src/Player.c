@@ -68,3 +68,17 @@ CD_DestroyPlayer (CDPlayer* self)
 
     CD_free(self);
 }
+
+void
+CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
+{
+
+
+}
+
+void
+CD_PlayerSendRaw (CDPlayer* self, CDString* data)
+{
+
+}
+

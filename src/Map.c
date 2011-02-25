@@ -202,8 +202,8 @@ CD_MapSet (CDMap* self, int id, void* data)
     int      ret;
 
     pthread_rwlock_wrlock(&self->lock);
-    it                       = kh_put(cdMap, self->map, id, &ret);
-    old                      = kh_value(self->map, it);
+    it                      = kh_put(cdMap, self->map, id, &ret);
+    old                     = kh_value(self->map, it);
     kh_value(self->map, it) = data;
     pthread_rwlock_unlock(&self->lock);
 
