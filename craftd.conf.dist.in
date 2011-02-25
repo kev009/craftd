@@ -1,33 +1,49 @@
 {
   "00": "craftd config file.  Must be valid JSON.",
+
   "server": {
     "daemonize": true,
-    "game-bind": "0.0.0.0",
-    "game-bind6": "::",
-    "game-port": 25565,
+
+    "connection": {
+        "bind": {
+            "ipv4": "0.0.0.0",
+            "ipv6": "::",
+        },
+
+        "port": 25565
+    },
+
+    "workers": 10,
+
+    "rate": {
+        "sunrise": 20,
+        "day": 20,
+        "sunset": 20,
+        "night": 20
+    },
+
     "max-listenbacklog": 16,
     "minecraft-stringmax": 100,
-    "worker-pool-size": 2,
-    "day-rate": 20,
-    "sunset-rate": 20,
-    "night-rate": 20,
-    "sunrise-rate": 20,
-    "motd-file": "@sysconfdir@/craftd/motd.conf.dist",
-    "world-dir": "@datadir@/craftd/world",
-    "proxy-enabled": false,
-    "default-server": "Local",
-    "servers" : [ {
-        "host" : "127.0.0.1",
-        "name" : "Default Server",
-        "port" : 25565 }
-    ]
+
+    "file": {
+        "motd": "@sysconfdir@/craftd/motd.conf.dist",
+        "world": "@datadir@/craftd/world"
+    },
   },
+
   "httpd": {
     "enabled": true,
-    "httpd-bind": "127.0.0.1",
-    "httpd-bind6": "::1",
-    "httpd-port": 25566,
-    "static-docroot": "@datadir@/craftd/htdocs/"
+
+    "connection": {
+        "bind": {
+            "ipv4": "127.0.0.1",
+            "ipv6": "::1",
+        },
+
+        "port": 25566,
+    }
+
+    "root": "@datadir@/craftd/htdocs/"
   }
 }
 

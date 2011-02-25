@@ -23,23 +23,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Worker.h"
 #include "common.h"
+
+#include "Server.h"
+#include "Worker.h"
+#include "Workers.h"
+#include "Player.h"
 
 CDWorker*
 CD_CreateWorker (void)
 {
     CDWorker* self = CD_malloc(sizeof(CDWorker));
 
-    if (!object) {
+    if (!self) {
         return NULL;
     }
 
     self->id      = 0;
-    self->working = NULL;
-    self->thread  = NULL;
+    self->working = false;
 
-    return object;
+    return self;
 }
 
 void
@@ -50,16 +53,17 @@ CD_DestroyWorker (CDWorker* self)
         pthread_cancel(self->thread);
     }
 
-    CD_free(self->working);
+    if (self->job) {
+        CD_DestroyJob(self->job);
+    }
+
     CD_free(self);
 }
 
 void*
-CD_RunWorker (void* arg)
+CD_RunWorker (CDWorker* self)
 {
-    CDWorker* self = arg;
-
-    LOG(LOG_INFO, "worker %d started", id);
+//    LOG(LOG_INFO, "worker %d started", id);
 
     while (self->working) {
         pthread_mutex_lock(&self->workers->mutex);
@@ -69,18 +73,18 @@ CD_RunWorker (void* arg)
          * Works in tandem with errorcb FOREACH bev removal loop
          */
         while (CD_ListLength(self->workers->jobs) == 0) {
-            LOG(LOG_DEBUG, "worker %d ready", self->id);
+//            LOG(LOG_DEBUG, "worker %d ready", self->id);
 
             pthread_cond_wait(&self->workers->condition, &self->workers->mutex);
         }
 
         if (!self->working) {
-            LOG(LOG_DEBUG, "worker %d stopped", self->id);
-            pthread_mutex_unlock(self->workers->mutex);
+//            LOG(LOG_DEBUG, "worker %d stopped", self->id);
+            pthread_mutex_unlock(&self->workers->mutex);
             break;
         }
 
-        LOG(LOG_DEBUG, "in worker: %d", self->id);
+//        LOG(LOG_DEBUG, "in worker: %d", self->id);
 
         do {
             self->job = CD_NextJob(self->workers);
@@ -114,7 +118,7 @@ CD_RunWorker (void* arg)
             }
         } while (!self->job);
 
-        pthread_mutex_unlock(self->workers->mutex);
+        pthread_mutex_unlock(&self->workers->mutex);
 
         if (CD_JOB_IS_PLAYER(self->job)) {
             CDPlayer* player = self->job->data;
@@ -124,15 +128,15 @@ CD_RunWorker (void* arg)
 
             switch (self->job->type) {
                 case CDPlayerInput: {
-                    if (!self->job->event || !self->job->player) {
-                        LOG(LOG_CRIT, "Aaack, null event or context in worker?");
+                    if (!self->job) {
+//                        LOG(LOG_CRIT, "Aaack, null event or context in worker?");
 
                         goto PLAYER_JOB_ERROR;
                     }
 
-                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->event));
+                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->buffer));
 
-                    if (evbuffer_get_length(player->event->input) > 0) {
+                    if (evbuffer_get_length(bufferevent_get_input(player->buffer)) > 0) {
                         player->pending = true;
 
                         CD_AddJob(player->server->workers, self->job);

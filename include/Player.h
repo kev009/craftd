@@ -62,6 +62,8 @@ typedef struct _CDPlayer {
 
 CDPlayer* CD_CreatePlayer (struct _CDServer* server);
 
+void CD_DestroyPlayer (CDPlayer* self);
+
 void CD_SetPlayerName (const char* name);
 
 #endif

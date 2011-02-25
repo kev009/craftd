@@ -23,59 +23,66 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "minecraft.h"
 #include "common.h"
 
+#define CRAFTD_MINECRAFT_IGNORE_EXTERN
+#include "minecraft.h"
+#undef CRAFTD_MINECRAFT_IGNORE_EXTERN
+
+const MCEntityId MCMaxEntityId = INT_MAX;
+
 void
-MC_DestroyString (MCString object)
+MC_DestroyString (MCString self)
 {
-    bdestroy(object);
+    bdestroy(self);
 }
 
 MCMetadata*
 MC_CreateMetadata (void)
 {
-    MCMetadata* object = MC_malloc(sizeof(MCMetadata));
+    MCMetadata* self = CD_malloc(sizeof(MCMetadata));
 
-    if (!object) {
+    if (!self) {
         return NULL;
     }
+
+    return self;
 }
 
 void
-MC_DestroyMetadata (MCMetadata* object)
+MC_DestroyMetadata (MCMetadata* self)
 {
     size_t i;
 
-    for (i = 0; i < object->length; i++) {
-        MC_DestroyData(object->item[i]);
+    for (i = 0; i < self->length; i++) {
+        MC_DestroyData(self->item[i]);
     }
 
-    MC_free(object->item);
-    MC_free(object);
+    CD_free(self->item);
+    CD_free(self);
 }
 
 MCData*
 MC_CreateData (void)
 {
-    MCData* object = CD_malloc(sizeof(MCData));
+    MCData* self = CD_malloc(sizeof(MCData));
 
-    if (!object) {
+    if (!self) {
         return NULL;
     }
 
-    return object;
+    return self;
 }
 
 void
-MC_DestroyData (MCData* object)
+MC_DestroyData (MCData* self)
 {
     // Destroy the bstring, the other types lay on the stack
-    if (object->type == MCTypeString) {
-        bdestroy(object->data.s);
+    if (self->type == MCTypeString) {
+        bdestroy(self->data.s);
     }
 
-    CD\_free(object);
+    CD_free(self);
 }
 
 MCMetadata*
@@ -93,7 +100,7 @@ MC_ConcatDatas (MCMetadata* metadata, MCData** items, size_t length)
 MCMetadata*
 MC_AppendData (MCMetadata* metadata, MCData* data)
 {
-    metadata->item = MC_realloc(metadata->item, sizeof(MCData*) * ++metadata->length);
+    metadata->item = CD_realloc(metadata->item, sizeof(MCData*) * ++metadata->length);
 
     metadata->item[metadata->length - 1] = data;
 
@@ -125,12 +132,12 @@ MC_MetadataFromEvent (struct bufferevent* event)
 
         if (current->type == MCTypeString) {
             evbuffer_remove(input, &length, 2);
-            buffer = MC_malloc(length);
+            buffer = CD_malloc(length);
             evbuffer_remove(input, buffer, length);
             bassignblk(current->data.s, buffer, length);
         }
         else {
-            current->data = evbuffer_remove(input, &current->data, sizes[current->type]);
+            evbuffer_remove(input, &current->data, sizes[current->type]);
         }
 
         MC_AppendData(metadata, current);

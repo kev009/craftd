@@ -49,7 +49,7 @@ CD_CreatePlayer (struct _CDServer* server)
     pthread_rwlock_init(&self->lock.status, NULL);
     pthread_rwlock_init(&self->lock.pending, NULL);
 
-    self->_private = CD_CreateHash();
+    PRIVATE(self) = CD_CreateHash();
 
     return self;
 }
@@ -64,7 +64,7 @@ CD_DestroyPlayer (CDPlayer* self)
     pthread_rwlock_destroy(&self->lock.status);
     pthread_rwlock_destroy(&self->lock.pending);
 
-    CD_DestroyHash(self->_private);
+    CD_DestroyHash(PRIVATE(self));
 
     CD_free(self);
 }

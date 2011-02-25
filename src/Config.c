@@ -27,14 +27,77 @@
 
 #include "Config.h"
 
+// TODO: Implement real parsing of the json file
 CDConfig*
 CD_ParseConfig (const char* path)
 {
-    return NULL;
+    CDConfig* self = CD_malloc(sizeof(CDConfig));
+
+    if (!self) {
+        return NULL;
+    }
+
+    self->data = json_load_file(path, 0, &self->error);
+
+    if (!self->data) {
+        CD_DestroyConfig(self);
+        return NULL;
+    }
+
+    self->cache.daemonize = true;
+
+    self->cache.connection.port = 25565;
+
+    self->cache.connection.bind.ipv4.sin_family      = AF_INET;
+    self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
+    self->cache.connection.bind.ipv4.sin_port        = htons(self->cache.connection.port);
+
+    self->cache.connection.bind.ipv6.sin6_family       = AF_INET6;
+//    self->cache.connection.bind.ipv6.sin6_addr.s6_addr = INADDR_ANY;
+    self->cache.connection.bind.ipv6.sin6_port         = htons(self->cache.connection.port);
+
+    self->cache.httpd.enabled         = true;
+    self->cache.httpd.connection.port = 25566;
+
+    self->cache.httpd.connection.bind.ipv4.sin_family      = AF_INET;
+    self->cache.httpd.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
+    self->cache.httpd.connection.bind.ipv4.sin_port        = htons(self->cache.httpd.connection.port);
+
+    self->cache.httpd.connection.bind.ipv6.sin6_family       = AF_INET6;
+//    self->cache.httpd.connection.bind.ipv6.sin6_addr.s6_addr = INADDR_ANY;
+    self->cache.httpd.connection.bind.ipv6.sin6_port         = htons(self->cache.httpd.connection.port);
+
+    self->cache.rate.sunrise = 20;
+    self->cache.rate.day     = 20;
+    self->cache.rate.sunset  = 20;
+    self->cache.rate.night   = 20;
+
+    self->cache.spawn.x = 0;
+    self->cache.spawn.y = 0;
+    self->cache.spawn.z = 0;
+
+    self->cache.workers = 10;
+
+    self->cache.maxPlayers = 0;
+
+    return self;
 }
 
 void
 CD_DestroyConfig (CDConfig* self)
 {
-    
+    json_decref(self->data);
+}
+
+void
+CD_ConfigParseBool (bool* save, const json_t* json, const char* key)
+{
+    json_t* obj = json_object_get(json, key);
+
+    if (obj && json_is_true(obj)) {
+        *save = true;
+    }
+    else {
+        *save = false;
+    }
 }

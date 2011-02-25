@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <limits.h>
 #include <errno.h>
 #include "memory.h"
@@ -48,6 +49,8 @@
 #include "List.h"
 #include "Map.h"
 #include "Hash.h"
+#include "String.h"
+#include "Regexp.h"
 
 #define PRIVATE(data) ((data)->_private)
 

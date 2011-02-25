@@ -23,10 +23,45 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void
-craftd_version (const char* executable)
-{
-    LOG(LOG_NOTICE, "%s (%s-%s)", executable, PACKAGE_TARNAME, PACKAGE_VERSION);
-    LOG(LOG_NOTICE, "Copyright (c) 2011 Kevin Bowling - "
-		    "http://mc.kev009.com/craftd/");
-}
+#ifndef CDAFTD_REGEXP_H
+#define CDAFTD_REGEXP_H
+
+#include <pcre.h>
+
+#define REGEXP_I PCRE_CASELESS
+#define REGEXP_X PCRE_EXTENDED
+#define REGEXP_M PCRE_MULTILINE
+#define REGEXP_S PCRE_DOTALL
+
+typedef struct _CDRegexp {
+    char* string;
+    int   options;
+
+    pcre*       pattern;
+    pcre_extra* study;
+} CDRegexp;
+
+typedef struct _CDRegexpMatches {
+    size_t     length;
+    CDString** item;
+} CDRegexpMatches;
+
+CDRegexp* CD_CreateRegexp (char* regexp, int options);
+
+void CD_DestroyRegexp (CDRegexp* regexp);
+
+void CD_DestroyRegexpKeepString (CDRegexp* regexp);
+
+CDRegexpMatches* CD_CreateRegexpMatches (size_t length);
+
+void CD_DestroyRegexpMatches (CDRegexpMatches* object);
+
+CDRegexpMatches* CD_MatchRegexp (CDRegexp* regexp, CDString* string);
+
+CDRegexpMatches* CD_MatchRegexpString (char* regexp, int options, CDString* string);
+
+CDRegexpMatches* CD_MatchRegexpString2 (char* regexp, int options, char* string);
+
+bool CD_TestRegexp (CDRegexp* regexp, CDString* string);
+
+#endif

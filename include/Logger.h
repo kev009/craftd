@@ -61,7 +61,7 @@ extern CDLogger CDDefaultLogger;
 #define SLOG(server, priority, format, ...) \
     server->logger.log(priority, "%s> " format, CD_ServerToString(server), ##__VA_ARGS__)
 
-#define SERR(format, ...) SLOG(LOG_CRIT, format, ##__VA_ARGS__)
+#define SERR(server, format, ...) SLOG(server, LOG_CRIT, format, ##__VA_ARGS__)
 
 #define SLOG_CLOSE(server) server->logger.close()
 

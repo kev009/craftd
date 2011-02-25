@@ -24,7 +24,7 @@
  */
 
 #include <config.h>
- 
+
 #include <unistd.h>
 #include <stdio.h>
 #include <netinet/in.h>
@@ -50,8 +50,8 @@
 void
 cd_ExitHandler (void)
 {
-  LOG(LOG_INFO, "Exiting.");
-  LOG_CLOSE();
+//  LOG(LOG_INFO, "Exiting.");
+//  LOG_CLOSE();
 }
 
 int

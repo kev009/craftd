@@ -28,7 +28,8 @@
 
 #include <stdbool.h>
 #include <ltdl.h>
-#include "bstrlib.h"
+#include "String.h"
+#include "Hash.h"
 
 struct _CDPlugin;
 struct _CDServer;
@@ -39,13 +40,15 @@ typedef bool (*CDPluginFinalizer)(struct _CDPlugin*);
 typedef struct _CDPlugin {
     struct _CDServer* server;
 
-    bstring path;
-    bstring name;
+    CDString* path;
+    CDString* name;
 
     lt_dlhandle handle;
 
     CDPluginInitializer initialize;
     CDPluginFinalizer   finalize;
+
+    CDHash* _private;
 } CDPlugin;
 
 CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path);

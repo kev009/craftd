@@ -72,7 +72,7 @@ short CD_ServerGetTime (CDServer* self);
 
 short CD_ServerSetTime (CDServer* self, short time);
 
-void CD_RunServer (CDServer* self);
+bool CD_RunServer (CDServer* self);
 
 MCEntityId CD_ServerGenerateEntityId (CDServer* self);
 
@@ -107,7 +107,7 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
 
 void CD_EventRegister (CDServer* server, const char* eventName, CDEventCallback callback);
 
-void CD_EventUnregister (CDServer* server, const char* eventName, CDEventCallback callback);
+CDEventCallback* CD_EventUnregister (CDServer* server, const char* eventName, CDEventCallback callback);
 
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN
 extern CDServer* CDMainServer;

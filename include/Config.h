@@ -26,12 +26,69 @@
 #ifndef CRAFTD_CONFIG_H
 #define CRAFTD_CONFIG_H
 
-typedef struct _CDConfig {
+#include <netinet/in.h>
+#include <stdbool.h>
+#include "jansson.h"
 
+typedef struct _CDConfig {
+    json_t*      data;
+    json_error_t error;
+
+    struct {
+        bool daemonize;
+
+        struct {
+            struct {
+                struct sockaddr_in  ipv4;
+                struct sockaddr_in6 ipv6;
+            } bind;
+
+            int port;
+        } connection;
+
+        struct {
+            bool enabled;
+
+            struct {
+                struct {
+                    struct sockaddr_in  ipv4;
+                    struct sockaddr_in6 ipv6;
+                } bind;
+
+                int port;
+            } connection;
+
+            char* root;
+        } httpd;
+
+        struct {
+            short sunrise;
+            short day;
+            short sunset;
+            short night;
+        } rate;
+
+        struct {
+            int x;
+            int y;
+            int z;
+        } spawn;
+
+        struct {
+            char* motd;
+            char* world;
+        } files;
+
+        int workers;
+
+        int maxPlayers;
+    } cache;
 } CDConfig;
 
 CDConfig* CD_ParseConfig (const char* path);
 
 void CD_DestroyConfig (CDConfig* self);
+
+void CD_ConfigParseBool (bool* save, const json_t* json, const char* key);
 
 #endif

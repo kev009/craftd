@@ -29,7 +29,7 @@
 #include "common.h"
 
 /**
- * Define MC data types 
+ * Define MC data types
  */
 
 typedef int8_t    MCBoolean;
@@ -50,7 +50,7 @@ typedef double MCDouble;
 
 typedef bstring MCString;
 
-void MC_DestroyString (MCString object);
+void MC_DestroyString (MCString self);
 
 typedef struct _MCSize {
     MCByte x;
@@ -97,7 +97,9 @@ typedef enum _MCWoolColor {
 
 typedef MCInteger MCEntityId;
 
-const MCEntityId MCMaxEntityId = INT_MAX;
+#ifndef CRAFTD_MINECRAFT_IGNORE_EXTERN
+extern const MCEntityId MCMaxEntityId;
+#endif
 
 typedef enum _MCEntityType {
     MCEntityPlayer,
@@ -130,16 +132,16 @@ typedef struct _MCData {
 
     union {
         MCByte    b;
-        MCShort   s;
+        MCShort   w;
         MCInteger i;
         MCFloat   f;
-        MCString  S;
+        MCString  s;
 
         struct {
             MCShort first;
             MCByte  second;
             MCShort third;
-        } sbs;
+        } wbw;
     } data;
 } MCData;
 
@@ -150,7 +152,11 @@ typedef struct _MCMetadata {
 
 MCMetadata* MC_CreateMetadata (void);
 
-void MC_DestroyMetadata (MCMetadata* object);
+void MC_DestroyMetadata (MCMetadata* self);
+
+MCData* MC_CreateData (void);
+
+void MC_DestroyData (MCData* self);
 
 MCMetadata* MC_ConcatDatas (MCMetadata* metadata, MCData** data, size_t length);
 

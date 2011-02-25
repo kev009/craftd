@@ -69,7 +69,7 @@ CD_CreateServer (const char* path)
 
     CD_ServerSetTime(self, 0);
 
-    self->_private = CD_CreateHash();
+    PRIVATE(self) = CD_CreateHash();
 
     return self;
 }
@@ -93,7 +93,7 @@ CD_DestroyServer (CDServer* self)
 
     CD_DestroyHash(self->event.callbacks);
 
-    CD_DestroyHash(self->_private);
+    CD_DestroyHash(PRIVATE(self));
 
     pthread_spin_destroy(&self->lock.time);
 
@@ -163,25 +163,25 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
         return;
     }
 
-    if (CD_HashLength(self->players) >= self->config->cache.max_players) {
+    if (CD_HashLength(self->players) >= self->config->cache.maxPlayers) {
         close(fd);
         SERR(self, "too many clients");
         return;
     }
 
     if (getpeername(fd, (struct sockaddr*) &storage, &length) < 0) {
-        SERR("could not get peer IP");
+        SERR(self, "could not get peer IP");
         close(fd);
         return;
     }
 
-    player = CD_CreatePlayer(server);
+    player = CD_CreatePlayer(self);
 
     if (storage.ss_family == AF_INET) {
-        evutil_inet_ntop(socket.ss_family, &((struct sockaddr_in*) &storage)->sin_addr, player->ip, sizeof(player->ip));
+        evutil_inet_ntop(storage.ss_family, &((struct sockaddr_in*) &storage)->sin_addr, player->ip, sizeof(player->ip));
     }
     else if (storage.ss_family == AF_INET6) {
-        evutil_inet_ntop(socket.ss_family, &((struct sockaddr_in6*) &storage)->sin_addr, player->ip, sizeof(player->ip));
+        evutil_inet_ntop(storage.ss_family, &((struct sockaddr_in6*) &storage)->sin6_addr, player->ip, sizeof(player->ip));
     }
     else {
         SERR(self, "weird address family");
@@ -189,69 +189,14 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
         CD_DestroyPlayer(player);
     }
 
-    player->fd = fd;
-    evutil_make_socket_nonblocking(player->fd);
+    player->socket = fd;
+    evutil_make_socket_nonblocking(player->socket);
 
-    player->buffer = bufferevent_socket_new(server->event.base, player->fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-    bufferevent_setcb(player->event, cd_ReadCallback, NULL, cd_ErrorCallback, player);
-    bufferevent_enable(player->event, EV_READ | EV_WRITE);
+    player->buffer = bufferevent_socket_new(self->event.base, player->socket, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+    bufferevent_setcb(player->buffer, cd_ReadCallback, NULL, cd_ErrorCallback, player);
+    bufferevent_enable(player->buffer, EV_READ | EV_WRITE);
 
-    CD_MapSet(server->entities, player->entity.id, player);
-}
-
-static
-void
-cd_TimeIncrease (evutil_socket_t, fd, short event, void* arg)
-{
-    CDServer* self = arg;
-
-    short current = CD_ServerGetTime(self);
-
-    if (current >= && current <= 11999) {
-        CD_ServerSetTime(current + self->config->cache.rate.day);
-    }
-    else if (current >= 12000, && current <= 13799) {
-        CD_ServerSetTime(current + self->config->cache.rate.sunset);
-    }
-    else if (current >= 13800 && current <= 22199) {
-        CD_ServerSetTime(current + self->config->cache.rate.night);
-    }
-    else if (current >= 22200 && current <= 23999) {
-        CD_ServerSetTime(current + self->config->cache.rate.sunrise);
-    }
-
-    current = CD_ServerGetTime(self);
-
-    if (current >= 24000) {
-        CD_ServerSetTime(current - 24000);
-    }
-}
-
-static
-void
-cd_TimeUpdate (evutil_socket_t, fd, short event, void* arg)
-{
-    CDServer* self = arg;
-
-    CDPacketTimeUpdate data   = { CD_ServerGetTime(self) };
-    CDPacket           packet = { CDTimeUpdate, &data };
-
-    CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
-    }
-}
-
-static
-void
-cd_KeepAlive (evutil_socket_t, fd, short event, void* arg)
-{
-    CDServer* self = arg;
-
-    CDPacket packet = { CDKeepAlive, NULL };
-
-    CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
-    }
+    CD_MapSet(self->entities, player->entity.id, player);
 }
 
 bool
@@ -269,20 +214,16 @@ CD_RunServer (CDServer* self)
         return false;
     }
 
-    evutil_make_socket_nonblocking(listener);
+    evutil_make_socket_nonblocking(self->socket);
 
     #ifndef WIN32
     {
         int one = 1;
-        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        setsockopt(self->socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     }
     #endif
 
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
-
-    CD_SetInterval(self->timeloop, 1, cd_TimeIncrease);
-    CD_SetInterval(self->timeloop, 30, cd_TimeUpdate);
-    CD_SetInterval(self->timeloop, 10, cd_KeepAlive);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
 
@@ -295,12 +236,10 @@ CD_RunServer (CDServer* self)
 MCEntityId
 CD_ServerGenerateEntityId (CDServer* self)
 {
-    MCEntityId    result;
-    CDMapIterator it
-    size_t        i;
+    MCEntityId result;
 
     if (CD_MapLength(self->entities) != 0) {
-        result = ((MCEntity*) CD_MapLast())->id + 1;
+        result = ((MCEntity*) CD_MapLast(self->entities))->id + 1;
     }
     else {
         result = INT_MIN;
@@ -312,15 +251,17 @@ CD_ServerGenerateEntityId (CDServer* self)
 bool
 cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 {
-    CDList*        callbacks = CD_HashGet(self->events, "Event.dispatch:before");
-    CDListIterator it;
-    va_list        ap;
+    CDList* callbacks = CD_HashGet(self->event.callbacks, "Event.dispatch:before");
+    va_list ap;
 
     va_start(ap, eventName);
 
-    for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {
-        if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, eventName, ap)) {
-            va_end(ap);
+    CD_LIST_FOREACH(callbacks, it) {
+        if (!CD_ListIteratorValue(it)) {
+            continue;
+        }
+
+        if (!((CDEventCallback) CD_ListIteratorValue(it))(self, eventName, ap)) {
             return false;
         }
     }
@@ -331,15 +272,17 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 bool
 cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 {
-    CDList*        callbacks = CD_HashGet(self->events, "Event.dispatch:after");
-    CDListIterator it;
-    va_list        ap;
+    CDList* callbacks = CD_HashGet(self->event.callbacks, "Event.dispatch:after");
+    va_list ap;
 
     va_start(ap, eventName);
 
     CD_LIST_FOREACH(callbacks, it) {
-        if (!((CDEventCallback*) CD_ListIteratorValue(it))(self, eventName, ap)) {
-            va_end(ap);
+        if (!CD_ListIteratorValue(it)) {
+            continue;
+        }
+
+        if (!((CDEventCallback) CD_ListIteratorValue(it))(self, eventName, ap)) {
             return false;
         }
     }
@@ -350,29 +293,29 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 void
 CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
-    CDList* callbacks = CD_HashGet(self->events, eventName);
+    CDList* callbacks = CD_HashGet(self->event.callbacks, eventName);
 
     if (!callbacks) {
-        callbacks = CD_ListCreate();
+        callbacks = CD_CreateList();
     }
 
     CD_ListPush(callbacks, callback);
 
-    CD_HashSet(self->events, eventName, callbacks);
+    CD_HashSet(self->event.callbacks, eventName, callbacks);
 }
 
-CDEntityCallback*
+CDEventCallback*
 CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
-    CDList* callbacks = CD_HashGet(self->events, eventName);
-    void*   result    = NULL;
+    CDList*          callbacks = CD_HashGet(self->event.callbacks, eventName);
+    CDEventCallback* result    = NULL;
 
     if (!callbacks) {
-        return;
+        return NULL;
     }
 
     if (callback) {
-        result    = CD_calloc(2, sizeof(CDEntityCallback));
+        result    = CD_calloc(2, sizeof(CDEventCallback));
         result[0] = CD_ListDeleteAll(callbacks, callback);
     }
     else {
@@ -380,7 +323,7 @@ CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callb
     }
 
     if (CD_ListLength(callbacks) == 0) {
-        CD_ListDestroy(callbacks);
+        CD_DestroyList(callbacks);
     }
 
     return result;

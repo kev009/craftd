@@ -23,46 +23,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_TIMELOOP_H
-#define CRAFTD_TIMELOOP_H
+#include "common.h"
 
-#include <event2/event.h>
-#include "Map.h"
+#include "String.h"
 
-struct _CDServer;
+CDString*
+CD_StringFromC (const char* string)
+{
+    CDString* self = CD_malloc(sizeof(CDString));
 
-typedef struct _CDTimeLoop {
-    struct _CDServer* server;
+    if (!self) {
+        return NULL;
+    }
 
-    pthread_t      thread;
-    pthread_attr_t attributes;
+    self->raw = bfromcstr(string);
 
-    bool running;
+    return self;
+}
 
-    int    last;
-    CDMap* callbacks;
+void
+CD_DestroyString (CDString* self)
+{
+    bdestroy(self->raw);
 
-    struct {
-        struct event_base* base;
-    } event;
-
-    struct {
-        pthread_spinlock_t last;
-    } lock;
-} CDTimeLoop;
-
-CDTimeLoop* CD_CreateTimeLoop (struct _CDServer* server);
-
-void CD_DestroyTimeLoop (CDTimeLoop* self);
-
-void* CD_RunTimeLoop (void* arg);
-
-int CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback);
-
-void CD_ClearTimeout (CDTimeLoop* self, int id);
-
-int CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback);
-
-void CD_ClearInterval (CDTimeLoop* self, int id);
-
-#endif
+    CD_free(self);
+}

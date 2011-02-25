@@ -1,6 +1,3 @@
-#ifndef CRAFTD_TIMELOOP_H
-#define CRAFTD_TIMELOOP_H
-
 /*
  * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
@@ -26,29 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <config.h>
+#define CRAFTD_LOGGER_IGNORE_EXTERN
+#include "Logger.h"
+#undef CRAFTD_LOGGER_IGNORE_EXTERN
 
-#include <sys/queue.h>
-#include <pthread.h>
-
-/* Public data */
-pthread_rwlock_t TLQ_rwlock;
-int TLQ_count;
-TAILQ_HEAD(TLQ_tailhead, TLQ_entry) TLQ_head;
-
-/**
- * A work item for the time loop
- */
-struct TLQ_entry
-{
-  int worktype;
-  void *workdata;
-};
-
-/* Public interfaces */
-void *run_timeloop(void *arg);
-int TL_get_gametime();
-int TL_set_gametime(int time);
-
-#endif
-
+CDLogger CDDefaultLogger;
