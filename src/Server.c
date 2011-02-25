@@ -197,6 +197,61 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
     CD_MapSet(server->entities, player->entity.id, player);
 }
 
+static
+void
+cd_TimeIncrease (evutil_socket_t, fd, short event, void* arg)
+{
+    CDServer* self = arg;
+
+    short current = CD_ServerGetTime(self);
+
+    if (current >= && current <= 11999) {
+        CD_ServerSetTime(current + self->config.rate.day);
+    }
+    else if (current >= 12000, && current <= 13799) {
+        CD_ServerSetTime(current + self->config.rate.sunset);
+    }
+    else if (current >= 13800 && current <= 22199) {
+        CD_ServerSetTime(current + self->config.rate.night);
+    }
+    else if (current >= 22200 && current <= 23999) {
+        CD_ServerSetTime(current + self->config.rate.sunrise);
+    }
+
+    current = CD_ServerGetTime(self);
+
+    if (current >= 24000) {
+        CD_ServerSetTime(current - 24000);
+    }
+}
+
+static
+void
+cd_TimeUpdate (evutil_socket_t, fd, short event, void* arg)
+{
+    CDServer* self = arg;
+
+    CDPacketTimeUpdate data   = { CD_ServerGetTime(self) };
+    CDPacket           packet = { CDTimeUpdate, &data };
+
+    CD_HASH_FOREACH(self->players, it) {
+        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
+    }
+}
+
+static
+void
+cd_KeepAlive (evutil_socket_t, fd, short event, void* arg)
+{
+    CDServer* self = arg;
+
+    CDPacket packet = { CDKeepAlive, NULL };
+
+    CD_HASH_FOREACH(self->players, it) {
+        CD_PlayerSendPacket(CD_HashIteratorValue(it), &packet);
+    }
+}
+
 bool
 CD_RunServer (CDServer* self)
 {
@@ -222,6 +277,10 @@ CD_RunServer (CDServer* self)
     #endif
 
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
+
+    CD_SetInterval(self->timeloop, 1, cd_TimeIncrease);
+    CD_SetInterval(self->timeloop, 30, cd_TimeUpdate);
+    CD_SetInterval(self->timeloop, 10, cd_KeepAlive);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
 

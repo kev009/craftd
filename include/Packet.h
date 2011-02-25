@@ -83,7 +83,6 @@ typedef enum _CDPacketType {
 
 typedef struct _CDPacket {
     CDPacketType type;
-    size_t       length;
     void*        data;
 } CDPacket;
 

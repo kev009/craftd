@@ -67,7 +67,7 @@ int
 CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
     struct timeval timeout      = { (int) seconds, (int) seconds * 1000000 };
-    struct event*  timeoutEvent = event_new(self->event.base, -1, 0, callback, NULL);
+    struct event*  timeoutEvent = event_new(self->event.base, -1, 0, callback, self->server);
     int            result;
 
     evtimer_add(timeoutEvent, &timeout);
@@ -92,7 +92,7 @@ int
 CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
     struct timeval interval      = { (int) seconds, (int) seconds * 1000000 };
-    struct event*  intervalEvent = event_new(self->event.base, -1, EV_PERSIST, callback, NULL);
+    struct event*  intervalEvent = event_new(self->event.base, -1, EV_PERSIST, callback, self->server);
     int            result;
 
     evtimer_add(intervalEvent, &interval);
