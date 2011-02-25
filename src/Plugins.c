@@ -23,11 +23,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Plugins.h"
 #include "common.h"
+#include <ltdl.h>
+
+#include "Plugins.h"
+
+CDPlugins*
+CD_CreatePlugins (struct _CDServer* server)
+{
+    CDPlugins* self = CD_malloc(sizeof(CDPlugins));
+
+    if (!self) {
+        return NULL;
+    }
+
+    self->server = server;
+    self->item   = NULL;
+    self->length = 0;
+
+    lt_dlinit();
+
+    return self;
+}
+
+void
+CD_DestroyPlugins (CDPlugins* self)
+{
+    lt_dlexit();
+
+    CD_free(self->item);
+    CD_free(self);
+}
 
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
-    return NULL;
+    return CD_CreatePlugin(self->server, path);
 }

@@ -23,33 +23,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLUGIN_H
-#define CRAFTD_PLUGIN_H
+#include "common.h"
 
-#include <stdbool.h>
-#include <ltdl.h>
-#include "bstrlib.h"
+#include "Config.h"
 
-struct _CDPlugin;
-struct _CDServer;
+CDConfig*
+CD_ParseConfig (const char* path)
+{
+    return NULL;
+}
 
-typedef bool (*CDPluginInitializer)(struct _CDPlugin*);
-typedef bool (*CDPluginFinalizer)(struct _CDPlugin*);
-
-typedef struct _CDPlugin {
-    struct _CDServer* server;
-
-    bstring path;
-    bstring name;
-
-    lt_dlhandle handle;
-
-    CDPluginInitializer initialize;
-    CDPluginFinalizer   finalize;
-} CDPlugin;
-
-CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path);
-
-void CD_DestroyPlugin (CDPlugin* self);
-
-#endif
+void
+CD_DestroyConfig (CDConfig* self)
+{
+    
+}

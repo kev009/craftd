@@ -23,33 +23,43 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLUGIN_H
-#define CRAFTD_PLUGIN_H
+#include "common.h"
 
-#include <stdbool.h>
-#include <ltdl.h>
-#include "bstrlib.h"
+#include "Plugin.h"
 
-struct _CDPlugin;
-struct _CDServer;
+CDPlugin*
+CD_CreatePlugin (struct _CDServer* server, const char* path)
+{
+    CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
-typedef bool (*CDPluginInitializer)(struct _CDPlugin*);
-typedef bool (*CDPluginFinalizer)(struct _CDPlugin*);
+    if (!self) {
+        return NULL;
+    }
 
-typedef struct _CDPlugin {
-    struct _CDServer* server;
+    self->server = server;
+    self->path   = bfromcstr(path);
+    self->handle = lt_dlopen(path);
 
-    bstring path;
-    bstring name;
+    self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
+    self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    lt_dlhandle handle;
+    self->initialize(self);
 
-    CDPluginInitializer initialize;
-    CDPluginFinalizer   finalize;
-} CDPlugin;
+    return self;
+}
 
-CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path);
+void
+CD_DestroyPlugin (CDPlugin* self)
+{
+    self->finalize(self);
 
-void CD_DestroyPlugin (CDPlugin* self);
+    lt_dlclose(self->handle);
+    bdestroy(self->path);
 
-#endif
+    if (self->name) {
+        bdestroy(self->name);
+    }
+
+    CD_free(self);
+}
+

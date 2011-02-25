@@ -27,7 +27,9 @@
 #include "Server.h"
 #undef CRAFTD_SERVER_IGNORE_EXTERN
 
-#include "List.h"
+#include "common.h"
+
+#include "Player.h"
 
 CDServer* CDMainServer = NULL;
 
@@ -46,10 +48,10 @@ CD_CreateServer (const char* path)
     self->timeloop = CD_CreateTimeLoop(self);
     self->config   = CD_ParseConfig(path);
     self->workers  = CD_CreateWorkers(self);
-    self->plugins  = CD_CreatePlugins(self)
+    self->plugins  = CD_CreatePlugins(self);
 
     if (!self->config || !self->workers) {
-        CD_DestroyServer(self)
+        CD_DestroyServer(self);
     }
 
     self->entities = CD_CreateMap();
@@ -75,8 +77,8 @@ CD_CreateServer (const char* path)
 void
 CD_DestroyServer (CDServer* self)
 {
-    CD_DestroyConfig(self->config)
-    CD_DestroyWorkers(self->workers)
+    CD_DestroyConfig(self->config);
+    CD_DestroyWorkers(self->workers);
     CD_DestroyPlugins(self->plugins);
 
     if (self->event.base) {
@@ -134,7 +136,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     if (!player->pending) {
         player->pending = true;
 
-        CD_AddJob(player->server->workers, CD_CreateJob(CDGameInput, player));
+        CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerInput, player));
     }
     pthread_rwlock_unlock(&player->lock.pending);
 }
@@ -161,7 +163,7 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
         return;
     }
 
-    if (CD_HashLength(self->players) >= self->config->max_players) {
+    if (CD_HashLength(self->players) >= self->config->cache.max_players) {
         close(fd);
         SERR(self, "too many clients");
         return;
@@ -206,16 +208,16 @@ cd_TimeIncrease (evutil_socket_t, fd, short event, void* arg)
     short current = CD_ServerGetTime(self);
 
     if (current >= && current <= 11999) {
-        CD_ServerSetTime(current + self->config.rate.day);
+        CD_ServerSetTime(current + self->config->cache.rate.day);
     }
     else if (current >= 12000, && current <= 13799) {
-        CD_ServerSetTime(current + self->config.rate.sunset);
+        CD_ServerSetTime(current + self->config->cache.rate.sunset);
     }
     else if (current >= 13800 && current <= 22199) {
-        CD_ServerSetTime(current + self->config.rate.night);
+        CD_ServerSetTime(current + self->config->cache.rate.night);
     }
     else if (current >= 22200 && current <= 23999) {
-        CD_ServerSetTime(current + self->config.rate.sunrise);
+        CD_ServerSetTime(current + self->config->cache.rate.sunrise);
     }
 
     current = CD_ServerGetTime(self);

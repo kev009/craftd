@@ -37,6 +37,10 @@ typedef struct _CDPlugins {
     CDPlugin** item;
 } CDPlugins;
 
+CDPlugins* CD_CreatePlugins (struct _CDServer* server);
+
+void CD_DestroyPlugins (CDPlugins* self);
+
 CDPlugin* CD_LoadPlugin (CDPlugins* self, const char* path);
 
 #endif

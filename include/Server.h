@@ -70,7 +70,7 @@ char* CD_ServerToString (CDServer* self);
 
 short CD_ServerGetTime (CDServer* self);
 
-void CD_ServerSetTime (CDServer* self, short time);
+short CD_ServerSetTime (CDServer* self, short time);
 
 void CD_RunServer (CDServer* self);
 

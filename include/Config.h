@@ -30,4 +30,8 @@ typedef struct _CDConfig {
 
 } CDConfig;
 
+CDConfig* CD_ParseConfig (const char* path);
+
+void CD_DestroyConfig (CDConfig* self);
+
 #endif
