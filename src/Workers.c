@@ -41,6 +41,8 @@ CD_CreateWorkers (CDServer* server)
     self->length = 0;
     self->item   = NULL;
 
+    self->jobs = CD_CreateList();
+
     pthread_attr_init(&self->attributes);
     pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
 
@@ -69,6 +71,9 @@ CD_DestroyWorkers (CDWorkers* self)
     }
 
     CD_free(self->item);
+
+    CD_DestroyList(self->jobs);
+
     CD_free(self);
 }
 
@@ -79,12 +84,13 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
     size_t i;
 
     for (i = 0; i < number; i++) {
-        result[i]          = CD_CreateWorker();
+        result[i]          = CD_CreateWorker(self->server);
         result[i]->id      = ++self->last;
         result[i]->working = true;
+        result[i]->workers = self;
 
         if (pthread_create(&result[i]->thread, &self->attributes, CD_RunWorker, result[i]) != 0) {
-            ERR("Worker pool startup failed!");
+            SERR(self->server, "worker pool startup failed!");
         }
     }
 

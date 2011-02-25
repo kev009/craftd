@@ -51,7 +51,7 @@ cd_ConsoleLog (int priority, const char* format, ...)
         printf("UNKNOWN: ");
     }
     else {
-        printf("%s", names[priority]);
+        printf("%s: ", names[priority]);
     }
 
     vprintf(format, ap);

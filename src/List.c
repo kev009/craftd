@@ -33,7 +33,6 @@ CD_CreateList (void)
     CDList* self = CD_malloc(sizeof(CDList));
 
     if (!self) {
-        //ERR("could not instantiate List object");
         return NULL;
     }
 
@@ -186,6 +185,7 @@ CD_ListDelete (CDList* self, void* data)
     return result;
 }
 
+// FIXME: same as above
 void*
 CD_ListDeleteAll (CDList* self, void* data)
 {
@@ -204,10 +204,11 @@ CD_ListDeleteAll (CDList* self, void* data)
     return result;
 }
 
+// FIXME: same as above
 void**
 CD_ListClear (CDList* self)
 {
-    void** result = NULL;
+    void** result = CD_malloc(sizeof(void*));
     size_t i      = 0;
 
     while (CD_ListLength(self) > 0) {
@@ -218,8 +219,6 @@ CD_ListClear (CDList* self)
     }
 
     result[i] = NULL;
-
-    pthread_rwlock_unlock(&self->lock);
 
     return result;
 }

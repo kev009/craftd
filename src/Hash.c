@@ -33,7 +33,6 @@ CD_CreateHash (void)
     CDHash* self = CD_malloc(sizeof(CDHash));
 
     if (!self) {
-//        ERR("could not allocate a Hash object");
         return NULL;
     }
 

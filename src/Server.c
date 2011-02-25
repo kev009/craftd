@@ -51,7 +51,17 @@ CD_CreateServer (const char* path)
     self->plugins  = CD_CreatePlugins(self);
 
     if (!self->config || !self->workers) {
+        if (!self->config) {
+            SERR(self, "Config couldn't be initialized");
+        }
+
+        if (!self->workers) {
+            SERR(self, "Workers couldn't be initialized");
+        }
+
         CD_DestroyServer(self);
+
+        return NULL;
     }
 
     self->entities = CD_CreateMap();
@@ -77,9 +87,17 @@ CD_CreateServer (const char* path)
 void
 CD_DestroyServer (CDServer* self)
 {
-    CD_DestroyConfig(self->config);
-    CD_DestroyWorkers(self->workers);
-    CD_DestroyPlugins(self->plugins);
+    if (self->config) {
+        CD_DestroyConfig(self->config);
+    }
+
+    if (self->workers) {
+        CD_DestroyWorkers(self->workers);
+    }
+
+    if (self->plugins) {
+        CD_DestroyPlugins(self->plugins);
+    }
 
     if (self->event.base) {
         event_base_free(self->event.base);
@@ -91,19 +109,28 @@ CD_DestroyServer (CDServer* self)
         self->event.listener = NULL;
     }
 
-    CD_DestroyHash(self->event.callbacks);
+    if (self->event.callbacks) {
+        CD_DestroyHash(self->event.callbacks);
+    }
 
-    CD_DestroyHash(PRIVATE(self));
+    if (PRIVATE(self)) {
+        CD_DestroyHash(PRIVATE(self));
+    }
 
     pthread_spin_destroy(&self->lock.time);
 
     CD_free(self->name);
 }
 
-char*
+const char*
 CD_ServerToString (CDServer* self)
 {
-    return self->name;
+    if (!self->name) {
+        return "craftd";
+    }
+    else {
+        return self->name;
+    }
 }
 
 short
@@ -159,11 +186,11 @@ cd_Accept (evutil_socket_t listener, short event, void* arg)
     int                     fd     = accept(listener, (struct sockaddr*) &storage, &length);
 
     if (fd < 0) {
-        SERR(self, "accept error");
+        SERR(self, "accept error: %s", strerror(-fd));
         return;
     }
 
-    if (CD_HashLength(self->players) >= self->config->cache.maxPlayers) {
+    if (self->config->cache.maxPlayers > 0 && CD_HashLength(self->players) >= self->config->cache.maxPlayers) {
         close(fd);
         SERR(self, "too many clients");
         return;
@@ -209,7 +236,7 @@ CD_RunServer (CDServer* self)
     }
 
     if ((self->socket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-        SERR(self, "could not create socket!");
+        SERR(self, "could not create socket: %s", strerror(-self->socket));
 
         return false;
     }
@@ -222,6 +249,24 @@ CD_RunServer (CDServer* self)
         setsockopt(self->socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     }
     #endif
+
+    if ((self->error = bind(self->socket, (struct sockaddr*) &self->config->cache.connection.bind.ipv4, sizeof(self->config->cache.connection.bind.ipv4))) < 0) {
+        SERR(self, "cannot bind: %s", strerror(ERROR(self)));
+        return;
+    }
+
+    if ((self->error = listen(self->socket, self->config->cache.connection.backlog)) < 0) {
+        SERR(self, "listen error: %s", strerror(ERROR(self)));
+        return;
+    }
+
+    SLOG(self, LOG_INFO, "server listening on port %d", self->config->cache.connection.port);
+
+    if (self->config->cache.maxPlayers > 0) {
+        SLOG(self, LOG_INFO, "server can host max %d players", self->config->cache.maxPlayers);
+    }
+
+    CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
 

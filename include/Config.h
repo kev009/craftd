@@ -44,6 +44,7 @@ typedef struct _CDConfig {
             } bind;
 
             int port;
+            int backlog;
         } connection;
 
         struct {

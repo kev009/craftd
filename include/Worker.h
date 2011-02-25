@@ -30,8 +30,11 @@
 #include "Job.h"
 
 struct _CDWorkers;
+struct _CDServer;
 
 typedef struct _CDWorker {
+    struct _CDServer* server;
+
     int       id;
     pthread_t thread;
 
@@ -44,7 +47,7 @@ typedef struct _CDWorker {
 /**
  * Create a Worker object
  */
-CDWorker* CD_CreateWorker (void);
+CDWorker* CD_CreateWorker (struct _CDServer* server);
 
 /**
  * Destroy a Worker object and its eventual working Job

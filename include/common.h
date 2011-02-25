@@ -54,4 +54,6 @@
 
 #define PRIVATE(data) ((data)->_private)
 
+#define ERROR(x) ((x->error > 0) ? x->error : -x->error)
+
 #endif

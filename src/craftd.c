@@ -50,8 +50,8 @@
 void
 cd_ExitHandler (void)
 {
-//  LOG(LOG_INFO, "Exiting.");
-//  LOG_CLOSE();
+    LOG(LOG_INFO, "Exiting.");
+    LOG_CLOSE();
 }
 
 int
@@ -75,7 +75,7 @@ main (int argc, char** argv)
 
     atexit(cd_ExitHandler);
 
-    cd_Version(argv[0]);
+    LOG(LOG_INFO, "%s " CRAFTD_VERSION, argv[0]);
 
     while ((opt = getopt(argc, argv, "c:dhnv")) != -1) {
         switch (opt) {
@@ -147,6 +147,11 @@ main (int argc, char** argv)
     }
 
     CDMainServer = server = CD_CreateServer(config);
+
+    if (!server) {
+        ERR("Server couldn't be instantiated");
+        exit(EXIT_FAILURE);
+    }
 
     /* By default, mask debugging messages */
     if (!debugging) {

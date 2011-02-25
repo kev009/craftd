@@ -25,13 +25,14 @@
 
 #include "common.h"
 
-#include "Server.h"
 #include "Worker.h"
+#include "Server.h"
 #include "Workers.h"
 #include "Player.h"
+#include "Logger.h"
 
 CDWorker*
-CD_CreateWorker (void)
+CD_CreateWorker (CDServer* server)
 {
     CDWorker* self = CD_malloc(sizeof(CDWorker));
 
@@ -39,6 +40,7 @@ CD_CreateWorker (void)
         return NULL;
     }
 
+    self->server  = server;
     self->id      = 0;
     self->working = false;
 
@@ -63,7 +65,7 @@ CD_DestroyWorker (CDWorker* self)
 void*
 CD_RunWorker (CDWorker* self)
 {
-//    LOG(LOG_INFO, "worker %d started", id);
+    SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
         pthread_mutex_lock(&self->workers->mutex);
@@ -73,18 +75,18 @@ CD_RunWorker (CDWorker* self)
          * Works in tandem with errorcb FOREACH bev removal loop
          */
         while (CD_ListLength(self->workers->jobs) == 0) {
-//            LOG(LOG_DEBUG, "worker %d ready", self->id);
+            SDEBUG(self->server, "worker %d ready", self->id);
 
             pthread_cond_wait(&self->workers->condition, &self->workers->mutex);
         }
 
         if (!self->working) {
-//            LOG(LOG_DEBUG, "worker %d stopped", self->id);
+            SDEBUG(self->server, "worker %d stopped", self->id);
             pthread_mutex_unlock(&self->workers->mutex);
             break;
         }
 
-//        LOG(LOG_DEBUG, "in worker: %d", self->id);
+        SDEBUG(self->server, "in worker: %d", self->id);
 
         do {
             self->job = CD_NextJob(self->workers);
@@ -129,7 +131,7 @@ CD_RunWorker (CDWorker* self)
             switch (self->job->type) {
                 case CDPlayerInput: {
                     if (!self->job) {
-//                        LOG(LOG_CRIT, "Aaack, null event or context in worker?");
+                        SERR(self->server, "Aaack, null event or context in worker?");
 
                         goto PLAYER_JOB_ERROR;
                     }
@@ -139,7 +141,7 @@ CD_RunWorker (CDWorker* self)
                     if (evbuffer_get_length(bufferevent_get_input(player->buffer)) > 0) {
                         player->pending = true;
 
-                        CD_AddJob(player->server->workers, self->job);
+                        CD_AddJob(self->workers, self->job);
                     }
                     else {
                         player->pending = false;
@@ -153,7 +155,7 @@ CD_RunWorker (CDWorker* self)
                 case CDPlayerProcess: {
                     player->status = CDPlayerProcess;
                     pthread_rwlock_unlock(&player->lock.status);
-                    CD_EventDispatch(player->server, "Player.process", player);
+                    CD_EventDispatch(self->server, "Player.process", player);
                     pthread_rwlock_wrlock(&player->lock.status);
                     player->status = CDPlayerIdle;
                 } break;

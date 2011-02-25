@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include "Config.h"
+#include "Logger.h"
 
 // TODO: Implement real parsing of the json file
 CDConfig*
@@ -40,13 +41,16 @@ CD_ParseConfig (const char* path)
     self->data = json_load_file(path, 0, &self->error);
 
     if (!self->data) {
+        ERR("[Config.parse] error on line %d: %s", self->error.line, self->error.text);
+
         CD_DestroyConfig(self);
         return NULL;
     }
 
     self->cache.daemonize = true;
 
-    self->cache.connection.port = 25565;
+    self->cache.connection.port    = 25565;
+    self->cache.connection.backlog = 42;
 
     self->cache.connection.bind.ipv4.sin_family      = AF_INET;
     self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
@@ -86,7 +90,11 @@ CD_ParseConfig (const char* path)
 void
 CD_DestroyConfig (CDConfig* self)
 {
-    json_decref(self->data);
+    if (self->data) {
+        json_decref(self->data);
+    }
+
+    CD_free(self);
 }
 
 void

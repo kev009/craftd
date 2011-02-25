@@ -7,7 +7,7 @@
     "connection": {
         "bind": {
             "ipv4": "0.0.0.0",
-            "ipv6": "::",
+            "ipv6": "::"
         },
 
         "port": 25565
@@ -28,7 +28,7 @@
     "file": {
         "motd": "@sysconfdir@/craftd/motd.conf.dist",
         "world": "@datadir@/craftd/world"
-    },
+    }
   },
 
   "httpd": {
@@ -37,11 +37,11 @@
     "connection": {
         "bind": {
             "ipv4": "127.0.0.1",
-            "ipv6": "::1",
+            "ipv6": "::1"
         },
 
-        "port": 25566,
-    }
+        "port": 25566
+    },
 
     "root": "@datadir@/craftd/htdocs/"
   }

@@ -35,6 +35,8 @@
 typedef struct _CDServer {
     char* name;
 
+    int error;
+
     CDTimeLoop* timeloop;
     CDWorkers*  workers;
     CDConfig*   config;
@@ -66,7 +68,7 @@ CDServer* CD_CreateServer (const char* path);
 
 void CD_DestroyServer (CDServer* self);
 
-char* CD_ServerToString (CDServer* self);
+const char* CD_ServerToString (CDServer* self);
 
 short CD_ServerGetTime (CDServer* self);
 

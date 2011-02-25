@@ -34,4 +34,6 @@ typedef struct _CDString {
 
 CDString* CD_StringFromC (const char* string);
 
+void CD_DestroyString (CDString* self);
+
 #endif

@@ -33,7 +33,6 @@ CD_CreateMap (void)
     CDMap* self = CD_malloc(sizeof(CDMap));
 
     if (!self) {
-//        ERR("could not allocate a Map object");
         return NULL;
     }
 
