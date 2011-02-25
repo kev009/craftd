@@ -83,7 +83,17 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 {
     CDPacket* packet = CD_HashGet(PRIVATE(player), "packet");
 
-    printf(":OOO %d\n", packet->type);
+    switch (packet->type) {
+        case CDKeepAlive: {
+            SDEBUG(server, "This was a triumph, I'm making a note here, huge success.");
+        } break;
+
+        case CDHandshake: {
+            CDPacketHandshake* data = packet->data;
+
+            SLOG(server, LOG_NOTICE, "%s is trying to log in", data->username->data);
+        }
+    }
 
     return true;
 }

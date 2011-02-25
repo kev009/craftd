@@ -122,26 +122,54 @@ CD_DestroyPacket (CDPacket* self)
     CD_free(self);
 }
 
+static
+MCString
+cd_GetMCStringFromBuffer (struct evbuffer* input)
+{
+    MCString result = bfromcstr("");
+    char*    data;
+    MCShort  length;
+
+    evbuffer_remove(input, &length, MCShortSize);
+
+    length = ntohs(length);
+    data   = CD_malloc(length + 1);
+
+    evbuffer_remove(input, data, length);
+
+    data[length] = '\0';
+
+    bassignblk(result, data, length);
+
+    return result;
+}
+
 void*
 CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
 {
-    struct evbuffer* input  = bufferevent_get_input(buffer);
-    void*            data   = NULL;
-    size_t           length = 0;
+    struct evbuffer* input = bufferevent_get_input(buffer);
 
     switch (self->type) {
         case CDKeepAlive: {
             evbuffer_drain(input, 1);
-        } break;
+
+            return NULL;
+        }
 
         case CDLogin: {
-            int16_t len;
+            return NULL;
+        }
 
-//            evbuffer_remove(input, data);
-        } break;
+        case CDHandshake: {
+            CDPacketHandshake* packet = CD_malloc(sizeof(CDPacketHandshake));
+
+            packet->username = cd_GetMCStringFromBuffer(input);
+
+            return packet;
+        }
     }
 
-    return data;
+    return NULL;
 }
 
 bstring

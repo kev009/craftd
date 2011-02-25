@@ -84,27 +84,25 @@ bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
 bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
 
-#define CD_EventDispatch(server, eventName, ...)                                            \
-    do {                                                                                    \
-        if (!cd_EventBeforeDispatch(server, eventName, ##__VA_ARGS__)) {                    \
-            break;                                                                          \
-        }                                                                                   \
-                                                                                            \
-        CDList* callbacks = CD_HashGet(server->event.callbacks, eventName);                 \
-                                                                                            \
-        if (callbacks) {                                                                    \
-            CD_LIST_FOREACH(callbacks, it) {                                                \
-                if (!CD_ListIteratorValue(it)) {                                            \
-                    continue;                                                               \
-                }                                                                           \
-                                                                                            \
-                if (!((CDEventCallback) CD_ListIteratorValue(it))(self, ##__VA_ARGS__)) {   \
-                    break;                                                                  \
-                }                                                                           \
-            }                                                                               \
-        }                                                                                   \
-                                                                                            \
-        cd_EventAfterDispatch(server, eventName, ##__VA_ARGS__);                            \
+#define CD_EventDispatch(self, eventName, ...)                                          \
+    do {                                                                                \
+        if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__)) {                  \
+            break;                                                                      \
+        }                                                                               \
+                                                                                        \
+        CDList* callbacks = CD_HashGet(self->event.callbacks, eventName);               \
+                                                                                        \
+        CD_LIST_FOREACH(callbacks, it) {                                                \
+            if (!CD_ListIteratorValue(it)) {                                            \
+                continue;                                                               \
+            }                                                                           \
+                                                                                        \
+            if (!((CDEventCallback) CD_ListIteratorValue(it))(self, ##__VA_ARGS__)) {   \
+                break;                                                                  \
+            }                                                                           \
+        }                                                                               \
+                                                                                        \
+        cd_EventAfterDispatch(self, eventName, ##__VA_ARGS__);                          \
     } while (0)
 
 void CD_EventRegister (CDServer* server, const char* eventName, CDEventCallback callback);

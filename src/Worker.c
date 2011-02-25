@@ -165,9 +165,7 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_unlock(&player->lock.pending);
                     pthread_rwlock_unlock(&player->lock.status);
 
-                    puts("^_^");
                     CD_EventDispatch(self->server, "Player.process", player);
-                    puts("v¯v");
 
                     pthread_rwlock_wrlock(&player->lock.pending);
                     pthread_rwlock_wrlock(&player->lock.status);

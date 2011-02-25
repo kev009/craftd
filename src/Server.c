@@ -159,6 +159,7 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
+    // FIXME: While debugging this goes deadlock
     pthread_rwlock_wrlock(&player->lock.pending);
     if (!player->pending) {
         player->pending = true;
@@ -252,12 +253,12 @@ CD_RunServer (CDServer* self)
 
     if ((self->error = bind(self->socket, (struct sockaddr*) &self->config->cache.connection.bind.ipv4, sizeof(self->config->cache.connection.bind.ipv4))) < 0) {
         SERR(self, "cannot bind: %s", strerror(ERROR(self)));
-        return;
+        return false;
     }
 
     if ((self->error = listen(self->socket, self->config->cache.connection.backlog)) < 0) {
         SERR(self, "listen error: %s", strerror(ERROR(self)));
-        return;
+        return false;
     }
 
     SLOG(self, LOG_INFO, "server listening on port %d", self->config->cache.connection.port);

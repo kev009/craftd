@@ -52,6 +52,13 @@ typedef bstring MCString;
 
 void MC_DestroyString (MCString self);
 
+static const char MCByteSize    = 1;
+static const char MCShortSize   = 2;
+static const char MCIntegerSize = 4;
+static const char MCLongSize    = 8;
+static const char MCFloatSize   = 4;
+static const char MCDoubleSize  = 8;
+
 typedef struct _MCSize {
     MCByte x;
     MCByte y;
