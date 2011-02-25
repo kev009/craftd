@@ -7,20 +7,20 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Build bundled libjansson
-#AC_CONFIG_SUBDIRS([third-party/jansson])
-
 # Don't look for C++ or Fortran compilers
 m4_undefine([AC_PROG_CXX])
 m4_defun([AC_PROG_CXX],[])
 m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
 
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC_C99
-AC_PROG_LIBTOOL
+AC_USE_SYSTEM_EXTENSIONS
+LT_PREREQ([2.2])
+AM_PROG_LIBTOOL
+AC_PROG_RANLIB
+AC_LTDL_DLLIB
 AC_SUBST(LIBTOOL_DEPS)
-#AC_LTDL_DLLIB
+LT_INIT([dlopen])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
@@ -48,7 +48,10 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
-                  sys/socket.h unistd.h endian.h sys/endian.h])
+                  sys/socket.h unistd.h endian.h sys/endian.h ltdl.h])
+
+# Check for libraries
+AC_SEARCH_LIBS([lt_dlopen], [ltdl])
 
 # Define libjansson stuff
 AC_TYPE_LONG_LONG_INT
