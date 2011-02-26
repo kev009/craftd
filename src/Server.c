@@ -44,6 +44,7 @@ CD_CreateServer (const char* path)
 
     pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE);
 
+    self->name     = NULL;
     self->logger   = CDConsoleLogger;
     self->timeloop = CD_CreateTimeLoop(self);
     self->config   = CD_ParseConfig(path);
