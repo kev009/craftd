@@ -26,11 +26,14 @@
 #ifndef CRAFTD_TIMELOOP_H
 #define CRAFTD_TIMELOOP_H
 
-#include <event2/event.h>
-#include "Map.h"
+#include <craftd/common.h>
+#include <craftd/Map.h>
 
 struct _CDServer;
 
+/**
+ * The TimeLoop class.
+ */
 typedef struct _CDTimeLoop {
     struct _CDServer* server;
 
@@ -51,18 +54,57 @@ typedef struct _CDTimeLoop {
     } lock;
 } CDTimeLoop;
 
+/**
+ * Create a TimeLoop object for the given server.
+ *
+ * @param server The Server the TimeLoop will run on.
+ *
+ * @return The instantiated TimeLoop object
+ */
 CDTimeLoop* CD_CreateTimeLoop (struct _CDServer* server);
 
+/**
+ * Destroy a TimeLoop object.
+ */
 void CD_DestroyTimeLoop (CDTimeLoop* self);
 
-void* CD_RunTimeLoop (void* arg);
+/**
+ * Start the TimeLoop operations.
+ */
+void* CD_RunTimeLoop (CDTimeLoop* self);
 
+/**
+ * Create an event that will run after the given seconds and delete itself after that
+ *
+ * @param seconds The seconds after which the event will be fired
+ * @param callback The callback to call after the given time
+ *
+ * @return An ID referring to the timeout with which you can stop it
+ */
 int CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback);
 
+/**
+ * Stop the timeout from happening
+ *
+ * @param id The timeout ID as returned by CD_SetTimeout
+ */
 void CD_ClearTimeout (CDTimeLoop* self, int id);
 
+/**
+ * Create an event that will run after the given seconds and keep repeating
+ *
+ * @param seconds The seconds after which the event will be fired each time
+ * @param callback The callback to call after the given time
+ *
+ * @return An ID referring to the interval with which you can stop it
+ */
 int CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback);
 
+/**
+ * Stop the interval from happening
+ *
+ * @param id The timeout ID as returned by CD_SetInterval
+ */
 void CD_ClearInterval (CDTimeLoop* self, int id);
 
 #endif

@@ -26,6 +26,8 @@
 #ifndef CRAFTD_JOB_H
 #define CRAFTD_JOB_H
 
+#include <common.h>
+
 typedef enum _CDJobType {
     CDPlayerInputJob,
     CDPlayerProcessJob,

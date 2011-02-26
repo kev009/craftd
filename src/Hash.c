@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Hash.h"
-#include "memory.h"
-#include "pthread.h"
+#include <craftd/Hash.h>
 
 CDHash*
 CD_CreateHash (void)

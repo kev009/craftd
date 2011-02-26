@@ -23,9 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Player.h"
-#include "Server.h"
-#include "common.h"
+#include <craftd/Player.h>
+#include <craftd/Server.h>
 
 CDPlayer*
 CD_CreatePlayer (struct _CDServer* server)

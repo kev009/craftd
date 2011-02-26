@@ -23,10 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "Server.h"
-#include "Plugin.h"
-#include "Player.h"
+#include <craftd/Server.h>
+#include <craftd/Plugin.h>
+#include <craftd/Player.h>
 
 static
 void
@@ -117,9 +116,9 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    CD_HashSet(PRIVATE(self), "Event.timeIncrease", (void*) CD_SetInterval(self->server->timeloop, 1,  cd_TimeIncrease));
-    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   (void*) CD_SetInterval(self->server->timeloop, 30, cd_TimeUpdate));
-    CD_HashSet(PRIVATE(self), "Event.keepAlive",    (void*) CD_SetInterval(self->server->timeloop, 10, cd_KeepAlive));
+    CD_HashSet(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  cd_TimeIncrease));
+    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, cd_TimeUpdate));
+    CD_HashSet(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, cd_KeepAlive));
 
     CD_EventRegister(self->server, "Player.process", cd_PlayerProcess);
 }

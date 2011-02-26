@@ -22,7 +22,7 @@ AC_LTDL_DLLIB
 AC_SUBST(LIBTOOL_DEPS)
 LT_INIT([dlopen])
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile plugins/Makefile \
                  htdocs/Makefile third-party/jansson/src/jansson_config.h])
 AC_CONFIG_SRCDIR([src/craftd.c])

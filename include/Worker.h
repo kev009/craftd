@@ -26,8 +26,10 @@
 #ifndef CRAFTD_WORKER_H
 #define CRAFTD_WORKER_H
 
-#include "Packet.h"
-#include "Job.h"
+#include <craftd/common.h>
+
+#include <craftd/Packet.h>
+#include <craftd/Job.h>
 
 struct _CDWorkers;
 struct _CDServer;

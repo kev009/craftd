@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-
-#include "Plugin.h"
+#include <craftd/Plugin.h>
 
 CDPlugin*
 CD_CreatePlugin (struct _CDServer* server, const char* path)

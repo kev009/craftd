@@ -23,8 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Job.h"
-#include "memory.h"
+#include <craftd/Job.h>
 
 CDJob*
 CD_CreateJob (CDJobType type, void* data)

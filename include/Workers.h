@@ -26,7 +26,8 @@
 #ifndef CRAFTD_WORKERS_H
 #define CRAFTD_WORKERS_H
 
-#include "Worker.h"
+#include <craftd/common.h>
+#include <craftd/Worker.h>
 
 struct _CDServer;
 

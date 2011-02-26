@@ -24,12 +24,11 @@
  */
 
 #define CRAFTD_SERVER_IGNORE_EXTERN
-#include "Server.h"
+#include <craftd/Server.h>
 #undef CRAFTD_SERVER_IGNORE_EXTERN
 
-#include "common.h"
-
-#include "Player.h"
+#include <craftd/common.h>
+#include <craftd/Player.h>
 
 CDServer* CDMainServer = NULL;
 
@@ -51,13 +50,21 @@ CD_CreateServer (const char* path)
     self->workers  = CD_CreateWorkers(self);
     self->plugins  = CD_CreatePlugins(self);
 
-    if (!self->config || !self->workers) {
+    if (!self->config || !self->workers || !self->timeloop || !self->plugins) {
         if (!self->config) {
             SERR(self, "Config couldn't be initialized");
         }
 
         if (!self->workers) {
             SERR(self, "Workers couldn't be initialized");
+        }
+
+        if (!self->timeloop) {
+            SERR(self, "TimeLoop couldn't be initialized");
+        }
+
+        if (!self->plugins) {
+            SERR(self, "Plugins couldn't be initialized");
         }
 
         CD_DestroyServer(self);
@@ -152,11 +159,6 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
-    if (evbuffer_get_length(bufferevent_get_input(event)) <= 1) {
-        return;
-    }
-
-    // FIXME: While debugging this goes deadlock
     pthread_rwlock_wrlock(&player->lock.pending);
     if (!player->pending) {
         player->pending = true;

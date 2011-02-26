@@ -26,12 +26,15 @@
 #ifndef CRAFTD_SERVER_H
 #define CRAFTD_SERVER_H
 
-#include "Config.h"
-#include "Logger.h"
-#include "TimeLoop.h"
-#include "Workers.h"
-#include "Plugins.h"
+#include <craftd/Config.h>
+#include <craftd/Logger.h>
+#include <craftd/TimeLoop.h>
+#include <craftd/Workers.h>
+#include <craftd/Plugins.h>
 
+/**
+ * Server class.
+ */
 typedef struct _CDServer {
     char* name;
 
@@ -64,18 +67,55 @@ typedef struct _CDServer {
     CDHash* _private;
 } CDServer;
 
+/**
+ * Create a Server instance with the given Config path.
+ *
+ * @param path Path to the config file
+ *
+ * @return The instantiated object
+ */
 CDServer* CD_CreateServer (const char* path);
 
+/**
+ * Destroy a Server instance.
+ */
 void CD_DestroyServer (CDServer* self);
 
+/**
+ * Get the name of the Server.
+ *
+ * @return The name of the Server or "craftd"
+ */
 const char* CD_ServerToString (CDServer* self);
 
+/**
+ * Get the current Server time in ticks.
+ *
+ * @return The current time in ticks
+ */
 short CD_ServerGetTime (CDServer* self);
 
+/**
+ * Set the current Server time in ticks.
+ *
+ * @param time The new time
+ *
+ * @return The set time
+ */
 short CD_ServerSetTime (CDServer* self, short time);
 
+/**
+ * Run a Server instance.
+ *
+ * @return true if everything went as expected or false otherwise
+ */
 bool CD_RunServer (CDServer* self);
 
+/**
+ * Get a new unique entity ID
+ *
+ * @return The generated entity ID
+ */
 MCEntityId CD_ServerGenerateEntityId (CDServer* self);
 
 typedef bool (*CDEventCallback)();
@@ -84,6 +124,14 @@ bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
 bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
 
+/**
+ * Dispatch an event with the given name and the given parameters.
+ *
+ * Pay attention to the parameters you pass, those go on the stack and passing float/double
+ * could get them borked. Pointers are always safe to pass.
+ *
+ * @param eventName The name of the event to dispatch
+ */
 #define CD_EventDispatch(self, eventName, ...)                                          \
     do {                                                                                \
         if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__)) {                  \
@@ -105,8 +153,21 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
         cd_EventAfterDispatch(self, eventName, ##__VA_ARGS__);                          \
     } while (0)
 
+/**
+ * Register a callback for an event.
+ *
+ * @param eventName The name of the event
+ * @param callback The callback to be added
+ */
 void CD_EventRegister (CDServer* server, const char* eventName, CDEventCallback callback);
 
+/**
+ * Unregister the event with the passed name, unregisters only the passed callback or every callback if NULL.
+ *
+ * @param callback The callback to unregister or NULL to unregister every callback
+ *
+ * @return The unregistered callbacks
+ */
 CDEventCallback* CD_EventUnregister (CDServer* server, const char* eventName, CDEventCallback callback);
 
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN

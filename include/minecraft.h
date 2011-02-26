@@ -26,11 +26,7 @@
 #ifndef CRAFTD_MINECRAFT_H
 #define CRAFTD_MINECRAFT_H
 
-#include "common.h"
-
-/**
- * Define MC data types
- */
+#include <craftd/common.h>
 
 typedef int8_t    MCBoolean;
 typedef MCBoolean MCBool;
