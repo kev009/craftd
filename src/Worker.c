@@ -140,7 +140,11 @@ CD_RunWorker (CDWorker* self)
 
                     SDEBUG(self->server, "received packet from %s", player->ip);
 
-                    CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->buffer));
+                    CDPacket* old = CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->buffer));
+
+                    if (old) {
+                        CD_DestroyPacket(old);
+                    }
 
                     if (evbuffer_get_length(bufferevent_get_input(player->buffer)) > 0) {
                         player->pending = true;

@@ -72,13 +72,15 @@ CD_DestroyPlayer (CDPlayer* self)
 void
 CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 {
+    CDString* data = CD_PacketToString(packet);
 
+    CD_PlayerSendRaw(self, data);
 
+    CD_DestroyString(data);
 }
 
 void
 CD_PlayerSendRaw (CDPlayer* self, CDString* data)
 {
-
+    evbuffer_add(bufferevent_get_output(self->buffer), CD_StringContent(data), CD_StringLength(data));
 }
-

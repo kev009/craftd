@@ -59,7 +59,7 @@ void
 cd_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 {
     CDPacketTimeUpdate data   = { CD_ServerGetTime(self) };
-    CDPacket           packet = { CDTimeUpdate, &data };
+    CDPacket           packet = { CDResponse, CDTimeUpdate, &data };
 
     CD_HASH_FOREACH(self->players, it) {
         CD_PlayerSendPacket(CD_HashIteratorValue(self->players, it), &packet);
@@ -70,7 +70,7 @@ static
 void
 cd_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDPacket packet = { CDKeepAlive, NULL };
+    CDPacket packet = { CDResponse, CDKeepAlive, NULL };
 
     CD_HASH_FOREACH(self->players, it) {
         CD_PlayerSendPacket(CD_HashIteratorValue(self->players, it), &packet);
@@ -88,11 +88,26 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
             SDEBUG(server, "This was a triumph, I'm making a note here, huge success.");
         } break;
 
+        case CDLogin: {
+            CDPacketLogin* data = packet->data;
+
+            SLOG(server, LOG_NOTICE, "%s:%s tried login", CD_StringContent(data->request.username), CD_StringContent(data->request.password));
+        } break;
+
         case CDHandshake: {
             CDPacketHandshake* data = packet->data;
 
-            SLOG(server, LOG_NOTICE, "%s is trying to log in", data->username->data);
-        }
+            SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
+
+            CDPacketHandshake pkt;
+            pkt.response.hash = CD_CreateStringFromCString("+");
+
+            CDPacket response = { CDResponse, CDHandshake, &pkt };
+
+            CD_PlayerSendPacket(player, &response);
+
+            CD_DestroyString(pkt.response.hash);
+        } break;
     }
 
     return true;

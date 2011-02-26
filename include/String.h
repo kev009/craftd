@@ -32,8 +32,16 @@ typedef struct _CDString {
     bstring raw;
 } CDString;
 
-CDString* CD_StringFromC (const char* string);
+CDString* CD_CreateStringFromCString (const char* string);
+
+CDString* CD_CreateStringFromBuffer (const char* buffer, size_t length);
 
 void CD_DestroyString (CDString* self);
+
+bstring CD_DestroyStringKeepData (CDString* self);
+
+const char* CD_StringContent (CDString* self);
+
+const size_t CD_StringLength (CDString* self);
 
 #endif

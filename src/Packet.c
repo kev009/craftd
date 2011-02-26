@@ -45,6 +45,8 @@ CD_PacketFromEvent (struct bufferevent* event)
         return NULL;
     }
 
+    self->chain = CDRequest;
+
     evbuffer_remove(input, &self->type, 1);
     self->data = CD_GetPacketDataFromEvent(self, event);
 
@@ -54,67 +56,79 @@ CD_PacketFromEvent (struct bufferevent* event)
 void
 CD_DestroyPacket (CDPacket* self)
 {
-    switch (self->type) {
-        case CDLogin: {
-            MC_DestroyString(((CDPacketLogin*) self->data)->username);
-            MC_DestroyString(((CDPacketLogin*) self->data)->password);
+    switch (self->chain) {
+        case CDRequest: {
+            switch (self->type) {
+                case CDLogin: {
+                    MC_DestroyString(((CDPacketLogin*) self->data)->request.username);
+                    MC_DestroyString(((CDPacketLogin*) self->data)->request.password);
+                } break;
+
+                case CDHandshake: {
+                    MC_DestroyString(((CDPacketHandshake*) self->data)->request.username);
+                } break;
+
+                case CDChat: {
+                    MC_DestroyString(((CDPacketChat*) self->data)->request.message);
+                } break;
+
+                case CDEntityMetadata: {
+                    MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->request.metadata);
+                } break;
+
+                case CDUpdateSign: {
+                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.first);
+                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.second);
+                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.third);
+                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.fourth);
+                } break;
+            }
         } break;
 
-        case CDHandshake: {
-            MC_DestroyString(((CDPacketHandshake*) self->data)->username);
-        } break;
+        case CDResponse: {
+            switch (self->type) {
+                case CDNamedEntitySpawn: {
+                    MC_DestroyString(((CDPacketNamedEntitySpawn*) self->data)->response.name);
+                } break;
 
-        case CDChat: {
-            MC_DestroyString(((CDPacketChat*) self->data)->message);
-        } break;
+                case CDSpawnMob: {
+                    MC_DestroyMetadata(((CDPacketSpawnMob*) self->data)->response.metadata);
+                } break;
 
-        case CDNamedEntitySpawn: {
-            MC_DestroyString(((CDPacketNamedEntitySpawn*) self->data)->name);
-        } break;
+                case CDPainting: {
+                    MC_DestroyString(((CDPacketPainting*) self->data)->response.title);
+                } break;
 
-        case CDSpawnMob: {
-            MC_DestroyMetadata(((CDPacketSpawnMob*) self->data)->metadata);
-        } break;
+                case CDEntityMetadata: {
+                    MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->response.metadata);
+                } break;
 
-        case CDPainting: {
-            MC_DestroyString(((CDPacketPainting*) self->data)->title);
-        } break;
+                case CDMapChunk: {
+                    CD_free(((CDPacketMapChunk*) self->data)->response.item);
+                } break;
 
-        case CDEntityMetadata: {
-            MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->metadata);
-        } break;
+                case CDMultiBlockChange: {
+                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.coordinate);
+                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.type);
+                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.metadata);
+                } break;
 
-        case CDMapChunk: {
-            CD_free(((CDPacketMapChunk*) self->data)->item);
-        } break;
+                case CDExplosion: {
+                    CD_free(((CDPacketExplosion*) self->data)->response.item);
+                } break;
 
-        case CDMultiBlockChange: {
-            CD_free(((CDPacketMultiBlockChange*) self->data)->coordinate);
-            CD_free(((CDPacketMultiBlockChange*) self->data)->type);
-            CD_free(((CDPacketMultiBlockChange*) self->data)->metadata);
-        } break;
+                case CDOpenWindow: {
+                    MC_DestroyString(((CDPacketOpenWindow*) self->data)->response.title);
+                } break;
 
-        case CDExplosion: {
-            CD_free(((CDPacketExplosion*) self->data)->item);
-        } break;
+                case CDWindowItems: {
+                    CD_free(((CDPacketWindowItems*) self->data)->response.item);
+                } break;
 
-        case CDOpenWindow: {
-            MC_DestroyString(((CDPacketOpenWindow*) self->data)->title);
-        } break;
-
-        case CDWindowItems: {
-            CD_free(((CDPacketWindowItems*) self->data)->item);
-        } break;
-
-        case CDUpdateSign: {
-            MC_DestroyString(((CDPacketUpdateSign*) self->data)->first);
-            MC_DestroyString(((CDPacketUpdateSign*) self->data)->second);
-            MC_DestroyString(((CDPacketUpdateSign*) self->data)->third);
-            MC_DestroyString(((CDPacketUpdateSign*) self->data)->fourth);
-        } break;
-
-        case CDDisconnect: {
-            MC_DestroyString(((CDPacketDisconnect*) self->data)->reason);
+                case CDDisconnect: {
+                    MC_DestroyString(((CDPacketDisconnect*) self->data)->response.reason);
+                } break;
+            }
         } break;
     }
 
@@ -126,9 +140,8 @@ static
 MCString
 cd_GetMCStringFromBuffer (struct evbuffer* input)
 {
-    MCString result = bfromcstr("");
-    char*    data;
-    MCShort  length;
+    char*   data;
+    MCShort length;
 
     evbuffer_remove(input, &length, MCShortSize);
 
@@ -139,9 +152,7 @@ cd_GetMCStringFromBuffer (struct evbuffer* input)
 
     data[length] = '\0';
 
-    bassignblk(result, data, length);
-
-    return result;
+    return CD_CreateStringFromBuffer(data, length + 1);
 }
 
 void*
@@ -151,19 +162,27 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
 
     switch (self->type) {
         case CDKeepAlive: {
-            evbuffer_drain(input, 1);
-
-            return NULL;
+            return CD_malloc(sizeof(CDPacketKeepAlive));
         }
 
         case CDLogin: {
-            return NULL;
+            CDPacketLogin* packet = CD_malloc(sizeof(CDPacketLogin));
+
+            evbuffer_remove(input, &packet->request.version, MCIntegerSize);
+
+            packet->request.username = cd_GetMCStringFromBuffer(input);
+            packet->request.password = cd_GetMCStringFromBuffer(input);
+
+            evbuffer_remove(input, &packet->request.mapSeed,   MCLongSize);
+            evbuffer_remove(input, &packet->request.dimension, MCByteSize);
+
+            return packet;
         }
 
         case CDHandshake: {
             CDPacketHandshake* packet = CD_malloc(sizeof(CDPacketHandshake));
 
-            packet->username = cd_GetMCStringFromBuffer(input);
+            packet->request.username = cd_GetMCStringFromBuffer(input);
 
             return packet;
         }
@@ -172,8 +191,32 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
     return NULL;
 }
 
-bstring
+CDString*
 CD_PacketToString (CDPacket* self)
 {
-    return NULL;
+    char*  data   = NULL;
+    size_t length = 0;
+
+    switch (self->chain) {
+        case CDRequest: {
+            switch (self->type) {
+            }
+        } break;
+
+        case CDResponse: {
+            switch (self->type) {
+                case CDHandshake: {
+                    CDPacketHandshake* packet = self->data;
+
+                    length = MCShortSize + CD_StringLength(packet->response.hash);
+                    data   = CD_malloc(length);
+
+                    *((short*) data) = htons(CD_StringLength(packet->response.hash));
+                    memcpy(data + MCShortSize, CD_StringContent(packet->response.hash), CD_StringLength(packet->response.hash));
+                } break;
+            }
+        } break;
+    }
+
+    return CD_CreateStringFromBuffer(data, length);
 }

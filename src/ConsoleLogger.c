@@ -38,14 +38,22 @@ cd_ConsoleLog (int priority, const char* format, ...)
         "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
     };
 
+    static pthread_spinlock_t spinlock = 0;
+
+    if (spinlock == 0) {
+        pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE);
+    }
+
     va_list ap;
 
     va_start(ap, format);
-  
+
     /* Return on MASKed log priorities */
     if (LOG_MASK(priority) & cd_mask) {
         return;
     }
+
+    pthread_spin_lock(&spinlock);
 
     if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
         printf("UNKNOWN: ");
@@ -56,7 +64,11 @@ cd_ConsoleLog (int priority, const char* format, ...)
 
     vprintf(format, ap);
     printf("\n");
-  
+
+    fflush(stdout);
+
+    pthread_spin_unlock(&spinlock);
+
     va_end(ap);
 }
 
@@ -81,5 +93,5 @@ void cd_ConsoleCloseLog (void)
 CDLogger CDConsoleLogger = {
     .log        = cd_ConsoleLog,
     .setlogmask = cd_ConsoleSetLogMask,
-    .closelog   = cd_ConsoleCloseLog,
+    .closelog   = cd_ConsoleCloseLog
 };

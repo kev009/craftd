@@ -34,7 +34,7 @@ const MCEntityId MCMaxEntityId = INT_MAX;
 void
 MC_DestroyString (MCString self)
 {
-    bdestroy(self);
+    CD_DestroyString(self);
 }
 
 MCMetadata*

@@ -44,13 +44,13 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
-#include "minecraft.h"
-
 #include "List.h"
 #include "Map.h"
 #include "Hash.h"
 #include "String.h"
 #include "Regexp.h"
+
+#include "minecraft.h"
 
 #define PRIVATE(data) ((data)->_private)
 

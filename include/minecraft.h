@@ -48,7 +48,7 @@ typedef float MCFloat;
 
 typedef double MCDouble;
 
-typedef bstring MCString;
+typedef CDString* MCString;
 
 void MC_DestroyString (MCString self);
 

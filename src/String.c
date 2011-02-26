@@ -28,7 +28,7 @@
 #include "String.h"
 
 CDString*
-CD_StringFromC (const char* string)
+CD_CreateStringFromCString (const char* string)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
@@ -41,10 +41,44 @@ CD_StringFromC (const char* string)
     return self;
 }
 
+CDString*
+CD_CreateStringFromBuffer (const char* buffer, size_t length)
+{
+    CDString* self = CD_malloc(sizeof(CDString));
+
+    self->raw = bfromcstr("");
+
+    bassignblk(self->raw, buffer, length);
+
+    return self;
+}
+
 void
 CD_DestroyString (CDString* self)
 {
     bdestroy(self->raw);
 
     CD_free(self);
+}
+
+bstring
+CD_DestroyStringKeepData (CDString* self)
+{
+    bstring result = self->raw;
+
+    CD_free(self);
+
+    return result;
+}
+
+const char*
+CD_StringContent (CDString* self)
+{
+    return self->raw->data;
+}
+
+const size_t
+CD_StringLength (CDString* self)
+{
+    return self->raw->slen;
 }
