@@ -33,7 +33,7 @@
 typedef struct _CDLogger {
     void (*log)        (int, const char*, ...);
     int  (*setlogmask) (int);
-    void (*closelog)   (void)
+    void (*closelog)   (void);
 } CDLogger;
 
 #ifndef CRAFTD_LOGGER_IGNORE_EXTERN
