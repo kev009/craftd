@@ -26,6 +26,8 @@
 #ifndef CRAFTD_STRING_H
 #define CRAFTD_STRING_H
 
+#include <stdbool.h>
+
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 

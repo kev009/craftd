@@ -26,6 +26,8 @@
 #ifndef CRAFTD_MEMORY_H
 #define CRAFTD_MEMORY_H
 
+#include <stdlib.h>
+
 /**
  * Simple free wrapper
  *
