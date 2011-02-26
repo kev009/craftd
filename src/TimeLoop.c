@@ -44,6 +44,8 @@ CD_CreateTimeLoop (struct _CDServer* server)
     self->event.base = event_base_new();
     self->callbacks  = CD_CreateMap();
     self->last       = INT_MIN;
+
+    return self;
 }
 
 void
@@ -58,7 +60,7 @@ CD_DestroyTimeLoop (CDTimeLoop* self)
     CD_free(self);
 }
 
-void*
+bool
 CD_RunTimeLoop (CDTimeLoop* self)
 {
     return event_base_dispatch(self->event.base);

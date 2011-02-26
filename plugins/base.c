@@ -121,6 +121,8 @@ CD_PluginInitialize (CDPlugin* self)
     CD_HashSet(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, cd_KeepAlive));
 
     CD_EventRegister(self->server, "Player.process", cd_PlayerProcess);
+
+    return true;
 }
 
 extern
@@ -132,4 +134,6 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
 
     CD_EventUnregister(self->server, "Player.process", cd_PlayerProcess);
+
+    return true;
 }
