@@ -200,8 +200,12 @@ CD_HashSet (CDHash* self, const char* name, void* data)
     int      ret;
 
     pthread_rwlock_wrlock(&self->lock);
-    it                       = kh_put(cdHash, self->hash, name, &ret);
-    old                      = kh_value(self->hash, it);
+    it = kh_put(cdHash, self->hash, name, &ret);
+
+    if (kh_exist(self->hash, it)) {
+        old = kh_value(self->hash, it);
+    }
+
     kh_value(self->hash, it) = data;
     pthread_rwlock_unlock(&self->lock);
 

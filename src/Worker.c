@@ -41,6 +41,7 @@ CD_CreateWorker (CDServer* server)
     self->server  = server;
     self->id      = 0;
     self->working = false;
+    self->job     = NULL;
 
     return self;
 }

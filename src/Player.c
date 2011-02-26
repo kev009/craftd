@@ -32,21 +32,22 @@ CD_CreatePlayer (struct _CDServer* server)
     CDPlayer* self = CD_malloc(sizeof(CDPlayer));
 
     if (!self) {
-//        SERR(server, "could not instantiate a Player object");
         return NULL;
     }
 
-    self->server            = server;
+    pthread_rwlock_init(&self->lock.status, NULL);
+    pthread_rwlock_init(&self->lock.pending, NULL);
+
+    self->server = server;
+
     self->entity.id         = CD_ServerGenerateEntityId(server);
     self->entity.type       = MCEntityPlayer;
     self->entity.position.x = 0;
     self->entity.position.y = 0;
     self->entity.position.z = 0;
 
-    self->status = CDPlayerIdle;
-
-    pthread_rwlock_init(&self->lock.status, NULL);
-    pthread_rwlock_init(&self->lock.pending, NULL);
+    self->status  = CDPlayerIdle;
+    self->pending = false;
 
     PRIVATE(self) = CD_CreateHash();
 
