@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Map.h"
-#include "memory.h"
-#include "pthread.h"
+#include <craftd/Map.h>
 
 CDMap*
 CD_CreateMap (void)

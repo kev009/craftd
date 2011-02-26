@@ -26,9 +26,8 @@
 #ifndef CRAFTD_PLAYER_H
 #define CRAFTD_PLAYER_H
 
-#include "minecraft.h"
-#include "Hash.h"
-#include "Packet.h"
+#include <craftd/common.h>
+#include <craftd/Packet.h>
 
 struct _CDServer;
 
@@ -38,6 +37,9 @@ typedef enum _CDPlayerStatus {
     CDPlayerProcess
 } CDPlayerStatus;
 
+/**
+ * The Player class.
+ */
 typedef struct _CDPlayer {
     MCEntity entity;
 
@@ -61,14 +63,32 @@ typedef struct _CDPlayer {
     } lock;
 } CDPlayer;
 
+/**
+ * Create a Player object on the given Server.
+ *
+ * @param server The Server the Player will play on
+ *
+ * @return The instantiated Player object
+ */
 CDPlayer* CD_CreatePlayer (struct _CDServer* server);
 
+/**
+ * Destroy a Player object
+ */
 void CD_DestroyPlayer (CDPlayer* self);
 
-void CD_SetPlayerName (const char* name);
-
+/**
+ * Send a Packet to a Player
+ *
+ * @param packet The Packet object to send
+ */
 void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
 
+/**
+ * Send a raw String to a Player
+ *
+ * @param data The raw String to send
+ */
 void CD_PlayerSendRaw (CDPlayer* self, CDString* data);
 
 #endif

@@ -26,22 +26,73 @@
 #ifndef CRAFTD_STRING_H
 #define CRAFTD_STRING_H
 
-#include "bstrlib.h"
+#include <craftd/bstring/bstrlib.h>
+#include <craftd/bstring/bstraux.h>
 
+typedef bstring CDRawString;
+
+/**
+ * The String class.
+ */
 typedef struct _CDString {
-    bstring raw;
+    CDRawString raw;
+
+    bool external;
 } CDString;
 
+/**
+ * Create a String object from a C null terminated string
+ *
+ * @param string The C string.
+ *
+ * @return The instantiated String object
+ */
 CDString* CD_CreateStringFromCString (const char* string);
 
+/**
+ * Create a String object from a length given buffer.
+ *
+ * Note that the buffer is NOT copied and NOT freed when the String is destroyed, use CD_CreateStringFromBufferCopy for that.
+ *
+ * @param buffer The buffer with the data
+ * @param length The length of the data you want to convert in a String
+ *
+ * @return The intantiated String object
+ */
 CDString* CD_CreateStringFromBuffer (const char* buffer, size_t length);
 
+/**
+ * Create a String object from a length given buffer.
+ *
+ * Note that the buffer IS copied, use CD_CreateStringFromBuffer if you don't want it to be copied.
+ *
+ * @param buffer The buffer with the data
+ * @param length The length of the data you want to convert in a String
+ *
+ * @return The intantiated String object
+ */
+CDString* CD_CreateStringFromBufferCopy (const char* buffer, size_t length);
+
+/**
+ * Destroy the String object AND the raw string
+ */
 void CD_DestroyString (CDString* self);
 
-bstring CD_DestroyStringKeepData (CDString* self);
+/**
+ * Destroy the String object and return the raw string
+ *
+ * @return The raw String
+ */
+CDRawString CD_DestroyStringKeepData (CDString* self);
 
+/**
+ * Get the String content as a C string
+ */
 const char* CD_StringContent (CDString* self);
 
+/**
+ * Get the String length
+ */
 const size_t CD_StringLength (CDString* self);
 
 #endif

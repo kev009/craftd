@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-
-#include "String.h"
+#include <craftd/String.h>
 
 CDString*
 CD_CreateStringFromCString (const char* string)
@@ -36,7 +34,8 @@ CD_CreateStringFromCString (const char* string)
         return NULL;
     }
 
-    self->raw = bfromcstr(string);
+    self->raw      = bfromcstr(string);
+    self->external = false;
 
     return self;
 }
@@ -46,9 +45,22 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
-    self->raw = bfromcstr("");
+    self->raw      = CD_malloc(sizeof(bstring));
+    self->external = true;
 
-    bassignblk(self->raw, buffer, length);
+    self->raw->slen = length;
+    self->raw->data = buffer;
+
+    return self;
+}
+
+CDString*
+CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
+{
+    CDString* self = CD_malloc(sizeof(CDString));
+
+    self->raw      = blk2bstr(buffer, length);
+    self->external = false;
 
     return self;
 }
@@ -56,12 +68,17 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
 void
 CD_DestroyString (CDString* self)
 {
-    bdestroy(self->raw);
+    if (self->external) {
+        CD_free(self->raw);
+    }
+    else {
+        bdestroy(self->raw);
+    }
 
     CD_free(self);
 }
 
-bstring
+CDRawString
 CD_DestroyStringKeepData (CDString* self)
 {
     bstring result = self->raw;

@@ -24,8 +24,7 @@
  */
 
 #define CRAFTD_LOGGER_IGNORE_EXTERN
-#include <evutil.h>
-#include "Logger.h"
+#include <craftd/Logger.h>
 #undef CRAFTD_LOGGER_IGNORE_EXTERN
 
 static int cd_mask = 0;

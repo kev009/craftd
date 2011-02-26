@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "List.h"
-#include "memory.h"
-#include "pthread.h"
+#include <craftd/List.h>
 
 CDList*
 CD_CreateList (void)

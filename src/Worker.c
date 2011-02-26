@@ -23,13 +23,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-
-#include "Worker.h"
-#include "Server.h"
-#include "Workers.h"
-#include "Player.h"
-#include "Logger.h"
+#include <craftd/Worker.h>
+#include <craftd/Server.h>
+#include <craftd/Workers.h>
+#include <craftd/Player.h>
+#include <craftd/Logger.h>
 
 CDWorker*
 CD_CreateWorker (CDServer* server)
@@ -142,6 +140,14 @@ CD_RunWorker (CDWorker* self)
 
                     packet = CD_PacketFromEvent(player->buffer);
 
+                    if (packet == NULL) {
+                        if (errno == EAGAIN) {
+                            player->pending = false;
+
+                            goto PLAYER_JOB_DONE;
+                        }
+                    }
+
                     SDEBUG(self->server, "received packet 0x%.2X from %s", packet->type, player->ip);
 
                     packet = CD_HashSet(PRIVATE(player), "packet", packet);
@@ -157,13 +163,11 @@ CD_RunWorker (CDWorker* self)
                     }
                     else {
                         player->pending = false;
-
-                        CD_DestroyJob(self->job);
                     }
 
                     player->status = CDPlayerInput;
 
-                    CD_AddJob(self->workers, CD_CreateJob (CDPlayerProcessJob, player));
+                    CD_AddJob(self->workers, CD_CreateJob(CDPlayerProcessJob, player));
                 } break;
 
                 case CDPlayerProcessJob: {
@@ -178,8 +182,6 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_wrlock(&player->lock.pending);
                     pthread_rwlock_wrlock(&player->lock.status);
                     player->status = CDPlayerIdle;
-
-                    CD_DestroyJob(self->job);
                 } break;
 
                 default: {
@@ -189,6 +191,10 @@ CD_RunWorker (CDWorker* self)
             }
 
             PLAYER_JOB_DONE: {
+                if (!player->pending && self->job) {
+                    CD_DestroyJob(self->job);
+                }
+
                 self->job = NULL;
 
                 pthread_rwlock_unlock(&player->lock.pending);

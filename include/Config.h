@@ -26,9 +26,8 @@
 #ifndef CRAFTD_CONFIG_H
 #define CRAFTD_CONFIG_H
 
-#include <netinet/in.h>
-#include <stdbool.h>
-#include "jansson.h"
+#include <craftd/common.h>
+#include <craftd/jansson/jansson.h>
 
 typedef struct _CDConfig {
     json_t*      data;
@@ -86,10 +85,28 @@ typedef struct _CDConfig {
     } cache;
 } CDConfig;
 
+/**
+ * Parse a Config file given a path.
+ *
+ * @param path The path to the Config file
+ *
+ * @return The instantiated Config object
+ */
 CDConfig* CD_ParseConfig (const char* path);
 
+/**
+ * Destroy a Config object
+ */
 void CD_DestroyConfig (CDConfig* self);
 
-void CD_ConfigParseBool (bool* save, const json_t* json, const char* key);
+/**
+ * Return a boolean from a json object
+ *
+ * @param json The json object
+ * @param key The name of the property to get
+ *
+ * @return A boolean value representing the property
+ */
+bool CD_ConfigParseBool (const json_t* json, const char* key);
 
 #endif

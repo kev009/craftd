@@ -26,7 +26,7 @@
 #ifndef CRAFTD_PACKET_H
 #define CRAFTD_PACKET_H
 
-#include "minecraft.h"
+#include <craftd/common.h>
 
 typedef enum _CDPacketChain {
     CDRequest,
@@ -544,12 +544,36 @@ typedef union _CDPacketDisconnect {
     } response;
 } CDPacketDisconnect;
 
+/**
+ * Create a Packet from an event buffer
+ *
+ * @param event The event buffer to read from
+ *
+ * @return The instantiated Packet object
+ */
 CDPacket* CD_PacketFromEvent (struct bufferevent* event);
 
+/**
+ * Destroy a Packet object
+ */
 void CD_DestroyPacket (CDPacket* self);
 
+/**
+ * Generate a CDPacket* object from the given bufferevent and return it.
+ *
+ * This is used internally by CD_PacketFromEvent but can be used in other situations.
+ *
+ * @param event The bufferevent where the input lays
+ *
+ * @return The instantiated Object cast to (void*)
+ */
 void* CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event);
 
+/**
+ * Generate a String version of the packet to send through the net
+ *
+ * @return The raw packet data
+ */
 CDString* CD_PacketToString (CDPacket* self);
 
 #endif

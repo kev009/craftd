@@ -23,10 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-
-#include "Config.h"
-#include "Logger.h"
+#include <craftd/Config.h>
+#include <craftd/Logger.h>
 
 // TODO: Implement real parsing of the json file
 CDConfig*
@@ -56,9 +54,9 @@ CD_ParseConfig (const char* path)
     self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
     self->cache.connection.bind.ipv4.sin_port        = htons(self->cache.connection.port);
 
-    self->cache.connection.bind.ipv6.sin6_family       = AF_INET6;
-//    self->cache.connection.bind.ipv6.sin6_addr.s6_addr = INADDR_ANY;
-    self->cache.connection.bind.ipv6.sin6_port         = htons(self->cache.connection.port);
+    self->cache.connection.bind.ipv6.sin6_family = AF_INET6;
+    self->cache.connection.bind.ipv6.sin6_addr   = in6addr_any;
+    self->cache.connection.bind.ipv6.sin6_port   = htons(self->cache.connection.port);
 
     self->cache.httpd.enabled         = true;
     self->cache.httpd.connection.port = 25566;
@@ -67,9 +65,9 @@ CD_ParseConfig (const char* path)
     self->cache.httpd.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
     self->cache.httpd.connection.bind.ipv4.sin_port        = htons(self->cache.httpd.connection.port);
 
-    self->cache.httpd.connection.bind.ipv6.sin6_family       = AF_INET6;
-//    self->cache.httpd.connection.bind.ipv6.sin6_addr.s6_addr = INADDR_ANY;
-    self->cache.httpd.connection.bind.ipv6.sin6_port         = htons(self->cache.httpd.connection.port);
+    self->cache.httpd.connection.bind.ipv6.sin6_family = AF_INET6;
+    self->cache.httpd.connection.bind.ipv6.sin6_addr   = in6addr_any;
+    self->cache.httpd.connection.bind.ipv6.sin6_port   = htons(self->cache.httpd.connection.port);
 
     self->cache.rate.sunrise = 20;
     self->cache.rate.day     = 20;
@@ -97,15 +95,10 @@ CD_DestroyConfig (CDConfig* self)
     CD_free(self);
 }
 
-void
-CD_ConfigParseBool (bool* save, const json_t* json, const char* key)
+bool
+CD_ConfigParseBool (const json_t* json, const char* key)
 {
     json_t* obj = json_object_get(json, key);
 
-    if (obj && json_is_true(obj)) {
-        *save = true;
-    }
-    else {
-        *save = false;
-    }
+    return (obj && json_is_true(obj));
 }

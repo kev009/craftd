@@ -32,10 +32,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
-#include "memory.h"
-#include "bstrlib.h"
-#include "bstraux.h"
-#include "javaendian.h"
 
 #include <pthread.h>
 
@@ -45,13 +41,17 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
-#include "List.h"
-#include "Map.h"
-#include "Hash.h"
-#include "String.h"
-#include "Regexp.h"
+#include <craftd/config.h>
+#include <craftd/memory.h>
 
-#include "minecraft.h"
+#include <craftd/List.h>
+#include <craftd/Map.h>
+#include <craftd/Hash.h>
+#include <craftd/String.h>
+#include <craftd/Regexp.h>
+
+#include <craftd/javaendian.h>
+#include <craftd/minecraft.h>
 
 #define PRIVATE(data) ((data)->_private)
 

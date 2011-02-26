@@ -26,17 +26,26 @@
 #ifndef CRAFTD_PLUGIN_H
 #define CRAFTD_PLUGIN_H
 
-#include <stdbool.h>
 #include <ltdl.h>
-#include "String.h"
-#include "Hash.h"
+
+#include <craftd/common.h>
 
 struct _CDPlugin;
 struct _CDServer;
 
+/**
+ * Callback type to initialize the Plugin
+ */
 typedef bool (*CDPluginInitializer)(struct _CDPlugin*);
+
+/**
+ * Callback type to finalize the Plugin
+ */
 typedef bool (*CDPluginFinalizer)(struct _CDPlugin*);
 
+/**
+ * The Plugin class.
+ */
 typedef struct _CDPlugin {
     struct _CDServer* server;
 
@@ -51,8 +60,19 @@ typedef struct _CDPlugin {
     CDHash* _private;
 } CDPlugin;
 
+/**
+ * Create a Plugin from a given path.
+ *
+ * @param server The Server the plugin will run on
+ * @param path The path to the plugin
+ *
+ * @return The instantiated Plugin object
+ */
 CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path);
 
+/**
+ * Destroy a Plugin object
+ */
 void CD_DestroyPlugin (CDPlugin* self);
 
 #endif

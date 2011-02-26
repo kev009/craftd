@@ -26,54 +26,175 @@
 #ifndef CRAFTD_HASH_H
 #define CRAFTD_HASH_H
 
-#include <stdbool.h>
-#include "khash.h"
+#include <craftd/common.h>
+#include <craftd/klib/khash.h>
 
 KHASH_MAP_INIT_STR(cdHash, void*);
 
+/**
+ * The Hash class
+ */
 typedef struct _CDHash {
     khash_t(cdHash)* hash;
 
     pthread_rwlock_t lock;
 } CDHash;
 
+/**
+ * The Hash iterator type
+ */
 typedef khiter_t CDHashIterator;
 
+/**
+ * Create an Hash object
+ *
+ * @return The Hash object
+ */
 CDHash* CD_CreateHash (void);
 
+/**
+ * Shallow clone a Hash object.
+ *
+ * It's useful to iterate over a Hash that you want to change during the iteration.
+ *
+ * @return The cloned Hash object
+ */
 CDHash* CD_CloneHash (CDHash* self);
 
+/**
+ * Destroy a Hash object.
+ *
+ * Keep in mind that you have to destroy the saved data yourself.
+ */
 void CD_DestroyHash (CDHash* self);
 
+/**
+ * Get an iterator to the beginning of the Hash.
+ *
+ * If used CD_HashIterator(Value|Key) on this iterator it will refer to the first
+ * element of the Hash.
+ *
+ * @return The iterator
+ */
 CDHashIterator CD_HashBegin (CDHash* self);
 
+/**
+ * Get an iterator to the end of the Hash.
+ *
+ * This iterator points *AFTER* the last element, so you have to use CD_HashPrevious to get the
+ * iterator pointing to the last element.
+ *
+ * @return The iterator
+ */
 CDHashIterator CD_HashEnd (CDHash* self);
 
+/**
+ * Get the next iterator with content, it automagically jumps empty buckets.
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return The iterator to the next element
+ */
 CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
 
+/**
+ * Get the previous iterator with content, it automagically jumps empty buckets.
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return The iterator to the previous element
+ */
 CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
 
+/**
+ * Get the number of elements in the Hash
+ *
+ * @return The number of elements in the Hash
+ */
 size_t CD_HashLength (CDHash* self);
 
+/**
+ * Get the key of the given iterator position.
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return The key (string) value
+ */
 const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
 
+/**
+ * Get the value of the given iterator position.
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return The value (whatever) value
+ */
 void* CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
 
+/**
+ * Checks if a iterator is valid (points to an existing element)
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return true if there's an element, false otherwise.
+ */
 bool CD_HashIteratorValid (CDHash* self, CDHashIterator iterator);
 
+/**
+ * Get the value of the element with the given name.
+ *
+ * @param name A string with the name you want to get
+ *
+ * @return The value or NULL
+ */
 void* CD_HashGet (CDHash* self, const char* name);
 
+/**
+ * Set the value of the element with the given name.
+ *
+ * @param name A string with the name you want to set
+ * @param data The pointer to the data you want to set
+ *
+ * @return The old data if present or NULL
+ */
 void* CD_HashSet (CDHash* self, const char* name, void* data);
 
+/**
+ * Delete the element with the given name
+ *
+ * @param name A string with the name you want to delete
+ *
+ * @return The delete data if present or NULL
+ */
 void* CD_HashDelete (CDHash* self, const char* name);
 
+/**
+ * Get the value of the first element in the Hash
+ *
+ * @return The first element in the Hash
+ */
 void* CD_HashFirst (CDHash* self);
 
+/**
+ * Get the value of the last element in the Hash
+ *
+ * @return The last element in the Hash
+ */
 void* CD_HashLast (CDHash* self);
 
+/**
+ * Empty the Hash and return an array of the contained data
+ *
+ * @return An array of the contained data
+ */
 void** CD_HashClear (CDHash* self);
 
-#define CD_HASH_FOREACH(hash, it) \
-    if (hash) for (CDHashIterator it = CD_HashBegin(hash), end = CD_HashEnd(hash); it != end; it = CD_HashNext(hash, it))
+/**
+ * Iterate over the given hash
+ *
+ * @parameter it The name of the iterator variable
+ */
+#define CD_HASH_FOREACH(self, it) \
+    if (self) for (CDHashIterator it = CD_HashBegin(self), __end__ = CD_HashEnd(self); it != __end__; it = CD_HashNext(self, it))
 
 #endif

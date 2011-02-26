@@ -30,6 +30,9 @@
 
 struct _CDServer;
 
+/**
+ * The Plugins class.
+ */
 typedef struct _CDPlugins {
     struct _CDServer* server;
 
@@ -37,10 +40,25 @@ typedef struct _CDPlugins {
     CDPlugin** item;
 } CDPlugins;
 
+/**
+ * Create a Plugins object on the given Server
+ *
+ * @param server The server the Plugins will run on
+ *
+ * @return THe instantiated Plugins object
+ */
 CDPlugins* CD_CreatePlugins (struct _CDServer* server);
 
+/**
+ * Destroy a Plugins object
+ */
 void CD_DestroyPlugins (CDPlugins* self);
 
+/**
+ * Load a Plugin from the given path and save it as loaded plugin.
+ *
+ * @param path The path to the plugin
+ */
 CDPlugin* CD_LoadPlugin (CDPlugins* self, const char* path);
 
 #endif

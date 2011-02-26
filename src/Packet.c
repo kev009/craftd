@@ -23,9 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Error.h"
-#include "Packet.h"
-#include "common.h"
+#include <craftd/Packet.h>
 
 CDPacket*
 CD_PacketFromEvent (struct bufferevent* event)
@@ -33,15 +31,15 @@ CD_PacketFromEvent (struct bufferevent* event)
     struct evbuffer* input  = bufferevent_get_input(event);
     size_t           length = evbuffer_get_length(input);
 
-    if (length == 0) {
-        CDError = CDNone;
+    if (length <= 1) {
+        errno = EAGAIN;
+
         return NULL;
     }
 
     CDPacket* self = CD_malloc(sizeof(CDPacket));
 
     if (!self) {
-        CDError = CDFail;
         return NULL;
     }
 
@@ -199,7 +197,6 @@ cd_GetMCStringFromBuffer (struct evbuffer* input)
 
     return CD_CreateStringFromBuffer(data, length + 1);
 }
-
 
 void*
 CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)

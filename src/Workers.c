@@ -23,9 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Workers.h"
-#include "Server.h"
-#include "common.h"
+#include <craftd/Workers.h>
+#include <craftd/Server.h>
 
 CDWorkers*
 CD_CreateWorkers (CDServer* server)

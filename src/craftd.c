@@ -23,26 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <config.h>
 
-#include <unistd.h>
-#include <stdio.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <pthread.h>
-
-#include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <event2/listener.h>
-#include <event2/thread.h>
-
-#include "common.h"
-#include "Server.h"
-#include "Logger.h"
-#include "version.h"
+#include <craftd/Server.h>
+#include <craftd/Logger.h>
+#include <craftd/version.h>
 
 /**
  * Try and perform cleanup with an atexit call

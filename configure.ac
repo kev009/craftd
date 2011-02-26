@@ -22,10 +22,9 @@ AC_LTDL_DLLIB
 AC_SUBST(LIBTOOL_DEPS)
 LT_INIT([dlopen])
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
                  third-party/jansson/src/jansson_config.h])
-AC_CONFIG_SRCDIR([src/mapchunk.h])
 
 # Checks for libraries.
 AX_LIB_SOCKET_NSL

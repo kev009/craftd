@@ -23,8 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "TimeLoop.h"
+#include <craftd/TimeLoop.h>
 
 CDTimeLoop*
 CD_CreateTimeLoop (struct _CDServer* server)
@@ -60,10 +59,8 @@ CD_DestroyTimeLoop (CDTimeLoop* self)
 }
 
 void*
-CD_RunTimeLoop (void* arg)
+CD_RunTimeLoop (CDTimeLoop* self)
 {
-    CDTimeLoop* self = arg;
-
     return event_base_dispatch(self->event.base);
 }
 
