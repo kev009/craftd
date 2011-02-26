@@ -152,6 +152,10 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
+    if (evbuffer_get_length(bufferevent_get_input(event)) <= 1) {
+        return;
+    }
+
     // FIXME: While debugging this goes deadlock
     pthread_rwlock_wrlock(&player->lock.pending);
     if (!player->pending) {

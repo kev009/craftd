@@ -80,7 +80,7 @@ CD_ParseConfig (const char* path)
     self->cache.spawn.y = 0;
     self->cache.spawn.z = 0;
 
-    self->cache.workers = 10;
+    self->cache.workers = 2;
 
     self->cache.maxPlayers = 0;
 

@@ -188,12 +188,8 @@ cd_GetMCStringFromBuffer (struct evbuffer* input)
     char*   data   = NULL;
     MCShort length = 0;
 
-    evbuffer_remove(input, &length, MCShortSize);
-
     length = ntohs(length);
     data   = CD_malloc(length + 1);
-
-    evbuffer_remove(input, data, length);
 
     data[length] = '\0';
 
