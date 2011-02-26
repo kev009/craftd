@@ -79,7 +79,7 @@ MC_DestroyData (MCData* self)
 {
     // Destroy the bstring, the other types lay on the stack
     if (self->type == MCTypeString) {
-        bdestroy(self->data.s);
+        CD_DestroyString(self->data.s);
     }
 
     CD_free(self);
@@ -134,7 +134,7 @@ MC_MetadataFromEvent (struct bufferevent* event)
             evbuffer_remove(input, &length, 2);
             buffer = CD_malloc(length);
             evbuffer_remove(input, buffer, length);
-            bassignblk(current->data.s, buffer, length);
+            current->data.s = CD_CreateStringFromBuffer(buffer, length);
         }
         else {
             evbuffer_remove(input, &current->data, sizes[current->type]);

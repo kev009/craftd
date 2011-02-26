@@ -46,8 +46,9 @@ CD_PacketFromEvent (struct bufferevent* event)
     }
 
     self->chain = CDRequest;
+    self->type  = 0;
 
-    evbuffer_remove(input, &self->type, 1);
+    evbuffer_remove(input, (MCByte*) &self->type, 1);
     self->data = CD_GetPacketDataFromEvent(self, event);
 
     return self;
@@ -137,11 +138,55 @@ CD_DestroyPacket (CDPacket* self)
 }
 
 static
+MCByte
+cd_GetMCByteFromBuffer (struct evbuffer* input)
+{
+    MCByte result = 0;
+
+    evbuffer_remove(input, &result, MCByteSize);
+
+    return result;
+}
+
+static
+MCShort
+cd_GetMCShortFromBuffer (struct evbuffer* input)
+{
+    MCShort result = 0;
+
+    evbuffer_remove(input, &result, MCShortSize);
+
+    return ntohs(result);
+}
+
+static
+MCInteger
+cd_GetMCIntegerFromBuffer (struct evbuffer* input)
+{
+    MCInteger result = 0;
+
+    evbuffer_remove(input, &result, MCIntegerSize);
+
+    return ntohl(result);
+}
+
+static
+MCLong
+cd_GetMCLongFromBuffer (struct evbuffer* input)
+{
+    MCLong result = 0;
+
+    evbuffer_remove(input, &result, MCLongSize);
+
+    return ntohll(result);
+}
+
+static
 MCString
 cd_GetMCStringFromBuffer (struct evbuffer* input)
 {
-    char*   data;
-    MCShort length;
+    char*   data   = NULL;
+    MCShort length = 0;
 
     evbuffer_remove(input, &length, MCShortSize);
 
@@ -154,6 +199,7 @@ cd_GetMCStringFromBuffer (struct evbuffer* input)
 
     return CD_CreateStringFromBuffer(data, length + 1);
 }
+
 
 void*
 CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
@@ -168,13 +214,11 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
         case CDLogin: {
             CDPacketLogin* packet = CD_malloc(sizeof(CDPacketLogin));
 
-            evbuffer_remove(input, &packet->request.version, MCIntegerSize);
-
-            packet->request.username = cd_GetMCStringFromBuffer(input);
-            packet->request.password = cd_GetMCStringFromBuffer(input);
-
-            evbuffer_remove(input, &packet->request.mapSeed,   MCLongSize);
-            evbuffer_remove(input, &packet->request.dimension, MCByteSize);
+            packet->request.version   = cd_GetMCIntegerFromBuffer(input);
+            packet->request.username  = cd_GetMCStringFromBuffer(input);
+            packet->request.password  = cd_GetMCStringFromBuffer(input);
+            packet->request.mapSeed   = cd_GetMCLongFromBuffer(input);
+            packet->request.dimension = cd_GetMCByteFromBuffer(input);
 
             return packet;
         }

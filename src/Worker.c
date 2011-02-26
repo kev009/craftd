@@ -132,18 +132,22 @@ CD_RunWorker (CDWorker* self)
 
             switch (self->job->type) {
                 case CDPlayerInputJob: {
+                    CDPacket* packet = NULL;
+
                     if (!self->job) {
                         SERR(self->server, "Aaack, null event or context in worker?");
 
                         goto PLAYER_JOB_ERROR;
                     }
 
-                    SDEBUG(self->server, "received packet from %s", player->ip);
+                    packet = CD_PacketFromEvent(player->buffer);
 
-                    CDPacket* old = CD_HashSet(PRIVATE(player), "packet", CD_PacketFromEvent(player->buffer));
+                    SDEBUG(self->server, "received packet 0x%.2X from %s", packet->type, player->ip);
 
-                    if (old) {
-                        CD_DestroyPacket(old);
+                    packet = CD_HashSet(PRIVATE(player), "packet", packet);
+
+                    if (packet) {
+                        CD_DestroyPacket(packet);
                     }
 
                     if (evbuffer_get_length(bufferevent_get_input(player->buffer)) > 0) {

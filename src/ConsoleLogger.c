@@ -34,36 +34,37 @@ static
 void
 cd_ConsoleLog (int priority, const char* format, ...)
 {
-    static const char* names[] = {
-        "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
-    };
-    
-    /* Temporary string buffers so we can print messages atomically easily */
-    static const int MAXCONPRI = 32;
-    static const int MAXCONMSG = 512;
-    char sbuf1[MAXCONPRI];
-    char sbuf2[MAXCONMSG];
-
-    va_list ap;
-
-    va_start(ap, format);
-
     /* Return on MASKed log priorities */
     if (LOG_MASK(priority) & cd_mask) {
         return;
     }
 
+    static const char* names[] = {
+        "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
+    };
+
+    /* Temporary string buffers so we can print messages atomically easily */
+    static const int MAX_PRIORITY_BUFFER = 10;
+    static const int MAX_MESSAGE_BUFFER  = 512;
+
+    char priorityBuffer[MAX_PRIORITY_BUFFER];
+    char messageBuffer[MAX_MESSAGE_BUFFER];
+
+    va_list ap;
+
+    va_start(ap, format);
+
     if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
-        evutil_snprintf(sbuf1, MAXCONMSG, "UNKNOWN: ");
+        evutil_snprintf(priorityBuffer, MAX_PRIORITY_BUFFER, "UNKNOWN");
     }
     else {
-        evutil_snprintf(sbuf1, MAXCONMSG, "%s: ", names[priority]);
+        evutil_snprintf(priorityBuffer, MAX_PRIORITY_BUFFER, "%s", names[priority]);
     }
-    
-    evutil_vsnprintf(sbuf2, MAXCONMSG, format, ap);
-    
-    printf("%s%s\n", sbuf1, sbuf2);
-    //fflush(stdout);
+
+    evutil_vsnprintf(messageBuffer, MAX_MESSAGE_BUFFER, format, ap);
+
+    printf("%s: %s\n", priorityBuffer, messageBuffer);
+    fflush(stdout);
 
     va_end(ap);
 }

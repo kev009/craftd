@@ -35,6 +35,7 @@
 #include "memory.h"
 #include "bstrlib.h"
 #include "bstraux.h"
+#include "javaendian.h"
 
 #include <pthread.h>
 

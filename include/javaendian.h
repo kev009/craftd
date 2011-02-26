@@ -1,6 +1,3 @@
-#ifndef CRAFTD_JAVAENDIAN_H
-#define CRAFTD_JAVAENDIAN_H
-
 /*
  * Copyright (c) 2010-2011 Kevin M. Bowling, <kevin.bowling@kev009.com>, USA
  * All rights reserved.
@@ -26,6 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef CRAFTD_JAVAENDIAN_H
+#define CRAFTD_JAVAENDIAN_H
 
 /* Functions to get floating point numbers into Java's endian order
  * If we're on a big-endian float machine, macro away the conversions
@@ -40,90 +39,93 @@
 #include <string.h>
 
 #ifdef HAVE_ENDIAN_H
-#include <endian.h>
+#   include <endian.h>
 #endif
+
 #ifdef HAVE_SYS_ENDIAN_H
-#include <sys/endian.h>
+#   include <sys/endian.h>
 #endif
+
 #ifdef HAVE_NETINTET_IN_H
-#include <netinet/in.h>
+#   include <netinet/in.h>
 #endif
+
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#   include <arpa/inet.h>
 #endif
 
 #ifdef WORDS_BIGENDIAN
-/* If big-endian, macro out ntohll and htonll if OS doesn't have it */
+#   ifndef htonll
+#       define htonll(ll) (ll)
+#   endif
 
-#ifndef htonll
-#define htonll(ll) (ll)
-#endif /* htonll */
-#ifndef ntohll
-#define ntohll(ll) (ll)
-#endif /* ntohll */
-
+#   ifndef ntohll
+#       define ntohll(ll) (ll)
+#   endif
 #else
-/* Not WORDS_BIGENDIAN */
 
 /* Add generic ntohll/htonll routine if needed */
-#if (HAVE_DECL_BE64TOH) && !defined(ntohll)
-#define ntohll(ll) be64toh(ll)
-#if (HAVE_DECL_HTOBE64)
-#define htonll(ll) htobe64(ll)
-#else
-#define htonll(ll) be64toh(ll)
-#endif
+#   if (HAVE_DECL_BE64TOH) && !defined(ntohll)
+#       define ntohll(ll) be64toh(ll)
 
-#else /* Don't have be64toh */
+#       if (HAVE_DECL_HTOBE64)
+#           define htonll(ll) htobe64(ll)
+#       else
+#           define htonll(ll) be64toh(ll)
+#       endif
 
-#ifndef ntohll
-#define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl(x >> 32))
-#endif
-#ifndef htonll
-#define htonll(x) ((((uint64_t)htonl(x)) << 32) + htonl(x >> 32))
-#endif
+#   else /* Don't have be64toh */
 
-#endif /* ntohll/htonll routines */
+#       ifndef ntohll
+#           define ntohll(x) ((((uint64_t)ntohl(x)) << 32) + ntohl(x >> 32))
+#       endif
+
+#       ifndef htonll
+#           define htonll(x) ((((uint64_t)htonl(x)) << 32) + htonl(x >> 32))
+#       endif
+
+#   endif /* ntohll/htonll routines */
 
 #endif /* WORDS_BIGENDIAN */
 
 
 #ifdef FLOAT_WORDS_BIGENDIAN
 /* Floating point types are big-endian, macro out conversion */
-#define Cswapd(d) (d)
-#define Cswapf(f) (f)
+#   define ntohd(d) (d)
+#   define ntohf(f) (f)
 #else
 /* We need to convert native floating-point types */
 
-union uint32orfloat
+static inline
+double
+ntohd (double d)
 {
-  uint32_t uint32val;
-  float floatval;
-};
+    union {
+        uint64_t l;
+        double   d;
+    } tmp;
 
-union uint64ordouble
-{
-  uint64_t uint64val;
-  double doubleval;
-};
+    tmp.d = d;
+    tmp.l = ntohll(tmp.l);
 
-static inline double 
-Cswapd(double d)
-{
-  union uint64ordouble tmp;
-  tmp.doubleval = d;
-  tmp.uint64val = ntohll(tmp.uint64val);
-  return tmp.doubleval;
+    return tmp.d;
 }
 
-static inline float
-Cswapf(float f)
+static inline
+float
+ntohf (float f)
 {
-  union uint32orfloat tmp;
-  tmp.floatval = f;
-  tmp.uint32val = ntohl(tmp.uint32val);
-  return tmp.floatval;
+    union {
+        uint32_t i;
+        float f;
+    } tmp;
+
+    tmp.f = f;
+    tmp.i = ntohl(tmp.i);
+
+    return tmp.f;
 }
+
 #endif /* FLOAT_WORDS_BIGENDIAN */
 
 #endif /* CRAFTD_JAVAENDIAN_H */

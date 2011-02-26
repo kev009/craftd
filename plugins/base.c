@@ -100,7 +100,7 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
             SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
 
             CDPacketHandshake pkt;
-            pkt.response.hash = CD_CreateStringFromCString("+");
+            pkt.response.hash = CD_CreateStringFromCString("-");
 
             CDPacket response = { CDResponse, CDHandshake, &pkt };
 

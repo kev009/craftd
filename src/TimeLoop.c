@@ -37,6 +37,9 @@ CD_CreateTimeLoop (struct _CDServer* server)
 
     pthread_spin_init(&self->lock.last, PTHREAD_PROCESS_PRIVATE);
 
+    pthread_attr_init(&self->attributes);
+    pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
+
     self->server     = server;
     self->running    = false;
     self->event.base = event_base_new();

@@ -70,14 +70,6 @@ CD_CreateServer (const char* path)
 
     self->event.callbacks = CD_CreateHash();
 
-/*
-    size_t i;
-
-    for (i = 0; i < self->config->plugins->length) {
-        CD_LoadPlugin(self->plugins, self->config->plugins->item[i]);
-    }
-*/
-
     CD_ServerSetTime(self, 0);
 
     PRIVATE(self) = CD_CreateHash();
@@ -271,8 +263,6 @@ CD_RunServer (CDServer* self)
     CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
     // Start the TimeLoop for timed events
-    pthread_attr_init(&self->timeloop->attributes);
-    pthread_attr_setdetachstate(&self->timeloop->attributes, PTHREAD_CREATE_DETACHED);
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
