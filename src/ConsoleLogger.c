@@ -23,8 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #define CRAFTD_LOGGER_IGNORE_EXTERN
+#include <evutil.h>
 #include "Logger.h"
 #undef CRAFTD_LOGGER_IGNORE_EXTERN
 
@@ -37,12 +37,12 @@ cd_ConsoleLog (int priority, const char* format, ...)
     static const char* names[] = {
         "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
     };
-
-    static pthread_spinlock_t spinlock = 0;
-
-    if (spinlock == 0) {
-        pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE);
-    }
+    
+    /* Temporary string buffers so we can print messages atomically easily */
+    static const int MAXCONPRI = 32;
+    static const int MAXCONMSG = 512;
+    char sbuf1[MAXCONPRI];
+    char sbuf2[MAXCONMSG];
 
     va_list ap;
 
@@ -53,21 +53,17 @@ cd_ConsoleLog (int priority, const char* format, ...)
         return;
     }
 
-    pthread_spin_lock(&spinlock);
-
     if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
-        printf("UNKNOWN: ");
+        evutil_snprintf(sbuf1, MAXCONMSG, "UNKNOWN: ");
     }
     else {
-        printf("%s: ", names[priority]);
+        evutil_snprintf(sbuf1, MAXCONMSG, "%s: ", names[priority]);
     }
-
-    vprintf(format, ap);
-    printf("\n");
-
-    fflush(stdout);
-
-    pthread_spin_unlock(&spinlock);
+    
+    evutil_vsnprintf(sbuf2, MAXCONMSG, format, ap);
+    
+    printf("%s%s\n", sbuf1, sbuf2);
+    //fflush(stdout);
 
     va_end(ap);
 }
