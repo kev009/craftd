@@ -194,8 +194,10 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
 CDString*
 CD_PacketToString (CDPacket* self)
 {
-    char*  data   = NULL;
-    size_t length = 0;
+    char*  data   = CD_malloc(1);
+    size_t length = 1;
+
+    data[0] = self->type;
 
     switch (self->chain) {
         case CDRequest: {
@@ -208,11 +210,11 @@ CD_PacketToString (CDPacket* self)
                 case CDHandshake: {
                     CDPacketHandshake* packet = self->data;
 
-                    length = MCShortSize + CD_StringLength(packet->response.hash);
-                    data   = CD_malloc(length);
+                    length += MCShortSize + CD_StringLength(packet->response.hash);
+                    data    = CD_realloc(data, length);
 
-                    *((short*) data) = htons(CD_StringLength(packet->response.hash));
-                    memcpy(data + MCShortSize, CD_StringContent(packet->response.hash), CD_StringLength(packet->response.hash));
+                    *((short*) (data + 1)) = htons(CD_StringLength(packet->response.hash));
+                    memcpy((data + 1 + MCShortSize), CD_StringContent(packet->response.hash), CD_StringLength(packet->response.hash));
                 } break;
             }
         } break;
