@@ -40,6 +40,8 @@ CD_CreatePlugins (struct _CDServer* server)
 
     lt_dlinit();
 
+    lt_dladdsearchdir("plugins");
+
     return self;
 }
 
