@@ -55,6 +55,11 @@ CD_PacketFromEvent (struct bufferevent* event)
 void
 CD_DestroyPacket (CDPacket* self)
 {
+    if (!self->data) {
+        CD_free(self);
+        return;
+    }
+
     switch (self->chain) {
         case CDRequest: {
             switch (self->type) {

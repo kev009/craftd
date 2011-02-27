@@ -64,12 +64,14 @@ CD_DestroyPlayer (CDPlayer* self)
     close(self->socket);
     bufferevent_free(self->buffer);
 
-    CD_DestroyString(self->username);
+    if (self->username) {
+        CD_DestroyString(self->username);
+    }
+
+    CD_DestroyHash(PRIVATE(self));
 
     pthread_rwlock_destroy(&self->lock.status);
     pthread_rwlock_destroy(&self->lock.pending);
-
-    CD_DestroyHash(PRIVATE(self));
 
     CD_free(self);
 }

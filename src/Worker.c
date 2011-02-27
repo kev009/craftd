@@ -221,12 +221,14 @@ CD_RunWorker (CDWorker* self)
             }
 
             SERVER_JOB_DONE: {
+                CD_DestroyJob(self->job);
                 self->job = NULL;
 
                 continue;
             }
 
             SERVER_JOB_ERROR: {
+                CD_DestroyJob(self->job);
                 self->job = NULL;
 
                 continue;
