@@ -1,6 +1,7 @@
-AM_LIBS = $(libevent2_pthreads_LIBS) $(PTHREAD_LIBS) $(LIBS)
+AM_LIBS = $(libevent2_pthreads_LIBS) $(PCRE_LIBS) $(PTHREAD_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
+AM_CPPFLAGS += $(PCRE_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
 #AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
