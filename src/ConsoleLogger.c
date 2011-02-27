@@ -42,28 +42,24 @@ cd_ConsoleLog (int priority, const char* format, ...)
         "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG"
     };
 
-    /* Temporary string buffers so we can print messages atomically easily */
-    static const int MAX_PRIORITY_BUFFER = 10;
-    static const int MAX_MESSAGE_BUFFER  = 512;
-
-    char priorityBuffer[MAX_PRIORITY_BUFFER];
-    char messageBuffer[MAX_MESSAGE_BUFFER];
-
     va_list ap;
-
     va_start(ap, format);
 
+    CDString* priorityBuffer;
+    CDString* messageBuffer = CD_CreateStringFromFormatList(format, ap);
+
     if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
-        evutil_snprintf(priorityBuffer, MAX_PRIORITY_BUFFER, "UNKNOWN");
+        priorityBuffer = CD_CreateStringFromCString("UNKNOWN");
     }
     else {
-        evutil_snprintf(priorityBuffer, MAX_PRIORITY_BUFFER, "%s", names[priority]);
+        priorityBuffer = CD_CreateStringFromCString(names[priority]);
     }
 
-    evutil_vsnprintf(messageBuffer, MAX_MESSAGE_BUFFER, format, ap);
-
-    printf("%s: %s\n", priorityBuffer, messageBuffer);
+    printf("%s: %s\n", CD_StringContent(priorityBuffer), CD_StringContent(messageBuffer));
     fflush(stdout);
+
+    CD_DestroyString(priorityBuffer);
+    CD_DestroyString(messageBuffer);
 
     va_end(ap);
 }

@@ -41,9 +41,12 @@ typedef struct _CDWorkers {
 
     CDList* jobs;
 
-    pthread_attr_t  attributes;
-    pthread_cond_t  condition;
-    pthread_mutex_t mutex;
+    pthread_attr_t attributes;
+
+    struct {
+        pthread_cond_t  condition;
+        pthread_mutex_t mutex;
+    } lock;
 } CDWorkers;
 
 CDWorkers* CD_CreateWorkers (struct _CDServer* server);

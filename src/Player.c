@@ -59,9 +59,12 @@ CD_CreatePlayer (struct _CDServer* server)
 void
 CD_DestroyPlayer (CDPlayer* self)
 {
-    CD_DestroyString(self->username);
-
     CD_EventDispatch(self->server, "Player.destroy", self);
+
+    close(self->socket);
+    bufferevent_free(self->buffer);
+
+    CD_DestroyString(self->username);
 
     pthread_rwlock_destroy(&self->lock.status);
     pthread_rwlock_destroy(&self->lock.pending);

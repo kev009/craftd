@@ -170,6 +170,6 @@ void** CD_ListClear (CDList* self);
  * @parameter it The name of the iterator variable
  */
 #define CD_LIST_FOREACH(self, it) \
-    if (self) for (CDListIterator it = CD_ListBegin(self), __end__ = CD_ListEnd(self); it != __end__; it = CD_ListNext(it))
+    if (self && CD_ListLength(self) > 0) for (CDListIterator it = CD_ListBegin(self), __end__ = CD_ListEnd(self); it != __end__; it = CD_ListNext(it))
 
 #endif

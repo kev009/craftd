@@ -45,13 +45,13 @@ CD_CreateWorkers (CDServer* server)
     pthread_attr_init(&self->attributes);
     pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
 
-    if (pthread_mutex_init(&self->mutex, NULL)) {
+    if (pthread_mutex_init(&self->lock.mutex, NULL)) {
         CD_DestroyWorkers(self);
 
         return NULL;
     }
 
-    if (pthread_cond_init(&self->condition, NULL) != 0) {
+    if (pthread_cond_init(&self->lock.condition, NULL) != 0) {
         CD_DestroyWorkers(self);
 
         return NULL;
@@ -72,6 +72,9 @@ CD_DestroyWorkers (CDWorkers* self)
     CD_free(self->item);
 
     CD_DestroyList(self->jobs);
+
+    pthread_mutex_destroy(&self->lock.mutex);
+    pthread_cond_destroy(&self->lock.condition);
 
     CD_free(self);
 }
@@ -125,7 +128,7 @@ CD_AddJob (CDWorkers* self, CDJob* job)
 {
     CD_ListPush(self->jobs, job);
 
-    pthread_cond_signal(&self->condition);
+    pthread_cond_signal(&self->lock.condition);
 }
 
 CDJob*

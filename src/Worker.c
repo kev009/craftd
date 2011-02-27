@@ -67,7 +67,7 @@ CD_RunWorker (CDWorker* self)
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
-        pthread_mutex_lock(&self->workers->mutex);
+        pthread_mutex_lock(&self->workers->lock.mutex);
 
         /* Check our predicate again:  The WQ is not empty
          * Prevent a nasty race condition if the client disconnects
@@ -76,12 +76,12 @@ CD_RunWorker (CDWorker* self)
         while (CD_ListLength(self->workers->jobs) == 0) {
             SDEBUG(self->server, "worker %d ready", self->id);
 
-            pthread_cond_wait(&self->workers->condition, &self->workers->mutex);
+            pthread_cond_wait(&self->workers->lock.condition, &self->workers->lock.mutex);
         }
 
         if (!self->working) {
             SDEBUG(self->server, "worker %d stopped", self->id);
-            pthread_mutex_unlock(&self->workers->mutex);
+            pthread_mutex_unlock(&self->workers->lock.mutex);
             break;
         }
 
@@ -113,7 +113,7 @@ CD_RunWorker (CDWorker* self)
             }
         } while (!self->job);
 
-        pthread_mutex_unlock(&self->workers->mutex);
+        pthread_mutex_unlock(&self->workers->lock.mutex);
 
         SDEBUG(self->server, "doing job type: %d", self->job->type);
 
@@ -180,10 +180,6 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_wrlock(&player->lock.status);
                     player->status = CDPlayerIdle;
                 } break;
-
-                default: {
-                    SERR(self->server, "unknown job");
-                }
             }
 
             PLAYER_JOB_DONE: {
@@ -208,8 +204,40 @@ CD_RunWorker (CDWorker* self)
                 continue;
             }
         }
+        else if (CD_JOB_IS_SERVER(self->job)) {
+            switch (self->job->type) {
+                case CDServerBroadcastJob: {
+                    CD_HASH_FOREACH(self->server->players, it) {
+                        CDPacketChat pkt;
+                        pkt.response.message = self->job->data;
+
+                        CDPacket response = { CDResponse, CDChat, &pkt };
+
+                        CD_PlayerSendPacket(CD_HashIteratorValue(self->server->players, it), &response);
+
+                        CD_DestroyString(self->job->data);
+                    }
+                } break;
+            }
+
+            SERVER_JOB_DONE: {
+                self->job = NULL;
+
+                continue;
+            }
+
+            SERVER_JOB_ERROR: {
+                self->job = NULL;
+
+                continue;
+            }
+
+        }
         else {
+            SERR(self->server, "unknown job (%d)", self->job->type);
+
             CD_DestroyJob(self->job);
+
             self->job = NULL;
         }
     }

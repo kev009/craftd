@@ -195,6 +195,6 @@ void** CD_HashClear (CDHash* self);
  * @parameter it The name of the iterator variable
  */
 #define CD_HASH_FOREACH(self, it) \
-    if (self) for (CDHashIterator it = CD_HashBegin(self), __end__ = CD_HashEnd(self); it != __end__; it = CD_HashNext(self, it))
+    if (self && CD_HashLength(self) > 0) for (CDHashIterator it = CD_HashBegin(self), __end__ = CD_HashEnd(self); it != __end__; it = CD_HashNext(self, it))
 
 #endif

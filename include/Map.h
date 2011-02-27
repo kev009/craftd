@@ -195,6 +195,6 @@ void** CD_MapClear (CDMap* self);
  * @parameter it The name of the iterator variable
  */
 #define CD_MAP_FOREACH(self, it) \
-    if (self) for (CDMapIterator it = CD_MapBegin(self), __end__ = CD_MapEnd(self); it != __end__; it = CD_MapNext(self, it))
+    if (self && CD_MapLength(self) > 0) for (CDMapIterator it = CD_MapBegin(self), __end__ = CD_MapEnd(self); it != __end__; it = CD_MapNext(self, it))
 
 #endif

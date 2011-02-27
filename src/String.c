@@ -83,6 +83,29 @@ CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
 }
 
 CDString*
+CD_CreateStringFromFormat (const char* format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+
+    CDString* self = CD_CreateStringFromFormatList(format, ap);
+
+    va_end(ap);
+
+    return self;
+}
+
+CDString*
+CD_CreateStringFromFormatList (const char* format, va_list ap)
+{
+    CDString* self = CD_CreateString();
+
+    bvcformata(self->raw, 9001, format, ap);
+
+    return self;
+}
+
+CDString*
 CD_CloneString (CDString* self)
 {
     CDString* cloned = CD_CreateString();
@@ -118,11 +141,21 @@ CD_DestroyStringKeepData (CDString* self)
 const char*
 CD_StringContent (CDString* self)
 {
-    return self->raw->data;
+    if (!self) {
+        return NULL;
+    }
+    else {
+        return self->raw->data;
+    }
 }
 
 const size_t
 CD_StringLength (CDString* self)
 {
-    return self->raw->slen;
+    if (!self) {
+        return NULL;
+    }
+    else {
+        return self->raw->slen;
+    }
 }

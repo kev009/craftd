@@ -83,6 +83,25 @@ CDString* CD_CreateStringFromBuffer (const char* buffer, size_t length);
 CDString* CD_CreateStringFromBufferCopy (const char* buffer, size_t length);
 
 /**
+ * Create a String object from a printf-like format string
+ *
+ * @param format The format to use
+ *
+ * @return The instantiated String object
+ */
+CDString* CD_CreateStringFromFormat (const char* format, ...);
+
+/**
+ * Create a String object from a printf-like format string and a passed va_list
+ *
+ * @param format The format to use
+ * @param ap A va_started va_list
+ *
+ * @return The instantiated String object
+ */
+CDString* CD_CreateStringFromFormatList (const char* format, va_list ap);
+
+/**
  * Clone a String object.
  *
  * @return The cloned object

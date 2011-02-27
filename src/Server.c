@@ -99,6 +99,10 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyPlugins(self->plugins);
     }
 
+    CD_HASH_FOREACH(self->players, it) {
+        CD_DestroyPlayer(CD_HashIteratorValue(self->players, it));
+    }
+
     if (self->event.base) {
         event_base_free(self->event.base);
         self->event.base = NULL;
@@ -117,9 +121,11 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyHash(PRIVATE(self));
     }
 
+    CD_free(self->name);
+
     pthread_spin_destroy(&self->lock.time);
 
-    CD_free(self->name);
+    CD_free(self);
 }
 
 const char*
@@ -159,6 +165,8 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
+    CDServer* self = player->server;
+
     pthread_rwlock_wrlock(&player->lock.pending);
     if (!player->pending) {
         player->pending = true;
@@ -172,23 +180,44 @@ static
 void
 cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 {
+    CDServer* self = player->server;
+
     if (!((error & BEV_EVENT_EOF) || (error & BEV_EVENT_ERROR) || (error & BEV_EVENT_TIMEOUT))) {
         return;
     }
 
     if (error & BEV_EVENT_ERROR) {
-        SLOG(player->server, LOG_INFO, "libevent: ip %s - %s", player->ip, evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+        SLOG(self, LOG_INFO, "libevent: ip %s - %s", player->ip, evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
     }
     else if (error & BEV_EVENT_TIMEOUT) {
-        SERR(player->server, "A bufferevent timeout?");
+        SERR(self, "A bufferevent timeout?");
     }
+
+    SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
+
+	pthread_mutex_lock(&self->workers->lock.mutex);
+
+    if (player->username) {
+        CD_AddJob(self->workers, CD_CreateJob(
+            CDServerBroadcastJob, CD_CreateStringFromFormat(
+                "Player %s has left the game.", CD_StringContent(player->username)
+            )
+        ));
+
+        CD_HashDelete(self->players, CD_StringContent(player->username));
+    }
+
+    CD_MapDelete(self->entities, player->entity.id);
+
+    CD_DestroyPlayer(player);
+
+    pthread_mutex_unlock(&self->workers->lock.mutex);
 }
 
 static
 void
-cd_Accept (evutil_socket_t listener, short event, void* arg)
+cd_Accept (evutil_socket_t listener, short event, CDServer* self)
 {
-    CDServer*               self = arg;
     CDPlayer*               player;
     struct sockaddr_storage storage;
     socklen_t               length = sizeof(storage);
