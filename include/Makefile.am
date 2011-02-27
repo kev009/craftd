@@ -22,23 +22,26 @@ pkginclude_HEADERS = craftd/common.h \
 		     craftd/Workers.h
 
 # bstring headers
-pkginclude_HEADERS += craftd/bstring/bsafe.h \
-		      craftd/bstring/bstraux.h \
-		      craftd/bstring/bstrlib.h \
-		      craftd/bstring/bstrwrap.h
+bstringdir = $(pkgincludedir)/bstring
+bstring_HEADERS = craftd/bstring/bsafe.h \
+		  craftd/bstring/bstraux.h \
+		  craftd/bstring/bstrlib.h \
+		  craftd/bstring/bstrwrap.h
 
 # jansson headers
-pkginclude_HEADERS += craftd/jansson/jansson.h
+janssondir = $(pkgincludedir)/jansson
+jansson_HEADERS = craftd/jansson/jansson.h
 
 # klib headers
-pkginclude_HEADERS += craftd/klib/kbtree.h \
-		      craftd/klib/khash.h \
-		      craftd/klib/khmm.h \
-		      craftd/klib/klist.h \
-		      craftd/klib/kmin.h \
-		      craftd/klib/knetfile.h \
-		      craftd/klib/knhx.h \
-		      craftd/klib/kseq.h \
-		      craftd/klib/ksort.h \
-		      craftd/klib/kstring.h \
-		      craftd/klib/kvec.h
+klibdir = $(pkgincludedir)/klib
+klib_HEADERS = craftd/klib/kbtree.h \
+	       craftd/klib/khash.h \
+	       craftd/klib/khmm.h \
+	       craftd/klib/klist.h \
+	       craftd/klib/kmin.h \
+	       craftd/klib/knetfile.h \
+	       craftd/klib/knhx.h \
+	       craftd/klib/kseq.h \
+	       craftd/klib/ksort.h \
+	       craftd/klib/kstring.h \
+	       craftd/klib/kvec.h
