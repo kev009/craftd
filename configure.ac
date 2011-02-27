@@ -18,11 +18,12 @@ AC_USE_SYSTEM_EXTENSIONS
 LT_PREREQ([2.2])
 AM_PROG_LIBTOOL
 AC_PROG_RANLIB
+AC_PROG_LN_S
 AC_LTDL_DLLIB
 AC_SUBST(LIBTOOL_DEPS)
 LT_INIT([dlopen])
 
-AC_CONFIG_HEADERS([include/config.h])
+AC_CONFIG_HEADERS([include/craftd/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile plugins/Makefile \
                  htdocs/Makefile third-party/jansson/src/jansson_config.h])
 AC_CONFIG_SRCDIR([src/craftd.c])

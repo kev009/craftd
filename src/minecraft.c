@@ -23,10 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
+#include <craftd/common.h>
 
 #define CRAFTD_MINECRAFT_IGNORE_EXTERN
-#include "minecraft.h"
+#include <craftd/minecraft.h>
 #undef CRAFTD_MINECRAFT_IGNORE_EXTERN
 
 const MCEntityId MCMaxEntityId = INT_MAX;

@@ -1,22 +1,44 @@
-pkginclude_HEADERS = common.h \
-		     config.h \
-		     Config.h \
-		     Hash.h \
-		     javaendian.h \
-		     Job.h \
-		     List.h \
-		     Logger.h \
-		     Map.h \
-		     memory.h \
-		     minecraft.h \
-		     Packet.h \
-		     Player.h \
-		     Plugin.h \
-		     Plugins.h \
-		     Regexp.h \
-		     Server.h \
-		     String.h \
-		     TimeLoop.h \
-		     version.h \
-		     Worker.h \
-		     Workers.h
+pkginclude_HEADERS = craftd/common.h \
+		     craftd/config.h \
+		     craftd/Config.h \
+		     craftd/Hash.h \
+		     craftd/javaendian.h \
+		     craftd/Job.h \
+		     craftd/List.h \
+		     craftd/Logger.h \
+		     craftd/Map.h \
+		     craftd/memory.h \
+		     craftd/minecraft.h \
+		     craftd/Packet.h \
+		     craftd/Player.h \
+		     craftd/Plugin.h \
+		     craftd/Plugins.h \
+		     craftd/Regexp.h \
+		     craftd/Server.h \
+		     craftd/String.h \
+		     craftd/TimeLoop.h \
+		     craftd/version.h \
+		     craftd/Worker.h \
+		     craftd/Workers.h
+
+# bstring headers
+pkginclude_HEADERS += craftd/bstring/bsafe.h \
+		      craftd/bstring/bstraux.h \
+		      craftd/bstring/bstrlib.h \
+		      craftd/bstring/bstrwrap.h
+
+# jansson headers
+pkginclude_HEADERS += craftd/jansson/jansson.h
+
+# klib headers
+pkginclude_HEADERS += craftd/klib/kbtree.h \
+		      craftd/klib/khash.h \
+		      craftd/klib/khmm.h \
+		      craftd/klib/klist.h \
+		      craftd/klib/kmin.h \
+		      craftd/klib/knetfile.h \
+		      craftd/klib/knhx.h \
+		      craftd/klib/kseq.h \
+		      craftd/klib/ksort.h \
+		      craftd/klib/kstring.h \
+		      craftd/klib/kvec.h

@@ -26,7 +26,7 @@
 #ifndef CRAFTD_JOB_H
 #define CRAFTD_JOB_H
 
-#include <common.h>
+#include <craftd/common.h>
 
 typedef enum _CDJobType {
     CDPlayerInputJob,

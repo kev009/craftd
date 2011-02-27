@@ -49,9 +49,9 @@ Makefile.in
 /config.log
 /config.status
 /config.sub
-include/config.h
-include/config.h.in
-include/stamp-h1
+include/craftd/config.h
+include/craftd/config.h.in
+include/craftd/stamp-h1
 
 # libtool
 build-aux/ltmain.sh
