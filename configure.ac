@@ -80,6 +80,7 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
 AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF([fp], [], [typedef void (*fp)();])
 
 AC_C_BIGENDIAN
 AC_CHECK_DECLS([be64toh,htobe64], [], [],
