@@ -28,6 +28,21 @@
 #include <craftd/String.h>
 
 CDString*
+CD_CreateString (void)
+{
+    CDString* self = CD_malloc(sizeof(CDString));
+
+    if (!self) {
+        return NULL;
+    }
+
+    self->raw      = bfromcstr("");
+    self->external = false;
+
+    return self;
+}
+
+CDString*
 CD_CreateStringFromCString (const char* string)
 {
     CDString* self = CD_malloc(sizeof(CDString));
@@ -65,6 +80,16 @@ CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
     self->external = false;
 
     return self;
+}
+
+CDString*
+CD_CloneString (CDString* self)
+{
+    CDString* cloned = CD_CreateString();
+
+    cloned->raw = bstrcpy(self->raw);
+
+    return cloned;
 }
 
 void

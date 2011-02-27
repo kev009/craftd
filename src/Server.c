@@ -172,7 +172,16 @@ static
 void
 cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 {
+    if (!((error & BEV_EVENT_EOF) || (error & BEV_EVENT_ERROR) || (error & BEV_EVENT_TIMEOUT))) {
+        return;
+    }
 
+    if (error & BEV_EVENT_ERROR) {
+        SLOG(player->server, LOG_INFO, "libevent: ip %s - %s", player->ip, evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+    }
+    else if (error & BEV_EVENT_TIMEOUT) {
+        SERR(player->server, "A bufferevent timeout?");
+    }
 }
 
 static

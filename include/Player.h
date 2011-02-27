@@ -45,7 +45,7 @@ typedef struct _CDPlayer {
 
     struct _CDServer* server;
 
-    bstring   name;
+    CDString* username;
     char      ip[128];
 
     evutil_socket_t     socket;

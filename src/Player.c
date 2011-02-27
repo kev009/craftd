@@ -46,6 +46,8 @@ CD_CreatePlayer (struct _CDServer* server)
     self->entity.position.y = 0;
     self->entity.position.z = 0;
 
+    self->username = NULL;
+
     self->status  = CDPlayerIdle;
     self->pending = false;
 
@@ -57,7 +59,7 @@ CD_CreatePlayer (struct _CDServer* server)
 void
 CD_DestroyPlayer (CDPlayer* self)
 {
-    bdestroy(self->name);
+    CD_DestroyString(self->username);
 
     CD_EventDispatch(self->server, "Player.destroy", self);
 

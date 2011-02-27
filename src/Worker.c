@@ -107,10 +107,6 @@ CD_RunWorker (CDWorker* self)
                             self->job = NULL;
                         }
                     } break;
-
-                    case CDPlayerOutputJob: {
-
-                    } break;
                 }
 
                 pthread_rwlock_unlock(&player->lock.status);
@@ -124,7 +120,7 @@ CD_RunWorker (CDWorker* self)
         if (CD_JOB_IS_PLAYER(self->job)) {
             CDPlayer* player = self->job->data;
 
-            SDEBUG(self->server, "working on player %s (%s)", player->name, player->ip);
+            SDEBUG(self->server, "working on player %s (%s)", player->username, player->ip);
 
             pthread_rwlock_wrlock(&player->lock.pending);
             pthread_rwlock_wrlock(&player->lock.status);
@@ -186,8 +182,7 @@ CD_RunWorker (CDWorker* self)
                 } break;
 
                 default: {
-                    SDEBUG(self->server, "destroying job");
-                    CD_DestroyJob(self->job);
+                    SERR(self->server, "unknown job");
                 }
             }
 

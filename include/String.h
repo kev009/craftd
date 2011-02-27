@@ -43,6 +43,13 @@ typedef struct _CDString {
 } CDString;
 
 /**
+ * Create an empty String object
+ *
+ * @return The instantiated obnject
+ */
+CDString* CD_CreateString (void);
+
+/**
  * Create a String object from a C null terminated string
  *
  * @param string The C string.
@@ -74,6 +81,13 @@ CDString* CD_CreateStringFromBuffer (const char* buffer, size_t length);
  * @return The intantiated String object
  */
 CDString* CD_CreateStringFromBufferCopy (const char* buffer, size_t length);
+
+/**
+ * Clone a String object.
+ *
+ * @return The cloned object
+ */
+CDString* CD_CloneString (CDString* self);
 
 /**
  * Destroy the String object AND the raw string

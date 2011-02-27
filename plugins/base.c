@@ -90,7 +90,9 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
         case CDLogin: {
             CDPacketLogin* data = packet->data;
 
-            SLOG(server, LOG_NOTICE, "%s:%s tried login", CD_StringContent(data->request.username), CD_StringContent(data->request.password));
+            SLOG(server, LOG_NOTICE, "%s with client version %d tried login", CD_StringContent(data->request.username), data->request.version);
+
+            player->username = CD_CloneString(data->request.username);
         } break;
 
         case CDHandshake: {
@@ -107,6 +109,10 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_DestroyString(pkt.response.hash);
         } break;
+
+        default: {
+            SERR(server, "unimplemented packet 0x%.2X from %s", packet->type, player->ip);
+        }
     }
 
     return true;

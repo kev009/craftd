@@ -81,6 +81,10 @@ CD_DestroyPacket (CDPacket* self)
                     MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.third);
                     MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.fourth);
                 } break;
+
+                default: {
+                    // wut
+                }
             }
         } break;
 
@@ -127,6 +131,10 @@ CD_DestroyPacket (CDPacket* self)
                 case CDDisconnect: {
                     MC_DestroyString(((CDPacketDisconnect*) self->data)->response.reason);
                 } break;
+
+                default: {
+                    // wut
+                }
             }
         } break;
     }
@@ -227,9 +235,11 @@ CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
 
             return packet;
         }
-    }
 
-    return NULL;
+        default: {
+            return NULL;
+        }
+    }
 }
 
 CDString*
@@ -259,6 +269,12 @@ CD_PacketToString (CDPacket* self)
                 } break;
             }
         } break;
+
+        default: {
+            CD_free(data);
+
+            return NULL;
+        }
     }
 
     return CD_CreateStringFromBuffer(data, length);
