@@ -81,6 +81,12 @@ CD_BufferLength (CDBuffer* self)
     return evbuffer_get_length(self->raw);
 }
 
+bool
+CD_BufferEmpty (CDBuffer* self)
+{
+    return CD_BufferLength(self) == 0;
+}
+
 int
 CD_BufferDrain (CDBuffer* self, size_t length)
 {
@@ -110,8 +116,9 @@ CD_BufferAddFormat (CDBuffer* self, const char* format, ...)
             case 'f': CD_BufferAddFloat(self,  va_arg(ap, double)); break;
             case 'd': CD_BufferAddDouble(self, va_arg(ap, double)); break;
 
-            case 'B': CD_BufferAddBoolean(self, va_arg(ap, int));       break;
-            case 'S': CD_BufferAddString(self,  va_arg(ap, CDString*)); break;
+            case 'B': CD_BufferAddBoolean(self, va_arg(ap, int));          break;
+            case 'S': CD_BufferAddString(self,  va_arg(ap, CDString*));    break;
+            case 'M': CD_BufferAddMetadata(self, va_arg(ap, MCMetadata*)); break;
         }
 
         format++;
@@ -191,6 +198,30 @@ CD_BufferAddString (CDBuffer* self, CDString* data)
     evbuffer_add(self->raw, CD_StringContent(data), CD_StringSize(data));
 }
 
+void
+CD_BufferAddMetadata (CDBuffer* self, MCMetadata* data)
+{
+    size_t i;
+
+    // Format strings of the different metadata types
+    static char* formats[] = { "b", "s", "i", "f", "S" };
+
+    for (i = 0; i < data->length; i++) {
+        if (data->item[i]->type == MCTypeShortByteShort) {
+            CD_BufferAddFormat(self, "sbs",
+                data->item[i]->data.sbs.first,
+                data->item[i]->data.sbs.second,
+                data->item[i]->data.sbs.third
+            );
+        }
+        else {
+            CD_BufferAddFormat(self, formats[data->item[i]->type], data->item[i]->data);
+        }
+    }
+
+    CD_BufferAddByte(self, 127);
+}
+
 CDPointer
 CD_BufferRemove (CDBuffer* self, size_t length)
 {
@@ -220,8 +251,9 @@ CD_BufferRemoveFormat (CDBuffer* self, const char* format, ...)
             case 'f': *((MCFloat*)  pointer) = CD_BufferRemoveFloat(self);  break;
             case 'd': *((MCDouble*) pointer) = CD_BufferRemoveDouble(self); break;
 
-            case 'B': *((MCBoolean*) pointer) = CD_BufferRemoveBoolean(self); break;
-            case 'S': *((MCString*) pointer)  = CD_BufferRemoveString(self);  break;
+            case 'B': *((MCBoolean*) pointer)   = CD_BufferRemoveBoolean(self);  break;
+            case 'S': *((MCString*) pointer)    = CD_BufferRemoveString(self);   break;
+            case 'M': *((MCMetadata**) pointer) = CD_BufferRemoveMetadata(self); break;
         }
 
         format++;
@@ -338,3 +370,39 @@ CD_BufferRemoveString (CDBuffer* self)
     return result;
 }
 
+MCMetadata*
+CD_BufferRemoveMetadata (CDBuffer* self)
+{
+    MCMetadata* metadata = MC_CreateMetadata();
+    MCData*     current  = NULL;
+    MCByte      type     = 0;
+
+    // Format strings of the different metadata types
+    static char* formats[] = { "b", "s", "i", "f", "S" };
+
+    while (!CD_BufferEmpty(self)) {
+        type = CD_BufferRemoveByte(self);
+
+        if (type == 127) {
+            break;
+        }
+
+        current       = MC_CreateData();
+        current->type = type >> 5;
+
+        if (current->type == MCTypeShortByteShort) {
+            CD_BufferRemoveFormat(self, "sbs",
+                &current->data.sbs.first,
+                &current->data.sbs.second,
+                &current->data.sbs.third
+            );
+        }
+        else {
+            CD_BufferRemoveFormat(self, formats[current->type], &current->data);
+        }
+
+        MC_AppendData(metadata, current);
+    }
+
+    return metadata;
+}

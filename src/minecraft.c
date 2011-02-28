@@ -79,7 +79,7 @@ MC_DestroyData (MCData* self)
 {
     // Destroy the bstring, the other types lay on the stack
     if (self->type == MCTypeString) {
-        CD_DestroyString(self->data.s);
+        CD_DestroyString(self->data.S);
     }
 
     CD_free(self);
@@ -103,45 +103,6 @@ MC_AppendData (MCMetadata* metadata, MCData* data)
     metadata->item = CD_realloc(metadata->item, sizeof(MCData*) * ++metadata->length);
 
     metadata->item[metadata->length - 1] = data;
-
-    return metadata;
-}
-
-MCMetadata*
-MC_MetadataFromEvent (struct bufferevent* event)
-{
-    MCMetadata*      metadata = MC_CreateMetadata();
-    MCData*          current  = NULL;
-    MCByte           type     = 0;
-    struct evbuffer* input    = bufferevent_get_input(event);
-    MCShort          length;
-    char*            buffer;
-
-    // Sizes of the different metadata types
-    static char sizes[] = { 1, 2, 4, 4, -1, 5 };
-
-    while (true) {
-        evbuffer_remove(input, &type, 1);
-
-        if (type == 127) {
-            break;
-        }
-
-        current       = MC_CreateData();
-        current->type = type >> 5;
-
-        if (current->type == MCTypeString) {
-            evbuffer_remove(input, &length, 2);
-            buffer = CD_malloc(length);
-            evbuffer_remove(input, buffer, length);
-            current->data.s = CD_CreateStringFromBuffer(buffer, length);
-        }
-        else {
-            evbuffer_remove(input, &current->data, sizes[current->type]);
-        }
-
-        MC_AppendData(metadata, current);
-    }
 
     return metadata;
 }

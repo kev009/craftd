@@ -99,6 +99,8 @@ CD_CreateString (void)
     self->length   = 0;
     self->external = false;
 
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
     return self;
 }
 
@@ -116,6 +118,8 @@ CD_CreateStringFromCString (const char* string)
 
     self->external = true;
 
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
     return self;
 }
 
@@ -131,6 +135,8 @@ CD_CreateStringFromCStringCopy (const char* string)
     self->raw      = bfromcstr(string);
     self->external = false;
 
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
     return self;
 }
 
@@ -145,6 +151,8 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
     self->raw->slen = length;
     self->raw->data = (unsigned char*) buffer;
 
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
     return self;
 }
 
@@ -155,6 +163,8 @@ CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
 
     self->raw      = blk2bstr(buffer, length);
     self->external = false;
+
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
 
     return self;
 }
@@ -169,6 +179,8 @@ CD_CreateStringFromFormat (const char* format, ...)
 
     va_end(ap);
 
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
     return self;
 }
 
@@ -178,6 +190,8 @@ CD_CreateStringFromFormatList (const char* format, va_list ap)
     CDString* self = CD_CreateString();
 
     bvcformata(self->raw, 9001, format, ap);
+
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
 
     return self;
 }
@@ -197,7 +211,11 @@ CD_CreateStringFromOffset (CDString* self, int offset, int limit)
         data += cd_UTF8_offset((const char*) self->raw->data, offset);
     }
 
-    return CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
+    self = CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
+
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+
+    return self;
 }
 
 CDString*
@@ -206,6 +224,8 @@ CD_CloneString (CDString* self)
     CDString* cloned = CD_CreateString();
 
     cloned->raw = bstrcpy(self->raw);
+
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
 
     return cloned;
 }

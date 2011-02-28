@@ -97,6 +97,12 @@ CD_DestroyPacket (CDPacket* self)
 
         case CDResponse: {
             switch (self->type) {
+                case CDHandshake: {
+                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
+
+                    MC_DestroyString(packet->response.hash);
+                } break;
+
                 case CDNamedEntitySpawn: {
                     CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
 
@@ -271,6 +277,115 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
                 &packet->request.yaw,
                 &packet->request.pitch,
                 &packet->request.is.onGround
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDPlayerDigging: {
+            CDPacketPlayerDigging* packet = (CDPacketPlayerDigging*) CD_malloc(sizeof(CDPacketPlayerDigging));
+
+            CD_BufferRemoveFormat(input, "bibib",
+                &packet->request.status,
+                &packet->request.position.x,
+                &packet->request.position.y,
+                &packet->request.position.z,
+                &packet->request.face
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDPlayerBlockPlacement: {
+            CDPacketPlayerBlockPlacement* packet = (CDPacketPlayerBlockPlacement*) CD_malloc(sizeof(CDPacketPlayerBlockPlacement));
+
+            CD_BufferRemoveFormat(input, "ibibsbs",
+                &packet->request.position.x,
+                &packet->request.position.y,
+                &packet->request.position.z,
+
+                &packet->request.direction,
+                &packet->request.item.id,
+                &packet->request.item.count,
+                &packet->request.item.uses
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDHoldChange: {
+            CDPacketHoldChange* packet = (CDPacketHoldChange*) CD_malloc(sizeof(CDPacketHoldChange));
+
+            CD_BufferRemoveFormat(input, "s",
+                &packet->request.item.id
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDEntityAction: {
+            CDPacketEntityAction* packet = (CDPacketEntityAction*) CD_malloc(sizeof(CDPacketEntityAction));
+
+            CD_BufferRemoveFormat(input, "ib",
+                &packet->request.entity.id,
+                &packet->request.action
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDEntityMetadata: {
+            CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) CD_malloc(sizeof(CDPacketEntityMetadata));
+
+            CD_BufferRemoveFormat(input, "iM",
+                &packet->request.entity.id,
+                &packet->request.metadata
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDWindowClick: {
+            CDPacketWindowClick* packet = (CDPacketWindowClick*) CD_malloc(sizeof(CDPacketWindowClick));
+
+            CD_BufferRemoveFormat(input, "bsBssbs",
+                &packet->request.id,
+                &packet->request.slot,
+                &packet->request.rightClick,
+                &packet->request.action,
+
+                &packet->request.item.id,
+                &packet->request.item.count,
+                &packet->request.item.uses
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDTransaction: {
+            CDPacketTransaction* packet = (CDPacketTransaction*) CD_malloc(sizeof(CDPacketTransaction));
+
+            CD_BufferRemoveFormat(input, "bsB",
+                &packet->request.id,
+                &packet->request.action,
+                &packet->request.accepted
+            );
+
+            return (CDPointer) packet;
+        }
+
+        case CDUpdateSign: {
+            CDPacketUpdateSign* packet = (CDPacketUpdateSign*) CD_malloc(sizeof(CDPacketUpdateSign));
+
+            CD_BufferRemoveFormat(input, "iisiSSSS",
+                &packet->request.position.x,
+                &packet->request.position.y,
+                &packet->request.position.z,
+
+                &packet->request.first,
+                &packet->request.second,
+                &packet->request.third,
+                &packet->request.fourth
             );
 
             return (CDPointer) packet;

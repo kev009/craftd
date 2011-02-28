@@ -61,8 +61,10 @@ static
 void
 cd_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDPacketTimeUpdate data   = { CD_ServerGetTime(self) };
-    CDPacket           packet = { CDResponse, CDTimeUpdate, (CDPointer) &data };
+    CDPacketTimeUpdate pkt;
+    pkt.response.time = CD_ServerGetTime(self);
+
+    CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
     CD_HASH_FOREACH(self->players, it) {
         CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);

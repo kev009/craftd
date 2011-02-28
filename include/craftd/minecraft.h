@@ -136,16 +136,16 @@ typedef struct _MCData {
 
     union {
         MCByte    b;
-        MCShort   w;
+        MCShort   s;
         MCInteger i;
         MCFloat   f;
-        MCString  s;
+        MCString  S;
 
         struct {
             MCShort first;
             MCByte  second;
             MCShort third;
-        } wbw;
+        } sbs;
     } data;
 } MCData;
 

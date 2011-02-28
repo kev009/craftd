@@ -174,6 +174,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     pthread_rwlock_unlock(&player->lock.pending);
 }
 
+// FIXME: the usual possible segfault
 static
 void
 cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)

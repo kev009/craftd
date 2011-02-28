@@ -62,6 +62,8 @@ CDPointer CD_BufferContent (CDBuffer* self);
 
 size_t CD_BufferLength (CDBuffer* self);
 
+bool CD_BufferEmpty (CDBuffer* self);
+
 int CD_BufferDrain (CDBuffer* self, size_t length);
 
 void CD_BufferAdd (CDBuffer* self, CDPointer data, size_t length);
@@ -80,6 +82,7 @@ void CD_BufferAdd (CDBuffer* self, CDPointer data, size_t length);
  *
  *     B: MCBoolean
  *     S: MCString
+ *     M: MCMetadata
  *
  * @param format The format string
  */
@@ -103,6 +106,8 @@ void CD_BufferAddBoolean (CDBuffer* self, MCBoolean data);
 
 void CD_BufferAddString (CDBuffer* self, MCString data);
 
+void CD_BufferAddMetadata (CDBuffer* self, MCMetadata* data);
+
 CDPointer CD_BufferRemove (CDBuffer* self, size_t length);
 
 /**
@@ -119,6 +124,7 @@ CDPointer CD_BufferRemove (CDBuffer* self, size_t length);
  *
  *     B: MCBoolean
  *     S: MCString
+ *     M: MCMetadata
  *
  * @param format The format string
  */
@@ -141,5 +147,7 @@ MCDouble CD_BufferRemoveDouble (CDBuffer* self);
 MCBoolean CD_BufferRemoveBoolean (CDBuffer* self);
 
 MCString CD_BufferRemoveString (CDBuffer* self);
+
+MCMetadata* CD_BufferRemoveMetadata (CDBuffer* self);
 
 #endif

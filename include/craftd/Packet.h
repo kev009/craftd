@@ -51,6 +51,7 @@ typedef enum _CDPacketType {
     CDPlayerDigging        = 0x0E,
     CDPlayerBlockPlacement = 0x0F,
     CDHoldChange           = 0x10,
+    CDUseBed               = 0x11,
     CDArmAnimate           = 0x12,
     CDEntityAction         = 0x13,
     CDNamedEntitySpawn     = 0x14,
@@ -93,7 +94,7 @@ typedef struct _CDPacket {
 } CDPacket;
 
 typedef union _CDPacketKeepAlive {
-    char noDataYet;
+    char empty;
 } CDPacketKeepAlive;
 
 typedef union _CDPacketLogin {
@@ -135,19 +136,23 @@ typedef union _CDPacketChat {
 
     struct {
         MCString message;
-    } response;
+    } response
 } CDPacketChat;
 
-typedef struct _CDPacketTimeUpdate {
-    MCLong time;
+typedef union _CDPacketTimeUpdate {
+    struct {
+        MCLong time;
+    } response;
 } CDPacketTimeUpdate;
 
-typedef struct _CDPacketEntityEquipment {
-    MCEntity entity;
+typedef union _CDPacketEntityEquipment {
+    struct {
+        MCEntity entity;
 
-    MCShort   slot;
-    MCShort   item;
-    MCShort   damage; // Still not sure about it
+        MCShort   slot;
+        MCShort   item;
+        MCShort   damage; // Still not sure about it
+    } response;
 } MCEntityEquipment;
 
 typedef union _CDPacketSpawnPosition {
@@ -164,12 +169,14 @@ typedef union _CDPacketUseEntity {
     } request;
 } CDPacketUseEntity;
 
-typedef struct _CDPacketUpdateHealth {
-    MCShort health;
+typedef union _CDPacketUpdateHealth {
+    struct {
+        MCShort health;
+    } response;
 } CDPacketUpdateHealth;
 
-typedef struct _CDPacketRespawn {
-    char noDataYet;
+typedef union _CDPacketRespawn {
+    char empty;
 } CDPacketRespawn;
 
 typedef union _CDPacketOnGround {
@@ -209,7 +216,6 @@ typedef union _CDPacketPlayerMoveLook {
         MCFloat yaw;
         MCFloat pitch;
 
-
         struct {
             MCBoolean onGround;
         } is;
@@ -228,61 +234,81 @@ typedef union _CDPacketPlayerMoveLook {
     } response;
 } CDPacketPlayerMoveLook;
 
-typedef struct _CDPacketDigging {
-    enum {
-        CDStartedDigging,
-        CDDigging,
-        CDStoppedDigging,
-        CDBlockBroken,
-        CDDropItem
-    } status;
+typedef union _CDPacketPlayerDigging {
+    struct {
+        enum {
+            CDStartedDigging,
+            CDDigging,
+            CDStoppedDigging,
+            CDBlockBroken,
+            CDDropItem
+        } status;
 
-    MCPosition position;
+        MCPosition position;
 
-    enum {
-        CDFaceNegativeY,
-        CDFacePositiveY,
-        CDFaceNegativeZ,
-        CDFacePositiveZ,
-        CDFaceNegativeX,
-        CDFacePositiveX
-    } face;
-} CDPacketDigging;
+        enum {
+            CDFaceNegativeY,
+            CDFacePositiveY,
+            CDFaceNegativeZ,
+            CDFacePositiveZ,
+            CDFaceNegativeX,
+            CDFacePositiveX
+        } face;
+    } request;
+} CDPacketPlayerDigging;
 
-typedef struct _CDPacketPlayerBlockPlacement {
-    MCPosition position;
+typedef union _CDPacketPlayerBlockPlacement {
+    struct {
+        MCPosition position;
 
-    MCByte  direction;
-    MCItem  item;
-    MCByte  amount;
-    MCShort damage;
+        MCByte  direction;
+        MCItem  item;
+        MCByte  amount;
+        MCShort damage;
+    } request;
 } CDPacketPlayerBlockPlacement;
 
-typedef struct _CDPacketHoldChange {
-    MCItem item;
+typedef union _CDPacketHoldChange {
+    struct {
+        MCItem item;
+    } request;
 } CDPacketHoldChange;
 
-typedef struct _CDPacketArmAnimate {
-    MCEntity entity;
+typedef union _CDPacketUseBed {
+    struct {
+        MCEntity entity;
 
-    enum {
-        CDNoAnimation,
-        CDSwingArm,
+        MCByte inBed;
 
-        CDUnknownAnimation = 102,
+        MCPosition position;
+    } response;
+} CDPacketUseBed;
 
-        CDCrouchAnimation = 104,
-        CDUncrouchAnimation
-    } animate;
+typedef union _CDPacketArmAnimate {
+    struct {
+        MCEntity entity;
+
+        enum {
+            CDNoAnimation,
+            CDSwingArm,
+
+            CDUnknownAnimation = 102,
+
+            CDCrouchAnimation = 104,
+            CDUncrouchAnimation
+        } animate;
+    } response;
 } CDPacketArmAnimate;
 
-typedef struct _CDPacketEntityAction {
-    MCEntity entity;
+typedef union _CDPacketEntityAction {
+    struct {
+        MCEntity entity;
 
-    enum {
-        CDCrouchAction = 1,
-        CDUncrouchAction
-    } action;
+        enum {
+            CDCrouchAction = 1,
+            CDUncrouchAction
+        } action;
+    } request;
 } CDPacketEntityAction;
 
 typedef union _CDPacketNamedEntitySpawn {
@@ -299,44 +325,50 @@ typedef union _CDPacketNamedEntitySpawn {
     } response;
 } CDPacketNamedEntitySpawn;
 
-typedef struct _CDPacketPickupSpawn {
-    MCEntity   entity;
-    MCItem     item;
-    MCPosition position;
+typedef union _CDPacketPickupSpawn {
+    struct {
+        MCEntity   entity;
+        MCItem     item;
+        MCPosition position;
 
-    MCByte rotation;
-    MCByte pitch;
-    MCByte roll;
+        MCByte rotation;
+        MCByte pitch;
+        MCByte roll;
+    } response;
 } CDPacketPickupSpawn;
 
-typedef struct _CDPacketCollectItem {
-    MCInteger collected;
-    MCInteger collector;
+typedef union _CDPacketCollectItem {
+    struct {
+        MCInteger collected;
+        MCInteger collector;
+    } response;
 } CDPacketCollectItem;
 
-typedef struct _CDPacketSpawnObject {
-    MCEntity entity;
+typedef union _CDPacketSpawnObject {
+    struct {
+        MCEntity entity;
 
-    enum {
-        CDBoat = 1,
+        enum {
+            CDBoat = 1,
 
-        CDMinecart = 10,
-        CDStorageCart,
-        CDPoweredCart,
+            CDMinecart = 10,
+            CDStorageCart,
+            CDPoweredCart,
 
-        CDActivatedTNT = 50,
+            CDActivatedTNT = 50,
 
-        CDArrow = 60,
-        CDThrownSnowball,
-        CDThrownEgg,
+            CDArrow = 60,
+            CDThrownSnowball,
+            CDThrownEgg,
 
-        CDFallingSand = 70,
-        CDFallingGravel,
+            CDFallingSand = 70,
+            CDFallingGravel,
 
-        CDFishingFloat = 90
-    } type;
+            CDFishingFloat = 90
+        } type;
 
-    MCPosition position;
+        MCPosition position;
+    } response;
 } CDPacketSpawnObject;
 
 typedef union _CDPacketSpawnMob {
@@ -375,62 +407,79 @@ typedef union _CDPacketPainting { // Verify type and coordiates
     } response;
 } CDPacketPainting;
 
-
-typedef struct _CDPacketEntityVelocity {
-    MCEntity   entity;
-    MCPosition velocity;
+typedef union _CDPacketEntityVelocity {
+    struct {
+        MCEntity   entity;
+        MCPosition velocity;
+    } response;
 } CDPacketEntityVelocity;
 
-typedef struct _CDPacketEntityDestroy {
-    MCEntity entity;
+typedef union _CDPacketEntityDestroy {
+    struct {
+        MCEntity entity;
+    } response;
 } CDPacketEntityDestroy;
 
-typedef struct _CDPacketEntityCreate {
-    MCEntity entity;
+typedef union _CDPacketEntityCreate {
+    struct {
+        MCEntity entity;
+    } response;
 } CDPacketEntityCreate;
 
-typedef struct _CDPacketEntityRelativeMove {
-    MCEntity entity;
+typedef union _CDPacketEntityRelativeMove {
+    struct {
+        MCEntity entity;
 
-    MCRelativePosition position;
+        MCRelativePosition position;
+    } response;
 } CDPacketEntityRelativeMove;
 
-typedef struct _CDPacketEntityLook {
-    MCEntity entity;
+typedef union _CDPacketEntityLook {
+    struct {
+        MCEntity entity;
 
-    MCByte yaw;
-    MCByte pitch;
+        MCByte yaw;
+        MCByte pitch;
+    } response;
 } CDPacketEntityLook;
 
-typedef struct _CDPacketEntityLookMove {
-    MCEntity entity;
+typedef union _CDPacketEntityLookMove {
+    struct {
+        MCEntity entity;
 
-    MCRelativePosition position;
+        MCRelativePosition position;
 
-    MCByte yaw;
-    MCByte pitch;
+        MCByte yaw;
+        MCByte pitch;
+    } response;
 } CDPacketEntityLookMove;
 
-typedef struct _CDPacketEntityTeleport {
-    MCEntity   entity;
-    MCPosition position;
+typedef union _CDPacketEntityTeleport {
+    struct {
+        MCEntity   entity;
+        MCPosition position;
 
-    MCByte rotation;
-    MCByte pitch;
+        MCByte rotation;
+        MCByte pitch;
+    } response;
 } CDPacketEntityTeleport;
 
-typedef struct _CDPacketEntityStatus { // Not sure yet
-    MCEntity entity;
+typedef union _CDPacketEntityStatus { // Not sure yet
+    struct {
+        MCEntity entity;
 
-    enum {
-        CDDrowning = 2,
-        CDDead
-    } status;
+        enum {
+            CDDrowning = 2,
+            CDDead
+        } status;
+    } response;
 } CDPacketEntityStatus;
 
-typedef struct _CDPacketEntityAttach {
-    MCEntity entity;
-    MCEntity vehicle;
+typedef union _CDPacketEntityAttach {
+    struct {
+        MCEntity entity;
+        MCEntity vehicle;
+    } response;
 } CDPacketEntityAttach;
 
 typedef union _CDPacketEntityMetadata {
@@ -445,11 +494,13 @@ typedef union _CDPacketEntityMetadata {
     } response;
 } CDPacketEntityMetadata;
 
-typedef struct _CDPacketPreChunk {
-    MCInteger x;
-    MCInteger z;
+typedef union _CDPacketPreChunk {
+    struct {
+        MCInteger x;
+        MCInteger z;
 
-    MCBoolean mode;
+        MCBoolean mode;
+    } response;
 } CDPacketPreChunk;
 
 typedef union _CDPacketMapChunk {
@@ -475,25 +526,29 @@ typedef union _CDPacketMultiBlockChange {
     } response;
 } CDPacketMultiBlockChange;
 
-typedef struct _CDPacketBlockChange {
-    MCPosition position;
+typedef union _CDPacketBlockChange {
+    struct {
+        MCPosition position;
 
-    MCByte type;
-    MCByte metadata;
+        MCByte type;
+        MCByte metadata;
+    } response;
 } CDPacketBlockChange;
 
-typedef struct _CDPacketPlayNoteBlock {
-    MCPosition position;
+typedef union _CDPacketPlayNoteBlock {
+    struct {
+        MCPosition position;
 
-    enum {
-        CDHarp,
-        CDDoubleBass,
-        CDSnareDrum,
-        CDClicksSticks,
-        CDBassDrum
-    } instrument;
+        enum {
+            CDHarp,
+            CDDoubleBass,
+            CDSnareDrum,
+            CDClicksSticks,
+            CDBassDrum
+        } instrument;
 
-    MCByte pitch;
+        MCByte pitch;
+    } response;
 } CDPacketPlayNoteBlock;
 
 typedef union _CDPacketExplosion { // Not sure yet
@@ -530,20 +585,24 @@ typedef union _CDPacketCloseWindow {
     } response;
 } CDPacketCloseWindow;
 
-typedef struct _CDPacketWindowClick {
-    MCByte    id;
-    MCShort   slot;
-    MCBoolean rightClick;
-    MCShort   action;
+typedef union _CDPacketWindowClick {
+    struct {
+        MCByte    id;
+        MCShort   slot;
+        MCBoolean rightClick;
+        MCShort   action;
 
-    MCItem item; // if the first of the 3 values is -1 the packet ends there
+        MCItem item; // if the first of the 3 values is -1 the packet ends there
+    } request;
 } CDPacketWindowClick;
 
-typedef struct _CDPacketSetSlot {
-    MCByte  id;
-    MCShort slot;
+typedef union _CDPacketSetSlot {
+    struct {
+        MCByte  id;
+        MCShort slot;
 
-    MCItem item; // if the first of the 3 values is -1 the packet ends there
+        MCItem item; // if the first of the 3 values is -1 the packet ends there
+    } response;
 } CDPacketSetSlot;
 
 typedef union _CDPacketWindowItems {
@@ -555,16 +614,26 @@ typedef union _CDPacketWindowItems {
     } response;
 } CDPacketWindowItems;
 
-typedef struct _CDPacketUpdateProgressBar {
-    MCByte  id;
-    MCShort bar;
-    MCShort value;
+typedef union _CDPacketUpdateProgressBar {
+    struct {
+        MCByte  id;
+        MCShort bar;
+        MCShort value;
+    } response;
 } CDPacketUpdateProgressBar;
 
-typedef struct _CDPacketTransaction {
-    MCByte    id;
-    MCShort   action;
-    MCBoolean accepted;
+typedef union _CDPacketTransaction {
+    struct {
+        MCByte    id;
+        MCShort   action;
+        MCBoolean accepted;
+    } request;
+
+    struct {
+        MCByte    id;
+        MCShort   action;
+        MCBoolean accepted;
+    } response;
 } CDPacketTransaction;
 
 typedef union _CDPacketUpdateSign {
