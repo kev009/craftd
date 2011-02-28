@@ -2,14 +2,11 @@ AM_LIBS = $(libevent2_pthreads_LIBS) $(PCRE_LIBS) $(PTHREAD_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 AM_CPPFLAGS += $(PCRE_CFLAGS)
-AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
-#AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
-#AM_CPPFLAGS += -I$(top_srcdir)/third-party/klib
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
 
 # The list of core libraries that are always built
-lib_LTLIBRARIES = libcdbase.la libcdnbt.la
+pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la
 
 # The base plugin handles default game rules
 libcdbase_la_SOURCES = base.c
