@@ -148,6 +148,7 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
     self->raw      = CD_malloc(sizeof(struct tagbstring));
     self->external = true;
 
+    self->raw->mlen = length;
     self->raw->slen = length;
     self->raw->data = (unsigned char*) buffer;
 

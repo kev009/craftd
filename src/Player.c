@@ -49,8 +49,9 @@ CD_CreatePlayer (struct _CDServer* server)
 
     self->username = NULL;
 
-    self->status  = CDPlayerIdle;
-    self->pending = false;
+    self->status        = CDPlayerIdle;
+    self->pending       = false;
+    self->disconnecting = false;
 
     self->buffers = NULL;
 
