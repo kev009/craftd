@@ -185,7 +185,7 @@ typedef union _CDPacketPlayerPosition {
         MCDouble stance;
 
         struct {
-            MCBoolean onGround
+            MCBoolean onGround;
         } is;
     } request;
 } CDPacketPlayerPosition;
@@ -196,7 +196,7 @@ typedef union _CDPacketPlayerLook {
         MCFloat pitch;
 
         struct {
-            MCBoolean onGround
+            MCBoolean onGround;
         } is;
     } request;
 } CDPacketPlayerLook;
@@ -211,7 +211,7 @@ typedef union _CDPacketPlayerMoveLook {
 
 
         struct {
-            MCBoolean onGround
+            MCBoolean onGround;
         } is;
     } request;
 
@@ -223,7 +223,7 @@ typedef union _CDPacketPlayerMoveLook {
         MCFloat pitch;
 
         struct {
-            MCBoolean onGround
+            MCBoolean onGround;
         } is;
     } response;
 } CDPacketPlayerMoveLook;
