@@ -17,7 +17,7 @@
  * @param y an integer value
  * @return greater of the two parameters
  */
-static inline int CD_max(int x, int y)
+static inline int CD_Max(int x, int y)
 {
   return x > y ? x : y;
 }
@@ -28,7 +28,7 @@ static inline int CD_max(int x, int y)
  * @param y an integer value
  * @return smaller of the two parameters
  */
-static inline int CD_min(int x, int y)
+static inline int CD_Min(int x, int y)
 {
   return x > y ? y : x;
 }
@@ -42,7 +42,7 @@ static inline int CD_min(int x, int y)
  * @param y the divisor
  * @return the integer quotient
  */
-static inline int CD_div(int x, int y)
+static inline int CD_Div(int x, int y)
 {
   if (-13/5 == -2 && (x < 0) != (y < 0) && x%y != 0)
     return x/y - 1;
@@ -59,7 +59,7 @@ static inline int CD_div(int x, int y)
  * @param y the divisor
  * @return the integer quotient
  */
-static inline int CD_mod(int x, int y)
+static inline int CD_Mod(int x, int y)
 {
   if (-13/5 == -2 && (x < 0) != (y < 0) && x%y != 0)
     return x%y + y;
@@ -75,9 +75,9 @@ static inline int CD_mod(int x, int y)
  * @param y divisior
  * @return floor of x/y
  */
-static inline int Arith_floor(int x, int y)
+static inline int CD_Floor(int x, int y)
 {
-  return Arith_div(x, y);
+  return CD_Div(x, y);
 }
 
 /**
@@ -88,9 +88,9 @@ static inline int Arith_floor(int x, int y)
  * @param y divisior
  * @return ceiling of x/y
  */
-static inline int Arith_ceiling(int x, int y)
+static inline int CD_Ceiling(int x, int y)
 {
-  return Arith_div(x, y) + (x%y != 0);
+  return CD_Div(x, y) + (x%y != 0);
 }
 
 #endif
