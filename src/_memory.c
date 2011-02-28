@@ -23,73 +23,59 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#include <craftd/Logger.h>
 
-#include <craftd/common.h>
-#include <craftd/Packet.h>
+#include <craftd/memory.h>
 
-struct _CDServer;
+void
+CD_free (void* pointer)
+{
+    if (pointer) {
+        free(pointer);
+    }
+}
 
-typedef enum _CDPlayerStatus {
-    CDPlayerIdle,
-    CDPlayerInput,
-    CDPlayerProcess
-} CDPlayerStatus;
+void*
+CD_calloc (size_t number, size_t size)
+{
+    void* pointer;
 
-/**
- * The Player class.
- */
-typedef struct _CDPlayer {
-    MCEntity entity;
+    if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
+        ERR("could not allocate memory with a calloc");
+    }
 
-    struct _CDServer* server;
+    return pointer;
+}
 
-    CDString* username;
-    char      ip[128];
+void*
+CD_malloc (size_t size)
+{
+    void* pointer;
 
-    evutil_socket_t     socket;
+    if ((pointer = malloc(size)) == NULL) {
+        ERR("could not allocate memory with a malloc");
+    }
 
-    CDBuffers* buffers;
+    return pointer;
+}
 
-    CDHash* _private;
+void*
+CD_realloc (void* pointer, size_t size)
+{
+    void* newPointer;
 
-    CDPlayerStatus status;
+    if (pointer == NULL) {
+        return CD_malloc(size);
+    }
 
-    bool pending;
+    if (size == 0) {
+        CD_free(pointer);
+        return NULL;
+    }
 
-    struct {
-        pthread_rwlock_t status;
-        pthread_rwlock_t pending;
-    } lock;
-} CDPlayer;
+    if ((newPointer = realloc(pointer, size)) == NULL) {
+      ERR("could not allocate memory with a realloc");
+    }
 
-/**
- * Create a Player object on the given Server.
- *
- * @param server The Server the Player will play on
- *
- * @return The instantiated Player object
- */
-CDPlayer* CD_CreatePlayer (struct _CDServer* server);
-
-/**
- * Destroy a Player object
- */
-void CD_DestroyPlayer (CDPlayer* self);
-
-/**
- * Send a Packet to a Player
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a raw String to a Player
- *
- * @param data The raw String to send
- */
-void CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* data);
-
-#endif
+    return newPointer;
+}

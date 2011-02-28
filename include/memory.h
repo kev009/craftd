@@ -33,14 +33,7 @@
  *
  * @param pointer The pointer to free
  */
-static inline
-void
-CD_free (void* pointer)
-{
-    if (pointer) {
-        free(pointer);
-    }
-}
+void CD_free (void* pointer);
 
 /**
  * Simple calloc wrapper w/error handling
@@ -50,18 +43,7 @@ CD_free (void* pointer)
  *
  * @return valid pointer to heap memory
  */
-static inline
-void*
-CD_calloc (size_t number, size_t size)
-{
-    void* pointer;
-
-    if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
-//        CERR("could not allocate memory with a calloc");
-    }
-
-    return pointer;
-}
+void* CD_calloc (size_t number, size_t size);
 
 /**
  * Simple malloc wrapper w/error handling
@@ -70,18 +52,7 @@ CD_calloc (size_t number, size_t size)
  *
  * @return valid pointer to heap memory
  */
-static inline
-void*
-CD_malloc (size_t size)
-{
-    void* pointer;
-
-    if ((pointer = malloc(size)) == NULL) {
-//        CERR("could not allocate memory with a malloc");
-    }
-
-    return pointer;
-}
+void* CD_malloc (size_t size);
 
 /**
  * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
@@ -91,26 +62,6 @@ CD_malloc (size_t size)
  *
  * @return resized valid pointer to heap memory
  */
-static inline
-void*
-CD_realloc (void* pointer, size_t size)
-{
-    void* newPointer;
-
-    if (pointer == NULL) {
-        return CD_malloc(size);
-    }
-
-    if (size == 0) {
-        CD_free(pointer);
-        return NULL;
-    }
-
-    if ((newPointer = realloc(pointer, size)) == NULL) {
-//      CERR("could not allocate memory with a realloc");
-    }
-
-    return newPointer;
-}
+void* CD_realloc (void* pointer, size_t size);
 
 #endif

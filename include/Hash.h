@@ -29,7 +29,7 @@
 #include <craftd/common.h>
 #include <craftd/klib/khash.h>
 
-KHASH_MAP_INIT_STR(cdHash, void*);
+KHASH_MAP_INIT_STR(cdHash, CDPointer);
 
 /**
  * The Hash class
@@ -129,7 +129,7 @@ const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
  *
  * @return The value (whatever) value
  */
-void* CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
+CDPointer CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
 
 /**
  * Checks if a iterator is valid (points to an existing element)
@@ -147,7 +147,7 @@ bool CD_HashIteratorValid (CDHash* self, CDHashIterator iterator);
  *
  * @return The value or NULL
  */
-void* CD_HashGet (CDHash* self, const char* name);
+CDPointer CD_HashGet (CDHash* self, const char* name);
 
 /**
  * Set the value of the element with the given name.
@@ -157,7 +157,7 @@ void* CD_HashGet (CDHash* self, const char* name);
  *
  * @return The old data if present or NULL
  */
-void* CD_HashSet (CDHash* self, const char* name, void* data);
+CDPointer CD_HashSet (CDHash* self, const char* name, CDPointer data);
 
 /**
  * Delete the element with the given name
@@ -166,28 +166,28 @@ void* CD_HashSet (CDHash* self, const char* name, void* data);
  *
  * @return The delete data if present or NULL
  */
-void* CD_HashDelete (CDHash* self, const char* name);
+CDPointer CD_HashDelete (CDHash* self, const char* name);
 
 /**
  * Get the value of the first element in the Hash
  *
  * @return The first element in the Hash
  */
-void* CD_HashFirst (CDHash* self);
+CDPointer CD_HashFirst (CDHash* self);
 
 /**
  * Get the value of the last element in the Hash
  *
  * @return The last element in the Hash
  */
-void* CD_HashLast (CDHash* self);
+CDPointer CD_HashLast (CDHash* self);
 
 /**
  * Empty the Hash and return an array of the contained data
  *
  * @return An array of the contained data
  */
-void** CD_HashClear (CDHash* self);
+CDPointer* CD_HashClear (CDHash* self);
 
 /**
  * Iterate over the given hash

@@ -41,6 +41,12 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
+#if SIZEOF_FP == 8 // || SIZEOF_INTPTR_T == 8
+    typedef int64_t CDPointer;
+#else
+    typedef int32_t CDPointer;
+#endif
+
 #include <craftd/config.h>
 #include <craftd/memory.h>
 
@@ -52,6 +58,9 @@
 
 #include <craftd/javaendian.h>
 #include <craftd/minecraft.h>
+
+#include <craftd/Buffer.h>
+#include <craftd/Buffers.h>
 
 #define PRIVATE(data) ((data)->_private)
 

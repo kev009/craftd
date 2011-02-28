@@ -1,6 +1,7 @@
 pkginclude_HEADERS = common.h \
 		     config.h \
 		     Config.h \
+			 Buffer.h \
 		     Hash.h \
 		     javaendian.h \
 		     Job.h \

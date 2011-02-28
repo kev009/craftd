@@ -151,10 +151,10 @@ CD_MapIteratorKey (CDMap* self, CDMapIterator iterator)
     return result;
 }
 
-void*
+CDPointer
 CD_MapIteratorValue (CDMap* self, CDMapIterator iterator)
 {
-    void* result = NULL;
+    CDPointer result = (CDPointer) NULL;
 
     pthread_rwlock_rdlock(&self->lock);
     result = kh_value(self->map, iterator);
@@ -175,11 +175,11 @@ CD_MapIteratorValid (CDMap* self, CDMapIterator iterator)
     return result;
 }
 
-void*
+CDPointer
 CD_MapGet (CDMap* self, int id)
 {
-    void*    result = NULL;
-    khiter_t it;
+    CDPointer result = (CDPointer) NULL;
+    khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
     it = kh_get(cdMap, self->map, id);
@@ -192,12 +192,12 @@ CD_MapGet (CDMap* self, int id)
     return result;
 }
 
-void*
-CD_MapSet (CDMap* self, int id, void* data)
+CDPointer
+CD_MapSet (CDMap* self, int id, CDPointer data)
 {
-    void*    old = NULL;
-    khiter_t it;
-    int      ret;
+    CDPointer old = (CDPointer) NULL;
+    khiter_t  it;
+    int       ret;
 
     pthread_rwlock_wrlock(&self->lock);
     it                      = kh_put(cdMap, self->map, id, &ret);
@@ -208,11 +208,11 @@ CD_MapSet (CDMap* self, int id, void* data)
     return old;
 }
 
-void*
+CDPointer
 CD_MapDelete (CDMap* self, int id)
 {
-    void*    old = NULL;
-    khiter_t it;
+    CDPointer old = (CDPointer) NULL;
+    khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
     it = kh_get(cdMap, self->map, id);
@@ -227,24 +227,24 @@ CD_MapDelete (CDMap* self, int id)
     return old;
 }
 
-void*
+CDPointer
 CD_MapFirst (CDMap* self)
 {
     return CD_MapIteratorValue(self, CD_MapBegin(self));
 }
 
-void*
+CDPointer
 CD_MapLast (CDMap* self)
 {
     return CD_MapIteratorValue(self, CD_MapPrevious(self, CD_MapEnd(self)));
 }
 
-void**
+CDPointer*
 CD_MapClear (CDMap* self)
 {
-    void**   result = NULL;
-    size_t   i      = 0;
-    khiter_t it;
+    CDPointer* result = (CDPointer*) NULL;
+    size_t     i      = 0;
+    khiter_t   it;
 
     pthread_rwlock_wrlock(&self->lock);
 
@@ -252,12 +252,12 @@ CD_MapClear (CDMap* self)
         if (kh_exist(self->map, it)) {
             i++;
 
-            result        = CD_realloc(result, sizeof(void*) * (i + 1));
+            result        = CD_realloc(result, sizeof(CDPointer) * (i + 1));
             result[i - 1] = kh_value(self->map, it);
         }
     }
 
-    result[i] = NULL;
+    result[i] = (CDPointer) NULL;
 
     kh_clear(cdMap, self->map);
     pthread_rwlock_unlock(&self->lock);

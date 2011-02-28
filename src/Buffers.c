@@ -23,73 +23,49 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#include <craftd/Buffers.h>
 
-#include <craftd/common.h>
-#include <craftd/Packet.h>
+CDBuffers*
+CD_CreateBuffers (void)
+{
+    CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
-struct _CDServer;
+    if (!self) {
+        return NULL;
+    }
 
-typedef enum _CDPlayerStatus {
-    CDPlayerIdle,
-    CDPlayerInput,
-    CDPlayerProcess
-} CDPlayerStatus;
+    self->input  = CD_CreateBuffer();
+    self->output = CD_CreateBuffer();
 
-/**
- * The Player class.
- */
-typedef struct _CDPlayer {
-    MCEntity entity;
+    self->raw      = NULL;
+    self->external = false;
 
-    struct _CDServer* server;
+    return self;
+}
 
-    CDString* username;
-    char      ip[128];
+CDBuffers*
+CD_WrapBuffers (CDRawBuffers buffers)
+{
+     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
-    evutil_socket_t     socket;
+    if (!self) {
+        return NULL;
+    }
 
-    CDBuffers* buffers;
+    self->input  = CD_WrapBuffer(bufferevent_get_input(buffers));
+    self->output = CD_WrapBuffer(bufferevent_get_output(buffers));
 
-    CDHash* _private;
+    self->raw      = buffers;
+    self->external = true;
 
-    CDPlayerStatus status;
+    return self;
+}
 
-    bool pending;
+void
+CD_DestroyBuffers (CDBuffers* self)
+{
+    CD_DestroyBuffer(self->input);
+    CD_DestroyBuffer(self->output);
 
-    struct {
-        pthread_rwlock_t status;
-        pthread_rwlock_t pending;
-    } lock;
-} CDPlayer;
-
-/**
- * Create a Player object on the given Server.
- *
- * @param server The Server the Player will play on
- *
- * @return The instantiated Player object
- */
-CDPlayer* CD_CreatePlayer (struct _CDServer* server);
-
-/**
- * Destroy a Player object
- */
-void CD_DestroyPlayer (CDPlayer* self);
-
-/**
- * Send a Packet to a Player
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a raw String to a Player
- *
- * @param data The raw String to send
- */
-void CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* data);
-
-#endif
+    CD_free(self);
+}

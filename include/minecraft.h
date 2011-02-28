@@ -48,6 +48,7 @@ typedef CDString* MCString;
 
 void MC_DestroyString (MCString self);
 
+static const char MCBooleanSize = 1;
 static const char MCByteSize    = 1;
 static const char MCShortSize   = 2;
 static const char MCIntegerSize = 4;

@@ -51,6 +51,8 @@ CD_CreatePlayer (struct _CDServer* server)
     self->status  = CDPlayerIdle;
     self->pending = false;
 
+    self->buffers = NULL;
+
     PRIVATE(self) = CD_CreateHash();
 
     return self;
@@ -62,7 +64,8 @@ CD_DestroyPlayer (CDPlayer* self)
     CD_EventDispatch(self->server, "Player.destroy", self);
 
     close(self->socket);
-    bufferevent_free(self->buffer);
+
+    CD_DestroyBuffers(self->buffers);
 
     if (self->username) {
         CD_DestroyString(self->username);
@@ -79,15 +82,23 @@ CD_DestroyPlayer (CDPlayer* self)
 void
 CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 {
-    CDString* data = CD_PacketToString(packet);
+    if (!self->buffers) {
+        return;
+    }
 
-    CD_PlayerSendRaw(self, data);
+    CDBuffer* data = CD_PacketToBuffer(packet);
 
-    CD_DestroyString(data);
+    CD_PlayerSendBuffer(self, data);
+
+    CD_DestroyBuffer(data);
 }
 
 void
-CD_PlayerSendRaw (CDPlayer* self, CDString* data)
+CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* buffer)
 {
-    evbuffer_add(bufferevent_get_output(self->buffer), CD_StringContent(data), CD_StringLength(data));
+    if (!self->buffers) {
+        return;
+    }
+
+    CD_BufferAddBuffer(self->buffers->output, buffer);
 }

@@ -31,6 +31,10 @@
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 
+#ifndef CRAFTD_STRING_IGNORE_EXTERN
+extern const char* MCCharset;
+#endif
+
 typedef bstring CDRawString;
 
 /**
@@ -38,8 +42,8 @@ typedef bstring CDRawString;
  */
 typedef struct _CDString {
     CDRawString raw;
-
-    bool external;
+    size_t      length;
+    bool        external;
 } CDString;
 
 /**
@@ -57,6 +61,15 @@ CDString* CD_CreateString (void);
  * @return The instantiated String object
  */
 CDString* CD_CreateStringFromCString (const char* string);
+
+/**
+ * Create a String object from a C null terminated string
+ *
+ * @param string The C string.
+ *
+ * @return The instantiated String object
+ */
+CDString* CD_CreateStringFromCStringCopy (const char* string);
 
 /**
  * Create a String object from a length given buffer.
@@ -102,6 +115,16 @@ CDString* CD_CreateStringFromFormat (const char* format, ...);
 CDString* CD_CreateStringFromFormatList (const char* format, va_list ap);
 
 /**
+ * Create a String object from a substring
+ *
+ * @param offset The offset where to start
+ * @param limit How many chars to include in the result
+ *
+ * @return The instantiated String object
+ */
+CDString* CD_CreateStringFromOffset (CDString* self, int offset, int limit);
+
+/**
  * Clone a String object.
  *
  * @return The cloned object
@@ -121,6 +144,15 @@ void CD_DestroyString (CDString* self);
 CDRawString CD_DestroyStringKeepData (CDString* self);
 
 /**
+ * Get the char at the given index
+ *
+ * @param index The position of the char you want to get
+ *
+ * @return A String with the wanted char (unicode char)
+ */
+CDString* CD_CharAt (CDString* self, size_t index);
+
+/**
  * Get the String content as a C string
  */
 const char* CD_StringContent (CDString* self);
@@ -129,5 +161,42 @@ const char* CD_StringContent (CDString* self);
  * Get the String length
  */
 const size_t CD_StringLength (CDString* self);
+
+/**
+ * Get raw String length
+ */
+const size_t CD_StringSize (CDString* self);
+
+/**
+ * Check if a String is empty (length 0) or not
+ *
+ * @return true when empty, false otherwise
+ */
+bool CD_StringEmpty (CDString* self);
+
+/**
+ * Check if a String is blank (/^\s*$/) or not
+ *
+ * @return true when blank, false otherwise
+ */
+bool CD_StringBlank (CDString* self);
+
+/**
+ * Check if a String starts with the given value
+ *
+ * @param check The string which the String object has to start
+ *
+ * @return true if it starts with it, false otherwise
+ */
+bool CD_StringStartWith (CDString* self, const char* check);
+
+/**
+ * Check if a String ends with the given value
+ *
+ * @param check The string which the String object has to end
+ *
+ * @return true if it ends with it, false otherwise
+ */
+bool CD_StringEndWith (CDString* self, const char* check);
 
 #endif
