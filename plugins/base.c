@@ -86,9 +86,6 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 {
     CDPacket* packet = (CDPacket*) CD_HashGet(PRIVATE(player), "packet");
 
-    puts("lol");
-    return true;
-
     switch (packet->type) {
         case CDKeepAlive: {
             SDEBUG(server, "This was a triumph, I'm making a note here, huge success.");
