@@ -173,7 +173,16 @@ static void _init_data(int ch_x, int ch_z)
 	int light_val = 0x0F;
 	/* this should only put 1 layer of bedrock */
 	int block_height[16][16];
+	float lacunarity = 0.5;
+	float exponent_array[4];
 
+	float frequency = 1.0;
+	float H = 0.25;
+	int i;
+	for (i = 0 ; i < 4 ; i++) {
+		exponent_array[i] = pow(frequency, -H);
+		frequency *= lacunarity;
+	}
 	/* step 1: generate the height map */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
@@ -182,6 +191,19 @@ static void _init_data(int ch_x, int ch_z)
 			total_z = ((((float)ch_z)*16.0) + ((float)z)); 
 			total_x *= 0.015;
 			total_z *= 0.015;
+#if 1
+			float weight = 1.0;
+			float signl;
+			a = 0.0;
+			for (i = 0 ; i < 4 ; i++) {
+				signl = snoise2(total_x, total_z) * exponent_array[i];
+				if (weight > 1.0) weight = 1.0;
+				a += (weight * signl);
+				weight *= signl;
+				total_x *= lacunarity;
+				total_z *= lacunarity;
+			}
+#else
 			a = snoise2(total_x, total_z);
 			a += (snoise2(total_x*2.0, total_z*2.0) * 0.5);
 			a += (snoise2(total_x*4.0, total_z*4.0) * 0.25);
@@ -195,6 +217,7 @@ static void _init_data(int ch_x, int ch_z)
 			/* fill the minimum height, we get flat bottom lakes like that */
 			a = (a < -0.40 ? -0.40 : a);
 			a = ((a / 2.5)*48.0 + 64.0);
+#endif
 			block_height[(int)x][(int)z] = a;
 		}
 	}
@@ -203,7 +226,8 @@ static void _init_data(int ch_x, int ch_z)
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			for (y = 0 ; y < block_height[x][z] ; y++) {
-				_blocks[y + (z*128) + (x*128*16)] = block_type(ch_x, ch_z, x, y, z);
+				//_blocks[y + (z*128) + (x*128*16)] = block_type(ch_x, ch_z, x, y, z);
+				_blocks[y + (z*128) + (x*128*16)] = 11;
 			}
 			_heightmap[x+(z*16)] = block_height[x][z]; /* max height is 1 */
 
@@ -212,6 +236,7 @@ static void _init_data(int ch_x, int ch_z)
 			}
 		}
 	}
+#if 0
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			/* step 3: replace top with grass */
@@ -235,6 +260,7 @@ static void _init_data(int ch_x, int ch_z)
 			}
 		}
 	}
+#endif
 }
 
 /**
