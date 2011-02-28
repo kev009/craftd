@@ -3,6 +3,7 @@ pkginclude_HEADERS = craftd/common.h \
 		     craftd/Config.h \
 		     craftd/Hash.h \
                      craftd/Buffer.h \
+		     craftd/Buffers.h \
 		     craftd/javaendian.h \
 		     craftd/Job.h \
 		     craftd/List.h \
