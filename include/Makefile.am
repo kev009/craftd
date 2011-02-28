@@ -1,9 +1,9 @@
-pkginclude_HEADERS = craftd/Arith.h \
+pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/common.h \
 		     craftd/config.h \
 		     craftd/Config.h \
 		     craftd/Hash.h \
-                     craftd/Buffer.h \
+             craftd/Buffer.h \
 		     craftd/Buffers.h \
 		     craftd/javaendian.h \
 		     craftd/Job.h \

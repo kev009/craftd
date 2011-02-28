@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <limits.h>
 #include <sys/stat.h>
 
 #include <craftd/Server.h>
@@ -39,95 +38,94 @@ static int spawnX, spawnY, spawnZ;
 * Run at plugin startup to initialize Config.SpawnPos struct with default spawn
 * coordinates and make sure the world directory exists.
 *
-* @return 0 on success, -1 otherwise
+* @return true on success, false otherwise
 */
-static int 
-cdnbt_LoadLevelDat(CDPlugin* self)
+static
+bool
+cdnbt_LoadLevelDat (CDPlugin* self)
 {
-  struct stat buf;
-  int worldstat = stat(world_dir, &buf);
-  
-  if (worldstat == -1)
-  {
-    LOG(LOG_ERR, "World directory %s does not exist", world_dir);
-    return -1;
-  }
-  
-  char leveldatpath[PATH_MAX];
-  nbt_file *nf;
-  nbt_tag *data;
+    struct stat buf;
+    int         worldstat = stat(world_dir, &buf);
 
-  if (nbt_init(&nf) != NBT_OK)
-  {
-    LOG(LOG_ERR, "Cannot initialize level.dat structure");
-    return -1;
-  }
+    if (worldstat == -1) {
+        ERR("World directory %s does not exist", world_dir);
+        return false;
+    }
 
-  evutil_snprintf(leveldatpath, PATH_MAX, "%s/level.dat", world_dir);
+    CDString* leveldatPath;
+    nbt_file* nf;
+    nbt_tag*  data;
 
-  if (nbt_parse(nf, leveldatpath) != NBT_OK)
-  {
-    LOG(LOG_ERR, "Cannot parse level.dat (%d).", leveldatpath);
-    return -1;
-  }
-  
-  data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
-  
-  nbt_tag *t_gametime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
-  nbt_tag *t_spawnX = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
-  nbt_tag *t_spawnY = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
-  nbt_tag *t_spawnZ = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
-  
-  CD_ServerSetTime(self->server, *(nbt_cast_int(t_gametime)));
-  spawnX = *(nbt_cast_int(t_spawnX));
-  spawnY = *(nbt_cast_int(t_spawnY));
-  spawnZ = *(nbt_cast_int(t_spawnZ));
-  
-  nbt_free(nf);
-  return 0;
+    if (nbt_init(&nf) != NBT_OK) {
+        ERR("Cannot initialize level.dat structure");
+        return false;
+    }
+
+    leveldatPath = CD_CreateStringFromFormat("%s/level.dat", world_dir);
+
+    if (nbt_parse(nf, CD_StringContent(leveldatPath)) != NBT_OK) {
+        ERR("Cannot parse level.dat (%s).", CD_StringContent(leveldatPath));
+        return false;
+    }
+
+    data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
+
+    nbt_tag* t_gametime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
+    nbt_tag* t_spawnX   = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
+    nbt_tag* t_spawnY   = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
+    nbt_tag* t_spawnZ   = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
+
+    CD_ServerSetTime(self->server, *(nbt_cast_int(t_gametime)));
+
+    spawnX = *(nbt_cast_int(t_spawnX));
+    spawnY = *(nbt_cast_int(t_spawnY));
+    spawnZ = *(nbt_cast_int(t_spawnZ));
+
+    nbt_free(nf);
+
+    CD_DestroyString(leveldatPath);
+
+    return true;
 }
 
-int valid_chunk(nbt_tag *nbtroot)
+bool
+valid_chunk (nbt_tag *nbtroot)
 {
     /* Check valid root element */
-    nbt_tag *root = nbt_find_tag_by_name("Level", nbt_cast_compound(nbtroot));
+    nbt_tag* root = nbt_find_tag_by_name("Level", nbt_cast_compound(nbtroot));
 
-    if ((root != NULL) &&
-            (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND))
-    {
-        nbt_tag *blocks = nbt_find_tag_by_name("Blocks", nbt_cast_compound(root));
+    if ((root != NULL) && (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND)) {
+        nbt_tag* blocks = nbt_find_tag_by_name("Blocks", nbt_cast_compound(root));
 
-        if ((blocks != NULL) && (blocks->type == TAG_BYTE_ARRAY))
-        {
-            nbt_byte_array *arr = (nbt_byte_array *)blocks->value;
+        if ((blocks != NULL) && (blocks->type == TAG_BYTE_ARRAY)) {
+            nbt_byte_array* arr = (nbt_byte_array*) blocks->value;
 
-            if (arr->length == 32768)
-            {
-                return 0; /* Valid at last. */
+            if (arr->length == 32768) {
+                return true; /* Valid at last. */
             }
         }
     }
-    
-    return 1;
+
+    return false;
 }
 
 static
 bool
 cdnbt_LoadChunk()
 {
-  // zomg
-  return true;
+    // zomg
+    return true;
 }
 
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-  cdnbt_LoadLevelDat(self);
+    cdnbt_LoadLevelDat(self);
 
-  CD_EventRegister(self->server, "Chunk.load", cdnbt_LoadChunk);
+    CD_EventRegister(self->server, "Chunk.load", cdnbt_LoadChunk);
 
-  return true;
+    return true;
 }
 
 extern

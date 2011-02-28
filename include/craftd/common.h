@@ -26,8 +26,6 @@
 #ifndef CRAFTD_COMMON_H
 #define CRAFTD_COMMON_H
 
-#include <craftd/config.h>
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -43,14 +41,14 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
+#include <craftd/config.h>
+#include <craftd/memory.h>
+
 #if SIZEOF_FP == 4 && SIZEOF_INTPTR_T == 4
     typedef int32_t CDPointer;
 #else
     typedef int64_t CDPointer;
 #endif
-
-#include <craftd/config.h>
-#include <craftd/memory.h>
 
 #include <craftd/List.h>
 #include <craftd/Map.h>
