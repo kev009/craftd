@@ -29,10 +29,11 @@
 #include "nbt.h"
 
 static
-void
+bool
 cdnbt_LoadChunk()
 {
   // zomg
+  return true;
 }
 
 extern
