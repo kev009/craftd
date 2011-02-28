@@ -94,6 +94,33 @@ CD_BufferAdd (CDBuffer* self, CDPointer data, size_t length)
 }
 
 void
+CD_BufferAddFormat (CDBuffer* self, const char* format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+
+    while (*format != '\0') {
+        switch (*format) {
+            case 'b': CD_BufferAddByte(self,    va_arg(ap, int));  break;
+            case 's': CD_BufferAddShort(self,   va_arg(ap, int));  break;
+            case 'i': CD_BufferAddInteger(self, va_arg(ap, int));  break;
+            case 'l': CD_BufferAddLong(self,    va_arg(ap, long)); break;
+
+            case 'f': CD_BufferAddFloat(self,  va_arg(ap, double)); break;
+            case 'd': CD_BufferAddDouble(self, va_arg(ap, double)); break;
+
+            case 'B': CD_BufferAddBoolean(self, va_arg(ap, int));       break;
+            case 'S': CD_BufferAddString(self,  va_arg(ap, CDString*)); break;
+        }
+
+        format++;
+    }
+
+    va_end(ap);
+}
+
+void
 CD_BufferAddBuffer (CDBuffer* self, CDBuffer* data)
 {
     CDPointer stuff = CD_BufferContent(data);
@@ -101,12 +128,6 @@ CD_BufferAddBuffer (CDBuffer* self, CDBuffer* data)
     evbuffer_add(self->raw, (void*) stuff, CD_BufferLength(data));
 
     CD_free((void*) stuff);
-}
-
-void
-CD_BufferAddBoolean (CDBuffer* self, MCBoolean data)
-{
-    evbuffer_add(self->raw, &data, MCBooleanSize);
 }
 
 void
@@ -156,6 +177,12 @@ CD_BufferAddDouble (CDBuffer* self, MCDouble data)
 }
 
 void
+CD_BufferAddBoolean (CDBuffer* self, MCBoolean data)
+{
+    evbuffer_add(self->raw, &data, MCBooleanSize);
+}
+
+void
 CD_BufferAddString (CDBuffer* self, CDString* data)
 {
     MCShort size = htons(CD_StringSize(data));
@@ -173,6 +200,36 @@ CD_BufferRemove (CDBuffer* self, size_t length)
 
     return result;
 }
+
+void
+CD_BufferRemoveFormat (CDBuffer* self, const char* format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+
+    while (*format != '\0') {
+        CDPointer pointer = va_arg(ap, CDPointer);
+
+        switch (*format) {
+            case 'b': *((MCByte*) pointer)    = CD_BufferRemoveByte(self);    break;
+            case 's': *((MCShort*) pointer)   = CD_BufferRemoveShort(self);   break;
+            case 'i': *((MCInteger*) pointer) = CD_BufferRemoveInteger(self); break;
+            case 'l': *((MCLong*) pointer)    = CD_BufferRemoveLong(self);    break;
+
+            case 'f': *((MCFloat*)  pointer) = CD_BufferRemoveFloat(self);  break;
+            case 'd': *((MCDouble*) pointer) = CD_BufferRemoveDouble(self); break;
+
+            case 'B': *((MCBoolean*) pointer) = CD_BufferRemoveBoolean(self); break;
+            case 'S': *((MCString*) pointer)  = CD_BufferRemoveString(self);  break;
+        }
+
+        format++;
+    }
+
+    va_end(ap);
+}
+
 
 CDBuffer*
 CD_BufferRemoveBuffer (CDBuffer* self)

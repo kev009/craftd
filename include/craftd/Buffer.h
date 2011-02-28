@@ -66,9 +66,26 @@ int CD_BufferDrain (CDBuffer* self, size_t length);
 
 void CD_BufferAdd (CDBuffer* self, CDPointer data, size_t length);
 
-void CD_BufferAddBuffer (CDBuffer* self, CDBuffer* data);
+/**
+ * Add data to a buffer with data from the given format.
+ *
+ * Format types:
+ *     b: MCByte
+ *     s: MCShort
+ *     i: MCInteger
+ *     l: MCLong
+ *
+ *     f: MCFloat
+ *     d: MCDouble
+ *
+ *     B: MCBoolean
+ *     S: MCString
+ *
+ * @param format The format string
+ */
+void CD_BufferAddFormat (CDBuffer* self, const char* format, ...);
 
-void CD_BufferAddBoolean (CDBuffer* self, MCBoolean data);
+void CD_BufferAddBuffer (CDBuffer* self, CDBuffer* data);
 
 void CD_BufferAddByte (CDBuffer* self, MCByte data);
 
@@ -82,13 +99,32 @@ void CD_BufferAddFloat (CDBuffer* self, MCFloat data);
 
 void CD_BufferAddDouble (CDBuffer* self, MCDouble data);
 
+void CD_BufferAddBoolean (CDBuffer* self, MCBoolean data);
+
 void CD_BufferAddString (CDBuffer* self, MCString data);
 
 CDPointer CD_BufferRemove (CDBuffer* self, size_t length);
 
-CDBuffer* CD_BufferRemoveBuffer (CDBuffer* self);
+/**
+ * Remove data from a buffer with data from the given format.
+ *
+ * Format types:
+ *     b: MCByte
+ *     s: MCShort
+ *     i: MCInteger
+ *     l: MCLong
+ *
+ *     f: MCFloat
+ *     d: MCDouble
+ *
+ *     B: MCBoolean
+ *     S: MCString
+ *
+ * @param format The format string
+ */
+void CD_BufferRemoveFormat (CDBuffer* self, const char* format, ...);
 
-MCBoolean CD_BufferRemoveBoolean (CDBuffer* self);
+CDBuffer* CD_BufferRemoveBuffer (CDBuffer* self);
 
 MCByte CD_BufferRemoveByte (CDBuffer* self);
 
@@ -101,6 +137,8 @@ MCLong CD_BufferRemoveLong (CDBuffer* self);
 MCFloat CD_BufferRemoveFloat (CDBuffer* self);
 
 MCDouble CD_BufferRemoveDouble (CDBuffer* self);
+
+MCBoolean CD_BufferRemoveBoolean (CDBuffer* self);
 
 MCString CD_BufferRemoveString (CDBuffer* self);
 

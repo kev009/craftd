@@ -177,11 +177,13 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDLogin: {
             CDPacketLogin* packet = (CDPacketLogin*) CD_malloc(sizeof(CDPacketLogin));
 
-            packet->request.version   = CD_BufferRemoveInteger(input);
-            packet->request.username  = CD_BufferRemoveString(input);
-            packet->request.password  = CD_BufferRemoveString(input);
-            packet->request.mapSeed   = CD_BufferRemoveLong(input);
-            packet->request.dimension = CD_BufferRemoveByte(input);
+            CD_BufferRemoveFormat(input, "iSSlb",
+                &packet->request.version,
+                &packet->request.username,
+                &packet->request.password,
+                &packet->request.mapSeed,
+                &packet->request.dimension
+            );
 
             return (CDPointer) packet;
         }
@@ -189,7 +191,9 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDHandshake: {
             CDPacketHandshake* packet = (CDPacketHandshake*) CD_malloc(sizeof(CDPacketHandshake));
 
-            packet->request.username = CD_BufferRemoveString(input);
+            CD_BufferRemoveFormat(input, "S",
+                &packet->request.username
+            );
 
             return (CDPointer) packet;
         }
@@ -197,7 +201,9 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDChat: {
             CDPacketChat* packet = (CDPacketChat*) CD_malloc(sizeof(CDPacketChat));
 
-            packet->request.message = CD_BufferRemoveString(input);
+            CD_BufferRemoveFormat(input, "S",
+                &packet->request.message
+            );
 
             return (CDPointer) packet;
         }
@@ -205,9 +211,11 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDUseEntity: {
             CDPacketUseEntity* packet = (CDPacketUseEntity*) CD_malloc(sizeof(CDPacketUseEntity));
 
-            packet->request.user      = CD_BufferRemoveInteger(input);
-            packet->request.target    = CD_BufferRemoveInteger(input);
-            packet->request.leftClick = CD_BufferRemoveByte(input);
+            CD_BufferRemoveFormat(input, "iib",
+                &packet->request.user,
+                &packet->request.target,
+                &packet->request.leftClick
+            );
 
             return (CDPointer) packet;
         }
@@ -219,7 +227,9 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDOnGround: {
             CDPacketOnGround* packet = (CDPacketOnGround*) CD_malloc(sizeof(CDPacketOnGround));
 
-            packet->request.onGround = CD_BufferRemoveBoolean(input);
+            CD_BufferRemoveFormat(input, "B",
+                &packet->request.onGround
+            );
 
             return (CDPointer) packet;
         }
@@ -227,11 +237,13 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDPlayerPosition: {
             CDPacketPlayerPosition* packet = (CDPacketPlayerPosition*) CD_malloc(sizeof(CDPacketPlayerPosition));
 
-            packet->request.position.x  = CD_BufferRemoveDouble(input);
-            packet->request.position.y  = CD_BufferRemoveDouble(input);
-            packet->request.stance      = CD_BufferRemoveDouble(input);
-            packet->request.position.z  = CD_BufferRemoveDouble(input);
-            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+            CD_BufferRemoveFormat(input, "ddddb",
+                &packet->request.position.x,
+                &packet->request.position.y,
+                &packet->request.stance,
+                &packet->request.position.z,
+                &packet->request.is.onGround
+            );
 
             return (CDPointer) packet;
         }
@@ -239,9 +251,11 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDPlayerLook: {
             CDPacketPlayerLook* packet = (CDPacketPlayerLook*) CD_malloc(sizeof(CDPacketPlayerLook));
 
-            packet->request.yaw         = CD_BufferRemoveFloat(input);
-            packet->request.pitch       = CD_BufferRemoveFloat(input);
-            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+            CD_BufferRemoveFormat(input, "ffb",
+                &packet->request.yaw,
+                &packet->request.pitch,
+                &packet->request.is.onGround
+            );
 
             return (CDPointer) packet;
         }
@@ -249,13 +263,15 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDPlayerMoveLook: {
             CDPacketPlayerMoveLook* packet = (CDPacketPlayerMoveLook*) CD_malloc(sizeof(CDPacketPlayerMoveLook));
 
-            packet->request.position.x  = CD_BufferRemoveDouble(input);
-            packet->request.stance      = CD_BufferRemoveDouble(input);
-            packet->request.position.y  = CD_BufferRemoveDouble(input);
-            packet->request.position.z  = CD_BufferRemoveDouble(input);
-            packet->request.yaw         = CD_BufferRemoveFloat(input);
-            packet->request.pitch       = CD_BufferRemoveFloat(input);
-            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+            CD_BufferRemoveFormat(input, "ddddffb",
+                &packet->request.position.x,
+                &packet->request.stance,
+                &packet->request.position.y,
+                &packet->request.position.z,
+                &packet->request.yaw,
+                &packet->request.pitch,
+                &packet->request.is.onGround
+            );
 
             return (CDPointer) packet;
         }
@@ -284,23 +300,29 @@ CD_PacketToBuffer (CDPacket* self)
                 case CDLogin: {
                     CDPacketLogin* packet = (CDPacketLogin*) self->data;
 
-                    CD_BufferAddInteger(data, packet->response.id);
-                    CD_BufferAddString(data, packet->response.serverName);
-                    CD_BufferAddString(data, packet->response.motd);
-                    CD_BufferAddLong(data, packet->response.mapSeed);
-                    CD_BufferAddByte(data, packet->response.dimension);
+                    CD_BufferAddFormat(data, "iSSlb",
+                        packet->response.id,
+                        packet->response.serverName,
+                        packet->response.motd,
+                        packet->response.mapSeed,
+                        packet->response.dimension
+                    );
                 } break;
 
                 case CDHandshake: {
                     CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
 
-                    CD_BufferAddString(data, packet->response.hash);
+                    CD_BufferAddFormat(data, "S",
+                        packet->response.hash
+                    );
                 } break;
 
                 case CDChat: {
                     CDPacketChat* packet = (CDPacketChat*) self->data;
 
-                    CD_BufferAddString(data, packet->response.message);
+                    CD_BufferAddFormat(data, "S",
+                        packet->response.message
+                    );
                 } break;
             }
         } break;
