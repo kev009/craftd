@@ -135,7 +135,7 @@ CD_RunWorker (CDWorker* self)
                         goto PLAYER_JOB_ERROR;
                     }
 
-                    packet = CD_PacketFromEvent(player->buffer);
+                    packet = CD_PacketFromBuffer(player->buffers->input);
 
                     if (packet == NULL) {
                         if (errno == EAGAIN) {
@@ -147,13 +147,13 @@ CD_RunWorker (CDWorker* self)
 
                     SDEBUG(self->server, "received packet 0x%.2X from %s", packet->type, player->ip);
 
-                    packet = CD_HashSet(PRIVATE(player), "packet", packet);
+                    packet = (CDPacket*) CD_HashSet(PRIVATE(player), "packet", (CDPointer) packet);
 
                     if (packet) {
                         CD_DestroyPacket(packet);
                     }
 
-                    if (evbuffer_get_length(bufferevent_get_input(player->buffer)) > 0) {
+                    if (CD_BufferLength(player->buffers->input) > 0) {
                         player->pending = true;
 
                         CD_AddJob(self->workers, self->job);
@@ -211,9 +211,9 @@ CD_RunWorker (CDWorker* self)
                         CDPacketChat pkt;
                         pkt.response.message = self->job->data;
 
-                        CDPacket response = { CDResponse, CDChat, &pkt };
+                        CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
 
-                        CD_PlayerSendPacket(CD_HashIteratorValue(self->server->players, it), &response);
+                        CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->server->players, it), &response);
 
                         CD_DestroyString(self->job->data);
                     }

@@ -23,73 +23,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#ifndef CRAFTD_BUFFERS_H
+#define CRAFTD_BUFFERS_H
 
 #include <craftd/common.h>
-#include <craftd/Packet.h>
 
-struct _CDServer;
+typedef struct bufferevent* CDRawBuffers;
 
-typedef enum _CDPlayerStatus {
-    CDPlayerIdle,
-    CDPlayerInput,
-    CDPlayerProcess
-} CDPlayerStatus;
+typedef struct _CDBuffers {
+    CDRawBuffers raw;
 
-/**
- * The Player class.
- */
-typedef struct _CDPlayer {
-    MCEntity entity;
+    CDBuffer* input;
+    CDBuffer* output;
 
-    struct _CDServer* server;
+    bool external;
+} CDBuffers;
 
-    CDString* username;
-    char      ip[128];
+CDBuffers* CD_CreateBuffers (void);
 
-    evutil_socket_t     socket;
+CDBuffers* CD_WrapBuffers (CDRawBuffers buffers);
 
-    CDBuffers* buffers;
-
-    CDHash* _private;
-
-    CDPlayerStatus status;
-
-    bool pending;
-
-    struct {
-        pthread_rwlock_t status;
-        pthread_rwlock_t pending;
-    } lock;
-} CDPlayer;
-
-/**
- * Create a Player object on the given Server.
- *
- * @param server The Server the Player will play on
- *
- * @return The instantiated Player object
- */
-CDPlayer* CD_CreatePlayer (struct _CDServer* server);
-
-/**
- * Destroy a Player object
- */
-void CD_DestroyPlayer (CDPlayer* self);
-
-/**
- * Send a Packet to a Player
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a raw String to a Player
- *
- * @param data The raw String to send
- */
-void CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* data);
+void CD_DestroyBuffers (CDBuffers* self);
 
 #endif

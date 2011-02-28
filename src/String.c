@@ -25,7 +25,66 @@
 
 #include <craftd/memory.h>
 
+#define CRAFTD_STRING_IGNORE_EXTERN
 #include <craftd/String.h>
+#undef CRAFTD_STRING_IGNORE_EXTERN
+
+const char* MCCharset =
+    "#$%&\"()*+,-./:;<=>?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
+
+static
+size_t
+cd_UTF8_nextCharLength (char data)
+{
+    if ((data & 0x80) == 0x00) {
+        return 1;
+    }
+    else if ((data & 0xE0) == 0xC0) {
+        return 2;
+    }
+    else if ((data & 0xF0) == 0xE0) {
+        return 3;
+    }
+    else if ((data & 0xF8) == 0xF0) {
+        return 4;
+    }
+    else {
+        return 0;
+    }
+}
+
+static
+size_t
+cd_UTF8_strlen (const char* data)
+{
+    size_t result  = 0;
+    size_t i       = 0;
+
+    while (data[i] != '\0') {
+        i += cd_UTF8_nextCharLength(data[i]);
+        result++;
+    }
+
+    return result;
+}
+
+static
+size_t
+cd_UTF8_offset (const char* data, size_t offset)
+{
+    size_t result = 0;
+    size_t i;
+
+    for (i = 0; i < offset; i++) {
+        result += cd_UTF8_nextCharLength(data[result]);
+    }
+
+    return result;
+}
 
 CDString*
 CD_CreateString (void)
@@ -37,6 +96,7 @@ CD_CreateString (void)
     }
 
     self->raw      = bfromcstr("");
+    self->length   = 0;
     self->external = false;
 
     return self;
@@ -44,6 +104,23 @@ CD_CreateString (void)
 
 CDString*
 CD_CreateStringFromCString (const char* string)
+{
+    CDString* self = CD_CreateString();
+
+    if (!self) {
+        return NULL;
+    }
+
+    self->raw->data = (unsigned char*) string;
+    self->raw->slen = strlen(string);
+
+    self->external = true;
+
+    return self;
+}
+
+CDString*
+CD_CreateStringFromCStringCopy (const char* string)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
@@ -66,7 +143,7 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
     self->external = true;
 
     self->raw->slen = length;
-    self->raw->data = buffer;
+    self->raw->data = (unsigned char*) buffer;
 
     return self;
 }
@@ -106,6 +183,24 @@ CD_CreateStringFromFormatList (const char* format, va_list ap)
 }
 
 CDString*
+CD_CreateStringFromOffset (CDString* self, int offset, int limit)
+{
+    unsigned char* data;
+
+    if (offset >= 0 && ((unsigned) offset) > self->length) {
+        return NULL;
+    }
+
+    data = self->raw->data;
+
+    if (offset >= 0) {
+        data += cd_UTF8_offset((const char*) self->raw->data, offset);
+    }
+
+    return CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
+}
+
+CDString*
 CD_CloneString (CDString* self)
 {
     CDString* cloned = CD_CreateString();
@@ -138,6 +233,12 @@ CD_DestroyStringKeepData (CDString* self)
     return result;
 }
 
+CDString*
+CD_CharAt (CDString* self, size_t index)
+{
+    return CD_CreateStringFromOffset(self, index, 1);
+}
+
 const char*
 CD_StringContent (CDString* self)
 {
@@ -145,7 +246,7 @@ CD_StringContent (CDString* self)
         return NULL;
     }
     else {
-        return self->raw->data;
+        return (const char*) self->raw->data;
     }
 }
 
@@ -153,9 +254,54 @@ const size_t
 CD_StringLength (CDString* self)
 {
     if (!self) {
-        return NULL;
+        return 0;
+    }
+    else {
+        return self->length;
+    }
+}
+
+const size_t
+CD_StringSize (CDString* self)
+{
+    if (!self) {
+        return 0;
     }
     else {
         return self->raw->slen;
     }
+}
+
+bool
+CD_StringEmpty (CDString* self)
+{
+    return (self == NULL || self->raw == NULL || CD_StringLength(self) == 0);
+}
+
+bool
+CD_StringBlank (CDString* self)
+{
+    size_t i;
+
+    for (i = 0; i < self->raw->slen; i++) {
+        if (!isspace(self->raw->data[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// TODO: itself
+bool
+CD_StringStartWith (CDString* self, const char* check)
+{
+    return false;
+}
+
+// TODO: itself
+bool
+CD_StringEndWith (CDString* self, const char* check)
+{
+    return false;
 }

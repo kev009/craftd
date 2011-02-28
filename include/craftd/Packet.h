@@ -89,11 +89,11 @@ typedef enum _CDPacketType {
 typedef struct _CDPacket {
     CDPacketChain chain;
     CDPacketType  type;
-    void*         data;
+    CDPointer     data;
 } CDPacket;
 
 typedef union _CDPacketKeepAlive {
-    // Empty packet
+    char noDataYet;
 } CDPacketKeepAlive;
 
 typedef union _CDPacketLogin {
@@ -108,7 +108,13 @@ typedef union _CDPacketLogin {
     } request;
 
     struct {
+        MCInteger id;
 
+        MCString serverName;
+        MCString motd;
+
+        MCLong mapSeed;
+        MCByte dimension;
     } response;
 } CDPacketLogin;
 
@@ -144,14 +150,18 @@ typedef struct _CDPacketEntityEquipment {
     MCShort   damage; // Still not sure about it
 } MCEntityEquipment;
 
-typedef struct _CDPacketSpawnPosition {
-    MCPosition position;
+typedef union _CDPacketSpawnPosition {
+    struct {
+        MCPosition position;
+    } response;
 } CDPacketSpawnPosition;
 
-typedef struct _CDPacketUseEntity {
-    MCInteger user;
-    MCInteger target;
-    MCBoolean leftClick;
+typedef union _CDPacketUseEntity {
+    struct {
+        MCInteger user;
+        MCInteger target;
+        MCBoolean leftClick;
+    } request;
 } CDPacketUseEntity;
 
 typedef struct _CDPacketUpdateHealth {
@@ -159,33 +169,63 @@ typedef struct _CDPacketUpdateHealth {
 } CDPacketUpdateHealth;
 
 typedef struct _CDPacketRespawn {
-    // This packet has no data
+    char noDataYet;
 } CDPacketRespawn;
 
-typedef struct _CDPacketOnGround {
-    MCBoolean onGround;
+typedef union _CDPacketOnGround {
+    struct {
+        MCBoolean onGround;
+    } request;
 } CDPacketOnGround;
 
-typedef struct _CDPacketPlayerPosition {
-    MCPrecisePosition position;
+typedef union _CDPacketPlayerPosition {
+    struct {
+        MCPrecisePosition position;
 
-    MCDouble stance;
+        MCDouble stance;
 
-    CDPacketOnGround is;
+        struct {
+            MCBoolean onGround
+        } is;
+    } request;
 } CDPacketPlayerPosition;
 
-typedef struct _CDPacketPlayerLook {
-    MCFloat yaw;
-    MCFloat pitch;
+typedef union _CDPacketPlayerLook {
+    struct {
+        MCFloat yaw;
+        MCFloat pitch;
 
-    CDPacketOnGround is;
+        struct {
+            MCBoolean onGround
+        } is;
+    } request;
 } CDPacketPlayerLook;
 
-typedef struct _CDPacketPlayerMoveLook {
-    CDPacketPlayerPosition position;
-    CDPacketPlayerLook     look;
+typedef union _CDPacketPlayerMoveLook {
+    struct {
+        MCPrecisePosition position;
 
-    CDPacketOnGround is;
+        MCDouble stance;
+        MCFloat yaw;
+        MCFloat pitch;
+
+
+        struct {
+            MCBoolean onGround
+        } is;
+    } request;
+
+    struct {
+        MCPrecisePosition position;
+
+        MCDouble stance;
+        MCFloat yaw;
+        MCFloat pitch;
+
+        struct {
+            MCBoolean onGround
+        } is;
+    } response;
 } CDPacketPlayerMoveLook;
 
 typedef struct _CDPacketDigging {
@@ -545,13 +585,13 @@ typedef union _CDPacketDisconnect {
 } CDPacketDisconnect;
 
 /**
- * Create a Packet from an event buffer
+ * Create a Packet from a Buffer
  *
- * @param event The event buffer to read from
+ * @param input The Buffer to read from
  *
  * @return The instantiated Packet object
  */
-CDPacket* CD_PacketFromEvent (struct bufferevent* event);
+CDPacket* CD_PacketFromBuffer (CDBuffer* input);
 
 /**
  * Destroy a Packet object
@@ -563,17 +603,17 @@ void CD_DestroyPacket (CDPacket* self);
  *
  * This is used internally by CD_PacketFromEvent but can be used in other situations.
  *
- * @param event The bufferevent where the input lays
+ * @param input The Buffer where the input lays
  *
- * @return The instantiated Object cast to (void*)
+ * @return The instantiated Object cast to (CDPointer)
  */
-void* CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* event);
+CDPointer CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input);
 
 /**
- * Generate a String version of the packet to send through the net
+ * Generate a Buffer version of the packet to send through the net
  *
  * @return The raw packet data
  */
-CDString* CD_PacketToString (CDPacket* self);
+CDBuffer* CD_PacketToBuffer (CDPacket* self);
 
 #endif

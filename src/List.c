@@ -53,10 +53,10 @@ CD_CloneList (CDList* self)
     return cloned;
 }
 
-void**
+CDPointer*
 CD_DestroyList (CDList* self)
 {
-    void** result = CD_ListClear(self);
+    CDPointer* result = CD_ListClear(self);
 
     kl_destroy(cdList, self->list);
 
@@ -110,14 +110,14 @@ CD_ListLength (CDList* self)
     return result;
 }
 
-void*
+CDPointer
 CD_ListIteratorValue (CDListIterator iterator)
 {
     return kl_val(iterator);
 }
 
 CDList*
-CD_ListPush (CDList* self, void* data)
+CD_ListPush (CDList* self, CDPointer data)
 {
     pthread_rwlock_wrlock(&self->lock);
     *kl_pushp(cdList, self->list) = data;
@@ -126,10 +126,10 @@ CD_ListPush (CDList* self, void* data)
     return self;
 }
 
-void*
+CDPointer
 CD_ListShift (CDList* self)
 {
-    void* result = NULL;
+    CDPointer result = (CDPointer) NULL;
 
     pthread_rwlock_wrlock(&self->lock);
     kl_shift(cdList, self->list, &result);
@@ -138,10 +138,10 @@ CD_ListShift (CDList* self)
     return result;
 }
 
-void*
+CDPointer
 CD_ListFirst (CDList* self)
 {
-    void* result = NULL;
+    CDPointer result = (CDPointer) NULL;
 
     pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->list));
@@ -150,10 +150,10 @@ CD_ListFirst (CDList* self)
     return result;
 }
 
-void*
+CDPointer
 CD_ListLast (CDList* self)
 {
-    void* result = NULL;
+    CDPointer result = (CDPointer) NULL;
 
     pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->list));
@@ -163,10 +163,10 @@ CD_ListLast (CDList* self)
 }
 
 // FIXME: This looks like it can go wrong, maybe set wrlock and use backend stuff
-void*
-CD_ListDelete (CDList* self, void* data)
+CDPointer
+CD_ListDelete (CDList* self, CDPointer data)
 {
-    void*          result = NULL;
+    CDPointer      result = (CDPointer) NULL;
     CDListIterator it;
     CDListIterator del;
 
@@ -184,10 +184,10 @@ CD_ListDelete (CDList* self, void* data)
 }
 
 // FIXME: same as above
-void*
-CD_ListDeleteAll (CDList* self, void* data)
+CDPointer
+CD_ListDeleteAll (CDList* self, CDPointer data)
 {
-    void*          result = NULL;
+    CDPointer      result = (CDPointer) NULL;
     CDListIterator it;
     CDListIterator del;
 
@@ -203,20 +203,20 @@ CD_ListDeleteAll (CDList* self, void* data)
 }
 
 // FIXME: same as above
-void**
+CDPointer*
 CD_ListClear (CDList* self)
 {
-    void** result = CD_malloc(sizeof(void*));
-    size_t i      = 0;
+    CDPointer* result = (CDPointer*) CD_malloc(sizeof(CDPointer));
+    size_t     i      = 0;
 
     while (CD_ListLength(self) > 0) {
         i++;
 
-        result        = CD_realloc(result, sizeof(void*) * (i + 1));
-        result[i - 1] = CD_ListDeleteAll(self, CD_ListBegin(self));
+        result        = (CDPointer*) CD_realloc(result, sizeof(CDPointer) * (i + 1));
+        result[i - 1] = CD_ListDeleteAll(self, CD_ListFirst(self));
     }
 
-    result[i] = NULL;
+    result[i] = (CDPointer) NULL;
 
     return result;
 }

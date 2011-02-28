@@ -151,10 +151,10 @@ CD_HashIteratorKey (CDHash* self, CDHashIterator iterator)
     return result;
 }
 
-void*
+CDPointer
 CD_HashIteratorValue (CDHash* self, CDHashIterator iterator)
 {
-    void* result = NULL;
+    CDPointer result = (CDPointer) NULL;
 
     pthread_rwlock_rdlock(&self->lock);
     result = kh_value(self->hash, iterator);
@@ -175,11 +175,11 @@ CD_HashIteratorValid (CDHash* self, CDHashIterator iterator)
     return result;
 }
 
-void*
+CDPointer
 CD_HashGet (CDHash* self, const char* name)
 {
-    void*    result = NULL;
-    khiter_t it;
+    CDPointer result = (CDPointer) NULL;
+    khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
     it = kh_get(cdHash, self->hash, name);
@@ -192,12 +192,12 @@ CD_HashGet (CDHash* self, const char* name)
     return result;
 }
 
-void*
-CD_HashSet (CDHash* self, const char* name, void* data)
+CDPointer
+CD_HashSet (CDHash* self, const char* name, CDPointer data)
 {
-    void*    old = NULL;
-    khiter_t it;
-    int      ret;
+    CDPointer old = (CDPointer) NULL;
+    khiter_t  it;
+    int       ret;
 
     pthread_rwlock_wrlock(&self->lock);
     it = kh_get(cdHash, self->hash, name);
@@ -215,11 +215,11 @@ CD_HashSet (CDHash* self, const char* name, void* data)
     return old;
 }
 
-void*
+CDPointer
 CD_HashDelete (CDHash* self, const char* name)
 {
-    void*    old = NULL;
-    khiter_t it;
+    CDPointer old = (CDPointer) NULL;
+    khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
     it = kh_get(cdHash, self->hash, name);
@@ -234,24 +234,24 @@ CD_HashDelete (CDHash* self, const char* name)
     return old;
 }
 
-void*
+CDPointer
 CD_HashFirst (CDHash* self)
 {
     return CD_HashIteratorValue(self, CD_HashBegin(self));
 }
 
-void*
+CDPointer
 CD_HashLast (CDHash* self)
 {
     return CD_HashIteratorValue(self, CD_HashPrevious(self, CD_HashEnd(self)));
 }
 
-void**
+CDPointer*
 CD_HashClear (CDHash* self)
 {
-    void**   result = NULL;
-    size_t   i      = 0;
-    khiter_t it;
+    CDPointer* result = NULL;
+    size_t     i      = 0;
+    khiter_t   it;
 
     pthread_rwlock_wrlock(&self->lock);
 
@@ -259,12 +259,12 @@ CD_HashClear (CDHash* self)
         if (kh_exist(self->hash, it)) {
             i++;
 
-            result        = CD_realloc(result, sizeof(void*) * (i + 1));
+            result        = CD_realloc(result, sizeof(CDPointer) * (i + 1));
             result[i - 1] = kh_value(self->hash, it);
         }
     }
 
-    result[i] = NULL;
+    result[i] = (CDPointer) NULL;
 
     kh_clear(cdHash, self->hash);
     pthread_rwlock_unlock(&self->lock);

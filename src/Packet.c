@@ -23,15 +23,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <craftd/Logger.h>
 #include <craftd/Packet.h>
 
 CDPacket*
-CD_PacketFromEvent (struct bufferevent* event)
+CD_PacketFromBuffer (CDBuffer* input)
 {
-    struct evbuffer* input  = bufferevent_get_input(event);
-    size_t           length = evbuffer_get_length(input);
-
-    if (length <= 1) {
+    if (CD_BufferLength(input) <= 1) {
         errno = EAGAIN;
 
         return NULL;
@@ -44,10 +42,8 @@ CD_PacketFromEvent (struct bufferevent* event)
     }
 
     self->chain = CDRequest;
-    self->type  = 0;
-
-    evbuffer_remove(input, (MCByte*) &self->type, 1);
-    self->data = CD_GetPacketDataFromEvent(self, event);
+    self->type  = CD_BufferRemoveByte(input);
+    self->data  = CD_GetPacketDataFromBuffer(self, input);
 
     return self;
 }
@@ -64,196 +60,218 @@ CD_DestroyPacket (CDPacket* self)
         case CDRequest: {
             switch (self->type) {
                 case CDLogin: {
-                    MC_DestroyString(((CDPacketLogin*) self->data)->request.username);
-                    MC_DestroyString(((CDPacketLogin*) self->data)->request.password);
+                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+
+                    MC_DestroyString(packet->request.username);
+                    MC_DestroyString(packet->request.password);
                 } break;
 
                 case CDHandshake: {
-                    MC_DestroyString(((CDPacketHandshake*) self->data)->request.username);
+                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
+
+                    MC_DestroyString(packet->request.username);
                 } break;
 
                 case CDChat: {
-                    MC_DestroyString(((CDPacketChat*) self->data)->request.message);
+                    CDPacketChat* packet = (CDPacketChat*) self->data;
+
+                    MC_DestroyString(packet->request.message);
                 } break;
 
                 case CDEntityMetadata: {
-                    MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->request.metadata);
+                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+
+                    MC_DestroyMetadata(packet->request.metadata);
                 } break;
 
                 case CDUpdateSign: {
-                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.first);
-                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.second);
-                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.third);
-                    MC_DestroyString(((CDPacketUpdateSign*) self->data)->request.fourth);
-                } break;
+                    CDPacketUpdateSign* packet = (CDPacketUpdateSign*) self->data;
 
-                default: {
-                    // wut
-                }
+                    MC_DestroyString(packet->request.first);
+                    MC_DestroyString(packet->request.second);
+                    MC_DestroyString(packet->request.third);
+                    MC_DestroyString(packet->request.fourth);
+                } break;
             }
         } break;
 
         case CDResponse: {
             switch (self->type) {
                 case CDNamedEntitySpawn: {
-                    MC_DestroyString(((CDPacketNamedEntitySpawn*) self->data)->response.name);
+                    CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
+
+                    MC_DestroyString(packet->response.name);
                 } break;
 
                 case CDSpawnMob: {
-                    MC_DestroyMetadata(((CDPacketSpawnMob*) self->data)->response.metadata);
+                    CDPacketSpawnMob* packet = (CDPacketSpawnMob*) self->data;
+
+                    MC_DestroyMetadata(packet->response.metadata);
                 } break;
 
                 case CDPainting: {
-                    MC_DestroyString(((CDPacketPainting*) self->data)->response.title);
+                    CDPacketPainting* packet = (CDPacketPainting*) self->data;
+
+                    MC_DestroyString(packet->response.title);
                 } break;
 
                 case CDEntityMetadata: {
-                    MC_DestroyMetadata(((CDPacketEntityMetadata*) self->data)->response.metadata);
+                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+
+                    MC_DestroyMetadata(packet->response.metadata);
                 } break;
 
                 case CDMapChunk: {
-                    CD_free(((CDPacketMapChunk*) self->data)->response.item);
+                    CDPacketMapChunk* packet = (CDPacketMapChunk*) self->data;
+
+                    CD_free(packet->response.item);
                 } break;
 
                 case CDMultiBlockChange: {
-                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.coordinate);
-                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.type);
-                    CD_free(((CDPacketMultiBlockChange*) self->data)->response.metadata);
+                    CDPacketMultiBlockChange* packet = (CDPacketMultiBlockChange*) self->data;
+
+                    CD_free(packet->response.coordinate);
+                    CD_free(packet->response.type);
+                    CD_free(packet->response.metadata);
                 } break;
 
                 case CDExplosion: {
-                    CD_free(((CDPacketExplosion*) self->data)->response.item);
+                    CDPacketExplosion* packet = (CDPacketExplosion*) self->data;
+
+                    CD_free(packet->response.item);
                 } break;
 
                 case CDOpenWindow: {
-                    MC_DestroyString(((CDPacketOpenWindow*) self->data)->response.title);
+                    CDPacketOpenWindow* packet = (CDPacketOpenWindow*) self->data;
+
+                    MC_DestroyString(packet->response.title);
                 } break;
 
                 case CDWindowItems: {
-                    CD_free(((CDPacketWindowItems*) self->data)->response.item);
+                    CDPacketWindowItems* packet = (CDPacketWindowItems*) self->data;
+
+                    CD_free(packet->response.item);
                 } break;
 
                 case CDDisconnect: {
-                    MC_DestroyString(((CDPacketDisconnect*) self->data)->response.reason);
-                } break;
+                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
 
-                default: {
-                    // wut
-                }
+                    MC_DestroyString(packet->response.reason);
+                } break;
             }
         } break;
     }
 
-    CD_free(self->data);
+    CD_free((void*) self->data);
     CD_free(self);
 }
 
-static
-MCByte
-cd_GetMCByteFromBuffer (struct evbuffer* input)
+CDPointer
+CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
 {
-    MCByte result = 0;
-
-    evbuffer_remove(input, &result, MCByteSize);
-
-    return result;
-}
-
-static
-MCShort
-cd_GetMCShortFromBuffer (struct evbuffer* input)
-{
-    MCShort result = 0;
-
-    evbuffer_remove(input, &result, MCShortSize);
-
-    return ntohs(result);
-}
-
-static
-MCInteger
-cd_GetMCIntegerFromBuffer (struct evbuffer* input)
-{
-    MCInteger result = 0;
-
-    evbuffer_remove(input, &result, MCIntegerSize);
-
-    return ntohl(result);
-}
-
-static
-MCLong
-cd_GetMCLongFromBuffer (struct evbuffer* input)
-{
-    MCLong result = 0;
-
-    evbuffer_remove(input, &result, MCLongSize);
-
-    return ntohll(result);
-}
-
-static
-MCString
-cd_GetMCStringFromBuffer (struct evbuffer* input)
-{
-    char*   data   = NULL;
-    MCShort length = 0;
-
-    evbuffer_remove(input, &length, MCShortSize);
-
-    length = ntohs(length);
-    data   = CD_malloc(length + 1);
-
-    evbuffer_remove(input, data, length);
-
-    data[length] = '\0';
-
-    return CD_CreateStringFromBuffer(data, length + 1);
-}
-
-void*
-CD_GetPacketDataFromEvent (CDPacket* self, struct bufferevent* buffer)
-{
-    struct evbuffer* input = bufferevent_get_input(buffer);
-
     switch (self->type) {
         case CDKeepAlive: {
-            return CD_malloc(sizeof(CDPacketKeepAlive));
+            return (CDPointer) CD_malloc(sizeof(CDPacketKeepAlive));
         }
 
         case CDLogin: {
-            CDPacketLogin* packet = CD_malloc(sizeof(CDPacketLogin));
+            CDPacketLogin* packet = (CDPacketLogin*) CD_malloc(sizeof(CDPacketLogin));
 
-            packet->request.version   = cd_GetMCIntegerFromBuffer(input);
-            packet->request.username  = cd_GetMCStringFromBuffer(input);
-            packet->request.password  = cd_GetMCStringFromBuffer(input);
-            packet->request.mapSeed   = cd_GetMCLongFromBuffer(input);
-            packet->request.dimension = cd_GetMCByteFromBuffer(input);
+            packet->request.version   = CD_BufferRemoveInteger(input);
+            packet->request.username  = CD_BufferRemoveString(input);
+            packet->request.password  = CD_BufferRemoveString(input);
+            packet->request.mapSeed   = CD_BufferRemoveLong(input);
+            packet->request.dimension = CD_BufferRemoveByte(input);
 
-            return packet;
+            return (CDPointer) packet;
         }
 
         case CDHandshake: {
-            CDPacketHandshake* packet = CD_malloc(sizeof(CDPacketHandshake));
+            CDPacketHandshake* packet = (CDPacketHandshake*) CD_malloc(sizeof(CDPacketHandshake));
 
-            packet->request.username = cd_GetMCStringFromBuffer(input);
+            packet->request.username = CD_BufferRemoveString(input);
 
-            return packet;
+            return (CDPointer) packet;
+        }
+
+        case CDChat: {
+            CDPacketChat* packet = (CDPacketChat*) CD_malloc(sizeof(CDPacketChat));
+
+            packet->request.message = CD_BufferRemoveString(input);
+
+            return (CDPointer) packet;
+        }
+
+        case CDUseEntity: {
+            CDPacketUseEntity* packet = (CDPacketUseEntity*) CD_malloc(sizeof(CDPacketUseEntity));
+
+            packet->request.user      = CD_BufferRemoveInteger(input);
+            packet->request.target    = CD_BufferRemoveInteger(input);
+            packet->request.leftClick = CD_BufferRemoveByte(input);
+
+            return (CDPointer) packet;
+        }
+
+        case CDRespawn: {
+            return (CDPointer) CD_malloc(sizeof(CDPacketRespawn));
+        }
+
+        case CDOnGround: {
+            CDPacketOnGround* packet = (CDPacketOnGround*) CD_malloc(sizeof(CDPacketOnGround));
+
+            packet->request.onGround = CD_BufferRemoveBoolean(input);
+
+            return (CDPointer) packet;
+        }
+
+        case CDPlayerPosition: {
+            CDPacketPlayerPosition* packet = (CDPacketPlayerPosition*) CD_malloc(sizeof(CDPacketPlayerPosition));
+
+            packet->request.position.x  = CD_BufferRemoveDouble(input);
+            packet->request.position.y  = CD_BufferRemoveDouble(input);
+            packet->request.stance      = CD_BufferRemoveDouble(input);
+            packet->request.position.z  = CD_BufferRemoveDouble(input);
+            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+
+            return (CDPointer) packet;
+        }
+
+        case CDPlayerLook: {
+            CDPacketPlayerLook* packet = (CDPacketPlayerLook*) CD_malloc(sizeof(CDPacketPlayerLook));
+
+            packet->request.yaw         = CD_BufferRemoveFloat(input);
+            packet->request.pitch       = CD_BufferRemoveFloat(input);
+            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+
+            return (CDPointer) packet;
+        }
+
+        case CDPlayerMoveLook: {
+            CDPacketPlayerMoveLook* packet = (CDPacketPlayerMoveLook*) CD_malloc(sizeof(CDPacketPlayerMoveLook));
+
+            packet->request.position.x  = CD_BufferRemoveDouble(input);
+            packet->request.stance      = CD_BufferRemoveDouble(input);
+            packet->request.position.y  = CD_BufferRemoveDouble(input);
+            packet->request.position.z  = CD_BufferRemoveDouble(input);
+            packet->request.yaw         = CD_BufferRemoveFloat(input);
+            packet->request.pitch       = CD_BufferRemoveFloat(input);
+            packet->request.is.onGround = CD_BufferRemoveBoolean(input);
+
+            return (CDPointer) packet;
         }
 
         default: {
-            return NULL;
+            return (CDPointer) NULL;
         }
     }
 }
 
-CDString*
-CD_PacketToString (CDPacket* self)
+CDBuffer*
+CD_PacketToBuffer (CDPacket* self)
 {
-    char*  data   = CD_malloc(1);
-    size_t length = 1;
+    CDBuffer* data = CD_CreateBuffer();
 
-    data[0] = self->type;
+    CD_BufferAddByte(data, self->type);
 
     switch (self->chain) {
         case CDRequest: {
@@ -263,24 +281,30 @@ CD_PacketToString (CDPacket* self)
 
         case CDResponse: {
             switch (self->type) {
+                case CDLogin: {
+                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+
+                    CD_BufferAddInteger(data, packet->response.id);
+                    CD_BufferAddString(data, packet->response.serverName);
+                    CD_BufferAddString(data, packet->response.motd);
+                    CD_BufferAddLong(data, packet->response.mapSeed);
+                    CD_BufferAddByte(data, packet->response.dimension);
+                } break;
+
                 case CDHandshake: {
-                    CDPacketHandshake* packet = self->data;
+                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
 
-                    length += MCShortSize + CD_StringLength(packet->response.hash);
-                    data    = CD_realloc(data, length);
+                    CD_BufferAddString(data, packet->response.hash);
+                } break;
 
-                    *((short*) (data + 1)) = htons(CD_StringLength(packet->response.hash));
-                    memcpy((data + 1 + MCShortSize), CD_StringContent(packet->response.hash), CD_StringLength(packet->response.hash));
+                case CDChat: {
+                    CDPacketChat* packet = (CDPacketChat*) self->data;
+
+                    CD_BufferAddString(data, packet->response.message);
                 } break;
             }
         } break;
-
-        default: {
-            CD_free(data);
-
-            return NULL;
-        }
     }
 
-    return CD_CreateStringFromBuffer(data, length);
+    return data;
 }

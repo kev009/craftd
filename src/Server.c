@@ -100,7 +100,7 @@ CD_DestroyServer (CDServer* self)
     }
 
     CD_HASH_FOREACH(self->players, it) {
-        CD_DestroyPlayer(CD_HashIteratorValue(self->players, it));
+        CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(self->players, it));
     }
 
     if (self->event.base) {
@@ -165,8 +165,6 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
-    CDServer* self = player->server;
-
     pthread_rwlock_wrlock(&player->lock.pending);
     if (!player->pending) {
         player->pending = true;
@@ -216,6 +214,24 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
 static
 void
+cd_LogCallback (int priority, const char* message)
+{
+    static char priorities[] = { LOG_DEBUG, LOG_NOTICE, LOG_WARNING, LOG_ERR };
+
+    if (CDMainServer) {
+        CDString* output = CD_CreateStringFromFormat("%s> %s", CD_ServerToString(CDMainServer), message);
+
+        CDMainServer->logger.log(priorities[priority], CD_StringContent(output));
+
+        CD_DestroyString(output);
+    }
+    else {
+        CDDefaultLogger.log(priorities[priority], message);
+    }
+}
+
+static
+void
 cd_Accept (evutil_socket_t listener, short event, CDServer* self)
 {
     CDPlayer*               player;
@@ -257,16 +273,20 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
     player->socket = fd;
     evutil_make_socket_nonblocking(player->socket);
 
-    player->buffer = bufferevent_socket_new(self->event.base, player->socket, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
-    bufferevent_setcb(player->buffer, cd_ReadCallback, NULL, cd_ErrorCallback, player);
-    bufferevent_enable(player->buffer, EV_READ | EV_WRITE);
+    player->buffers = CD_WrapBuffers(bufferevent_socket_new(self->event.base, player->socket, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE));
 
-    CD_MapSet(self->entities, player->entity.id, player);
+    bufferevent_setcb(player->buffers->raw, (bufferevent_data_cb) cd_ReadCallback, NULL, (bufferevent_event_cb) cd_ErrorCallback, player);
+    bufferevent_enable(player->buffers->raw, EV_READ | EV_WRITE);
+
+    CD_MapSet(self->entities, player->entity.id, (CDPointer) player);
 }
 
 bool
 CD_RunServer (CDServer* self)
 {
+    event_set_mem_functions(CD_malloc, CD_realloc, CD_free);
+    event_set_log_callback(cd_LogCallback);
+
     if ((self->event.base = event_base_new()) == NULL) {
         SERR(self, "could not create MC libevent base!");
 
@@ -307,9 +327,9 @@ CD_RunServer (CDServer* self)
     CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
     // Start the TimeLoop for timed events
-    pthread_create(&self->timeloop->thread, &self->timeloop->attributes, CD_RunTimeLoop, self->timeloop);
+    pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
 
-    self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, cd_Accept, self);
+    self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, (event_callback_fn) cd_Accept, self);
 
     event_add(self->event.listener, NULL);
 
@@ -338,7 +358,7 @@ CD_ServerGenerateEntityId (CDServer* self)
 bool
 cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 {
-    CDList* callbacks = CD_HashGet(self->event.callbacks, "Event.dispatch:before");
+    CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, "Event.dispatch:before");
     va_list ap;
 
     va_start(ap, eventName);
@@ -359,7 +379,7 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 bool
 cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 {
-    CDList* callbacks = CD_HashGet(self->event.callbacks, "Event.dispatch:after");
+    CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, "Event.dispatch:after");
     va_list ap;
 
     va_start(ap, eventName);
@@ -380,21 +400,21 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 void
 CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
-    CDList* callbacks = CD_HashGet(self->event.callbacks, eventName);
+    CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, eventName);
 
     if (!callbacks) {
         callbacks = CD_CreateList();
     }
 
-    CD_ListPush(callbacks, callback);
+    CD_ListPush(callbacks, (CDPointer) callback);
 
-    CD_HashSet(self->event.callbacks, eventName, callbacks);
+    CD_HashSet(self->event.callbacks, eventName, (CDPointer) callbacks);
 }
 
 CDEventCallback*
 CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
-    CDList*          callbacks = CD_HashGet(self->event.callbacks, eventName);
+    CDList*          callbacks = (CDList*) CD_HashGet(self->event.callbacks, eventName);
     CDEventCallback* result    = NULL;
 
     if (!callbacks) {
@@ -403,10 +423,10 @@ CD_EventUnregister (CDServer* self, const char* eventName, CDEventCallback callb
 
     if (callback) {
         result    = CD_calloc(2, sizeof(CDEventCallback));
-        result[0] = CD_ListDeleteAll(callbacks, callback);
+        result[0] = (CDEventCallback) CD_ListDeleteAll(callbacks, (CDPointer) callback);
     }
     else {
-        result = CD_ListClear(callbacks);
+        result = (CDEventCallback*) CD_ListClear(callbacks);
     }
 
     if (CD_ListLength(callbacks) == 0) {

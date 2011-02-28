@@ -31,7 +31,7 @@
 
 #define __cdList_free(x)
 
-KLIST_INIT(cdList, void*, __cdList_free);
+KLIST_INIT(cdList, CDPointer, __cdList_free);
 
 /**
  * The List class.
@@ -59,11 +59,11 @@ CDList* CD_CreateList (void);
 CDList* CD_CloneList (CDList* self);
 
 /**
- * Destroy a List object and return its remaining data as a NULL terminated void* array.
+ * Destroy a List object and return its remaining data as a NULL terminated CDPointer array.
  *
- * @return The NULL terminated void* array
+ * @return The NULL terminated CDPointer array
  */
-void** CD_DestroyList (CDList* self);
+CDPointer* CD_DestroyList (CDList* self);
 
 /**
  * Get an iterator to the beginning of the List.
@@ -107,7 +107,7 @@ size_t CD_ListLength (CDList* self);
  *
  * @return The value (whatever) value
  */
-void* CD_ListIteratorValue (CDListIterator iterator);
+CDPointer CD_ListIteratorValue (CDListIterator iterator);
 
 /**
  * Push a value into the List.
@@ -116,14 +116,14 @@ void* CD_ListIteratorValue (CDListIterator iterator);
  *
  * @return self
  */
-CDList* CD_ListPush (CDList* self, void* data);
+CDList* CD_ListPush (CDList* self, CDPointer data);
 
 /**
  * Shift a value from the List.
  *
  * @return The shifted value
  */
-void* CD_ListShift (CDList* self);
+CDPointer CD_ListShift (CDList* self);
 
 /**
  * Delete the first value matching the passed one from the List.
@@ -132,7 +132,7 @@ void* CD_ListShift (CDList* self);
  *
  * @return The removed data
  */
-void* CD_ListDelete (CDList* self, void* data);
+CDPointer CD_ListDelete (CDList* self, CDPointer data);
 
 /**
  * Delete all the items matching the passed one from the List.
@@ -141,28 +141,28 @@ void* CD_ListDelete (CDList* self, void* data);
  *
  * @return The reoved data
  */
-void* CD_ListDeleteAll (CDList* self, void* data);
+CDPointer CD_ListDeleteAll (CDList* self, CDPointer data);
 
 /**
  * Get the first element in the List.
  *
  * @return The first element in the list.
  */
-void* CD_ListFirst (CDList* self);
+CDPointer CD_ListFirst (CDList* self);
 
 /**
  * Get the last element in the List.
  *
  * @return The last element in the list.
  */
-void* CD_ListLast (CDList* self);
+CDPointer CD_ListLast (CDList* self);
 
 /**
  * Empty the List and return an array of the contained data
  *
  * @return An array of the contained data
  */
-void** CD_ListClear (CDList* self);
+CDPointer* CD_ListClear (CDList* self);
 
 /**
  * Iterate over the given map

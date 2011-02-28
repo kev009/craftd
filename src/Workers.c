@@ -91,7 +91,7 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
         result[i]->working = true;
         result[i]->workers = self;
 
-        if (pthread_create(&result[i]->thread, &self->attributes, CD_RunWorker, result[i]) != 0) {
+        if (pthread_create(&result[i]->thread, &self->attributes, (void *(*)(void *)) CD_RunWorker, result[i]) != 0) {
             SERR(self->server, "worker pool startup failed!");
         }
     }
@@ -126,7 +126,7 @@ CD_AppendWorker (CDWorkers* self, CDWorker* worker)
 void
 CD_AddJob (CDWorkers* self, CDJob* job)
 {
-    CD_ListPush(self->jobs, job);
+    CD_ListPush(self->jobs, (CDPointer) job);
 
     pthread_cond_signal(&self->lock.condition);
 }
@@ -134,5 +134,5 @@ CD_AddJob (CDWorkers* self, CDJob* job)
 CDJob*
 CD_NextJob (CDWorkers* self)
 {
-    return CD_ListShift(self->jobs);
+    return (CDJob*) CD_ListShift(self->jobs);
 }

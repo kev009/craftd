@@ -93,6 +93,9 @@
 /* Floating point types are big-endian, macro out conversion */
 #   define ntohd(d) (d)
 #   define ntohf(f) (f)
+
+#   define htond(d) (d)
+#   define htonf(f) (f)
 #else
 /* We need to convert native floating-point types */
 
@@ -112,6 +115,22 @@ ntohd (double d)
 }
 
 static inline
+double
+htond (double d)
+{
+    union {
+        uint64_t l;
+        double   d;
+    } tmp;
+
+    tmp.d = d;
+    tmp.l = htonll(tmp.l);
+
+    return tmp.d;
+}
+
+
+static inline
 float
 ntohf (float f)
 {
@@ -126,6 +145,21 @@ ntohf (float f)
     return tmp.f;
 }
 
-#endif /* FLOAT_WORDS_BIGENDIAN */
+static inline
+float
+htonf (float f)
+{
+    union {
+        uint32_t i;
+        float f;
+    } tmp;
 
-#endif /* CRAFTD_JAVAENDIAN_H */
+    tmp.f = f;
+    tmp.i = htonl(tmp.i);
+
+    return tmp.f;
+}
+
+#endif
+
+#endif

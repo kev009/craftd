@@ -29,7 +29,7 @@
 #include <craftd/common.h>
 #include <craftd/klib/khash.h>
 
-KHASH_MAP_INIT_INT(cdMap, void*);
+KHASH_MAP_INIT_INT(cdMap, CDPointer);
 
 /**
  * The Map class
@@ -129,7 +129,7 @@ int CD_MapIteratorKey (CDMap* self, CDMapIterator iterator);
  *
  * @return The value (whatever) value
  */
-void* CD_MapIteratorValue (CDMap* self, CDMapIterator iterator);
+CDPointer CD_MapIteratorValue (CDMap* self, CDMapIterator iterator);
 
 /**
  * Checks if a iterator is valid (points to an existing element)
@@ -147,7 +147,7 @@ bool CD_MapIteratorValid (CDMap* self, CDMapIterator iterator);
  *
  * @return The value or NULL
  */
-void* CD_MapGet (CDMap* self, int id);
+CDPointer CD_MapGet (CDMap* self, int id);
 
 /**
  * Set the value of the element with the given name.
@@ -157,7 +157,7 @@ void* CD_MapGet (CDMap* self, int id);
  *
  * @return The old data if present or NULL
  */
-void* CD_MapSet (CDMap* self, int id, void* data);
+CDPointer CD_MapSet (CDMap* self, int id, CDPointer data);
 
 /**
  * Delete the element with the given name
@@ -166,28 +166,28 @@ void* CD_MapSet (CDMap* self, int id, void* data);
  *
  * @return The delete data if present or NULL
  */
-void* CD_MapDelete (CDMap* self, int id);
+CDPointer CD_MapDelete (CDMap* self, int id);
 
 /**
  * Get the value of the first element in the Map
  *
  * @return The first element in the Map
  */
-void* CD_MapFirst (CDMap* self);
+CDPointer CD_MapFirst (CDMap* self);
 
 /**
  * Get the value of the last element in the Map
  *
  * @return The last element in the Map
  */
-void* CD_MapLast (CDMap* self);
+CDPointer CD_MapLast (CDMap* self);
 
 /**
  * Empty the Map and return an array of the contained data
  *
  * @return An array of the contained data
  */
-void** CD_MapClear (CDMap* self);
+CDPointer* CD_MapClear (CDMap* self);
 
 /**
  * Iterate over the given map

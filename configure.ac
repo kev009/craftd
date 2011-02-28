@@ -43,7 +43,7 @@ PTHREAD_LIBS="$PTHREAD_LIBS"
 PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
 # Force pthread for everything?
 #LIBS="$PTHREAD_LIBS $LIBS"
-#CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CFLAGS="$CFLAGS -Wno-switch-enum -Wno-unused-function -Wno-unused-label"
 #CC="$PTHREAD_CC"
 
 # Checks for header files.
