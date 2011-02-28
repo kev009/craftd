@@ -37,6 +37,7 @@ CD_CreatePlayer (struct _CDServer* server)
 
     pthread_rwlock_init(&self->lock.status, NULL);
     pthread_rwlock_init(&self->lock.pending, NULL);
+    pthread_rwlock_init(&self->lock.disconnecting, NULL);
 
     self->server = server;
 
@@ -75,6 +76,7 @@ CD_DestroyPlayer (CDPlayer* self)
 
     pthread_rwlock_destroy(&self->lock.status);
     pthread_rwlock_destroy(&self->lock.pending);
+    pthread_rwlock_destroy(&self->lock.disconnecting);
 
     CD_free(self);
 }

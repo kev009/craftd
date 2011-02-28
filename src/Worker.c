@@ -69,14 +69,14 @@ CD_RunWorker (CDWorker* self)
     while (self->working) {
         pthread_mutex_lock(&self->workers->lock.mutex);
 
-        /* Check our predicate again:  The WQ is not empty
-         * Prevent a nasty race condition if the client disconnects
-         * Works in tandem with errorcb FOREACH bev removal loop
-         */
-        while (CD_ListLength(self->workers->jobs) == 0) {
-            SDEBUG(self->server, "worker %d ready", self->id);
+        SDEBUG(self->server, "worker %d ready", self->id);
 
-            pthread_cond_wait(&self->workers->lock.condition, &self->workers->lock.mutex);
+        pthread_cond_wait(&self->workers->lock.condition, &self->workers->lock.mutex);
+
+        if (CD_ListLength(self->workers->jobs) == 0) {
+            SDEBUG(self->server, "no jobs for me (%d) :<", self->id);
+            pthread_mutex_unlock(&self->workers->lock.mutex);
+            continue;
         }
 
         if (!self->working) {
@@ -119,6 +119,12 @@ CD_RunWorker (CDWorker* self)
 
         if (CD_JOB_IS_PLAYER(self->job)) {
             CDPlayer* player = self->job->data;
+
+            pthread_rwlock_rdlock(&player->lock.disconnecting);
+            if (player->disconnecting) {
+                goto PLAYER_JOB_DONE;
+            }
+            pthread_rwlock_unlock(&player->lock.disconnecting);
 
             SDEBUG(self->server, "working on player %s (%s)", player->username, player->ip);
 
@@ -183,6 +189,28 @@ CD_RunWorker (CDWorker* self)
             }
 
             PLAYER_JOB_DONE: {
+                pthread_rwlock_rdlock(&player->lock.disconnecting);
+                if (player->disconnecting) {
+                    CD_DestroyJob(self->job);
+
+                    if (player->username) {
+                        CD_AddJob(player->server->workers, CD_CreateJob(
+                            CDServerBroadcastJob, CD_CreateStringFromFormat(
+                                "Player %s has left the game.", CD_StringContent(player->username)
+                            )
+                        ));
+
+                        CD_HashDelete(player->server->players, CD_StringContent(player->username));
+                    }
+
+                    CD_MapDelete(player->server->entities, player->entity.id);
+
+                    CD_DestroyPlayer(player);
+
+                    continue;
+                }
+                pthread_rwlock_unlock(&player->lock.disconnecting);
+
                 if (!player->pending && self->job) {
                     CD_DestroyJob(self->job);
                 }
@@ -207,16 +235,22 @@ CD_RunWorker (CDWorker* self)
         else if (CD_JOB_IS_SERVER(self->job)) {
             switch (self->job->type) {
                 case CDServerBroadcastJob: {
+                    CDPacketChat pkt;
+                    pkt.response.message = self->job->data;
+
+                    CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+
                     CD_HASH_FOREACH(self->server->players, it) {
-                        CDPacketChat pkt;
-                        pkt.response.message = self->job->data;
+                        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(self->server->players, it);
 
-                        CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
-
-                        CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->server->players, it), &response);
-
-                        CD_DestroyString(self->job->data);
+                        pthread_rwlock_rdlock(&player->lock.disconnecting);
+                        if (!player->disconnecting) {
+                            CD_PlayerSendPacket(player, &response);
+                        }
+                        pthread_rwlock_unlock(&player->lock.disconnecting);
                     }
+
+                    CD_DestroyString(self->job->data);
                 } break;
             }
 

@@ -194,23 +194,9 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
     SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
 
-	pthread_mutex_lock(&self->workers->lock.mutex);
-
-    if (player->username) {
-        CD_AddJob(self->workers, CD_CreateJob(
-            CDServerBroadcastJob, CD_CreateStringFromFormat(
-                "Player %s has left the game.", CD_StringContent(player->username)
-            )
-        ));
-
-        CD_HashDelete(self->players, CD_StringContent(player->username));
-    }
-
-    CD_MapDelete(self->entities, player->entity.id);
-
-    CD_DestroyPlayer(player);
-
-    pthread_mutex_unlock(&self->workers->lock.mutex);
+    pthread_rwlock_wrlock(&player->lock.disconnecting);
+    player->disconnecting = true;
+    pthread_rwlock_unlock(&player->lock.disconnecting);
 }
 
 static

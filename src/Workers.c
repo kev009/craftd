@@ -126,9 +126,13 @@ CD_AppendWorker (CDWorkers* self, CDWorker* worker)
 void
 CD_AddJob (CDWorkers* self, CDJob* job)
 {
+    pthread_mutex_lock(&self->lock.mutex);
+
     CD_ListPush(self->jobs, (CDPointer) job);
 
     pthread_cond_signal(&self->lock.condition);
+
+    pthread_mutex_unlock(&self->lock.mutex);
 }
 
 CDJob*

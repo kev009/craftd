@@ -55,12 +55,13 @@ typedef struct _CDPlayer {
     CDHash* _private;
 
     CDPlayerStatus status;
-
-    bool pending;
+    bool           pending;
+    bool           disconnecting;
 
     struct {
         pthread_rwlock_t status;
         pthread_rwlock_t pending;
+        pthread_rwlock_t disconnecting;
     } lock;
 } CDPlayer;
 
