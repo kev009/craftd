@@ -1,4 +1,5 @@
-pkginclude_HEADERS = craftd/common.h \
+pkginclude_HEADERS = craftd/Arith.h \
+		     craftd/common.h \
 		     craftd/config.h \
 		     craftd/Config.h \
 		     craftd/Hash.h \
