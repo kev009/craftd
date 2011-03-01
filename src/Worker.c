@@ -93,7 +93,9 @@ CD_RunWorker (CDWorker* self)
         }
 
         if (CD_JOB_IS_CUSTOM(self->job)) {
+            self->job->running = true;
             ((void (*)(CDServer*)) self->job->data)(self->server);
+            self->job->running = false;
         }
         else if (CD_JOB_IS_PLAYER(self->job)) {
             CDPlayer* player = self->job->data;
@@ -125,6 +127,8 @@ CD_RunWorker (CDWorker* self)
                 pthread_mutex_unlock(&player->lock.status);
                 continue;
             }
+
+            self->job->running = true;
 
             if (self->job->type == CDPlayerInputJob) {
                 CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
@@ -186,8 +190,10 @@ CD_RunWorker (CDWorker* self)
                     CD_LIST_FOREACH(player->jobs, it) {
                         CDJob* job = (CDJob*) CD_ListIteratorValue(it);
 
-                        while (job->running) {
-                            continue;
+                        if (job->type != CDPlayerDisconnectJob) {
+                            while (job->running) {
+                                continue;
+                            }
                         }
 
                         CD_DestroyJob(job);
@@ -195,9 +201,13 @@ CD_RunWorker (CDWorker* self)
 
                     CD_DestroyPlayer(player);
                 }
+
+                self->job->running = false;
             }
         }
         else if (CD_JOB_IS_SERVER(self->job)) {
+            self->job->running = true;
+
             if (self->job->type == CDServerBroadcastJob) {
                 CDPacketChat pkt;
                 pkt.response.message = self->job->data;
@@ -216,6 +226,8 @@ CD_RunWorker (CDWorker* self)
 
                 CD_DestroyString(self->job->data);
             }
+
+            self->job->running = false;
         }
     }
 
