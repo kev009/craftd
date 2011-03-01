@@ -136,7 +136,7 @@ typedef union _CDPacketChat {
 
     struct {
         MCString message;
-    } response
+    } response;
 } CDPacketChat;
 
 typedef union _CDPacketTimeUpdate {
