@@ -322,6 +322,7 @@ CD_RunServer (CDServer* self)
 
     // TODO: replace this with the plugin load cycle
     CD_LoadPlugin(self->plugins, "libcdbase");
+    CD_LoadPlugin(self->plugins, "libcdnbt");
 
     return event_base_dispatch(self->event.base) != 0;
 }

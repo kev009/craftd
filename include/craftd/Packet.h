@@ -52,7 +52,7 @@ typedef enum _CDPacketType {
     CDPlayerBlockPlacement = 0x0F,
     CDHoldChange           = 0x10,
     CDUseBed               = 0x11,
-    CDArmAnimate           = 0x12,
+    CDAnimation           = 0x12,
     CDEntityAction         = 0x13,
     CDNamedEntitySpawn     = 0x14,
     CDPickupSpawn          = 0x15,
@@ -153,7 +153,7 @@ typedef union _CDPacketEntityEquipment {
         MCShort   item;
         MCShort   damage; // Still not sure about it
     } response;
-} MCEntityEquipment;
+} CDPacketEntityEquipment;
 
 typedef union _CDPacketSpawnPosition {
     struct {
@@ -284,7 +284,7 @@ typedef union _CDPacketUseBed {
     } response;
 } CDPacketUseBed;
 
-typedef union _CDPacketArmAnimate {
+typedef union _CDPacketAnimation {
     struct {
         MCEntity entity;
 
@@ -296,9 +296,9 @@ typedef union _CDPacketArmAnimate {
 
             CDCrouchAnimation = 104,
             CDUncrouchAnimation
-        } animate;
+        } type;
     } response;
-} CDPacketArmAnimate;
+} CDPacketAnimation;
 
 typedef union _CDPacketEntityAction {
     struct {
@@ -392,6 +392,11 @@ typedef union _CDPacketSpawnMob {
             CDSquid
         } type;
 
+        MCPosition position;
+
+        MCByte yaw;
+        MCByte pitch;
+
         MCMetadata* metadata;
     } response;
 } CDPacketSpawnMob;
@@ -410,7 +415,7 @@ typedef union _CDPacketPainting { // Verify type and coordiates
 typedef union _CDPacketEntityVelocity {
     struct {
         MCEntity   entity;
-        MCPosition velocity;
+        MCVelocity velocity;
     } response;
 } CDPacketEntityVelocity;
 
@@ -557,8 +562,8 @@ typedef union _CDPacketExplosion { // Not sure yet
 
         MCFloat radius; // unsure
 
-        MCInteger   length;
-        MCPosition* item;
+        MCInteger           length;
+        MCRelativePosition* item;
     } response;
 } CDPacketExplosion;
 
@@ -580,6 +585,10 @@ typedef union _CDPacketOpenWindow {
 } CDPacketOpenWindow;
 
 typedef union _CDPacketCloseWindow {
+    struct {
+        MCByte id;
+    } request;
+
     struct {
         MCByte id;
     } response;
@@ -645,6 +654,15 @@ typedef union _CDPacketUpdateSign {
         MCString third;
         MCString fourth;
     } request;
+
+    struct {
+        MCPosition position;
+
+        MCString first;
+        MCString second;
+        MCString third;
+        MCString fourth;
+    } response;
 } CDPacketUpdateSign;
 
 typedef union _CDPacketDisconnect {

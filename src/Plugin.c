@@ -38,12 +38,22 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     self->path   = CD_CreateStringFromCString(path);
     self->handle = lt_dlopenext(path);
 
+    if (!self->handle) {
+        CD_DestroyPlugin(self);
+
+        errno = ENOENT;
+
+        return NULL;
+    }
+
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
     PRIVATE(self) = CD_CreateHash();
 
-    self->initialize(self);
+    if (self->initialize) {
+        self->initialize(self);
+    }
 
     return self;
 }
@@ -51,7 +61,9 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
 void
 CD_DestroyPlugin (CDPlugin* self)
 {
-    self->finalize(self);
+    if (self->finalize) {
+        self->finalize(self);
+    }
 
     lt_dlclose(self->handle);
     CD_DestroyString(self->path);

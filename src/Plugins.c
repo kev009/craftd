@@ -23,6 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <craftd/Logger.h>
+
 #include <craftd/Plugins.h>
 
 CDPlugins*
@@ -60,6 +62,10 @@ CD_LoadPlugin (CDPlugins* self, const char* path)
     CDPlugin* plugin = CD_CreatePlugin(self->server, path);
 
     if (!plugin) {
+        if (errno == ENOENT) {
+            SERR(self->server, "%s could not be found", path);
+        }
+
         return NULL;
     }
 

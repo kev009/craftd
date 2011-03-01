@@ -62,6 +62,12 @@ typedef struct _MCSize {
     MCByte z;
 } MCSize;
 
+typedef struct _MCVelocity {
+    MCShort x;
+    MCShort y;
+    MCShort z;
+} MCVelocity;
+
 typedef struct _MCPosition {
     MCInteger x;
     MCInteger y;

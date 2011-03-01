@@ -197,9 +197,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDHandshake: {
             CDPacketHandshake* packet = (CDPacketHandshake*) CD_malloc(sizeof(CDPacketHandshake));
 
-            CD_BufferRemoveFormat(input, "S",
-                &packet->request.username
-            );
+            packet->request.username = CD_BufferRemoveString(input);
 
             return (CDPointer) packet;
         }
@@ -207,9 +205,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDChat: {
             CDPacketChat* packet = (CDPacketChat*) CD_malloc(sizeof(CDPacketChat));
 
-            CD_BufferRemoveFormat(input, "S",
-                &packet->request.message
-            );
+            packet->request.message = CD_BufferRemoveString(input);
 
             return (CDPointer) packet;
         }
@@ -233,9 +229,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDOnGround: {
             CDPacketOnGround* packet = (CDPacketOnGround*) CD_malloc(sizeof(CDPacketOnGround));
 
-            CD_BufferRemoveFormat(input, "B",
-                &packet->request.onGround
-            );
+            packet->request.onGround = CD_BufferRemoveBoolean(input);
 
             return (CDPointer) packet;
         }
@@ -316,9 +310,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDHoldChange: {
             CDPacketHoldChange* packet = (CDPacketHoldChange*) CD_malloc(sizeof(CDPacketHoldChange));
 
-            CD_BufferRemoveFormat(input, "s",
-                &packet->request.item.id
-            );
+            packet->request.item.id = CD_BufferRemoveShort(input);
 
             return (CDPointer) packet;
         }
@@ -345,19 +337,31 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
+        case CDCloseWindow: {
+            CDPacketCloseWindow* packet = (CDPacketCloseWindow*) CD_malloc(sizeof(CDPacketCloseWindow));
+
+            packet->request.id = CD_BufferRemoveByte(input);
+
+            return (CDPointer) packet;
+        }
+
         case CDWindowClick: {
             CDPacketWindowClick* packet = (CDPacketWindowClick*) CD_malloc(sizeof(CDPacketWindowClick));
 
-            CD_BufferRemoveFormat(input, "bsBssbs",
+            CD_BufferRemoveFormat(input, "bsBss",
                 &packet->request.id,
                 &packet->request.slot,
                 &packet->request.rightClick,
                 &packet->request.action,
-
-                &packet->request.item.id,
-                &packet->request.item.count,
-                &packet->request.item.uses
+                &packet->request.item.id
             );
+
+            if (packet->request.item.id != -1) {
+                CD_BufferRemoveFormat(input, "bs",
+                    &packet->request.item.count,
+                    &packet->request.item.uses
+                );
+            }
 
             return (CDPointer) packet;
         }
@@ -427,17 +431,438 @@ CD_PacketToBuffer (CDPacket* self)
                 case CDHandshake: {
                     CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
 
-                    CD_BufferAddFormat(data, "S",
-                        packet->response.hash
-                    );
+                    CD_BufferAddString(data, packet->response.hash);
                 } break;
 
                 case CDChat: {
                     CDPacketChat* packet = (CDPacketChat*) self->data;
 
-                    CD_BufferAddFormat(data, "S",
-                        packet->response.message
+                    CD_BufferAddString(data, packet->response.message);
+                } break;
+
+                case CDTimeUpdate: {
+                    CDPacketTimeUpdate* packet = (CDPacketTimeUpdate*) self->data;
+
+                    CD_BufferAddLong(data, packet->response.time);
+                } break;
+
+                case CDEntityEquipment: {
+                    CDPacketEntityEquipment* packet = (CDPacketEntityEquipment*) self->data;
+
+                    CD_BufferAddFormat(data, "isss",
+                        packet->response.entity.id,
+                        packet->response.slot,
+                        packet->response.item,
+                        packet->response.damage
                     );
+                } break;
+
+                case CDSpawnPosition: {
+                    CDPacketSpawnPosition* packet = (CDPacketSpawnPosition*) self->data;
+
+                    CD_BufferAddFormat(data, "iii",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z
+                    );
+                } break;
+
+                case CDUpdateHealth: {
+                    CDPacketUpdateHealth* packet = (CDPacketUpdateHealth*) self->data;
+
+                    CD_BufferAddShort(data, packet->response.health);
+                } break;
+
+                case CDPlayerMoveLook: {
+                    CDPacketPlayerMoveLook* packet = (CDPacketPlayerMoveLook*) self->data;
+
+                    CD_BufferAddFormat(data, "ddddffB",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.stance,
+                        packet->response.position.z,
+                        packet->response.yaw,
+                        packet->response.pitch,
+                        packet->response.is.onGround
+                    );
+                } break;
+
+                case CDUseBed: {
+                    CDPacketUseBed* packet = (CDPacketUseBed*) self->data;
+
+                    CD_BufferAddFormat(data, "ibibi",
+                        packet->response.entity.id,
+                        packet->response.inBed,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z
+                    );
+                } break;
+
+                case CDAnimation: {
+                    CDPacketAnimation* packet = (CDPacketAnimation*) self->data;
+
+                    CD_BufferAddFormat(data, "ib",
+                        packet->response.entity.id,
+                        packet->response.type
+                    );
+                } break;
+
+                case CDNamedEntitySpawn: {
+                    CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
+
+                    CD_BufferAddFormat(data, "iSiiibbs",
+                        packet->response.entity.id,
+                        packet->response.name,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.rotation,
+                        packet->response.pitch,
+                        packet->response.item
+                    );
+                } break;
+
+                case CDPickupSpawn: {
+                    CDPacketPickupSpawn* packet = (CDPacketPickupSpawn*) self->data;
+
+                    CD_BufferAddFormat(data, "isbsiiibbb",
+                        packet->response.entity.id,
+                        packet->response.item.id,
+                        packet->response.item.count,
+                        packet->response.item.uses,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.rotation,
+                        packet->response.pitch,
+                        packet->response.roll
+                    );
+                } break;
+
+                case CDCollectItem: {
+                    CDPacketCollectItem* packet = (CDPacketCollectItem*) self->data;
+
+                    CD_BufferAddFormat(data, "ii",
+                        packet->response.collected,
+                        packet->response.collector
+                    );
+                } break;
+
+                case CDSpawnObject: {
+                    CDPacketSpawnObject* packet = (CDPacketSpawnObject*) self->data;
+
+                    CD_BufferAddFormat(data, "ibiii",
+                        packet->response.entity.id,
+                        packet->response.type,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z
+                    );
+                } break;
+
+                case CDSpawnMob: {
+                    CDPacketSpawnMob* packet = (CDPacketSpawnMob*) self->data;
+
+                    CD_BufferAddFormat(data, "ibiiibbM",
+                        packet->response.id,
+                        packet->response.type,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.yaw,
+                        packet->response.pitch,
+                        packet->response.metadata
+                    );
+                } break;
+
+                case CDPainting: {
+                    CDPacketPainting* packet = (CDPacketPainting*) self->data;
+
+                    CD_BufferAddFormat(data, "iSiiii",
+                        packet->response.entity.id,
+                        packet->response.title,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.type
+                    );
+                } break;
+
+                case CDEntityVelocity: {
+                    CDPacketEntityVelocity* packet = (CDPacketEntityVelocity*) self->data;
+
+                    CD_BufferAddFormat(data, "isss",
+                        packet->response.entity.id,
+                        packet->response.velocity.x,
+                        packet->response.velocity.y,
+                        packet->response.velocity.z
+                    );
+                } break;
+
+                case CDEntityDestroy: {
+                    CDPacketEntityDestroy* packet = (CDPacketEntityDestroy*) self->data;
+
+                    CD_BufferAddInteger(data, packet->response.entity.id);
+                } break;
+
+                case CDEntityCreate: {
+                    CDPacketEntityCreate* packet = (CDPacketEntityCreate*) self->data;
+
+                    CD_BufferAddInteger(data, packet->response.entity.id);
+                } break;
+
+                case CDEntityRelativeMove: {
+                    CDPacketEntityRelativeMove* packet = (CDPacketEntityRelativeMove*) self->data;
+
+                    CD_BufferAddFormat(data, "ibbb",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z
+                    );
+                } break;
+
+                case CDEntityLook: {
+                    CDPacketEntityLook* packet = (CDPacketEntityLook*) self->data;
+
+                    CD_BufferAddFormat(data, "ibb",
+                        packet->response.entity.id,
+                        packet->response.yaw,
+                        packet->response.pitch
+                    );
+                } break;
+
+                case CDEntityLookMove: {
+                    CDPacketEntityLookMove* packet = (CDPacketEntityLookMove*) self->data;
+
+                    CD_BufferAddFormat(data, "ibbbbb",
+                        packet->response.entity.id,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.yaw,
+                        packet->response.pitch
+                    );
+                } break;
+
+                case CDEntityTeleport: {
+                    CDPacketEntityTeleport* packet = (CDPacketEntityTeleport*) self->data;
+
+                    CD_BufferAddFormat(data, "iiiibb",
+                        packet->response.entity.id,
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+                        packet->response.rotation,
+                        packet->response.pitch
+                    );
+                } break;
+
+                case CDEntityStatus: {
+                    CDPacketEntityStatus* packet = (CDPacketEntityStatus*) self->data;
+
+                    CD_BufferAddFormat(data, "ib",
+                        packet->response.entity.id,
+                        packet->response.status
+                    );
+                } break;
+
+                case CDEntityAttach: {
+                    CDPacketEntityAttach* packet = (CDPacketEntityAttach*) self->data;
+
+                    CD_BufferAddFormat(data, "ii",
+                        packet->response.entity.id,
+                        packet->response.vehicle.id
+                    );
+                } break;
+
+                case CDEntityMetadata: {
+                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+
+                    CD_BufferAddFormat(data, "iM",
+                        packet->response.entity.id,
+                        packet->response.metadata
+                    );
+                } break;
+
+                case CDPreChunk: {
+                    CDPacketPreChunk* packet = (CDPacketPreChunk*) self->data;
+
+                    CD_BufferAddFormat(data, "iiB",
+                        packet->response.x,
+                        packet->response.z,
+                        packet->response.mode
+                    );
+                } break;
+
+                case CDMapChunk: {
+                    CDPacketMapChunk* packet = (CDPacketMapChunk*) self->data;
+
+                    CD_BufferAddFormat(data, "isibbb",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+
+                        packet->response.size.x,
+                        packet->response.size.y,
+                        packet->response.size.z
+                    );
+
+                    CD_BufferAddInteger(data, packet->response.length);
+
+                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * MCByteSize);
+                } break;
+
+                case CDMultiBlockChange: {
+                    CDPacketMultiBlockChange* packet = (CDPacketMultiBlockChange*) self->data;
+
+                    CD_BufferAddFormat(data, "ii",
+                        packet->response.x,
+                        packet->response.z
+                    );
+
+                    CD_BufferAddShort(data, packet->response.length);
+
+                    CD_BufferAdd(data, (CDPointer) packet->response.coordinate, packet->response.length * MCShortSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.type,       packet->response.length * MCByteSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.metadata,   packet->response.length * MCByteSize);
+                } break;
+
+                case CDBlockChange: {
+                    CDPacketBlockChange* packet = (CDPacketBlockChange*) self->data;
+
+                    CD_BufferAddFormat(data, "ibibb",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+
+                        packet->response.type,
+                        packet->response.metadata
+                    );
+                } break;
+
+                case CDPlayNoteBlock: {
+                    CDPacketPlayNoteBlock* packet = (CDPacketPlayNoteBlock*) self->data;
+
+                    CD_BufferAddFormat(data, "isibb",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+
+                        packet->response.instrument,
+                        packet->response.pitch
+                    );
+                } break;
+
+                case CDExplosion: {
+                    CDPacketExplosion* packet = (CDPacketExplosion*) self->data;
+
+                    CD_BufferAddFormat(data, "dddf",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+
+                        packet->response.radius
+                    );
+
+                    CD_BufferAddInteger(data, packet->response.length);
+
+                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * 3 * MCByteSize);
+                } break;
+
+                case CDOpenWindow: {
+                    CDPacketOpenWindow* packet = (CDPacketOpenWindow*) self->data;
+
+                    CD_BufferAddFormat(data, "bbSb",
+                        packet->response.id,
+                        packet->response.type,
+                        packet->response.title,
+                        packet->response.slots
+                    );
+                } break;
+
+                case CDCloseWindow: {
+                    CDPacketCloseWindow* packet = (CDPacketCloseWindow*) self->data;
+
+                    CD_BufferAddByte(data, packet->response.id);
+                } break;
+
+                case CDSetSlot: {
+                    CDPacketSetSlot* packet = (CDPacketSetSlot*) self->data;
+
+                    CD_BufferAddFormat(data, "bss",
+                        packet->response.id,
+                        packet->response.slot,
+                        packet->response.item.id
+                    );
+
+                    if (packet->response.item.id != -1) {
+                        CD_BufferAddFormat(data, "bs",
+                            packet->response.item.count,
+                            packet->response.item.uses
+                        );
+                    }
+                } break;
+
+                case CDWindowItems: {
+                    CDPacketWindowItems* packet = (CDPacketWindowItems*) self->data;
+
+                    CD_BufferAddByte(data, packet->response.id);
+
+                    size_t i;
+                    for (i = 0; i < packet->response.length; i++) {
+                        if (packet->response.item[i].id == -1) {
+                            CD_BufferAddShort(data, -1);
+                        }
+                        else {
+                            CD_BufferAddFormat(data, "sbs",
+                                packet->response.item[i].id,
+                                packet->response.item[i].count,
+                                packet->response.item[i].uses
+                            );
+                        }
+                    }
+                } break;
+
+                case CDUpdateProgressBar: {
+                    CDPacketUpdateProgressBar* packet = (CDPacketUpdateProgressBar*) self->data;
+
+                    CD_BufferAddFormat(data, "bss",
+                        packet->response.id,
+                        packet->response.bar,
+                        packet->response.value
+                    );
+                } break;
+
+                case CDTransaction: {
+                    CDPacketTransaction* packet = (CDPacketTransaction*) self->data;
+
+                    CD_BufferAddFormat(data, "bsB",
+                        packet->response.id,
+                        packet->response.action,
+                        packet->response.accepted
+                    );
+                } break;
+
+                case CDUpdateSign: {
+                    CDPacketUpdateSign* packet = (CDPacketUpdateSign*) self->data;
+
+                    CD_BufferAddFormat(data, "isiSSSS",
+                        packet->response.position.x,
+                        packet->response.position.y,
+                        packet->response.position.z,
+
+                        packet->response.first,
+                        packet->response.second,
+                        packet->response.third,
+                        packet->response.fourth
+                    );
+                } break;
+
+                case CDDisconnect: {
+                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
+
+                    CD_BufferAddString(data, packet->response.reason);
                 } break;
             }
         } break;
