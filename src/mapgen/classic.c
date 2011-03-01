@@ -29,6 +29,66 @@ static unsigned char _heightmap[256] = {0};
 
 #define OCTAVES 8
 
+float multifractal_2d(float x, float z, float lacunarity, int octaves)
+{
+	float *exponent_array = calloc(octaves, sizeof(float));;
+	float frequency = 1.0;
+	float H = 0.25;
+	float offset = 0.7;
+	int i;
+	float weight = 1.0;
+
+	float res = 0.0;
+
+	for (i = 0 ; i < octaves ; i++) {
+		exponent_array[i] = pow(frequency, -H);
+		frequency *= lacunarity;
+	}
+
+	for (i = 0 ; i < OCTAVES ; i++) {
+		float signl = (snoise2(x, z) + offset) * exponent_array[i];
+		if (weight > 1.0) weight = 1.0;
+		res += (weight * signl);
+		weight *= signl;
+		x *= lacunarity;
+		z *= lacunarity;
+	}
+	free(exponent_array);
+	return res;
+}
+
+float multifractal_3d(float x, float y, float z, float lacunarity, int octaves)
+{
+	float *exponent_array = calloc(octaves, sizeof(float));;
+	float frequency = 1.0;
+	float H = 0.25;
+	float offset = 0.7;
+	int i;
+	float weight = 1.0;
+	float total_weight = 0.0;
+
+	float res = 0.0;
+
+	for (i = 0 ; i < octaves ; i++) {
+		exponent_array[i] = pow(frequency, -H);
+		frequency *= lacunarity;
+	}
+
+	for (i = 0 ; i < OCTAVES ; i++) {
+		float signl = (snoise3(x, y, z) + offset) * exponent_array[i];
+		if (weight > 1.0) weight = 1.0;
+		res += (weight * signl);
+		total_weight += (exponent_array[i] * weight);
+
+		weight *= signl;
+		x *= lacunarity;
+		z *= lacunarity;
+	}
+	free(exponent_array);
+
+	return res /*/ total_weight*/;
+}
+
 /**
  * Initialize byte arrays for a standard chunk
  *
@@ -41,39 +101,18 @@ static void _init_data(int ch_x, int ch_z)
 	/* this should only put 1 layer of bedrock */
 	int block_height[16][16];
 	float lacunarity;
-	float exponent_array[OCTAVES];
-
-	float frequency = 1.0;
-	float offset = 0.7;
-	float H = 0.25;
-	int i;
 
 	/* step 1: generate the height map */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			float total_x, total_z;
-			total_x = ((((float)ch_x)*16.0) + ((float)x));
-			total_z = ((((float)ch_z)*16.0) + ((float)z));
-			total_x *= 0.015;
-			total_z *= 0.015;
-			frequency = 1.0;
+			total_x = ((((float)ch_x)*16.0) + ((float)x)) * 0.00155; /* magic */
+			total_z = ((((float)ch_z)*16.0) + ((float)z)) * 0.00155;
 			lacunarity = (((cos(total_x/5.0) + cos(total_z/5.0))/4.0)+1.0);
-			for (i = 0 ; i < OCTAVES ; i++) {
-				exponent_array[i] = pow(frequency, -H);
-				frequency *= lacunarity;
-			}
-			float weight = 1.0;
-			float signl;
-			a = 0.0;
-			for (i = 0 ; i < OCTAVES ; i++) {
-				signl = (snoise2(total_x, total_z) + offset) * exponent_array[i];
-				if (weight > 1.0) weight = 1.0;
-				a += (weight * signl);
-				weight *= signl;
-				total_x *= lacunarity;
-				total_z *= lacunarity;
-			}
-			a = ((a *4.0) + ((-lacunarity*40)+100))*(lacunarity/1.5)+20;
+
+			a = multifractal_2d(total_x, total_z, 2.7, 20); /* magic settings */
+			a = a * 13.5 + 55; /* magic settings */
+
 			block_height[(int)x][(int)z] = a;
 		}
 	}
