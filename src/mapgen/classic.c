@@ -26,141 +26,8 @@ static unsigned char _skylight[16384] = {0};
 static unsigned char _blocklight[16384] = {0};
 static unsigned char _heightmap[256] = {0};
 
-static int lookup_type_mountain(float value)
-{
-	if (value < -0.50)
-		return 13;	/* gravel */
-	if (value < 0.0)
-		return 3;	/* dirt */
-	if (value < 0.30)
-		return 1;	/* stone */
-	if (value < 0.35)
-		return 16;	/* coal */
-	if (value < 0.50)
-		return 1;	/* stone */
-	if (value < 0.55)
-		return 16;	/* iron */
-	return 0;
-}
 
-static int lookup_type_hills(float value)
-{
-	if (value < -0.50)
-		return 0;
-	if (value < -0.05)
-		return 3;	/* dirt */
-	if (value < 0.0)
-		return 13;	/* gravel */
-	if (value < 0.25)
-		return 1;	/* stone */
-	if (value < 0.40)
-		return 0;	/* cave */
-	if (value < 0.50)
-		return 1;	/* stone */
-	if (value < 0.58)
-		return 3;	/* dirt */
-	if (value < 0.62)
-		return 0;	/* cave */
-	if (value < 0.72)
-		return 3;	/* dirt */
-	if (value < 0.722)
-		return 16;	/* coal */
-	if (value < 0.84)
-		return 1;	/* stone */
-	if (value < 0.85)
-		return 16;	/* iron */
-	return 0;
-}
-
-static int lookup_type_sealevel(float value)
-{
-	if (value < -0.07)
-		return 12;	/* sand */
-	if (value < 0.0)
-		return 1;	/* rock */
-	if (value < 0.07)
-		return 3;	/* dirt */
-	return 12;		/* sand */
-}
-
-static int lookup_type_underground1(float value)
-{
-	if (value < -0.2)
-		return 12;
-	if (value < -0.19)
-		return 0;
-	if (value < -0.17)
-		return 1;
-	if (value < -0.15)
-		return 3;
-	if (value < -0.05)
-		return 0;
-	if (value < 0.2)
-		return 1;
-	if (value < 0.25)
-		return 0;
-	if (value < 0.5)
-		return 1;
-	return 12;
-}
-
-static int lookup_type_underground2(float value)
-{
-	return 7;
-}
-
-static int lookup_type_underground3(float value)
-{
-	return 7;
-}
-
-static int lookup_type_bottom(float value)
-{
-	return 7; /* bedrock */
-}
-
-/**
- * Determine a block's type (sand, bedrock, ...)
- *
- * @param value a noise generated value [-1.0, 1.0]
- * @param height the altitude of the block
- *
- * @return the block type
- */
-static int lookup_type(float value, int height)
-{
-	if (height <= 1)
-		return lookup_type_bottom(value);
-	if (height <= 20)
-		return lookup_type_underground3(value);
-	if (height <= 35)
-		return lookup_type_underground2(value);
-	if (height <= 50)
-		return lookup_type_underground1(value);
-	if (height <= 66)
-		return lookup_type_sealevel(value);
-	if (height <= 75)
-		return lookup_type_hills(value);
-	/* really high */
-	return lookup_type_mountain(value);
-}
-
-static int block_type(int ch_x, int ch_z, int x, int y, int z)
-{
-	float total_x = ((((float)ch_x)*16.0) + ((float)x)) * 0.053;
-	float total_z = ((((float)ch_z)*16.0) + ((float)z)) * 0.053;
-	float total_y = ((float)y) * 0.015;
-
-	float val = snoise3(total_x, total_y, total_z);
-	val += (0.5*(snoise3(total_x*2.0, total_y*2.0, total_z*2.0)));
-	val += (0.25*(snoise3(total_x*4.0, total_y*4.0, total_z*4.0)));
-	val += (0.125*(snoise3(total_x*8.0, total_y*8.0, total_z*8.0)));
-	//val *= (cos(total_z)+cos(total_x)+cos(total_z));
-	//val /= (1.5);
-	val /= (1.0 + 0.5 + 0.25 + 0.125);
-
-	return lookup_type(val, y);
-}
+#define OCTAVES 8
 
 /**
  * Initialize byte arrays for a standard chunk
@@ -173,61 +40,49 @@ static void _init_data(int ch_x, int ch_z)
 	int light_val = 0x0F;
 	/* this should only put 1 layer of bedrock */
 	int block_height[16][16];
-	float lacunarity = 0.5;
-	float exponent_array[4];
+	float lacunarity;
+	float exponent_array[OCTAVES];
 
 	float frequency = 1.0;
+	float offset = 0.7;
 	float H = 0.25;
 	int i;
-	for (i = 0 ; i < 4 ; i++) {
-		exponent_array[i] = pow(frequency, -H);
-		frequency *= lacunarity;
-	}
+
 	/* step 1: generate the height map */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			float total_x, total_z;
-			total_x = ((((float)ch_x)*16.0) + ((float)x)); 
-			total_z = ((((float)ch_z)*16.0) + ((float)z)); 
+			total_x = ((((float)ch_x)*16.0) + ((float)x));
+			total_z = ((((float)ch_z)*16.0) + ((float)z));
 			total_x *= 0.015;
 			total_z *= 0.015;
-#if 1
+			frequency = 1.0;
+			lacunarity = (((cos(total_x/5.0) + cos(total_z/5.0))/4.0)+1.0);
+			for (i = 0 ; i < OCTAVES ; i++) {
+				exponent_array[i] = pow(frequency, -H);
+				frequency *= lacunarity;
+			}
 			float weight = 1.0;
 			float signl;
 			a = 0.0;
-			for (i = 0 ; i < 4 ; i++) {
-				signl = snoise2(total_x, total_z) * exponent_array[i];
+			for (i = 0 ; i < OCTAVES ; i++) {
+				signl = (snoise2(total_x, total_z) + offset) * exponent_array[i];
 				if (weight > 1.0) weight = 1.0;
 				a += (weight * signl);
 				weight *= signl;
 				total_x *= lacunarity;
 				total_z *= lacunarity;
 			}
-#else
-			a = snoise2(total_x, total_z);
-			a += (snoise2(total_x*2.0, total_z*2.0) * 0.5);
-			a += (snoise2(total_x*4.0, total_z*4.0) * 0.25);
-			a += (snoise2(total_x*8.0, total_z*8.0) * 0.125);
-			a /= (1.0 + 0.5 + 0.25 + 0.125);
-			/* noise tends to be of repetitive height (-1.0 -> 1.0)
-			 * which would tend to result in hills of the same height
-			 * so we need to multiply it by a cos/sin to give more
-			 * randomness  to it */
-			a *= (cos(total_z)+cos(total_x));
-			/* fill the minimum height, we get flat bottom lakes like that */
-			a = (a < -0.40 ? -0.40 : a);
-			a = ((a / 2.5)*48.0 + 64.0);
-#endif
+			a = ((a *4.0) + ((-lacunarity*40)+100))*(lacunarity/1.5)+20;
 			block_height[(int)x][(int)z] = a;
 		}
 	}
-	/* step 2: fill the chunk with sand according to the height map */
+	/* step 2: fill the chunk with rock according to the height map */
 	memset(_blocks, 0, 32768);
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
-			for (y = 0 ; y < block_height[x][z] ; y++) {
-				//_blocks[y + (z*128) + (x*128*16)] = block_type(ch_x, ch_z, x, y, z);
-				_blocks[y + (z*128) + (x*128*16)] = 11;
+			for (y = 0 ; y < block_height[x][z] && y < 128 ; y++) {
+				_blocks[y + (z*128) + (x*128*16)] = 1; /* stone is the basis of MC worlds */
 			}
 			_heightmap[x+(z*16)] = block_height[x][z]; /* max height is 1 */
 
@@ -236,31 +91,76 @@ static void _init_data(int ch_x, int ch_z)
 			}
 		}
 	}
-#if 0
+	float total_x, total_z;
+	float res;
+	/* dig caves / erosion */
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
+			total_x = ((((float)ch_x)*16.0) + ((float)x));
+			total_z = ((((float)ch_z)*16.0) + ((float)z));
+			/* caves (underground) */
+			for (y = 0 ; y < 54 ; y++) {
+				res = snoise3(total_x/12.0, y/12.0, total_z/12.0);
+				res += (0.5 * snoise3(total_x/24.0, y/24.0, total_z/24.0));
+				res /= 1.5;
+				if (res > 0.35) {
+					if (y < 16)
+						_blocks[y + (z*128) + (x*128*16)] = 11; /* lava */
+					else
+						_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+				}
+			}
+			for (y = 54 ; y < _heightmap[x+(z*16)] - 4 ; y++) {
+				res = snoise3(total_x/12.0, y/12.0, total_z/12.0);
+				res += (0.5 * snoise3(total_x/24.0, y/24.0, total_z/24.0));
+				res /= 1.5;
+				if (res > 0.45) {
+						_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+				}
+			}
+			/* erosion (over ground) */
+			for (y = 65 ; y < _heightmap[x+(z*16)] ; y++) {
+				res = snoise3(total_x/40.0, y/50.0, total_z/40.0);
+				res += (0.5 * snoise3(total_x/80.0, y/100.0, total_z/80.0));
+				res /= 1.5;
+				if (res > 0.50)
+					_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+			}
+		}
+	}
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			/* step 3: replace top with grass */
-			y = _heightmap[x+(z*16)];;
-			while (_blocks[y + (z*128) + (x*128*16)] == 0 && y > 64) {
+			y = _heightmap[x+(z*16)];
+			while (_blocks[y + (z*128) + (x*128*16)] == 0) {
 				y--;
+				_heightmap[x+(z*16)]--;
+				
 			}
-			switch (_blocks[(y) + (z*128) + (x*128*16)]) {
-				case 0: /* empty */
-				case 12: /* sand */
-					break;
-				default:
-					_blocks[(y+1) + (z*128) + (x*128*16)] = 2;
+			if (y < 64 && y > 60) {
+				_blocks[y + (z*128) + (x*128*16)] = 12; /* sand underwater */
+				_blocks[y + (z*128) + (x*128*16)+1] = 12; /* sand underwater */
+			} else if (y >= 64) {
+				_blocks[y + (z*128) + (x*128*16)] = 3; /* dirt */
+				_blocks[y + (z*128) + (x*128*16)+1] = 2; /* dirt */
 			}
+			_heightmap[x+(z*16)] += 2;
 
 			/* step 4: flood with water at level 64 */
-			y = 62;
+			y = 64;
 			while (_blocks[y + (z*128) + (x*128*16)] == 0) {
 				_blocks[y + (z*128) + (x*128*16)] = 9; /* water */
 				y--;
 			}
 		}
 	}
-#endif
+	/* add 2 layers of bedrock */
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
+			_blocks[0 + (z*128) + (x*128*16)] = 7; // bedrock
+			_blocks[1 + (z*128) + (x*128*16)] = 7; // bedrock
+		}
+	}
 }
 
 /**
@@ -368,8 +268,8 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	/* write the nbt to disk */
 	//nbt_write_compound(nbt, nbt_cast_compound(level_tag));
 	nbt_write(nbt, full_path);
-
 	free(full_path);
+	printf("Done\n");
 }
 
 /**
