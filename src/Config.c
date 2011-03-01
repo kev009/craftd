@@ -78,9 +78,80 @@ CD_ParseConfig (const char* path)
     self->cache.spawn.y = 0;
     self->cache.spawn.z = 0;
 
+    self->cache.files.motd  = "/etc/craftd/motd.conf";
+    self->cache.files.world = "/usr/share/craftd/world";
+
     self->cache.workers = 2;
 
     self->cache.maxPlayers = 0;
+
+    J_DO {
+        J_OBJ(server, self->data, "server") {
+            J_BOOL(server, "daemonize",   self->cache.daemonize);
+            J_INT(server,  "workers",     self->cache.workers);
+            J_INT(server,  "max-players", self->cache.maxPlayers);
+
+            J_OBJ(files, server, "file") {
+                J_STRING(files, "motd",  self->cache.files.motd);
+                J_STRING(files, "world", self->cache.files.world);
+            }
+
+            J_OBJ(rate, server, "rate") {
+                J_INT(rate, "sunrise", self->cache.rate.sunrise);
+                J_INT(rate, "day",     self->cache.rate.day);
+                J_INT(rate, "sunset",  self->cache.rate.sunset);
+                J_INT(rate, "night",   self->cache.rate.night);
+            }
+
+            J_OBJ(spawn, server, "spawn") {
+                J_INT(spawn, "x", self->cache.spawn.x);
+                J_INT(spawn, "y", self->cache.spawn.y);
+                J_INT(spawn, "z", self->cache.spawn.z);
+            }
+
+            J_OBJ(connection, server, "connection") {
+                J_INT(connection, "port",    self->cache.connection.port);
+                J_INT(connection, "backlog", self->cache.connection.backlog);
+
+                J_OBJ(bind, connection, "bind") {
+                    J_IF_STRING(bind, "ipv4") {
+                        if (inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
+                            self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
+                        }
+                    }
+
+                    J_IF_STRING(bind, "ipv6") {
+                        if (inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
+                            self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
+                        }
+                    }
+                }
+            }
+        }
+
+        J_OBJ(httpd, self->data, "httpd") {
+            J_BOOL(httpd,   "enabled", self->cache.httpd.enabled);
+            J_STRING(httpd, "root",    self->cache.httpd.root);
+
+            J_OBJ(connection, httpd, "connection") {
+                J_INT(connection, "port", self->cache.httpd.connection.port);
+
+                J_OBJ(bind, connection, "bind") {
+                    J_IF_STRING(bind, "ipv4") {
+                        if (inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
+                            self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
+                        }
+                    }
+
+                    J_IF_STRING(bind, "ipv6") {
+                        if (inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
+                            self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return self;
 }
@@ -95,10 +166,3 @@ CD_DestroyConfig (CDConfig* self)
     CD_free(self);
 }
 
-bool
-CD_ConfigParseBool (const json_t* json, const char* key)
-{
-    json_t* obj = json_object_get(json, key);
-
-    return (obj && json_is_true(obj));
-}

@@ -36,8 +36,7 @@ struct _CDServer;
 typedef struct _CDPlugins {
     struct _CDServer* server;
 
-    size_t     length;
-    CDPlugin** item;
+    CDHash* items;
 } CDPlugins;
 
 /**

@@ -123,6 +123,12 @@ CD_AppendWorker (CDWorkers* self, CDWorker* worker)
     return self;
 }
 
+bool
+CD_HasJobs (CDWorkers* self)
+{
+    return CD_ListLength(self->jobs) > 0;
+}
+
 void
 CD_AddJob (CDWorkers* self, CDJob* job)
 {

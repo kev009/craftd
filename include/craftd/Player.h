@@ -34,7 +34,8 @@ struct _CDServer;
 typedef enum _CDPlayerStatus {
     CDPlayerIdle,
     CDPlayerInput,
-    CDPlayerProcess
+    CDPlayerProcess,
+    CDPlayerDisconnect
 } CDPlayerStatus;
 
 /**
@@ -48,21 +49,21 @@ typedef struct _CDPlayer {
     CDString* username;
     char      ip[128];
 
-    evutil_socket_t     socket;
+    evutil_socket_t socket;
 
     CDBuffers* buffers;
 
-    CDHash* _private;
+    CDList* jobs;
 
     CDPlayerStatus status;
     bool           pending;
-    bool           disconnecting;
 
     struct {
-        pthread_rwlock_t status;
-        pthread_rwlock_t pending;
-        pthread_rwlock_t disconnecting;
+        pthread_mutex_t status;
+        pthread_mutex_t jobs;
     } lock;
+
+    CDHash* _private;
 } CDPlayer;
 
 /**

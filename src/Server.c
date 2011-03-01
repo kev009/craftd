@@ -165,25 +165,38 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
-    pthread_rwlock_wrlock(&player->lock.pending);
-    if (!player->pending) {
-        player->pending = true;
+    pthread_mutex_lock(&player->lock.status);
 
-        CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerInputJob, player));
+    SDEBUG(player->server, "read data from %s (%s), %d byte/s available", player->username, player->ip, evbuffer_get_length(bufferevent_get_input(event)));
+
+    if (player->pending) {
+        SDEBUG(player->server, "there's already a pending input job");
+        pthread_mutex_unlock(&player->lock.status);
+        return;
     }
-    pthread_rwlock_unlock(&player->lock.pending);
+
+    player->pending = true;
+    pthread_mutex_unlock(&player->lock.status);
+
+    CDJob* job = CD_CreateJob(CDPlayerInputJob, player);
+
+    CD_ListPush(player->jobs, (CDPointer) job);
+    CD_AddJob(player->server->workers, job);
 }
 
-// FIXME: the usual possible segfault
 static
 void
 cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 {
-    CDServer* self = player->server;
-
     if (!((error & BEV_EVENT_EOF) || (error & BEV_EVENT_ERROR) || (error & BEV_EVENT_TIMEOUT))) {
         return;
     }
+
+    pthread_mutex_lock(&player->lock.status);
+
+    player->status = CDPlayerDisconnect;
+
+    CDServer* self = player->server;
 
     if (error & BEV_EVENT_ERROR) {
         SLOG(self, LOG_INFO, "libevent: ip %s - %s", player->ip, evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
@@ -194,9 +207,12 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
     SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
 
-    pthread_rwlock_wrlock(&player->lock.disconnecting);
-    player->disconnecting = true;
-    pthread_rwlock_unlock(&player->lock.disconnecting);
+    CDJob* job = CD_CreateJob(CDPlayerDisconnectJob, player);
+
+    CD_ListPush(player->jobs, (CDPointer) job);
+    CD_AddJob(player->server->workers, job);
+
+    pthread_mutex_unlock(&player->lock.status);
 }
 
 static

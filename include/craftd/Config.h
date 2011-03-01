@@ -42,7 +42,7 @@ typedef struct _CDConfig {
                 struct sockaddr_in6 ipv6;
             } bind;
 
-            int port;
+            uint16_t port;
             int backlog;
         } connection;
 
@@ -55,10 +55,10 @@ typedef struct _CDConfig {
                     struct sockaddr_in6 ipv6;
                 } bind;
 
-                int port;
+                uint16_t port;
             } connection;
 
-            char* root;
+            const char* root;
         } httpd;
 
         struct {
@@ -75,8 +75,8 @@ typedef struct _CDConfig {
         } spawn;
 
         struct {
-            char* motd;
-            char* world;
+            const char* motd;
+            const char* world;
         } files;
 
         int workers;
@@ -99,14 +99,37 @@ CDConfig* CD_ParseConfig (const char* path);
  */
 void CD_DestroyConfig (CDConfig* self);
 
-/**
- * Return a boolean from a json object
- *
- * @param json The json object
- * @param key The name of the property to get
- *
- * @return A boolean value representing the property
- */
-bool CD_ConfigParseBool (const json_t* json, const char* key);
+#define J_DO for (const json_t* __tmp__ = NULL, *__check__ = NULL; __check__ == NULL; __check__++)
+
+#define J_BOOL_VALUE \
+    json_is_true(__tmp__)
+
+#define J_STRING_VALUE \
+    json_string_value(__tmp__)
+
+#define J_INT_VALUE \
+    json_integer_value(__tmp__)
+
+#define J_OBJ(var, parent, key) \
+    const json_t* var = json_object_get(parent, key); \
+    if (var && !json_is_null(var))
+
+#define J_IF_BOOL(parent, key) \
+    if ((__tmp__ = json_object_get(parent, key)) && !json_is_null(__tmp__))
+
+#define J_IF_STRING(parent, key) \
+    if ((__tmp__ = json_object_get(parent, key)) && json_is_string(__tmp__))
+
+#define J_IF_INT(parent, key) \
+    if ((__tmp__ = json_object_get(parent, key)) && json_is_integer(__tmp__))
+
+#define J_BOOL(parent, key, into) \
+    J_IF_BOOL(parent, key) { into = J_BOOL_VALUE; }
+
+#define J_STRING(parent, key, into) \
+    J_IF_STRING(parent, key) { into = J_STRING_VALUE; }
+
+#define J_INT(parent, key, into) \
+    J_IF_INT(parent, key) { into = J_INT_VALUE; }
 
 #endif
