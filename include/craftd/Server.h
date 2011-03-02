@@ -31,6 +31,7 @@
 #include <craftd/TimeLoop.h>
 #include <craftd/Workers.h>
 #include <craftd/Plugins.h>
+#include <craftd/Player.h>
 
 /**
  * Server class.
@@ -110,6 +111,13 @@ short CD_ServerSetTime (CDServer* self, short time);
  * @return true if everything went as expected or false otherwise
  */
 bool CD_RunServer (CDServer* self);
+
+/**
+ * Call the read callback for the given player.
+ *
+ * @param player The player to read from
+ */
+void CD_ReadFromPlayer (CDServer* self, CDPlayer* player);
 
 /**
  * Get a new unique entity ID

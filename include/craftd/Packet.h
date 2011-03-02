@@ -681,6 +681,18 @@ typedef union _CDPacketDisconnect {
 CDPacket* CD_PacketFromBuffer (CDBuffer* input);
 
 /**
+ * Check if the buffer has enough/right data to parse a Packet
+ *
+ * @param input The buffer to read from
+ *
+ * @return true if parsable, false otherwise, errno is set with the following possible values:
+ *
+ *         EAGAIN: not enough data yet
+ *         EILSEQ: bad data packet
+ */
+bool CD_PacketParsable (CDBuffer* input);
+
+/**
  * Destroy a Packet object
  */
 void CD_DestroyPacket (CDPacket* self);
@@ -702,5 +714,8 @@ CDPointer CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input);
  * @return The raw packet data
  */
 CDBuffer* CD_PacketToBuffer (CDPacket* self);
+
+#define CD_PACKET_DO \
+    for (void* __check__ = NULL; __check__ == NULL; __check__++)
 
 #endif

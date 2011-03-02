@@ -37,6 +37,9 @@ struct _CDServer;
 typedef struct _CDTimeLoop {
     struct _CDServer* server;
 
+    pthread_t      thread;
+    pthread_attr_t attributes;
+
     bool running;
 
     int    last;

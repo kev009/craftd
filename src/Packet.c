@@ -29,7 +29,7 @@
 CDPacket*
 CD_PacketFromBuffer (CDBuffer* input)
 {
-    if (CD_BufferLength(input) <= 1) {
+    if (!CD_PacketParsable(input)) {
         errno = EAGAIN;
 
         return NULL;
@@ -46,6 +46,13 @@ CD_PacketFromBuffer (CDBuffer* input)
     self->data  = CD_GetPacketDataFromBuffer(self, input);
 
     return self;
+}
+
+// TODO: implement an FSM
+bool
+CD_PacketParsable (CDBuffer* input)
+{
+    return CD_BufferLength(input) > 1;
 }
 
 void

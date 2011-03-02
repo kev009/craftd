@@ -168,7 +168,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     pthread_mutex_lock(&player->lock.status);
     pthread_rwlock_wrlock(&player->lock.jobs);
 
-    SDEBUG(player->server, "read data from %s (%s), %d byte/s available", player->username, player->ip, evbuffer_get_length(bufferevent_get_input(event)));
+    SDEBUG(player->server, "read data from %s (%s), %d byte/s available", CD_StringContent(player->username), player->ip, evbuffer_get_length(bufferevent_get_input(event)));
 
     if (player->status == CDPlayerIdle) {
         CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
@@ -337,7 +337,8 @@ CD_RunServer (CDServer* self)
 
     CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
-    CD_RunTimeLoop(self->timeloop);
+    // Start the TimeLoop for timed events
+    pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, (event_callback_fn) cd_Accept, self);
 
@@ -348,6 +349,12 @@ CD_RunServer (CDServer* self)
     CD_LoadPlugin(self->plugins, "libcdnbt");
 
     return event_base_dispatch(self->event.base) != 0;
+}
+
+void
+CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
+{
+    cd_ReadCallback(player->buffers->raw, player);
 }
 
 // FIXME: This is just a dummy function
