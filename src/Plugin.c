@@ -35,6 +35,7 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     }
 
     self->server = server;
+    self->name   = NULL;
     self->path   = CD_CreateStringFromCString(path);
     self->handle = lt_dlopenext(path);
 

@@ -29,7 +29,6 @@
 #include <craftd/common.h>
 
 typedef enum _CDJobType {
-    CDPlayerInputJob,
     CDPlayerProcessJob,
     CDPlayerDisconnectJob,
 
@@ -42,25 +41,30 @@ typedef enum _CDJobType {
     job->type == CDCustomJob    \
 )
 
+
 #define CD_JOB_IS_PLAYER(job) (             \
-    job->type == CDPlayerInputJob       ||  \
-    job->type == CDPlayerProcessJob     ||  \
-    job->type == CDPlayerDisconnectJob      \
+        job->type == CDPlayerProcessJob     \
+    ||  job->type == CDPlayerDisconnectJob  \
 )
 
 #define CD_JOB_IS_SERVER(job) (         \
     job->type == CDServerBroadcastJob   \
 )
 
+typedef struct _CDCustomJob {
+    void      (*callback)(CDPointer);
+    CDPointer data;
+} CDCustomJobData;
+
 typedef struct _CDJob {
     CDJobType type;
-    void*     data;
-
-    bool running;
+    CDPointer data;
 } CDJob;
 
-CDJob* CD_CreateJob (CDJobType type, void* data);
+CDJob* CD_CreateJob (CDJobType type, CDPointer data);
 
-void* CD_DestroyJob (CDJob* job);
+CDPointer CD_DestroyJob (CDJob* job);
+
+CDCustomJobData* CD_CreateCustomJob (void (*callback)(CDPointer), CDPointer data);
 
 #endif

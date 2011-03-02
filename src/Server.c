@@ -166,22 +166,31 @@ void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
     pthread_mutex_lock(&player->lock.status);
+    pthread_rwlock_wrlock(&player->lock.jobs);
 
     SDEBUG(player->server, "read data from %s (%s), %d byte/s available", player->username, player->ip, evbuffer_get_length(bufferevent_get_input(event)));
 
-    if (player->pending) {
-        SDEBUG(player->server, "there's already a pending input job");
-        pthread_mutex_unlock(&player->lock.status);
-        return;
+    if (player->status == CDPlayerIdle) {
+        CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
+
+        if (packet) {
+            SDEBUG(player->server, "received packet 0x%.2X from %s", packet->type, player->ip);
+
+            packet = (CDPacket*) CD_HashSet(PRIVATE(player), "packet", (CDPointer) packet);
+
+            if (packet) {
+                CD_DestroyPacket(packet);
+            }
+
+            player->status = CDPlayerProcess;
+            player->jobs++;
+
+            CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerProcessJob, (CDPointer) player));
+        }
     }
 
-    player->pending = true;
+    pthread_rwlock_unlock(&player->lock.jobs);
     pthread_mutex_unlock(&player->lock.status);
-
-    CDJob* job = CD_CreateJob(CDPlayerInputJob, player);
-
-    CD_ListPush(player->jobs, (CDPointer) job);
-    CD_AddJob(player->server->workers, job);
 }
 
 static
@@ -207,9 +216,8 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
     SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
 
-    CDJob* job = CD_CreateJob(CDPlayerDisconnectJob, player);
+    CDJob* job = CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player);
 
-    CD_ListPush(player->jobs, (CDPointer) job);
     CD_AddJob(player->server->workers, job);
 
     pthread_mutex_unlock(&player->lock.status);

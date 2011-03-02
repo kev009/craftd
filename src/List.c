@@ -188,13 +188,12 @@ CDPointer
 CD_ListDeleteAll (CDList* self, CDPointer data)
 {
     CDPointer      result = (CDPointer) NULL;
-    CDListIterator it;
     CDListIterator del;
 
-    for (it = CD_ListBegin(self); it != CD_ListEnd(self); it = CD_ListNext(it)) {
+    CD_LIST_FOREACH(self, it) {
         if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
             result   = CD_ListIteratorValue(del);
-            it->next = CD_ListNext(del);
+            it->next = del->next;
             kmp_free(cdList, self->list->mp, del);
         }
     }

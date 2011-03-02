@@ -26,7 +26,7 @@
 #include <craftd/Job.h>
 
 CDJob*
-CD_CreateJob (CDJobType type, void* data)
+CD_CreateJob (CDJobType type, CDPointer data)
 {
     CDJob* self = CD_malloc(sizeof(CDJob));
 
@@ -34,19 +34,33 @@ CD_CreateJob (CDJobType type, void* data)
         return NULL;
     }
 
-    self->type    = type;
-    self->data    = data;
-    self->running = false;
+    self->type = type;
+    self->data = data;
 
     return self;
 }
 
-void*
+CDPointer
 CD_DestroyJob (CDJob* self)
 {
-    void* result = self->data;
+    CDPointer result = self->data;
 
     CD_free(self);
 
     return result;
+}
+
+CDCustomJobData*
+CD_CreateCustomJob (void (*callback)(CDPointer), CDPointer data)
+{
+    CDCustomJobData* self = CD_malloc(sizeof(CDCustomJobData));
+
+    if (!self) {
+        return NULL;
+    }
+
+    self->callback = callback;
+    self->data     = data;
+
+    return self;
 }
