@@ -351,6 +351,12 @@ CD_RunServer (CDServer* self)
     return event_base_dispatch(self->event.base) != 0;
 }
 
+void
+CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
+{
+    cd_ReadCallback(player->buffers->raw, player);
+}
+
 // FIXME: This is just a dummy function
 MCEntityId
 CD_ServerGenerateEntityId (CDServer* self)

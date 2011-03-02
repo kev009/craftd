@@ -140,7 +140,7 @@ CD_RunWorker (CDWorker* self)
                 CD_DestroyJob(self->job);
 
                 if (CD_BufferLength(player->buffers->input) > 0) {
-                    event_base_loop(self->server->event.base, EVLOOP_NONBLOCK);
+                    CD_ReadFromPlayer(player->server, player);
                 }
             }
             else if (self->job->type == CDPlayerDisconnectJob) {
