@@ -156,7 +156,7 @@ bool
 CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Base");
-    
+
     pthread_mutex_init(&cd_lock.login, NULL);
 
     CD_HashSet(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cd_TimeIncrease));
