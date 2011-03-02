@@ -29,11 +29,11 @@
 
 struct {
     pthread_mutex_t login;
-} cd_lock;
+} cdbase_lock;
 
 static
 void
-cd_TimeIncrease (evutil_socket_t fd, short event, CDServer* self)
+cdbase_TimeIncrease (evutil_socket_t fd, short event, CDServer* self)
 {
     short current = CD_ServerGetTime(self);
 
@@ -59,7 +59,7 @@ cd_TimeIncrease (evutil_socket_t fd, short event, CDServer* self)
 
 static
 void
-cd_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
+cdbase_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 {
     CDPacketTimeUpdate pkt;
     pkt.response.time = CD_ServerGetTime(self);
@@ -73,7 +73,7 @@ cd_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 
 static
 void
-cd_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
+cdbase_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 {
     CDPacket packet = { CDResponse, CDKeepAlive, (CDPointer) NULL };
 
@@ -84,7 +84,7 @@ cd_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 
 static
 bool
-cd_PlayerProcess (CDServer* server, CDPlayer* player)
+cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 {
     CDPacket* packet = (CDPacket*) CD_HashGet(PRIVATE(player), "packet");
 
@@ -96,7 +96,7 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
         case CDLogin: {
             CDPacketLogin* data = (CDPacketLogin*) packet->data;
 
-            pthread_mutex_lock(&cd_lock.login);
+            pthread_mutex_lock(&cdbase_lock.login);
 
             SLOG(server, LOG_NOTICE, "%s with client version %d tried login", CD_StringContent(data->request.username), data->request.version);
 
@@ -110,21 +110,33 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_HashSet(server->players, CD_StringContent(player->username), (CDPointer) player);
 
-            pthread_mutex_unlock(&cd_lock.login);
+            pthread_mutex_unlock(&cdbase_lock.login);
 
-            CDPacketLogin pkt;
-            pkt.response.id         = player->entity.id;
-            pkt.response.serverName = CD_CreateStringFromCString("");
-            pkt.response.motd       = CD_CreateStringFromCString("");
-            pkt.response.mapSeed    = 0;
-            pkt.response.dimension  = 0;
+            CD_PACKET_DO {
+                CDPacketLogin pkt;
+                pkt.response.id         = player->entity.id;
+                pkt.response.serverName = CD_CreateStringFromCString("");
+                pkt.response.motd       = CD_CreateStringFromCString("");
+                pkt.response.mapSeed    = 0;
+                pkt.response.dimension  = 0;
 
-            CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
+                CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
 
-            CD_PlayerSendPacket(player, &response);
+                CD_PlayerSendPacket(player, &response);
 
-            CD_DestroyString(pkt.response.serverName);
-            CD_DestroyString(pkt.response.motd);
+                CD_DestroyString(pkt.response.serverName);
+                CD_DestroyString(pkt.response.motd);
+            }
+
+            /* Send Spawn Position to initialize compass */
+            CD_PACKET_DO {
+                CDPacketSpawnPosition pkt;
+                pkt.response.position = *((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"));
+
+                CDPacket response = { CDResponse, CDSpawnPosition, (CDPointer) &pkt };
+
+                CD_PlayerSendPacket(player, &response);
+            }
         } break;
 
         case CDHandshake: {
@@ -171,13 +183,13 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Base");
 
-    pthread_mutex_init(&cd_lock.login, NULL);
+    pthread_mutex_init(&cdbase_lock.login, NULL);
 
-    CD_HashSet(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cd_TimeIncrease));
-    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cd_TimeUpdate));
-    CD_HashSet(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cd_KeepAlive));
+    CD_HashSet(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbase_TimeIncrease));
+    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbase_TimeUpdate));
+    CD_HashSet(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbase_KeepAlive));
 
-    CD_EventRegister(self->server, "Player.process", cd_PlayerProcess);
+    CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
 
     return true;
 }
@@ -190,9 +202,9 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
 
-    CD_EventUnregister(self->server, "Player.process", cd_PlayerProcess);
+    CD_EventUnregister(self->server, "Player.process", cdbase_PlayerProcess);
 
-    pthread_mutex_destroy(&cd_lock.login);
+    pthread_mutex_destroy(&cdbase_lock.login);
 
     return true;
 }
