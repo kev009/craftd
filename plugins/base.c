@@ -160,7 +160,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_EventDispatch(server, "Chunk.load", x, z, mapdata);
 
-                uLongf written;
+                uLongf written = 81920;
                 Bytef* buffer = (Bytef*) CD_malloc(compressBound(81920));
                 if (compress(buffer, &written, mapdata, compressBound(81920)) != Z_OK) {
                     SERR(server, "zlib compress failure");
