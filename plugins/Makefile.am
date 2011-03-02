@@ -15,7 +15,3 @@ libcdbase_la_LDFLAGS = -version-info 0:0:0
 # cdnbt loads Notch's NBT region file format
 libcdnbt_la_SOURCES = cdnbt/cdnbt.c cdnbt/nbt.c cdnbt/nbt.h cdnbt/itoa.c cdnbt/itoa.h
 libcdnbt_la_LDFLAGS = -version-info 0:0:0
-
-# The javascript plugin
-libcdjs_la_SOURCES = cdjs/cdjs.c
-libcdjs_la_LDFLAGS = -version-info 0:0:0
