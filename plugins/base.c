@@ -125,16 +125,19 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
             CD_DestroyString(loginpkt.response.motd);
 
             /* Send Spawn Position to initialize compass */
-            /*
+
             CDPacketSpawnPosition spawnpkt;
 
             MCPosition* spawnposition = (MCPosition*)
                 CD_HashGet(PRIVATE(server), "World.spawnposition");
-            spawnpkt.response.position = *spawnposition;
+
+            spawnpkt.response.position.x = spawnposition->x;
+            spawnpkt.response.position.y = spawnposition->y;
+            spawnpkt.response.position.z = spawnposition->z;
+
             CDPacket spresponse = { CDResponse, CDSpawnPosition, (CDPointer) &spawnpkt };
 
             CD_PlayerSendPacket(player, &spresponse);
-            */
 
             pthread_mutex_unlock(&cd_lock.login);
         } break;
