@@ -27,6 +27,9 @@
 #include <craftd/Plugin.h>
 #include <craftd/Player.h>
 
+// TODO Remove HAX
+#include <zlib.h>
+
 struct {
     pthread_mutex_t login;
 } cdbase_lock;
@@ -126,6 +129,45 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_DestroyString(pkt.response.serverName);
                 CD_DestroyString(pkt.response.motd);
+            }
+
+            CD_PACKET_DO {
+                CDPacketPreChunk pkt;
+                pkt.response.x = ((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"))->x/16;
+                pkt.response.z = ((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"))->z/16;
+                pkt.response.mode = true;
+
+                CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+
+                CD_PlayerSendPacket(player, &response);
+            }
+
+            CD_PACKET_DO {
+                CDPacketMapChunk pkt;
+                pkt.response.position = *((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"));
+                MCSize chunksize = {16,128,16};
+                pkt.response.size = chunksize;
+                
+                int x = ((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"))->x;
+                int z = ((MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition"))->z;
+                
+                DEBUG("Sending chunk (%d,%d)", x, z);
+
+                uint8_t mapdata[81920];
+                CD_EventDispatch(server, "Chunk.load", server, x, z, &mapdata);
+
+                uLongf written;
+                Bytef* buffer = (Bytef*) CD_malloc(81920);
+                if (compress(buffer, &written, &mapdata[0], 81920) != Z_OK)
+                    ERR("zlib compress failure");
+
+                pkt.response.length = (MCInteger) written;
+                pkt.response.item = (MCByte*) &mapdata;
+
+                CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
+
+                CD_PlayerSendPacket(player, &response);
+
             }
 
             /* Send Spawn Position to initialize compass */

@@ -84,6 +84,8 @@ cdnbt_LoadLevelDat (CDPlugin* self)
     spawnPosition->y = *(nbt_cast_int(t_spawnY));
     spawnPosition->z = *(nbt_cast_int(t_spawnZ));
 
+    DEBUG("Spawn position: (%d,%d,%d)", spawnPosition->x, spawnPosition->y, spawnPosition->z);
+
     CD_HashSet(PRIVATE(self->server), "World.spawnPosition", (CDPointer) spawnPosition);
 
     nbt_free(nf);
