@@ -159,7 +159,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         goto LOADCHUNK_ERROR;
     }
 
-    if (cdnbt_ValidChunk(nf->root) == 0) {
+    if (cdnbt_ValidChunk(nf->root) == true) {
         nbt_tag* t_level      = nbt_find_tag_by_name("Level", nbt_cast_compound(nf->root));
         nbt_tag* t_blocks     = nbt_find_tag_by_name("Blocks", nbt_cast_compound(t_level));
         nbt_tag* t_data       = nbt_find_tag_by_name("Data", nbt_cast_compound(t_level));
