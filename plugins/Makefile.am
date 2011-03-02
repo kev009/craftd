@@ -4,6 +4,7 @@ AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 AM_CPPFLAGS += $(PCRE_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
+AM_CPPFLAGS += -I$(top_srcdir)/include/craftd/jansson # Temprorary for jansson
 
 # The list of core libraries that are always built
 pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la #libcdjs.la
