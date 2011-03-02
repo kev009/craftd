@@ -115,13 +115,13 @@ CD_ParseConfig (const char* path)
 
                 J_OBJ(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
-                        if (inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
+                        if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
                             self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
                         }
                     }
 
                     J_IF_STRING(bind, "ipv6") {
-                        if (inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
+                        if (evutil_inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
                             self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
                         }
                     }
@@ -138,13 +138,13 @@ CD_ParseConfig (const char* path)
 
                 J_OBJ(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
-                        if (inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
+                        if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
                             self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
                         }
                     }
 
                     J_IF_STRING(bind, "ipv6") {
-                        if (inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
+                        if (evutil_inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
                             self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
                         }
                     }
