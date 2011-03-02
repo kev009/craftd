@@ -6,7 +6,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
 
 # The list of core libraries that are always built
-pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la libcdjs.la
+pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la #libcdjs.la
 
 # The base plugin handles default game rules
 libcdbase_la_SOURCES = base.c
@@ -17,5 +17,5 @@ libcdnbt_la_SOURCES = cdnbt/cdnbt.c cdnbt/nbt.c cdnbt/nbt.h cdnbt/itoa.c cdnbt/i
 libcdnbt_la_LDFLAGS = -version-info 0:0:0
 
 # The javascript plugin
-libcdjs_la_SOURCES = cdjs/cdjs.c
-libcdjs_la_LDFLAGS = -version-info 0:0:0
+#libcdjs_la_SOURCES = cdjs/cdjs.c
+#libcdjs_la_LDFLAGS = -version-info 0:0:0
