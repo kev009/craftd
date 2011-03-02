@@ -101,7 +101,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             pthread_mutex_lock(&cdbase_lock.login);
 
-            SLOG(server, LOG_NOTICE, "%s with client version %d tried login", CD_StringContent(data->request.username), data->request.version);
+            SLOG(server, LOG_NOTICE, "%s tried login with client version %d", CD_StringContent(data->request.username), data->request.version);
 
             if (CD_HashGet(server->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s exists on the server", CD_StringContent(data->request.username));

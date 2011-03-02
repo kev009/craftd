@@ -109,7 +109,7 @@ cdnbt_ValidChunk (nbt_tag* nbtRoot)
             nbt_byte_array* arr = (nbt_byte_array*) blocks->value;
 
             if (arr->length == 32768) {
-                return true;                 /* Valid at last. */
+                return true; /* Valid at last. */
             }
         }
     }
