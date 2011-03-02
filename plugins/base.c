@@ -90,7 +90,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
     switch (packet->type) {
         case CDKeepAlive: {
-            SDEBUG(server, "This was a triumph, I'm making a note here, huge success.");
+            SDEBUG(server, "%s is still alive", CD_StringContent(player->username));
         } break;
 
         case CDLogin: {
