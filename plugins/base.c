@@ -110,19 +110,31 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_HashSet(server->players, CD_StringContent(player->username), (CDPointer) player);
 
-            CDPacketLogin pkt;
-            pkt.response.id = player->entity.id;
-            pkt.response.serverName = CD_CreateStringFromCString("");
-            pkt.response.motd = CD_CreateStringFromCString("");
-            pkt.response.mapSeed = 0;
-            pkt.response.dimension = 0;
+            CDPacketLogin loginpkt;
+            loginpkt.response.id = player->entity.id;
+            loginpkt.response.serverName = CD_CreateStringFromCString("");
+            loginpkt.response.motd = CD_CreateStringFromCString("");
+            loginpkt.response.mapSeed = 0;
+            loginpkt.response.dimension = 0;
 
-            CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
+            CDPacket response = { CDResponse, CDLogin, (CDPointer) &loginpkt };
 
             CD_PlayerSendPacket(player, &response);
 
-            CD_DestroyString(pkt.response.serverName);
-            CD_DestroyString(pkt.response.motd);
+            CD_DestroyString(loginpkt.response.serverName);
+            CD_DestroyString(loginpkt.response.motd);
+
+            /* Send Spawn Position to initialize compass */
+            /*
+            CDPacketSpawnPosition spawnpkt;
+
+            MCPosition* spawnposition = (MCPosition*)
+                CD_HashGet(PRIVATE(server), "World.spawnposition");
+            spawnpkt.response.position = *spawnposition;
+            CDPacket spresponse = { CDResponse, CDSpawnPosition, (CDPointer) &spawnpkt };
+
+            CD_PlayerSendPacket(player, &spresponse);
+            */
 
             pthread_mutex_unlock(&cd_lock.login);
         } break;

@@ -79,9 +79,12 @@ cdnbt_LoadLevelDat (CDPlugin* self)
 
   CD_ServerSetTime(self->server, *(nbt_cast_long(t_gametime)));
 
-  CD_HashSet(PRIVATE(self), "World.spawnX", *(nbt_cast_int(t_spawnX)));
-  CD_HashSet(PRIVATE(self), "World.spawnX", *(nbt_cast_int(t_spawnY)));
-  CD_HashSet(PRIVATE(self), "World.spawnX", *(nbt_cast_int(t_spawnZ)));
+  MCPosition* spawnposition = CD_malloc(sizeof(MCPosition));
+  spawnposition->x = *(nbt_cast_int(t_spawnX));
+  spawnposition->y = *(nbt_cast_int(t_spawnY));
+  spawnposition->z = *(nbt_cast_int(t_spawnZ));
+
+  CD_HashSet(PRIVATE(self->server), "World.spawnposition", (CDPointer) spawnposition);
 
   nbt_free(nf);
 
@@ -203,6 +206,8 @@ bool
 CD_PluginFinalize (CDPlugin* self)
 {
   CD_EventUnregister(self->server, "Chunk.load", cdnbt_LoadChunk);
+
+  CD_free(CD_HashGet(PRIVATE(self->server), "World.spawnposition"));
 
   return true;
 }
