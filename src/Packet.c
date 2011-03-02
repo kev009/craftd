@@ -710,9 +710,9 @@ CD_PacketToBuffer (CDPacket* self)
                         packet->response.position.y,
                         packet->response.position.z,
 
-                        packet->response.size.x,
-                        packet->response.size.y,
-                        packet->response.size.z
+                        packet->response.size.x - 1,
+                        packet->response.size.y - 1,
+                        packet->response.size.z - 1
                     );
 
                     CD_BufferAddInteger(data, packet->response.length);
