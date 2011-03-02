@@ -337,8 +337,7 @@ CD_RunServer (CDServer* self)
 
     CD_SpawnWorkers(self->workers, self->config->cache.workers);
 
-    // Start the TimeLoop for timed events
-    pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
+    CD_RunTimeLoop(self->timeloop);
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, (event_callback_fn) cd_Accept, self);
 

@@ -143,6 +143,8 @@ void CD_DestroyString (CDString* self);
  */
 CDRawString CD_DestroyStringKeepData (CDString* self);
 
+bool CD_StringIsValidMinecraft (CDString* self);
+
 /**
  * Get the char at the given index
  *
