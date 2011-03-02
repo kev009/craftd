@@ -59,6 +59,8 @@ CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number)
 
 CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
 
+bool CD_HasJobs (CDWorkers* self);
+
 void CD_AddJob (CDWorkers* self, CDJob* job);
 
 CDJob* CD_NextJob (CDWorkers* self);

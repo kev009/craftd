@@ -3,7 +3,7 @@
 if [ -d "src" ]; then
     case "$1" in
         thread)
-            valgrind --tool=drd --exclusive-threshold=10 src/craftd -c craftd.conf.dist
+            valgrind --tool=drd --exclusive-threshold=100 src/craftd -c craftd.conf.dist
         ;;
 
         *)

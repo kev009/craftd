@@ -34,8 +34,9 @@ CD_CreateJob (CDJobType type, void* data)
         return NULL;
     }
 
-    self->type = type;
-    self->data = data;
+    self->type    = type;
+    self->data    = data;
+    self->running = false;
 
     return self;
 }

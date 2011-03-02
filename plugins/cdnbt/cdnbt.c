@@ -31,7 +31,7 @@
 #include "nbt.h"
 
 // Temporary hax
-static const char* world_dir = "/home/kev009/.minecraft/saves/World1/";
+static const char* world_dir;
 static int spawnX, spawnY, spawnZ;
 
 /**
@@ -45,7 +45,7 @@ bool
 cdnbt_LoadLevelDat (CDPlugin* self)
 {
     struct stat buf;
-    int         worldstat = stat(world_dir, &buf);
+    int         worldstat = stat(world_dir = self->server->config->cache.files.world, &buf);
 
     if (worldstat == -1) {
         ERR("World directory %s does not exist", world_dir);

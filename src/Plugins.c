@@ -37,8 +37,7 @@ CD_CreatePlugins (struct _CDServer* server)
     }
 
     self->server = server;
-    self->item   = NULL;
-    self->length = 0;
+    self->items  = CD_CreateHash();
 
     lt_dlinit();
 
@@ -52,7 +51,12 @@ CD_DestroyPlugins (CDPlugins* self)
 {
     lt_dlexit();
 
-    CD_free(self->item);
+    CD_HASH_FOREACH(self->items, it) {
+        CD_DestroyPlugin((CDPlugin*) CD_HashIteratorValue(self->items, it));
+    }
+
+    CD_DestroyHash(self->items);
+
     CD_free(self);
 }
 
@@ -69,8 +73,12 @@ CD_LoadPlugin (CDPlugins* self, const char* path)
         return NULL;
     }
 
-    self->item                   = CD_realloc(self->item, sizeof(CDPlugin*) * ++self->length);
-    self->item[self->length - 1] = plugin;
+    if (plugin->name) {
+        CD_HashSet(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
+    }
+    else {
+        CD_HashSet(self->items, path, (CDPointer) plugin);
+    }
 
     return plugin;
 }

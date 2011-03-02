@@ -31,17 +31,32 @@
 typedef enum _CDJobType {
     CDPlayerInputJob,
     CDPlayerProcessJob,
-    CDPlayerOutputJob,
+    CDPlayerDisconnectJob,
 
-    CDServerBroadcastJob
+    CDServerBroadcastJob,
+
+    CDCustomJob
 } CDJobType;
 
-#define CD_JOB_IS_PLAYER(job) (job->type == CDPlayerInputJob || job->type == CDPlayerProcessJob || job->type == CDPlayerOutputJob)
-#define CD_JOB_IS_SERVER(job) (job->type == CDServerBroadcastJob)
+#define CD_JOB_IS_CUSTOM(job) ( \
+    job->type == CDCustomJob    \
+)
+
+#define CD_JOB_IS_PLAYER(job) (             \
+    job->type == CDPlayerInputJob       ||  \
+    job->type == CDPlayerProcessJob     ||  \
+    job->type == CDPlayerDisconnectJob      \
+)
+
+#define CD_JOB_IS_SERVER(job) (         \
+    job->type == CDServerBroadcastJob   \
+)
 
 typedef struct _CDJob {
     CDJobType type;
     void*     data;
+
+    bool running;
 } CDJob;
 
 CDJob* CD_CreateJob (CDJobType type, void* data);
