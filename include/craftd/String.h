@@ -143,6 +143,15 @@ void CD_DestroyString (CDString* self);
  */
 CDRawString CD_DestroyStringKeepData (CDString* self);
 
+CDString* CD_AppendString (CDString* self, CDString* append);
+
+CDString* CD_AppendCString (CDString* self, const char* append);
+
+/**
+ * Check if a String is valid for Minecraft
+ *
+ * @return true if valid, false otherwise
+ */
 bool CD_StringIsValidMinecraft (CDString* self);
 
 /**

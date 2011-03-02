@@ -77,9 +77,8 @@ size_t
 cd_UTF8_offset (const char* data, size_t offset)
 {
     size_t result = 0;
-    size_t i;
 
-    for (i = 0; i < offset; i++) {
+    for (size_t i = 0; i < offset; i++) {
         result += cd_UTF8_nextCharLength(data[result]);
     }
 
@@ -115,6 +114,7 @@ CD_CreateStringFromCString (const char* string)
 
     self->raw->data = (unsigned char*) string;
     self->raw->slen = strlen(string);
+    self->raw->mlen = self->raw->slen;
 
     self->external = true;
 
@@ -254,10 +254,97 @@ CD_DestroyStringKeepData (CDString* self)
     return result;
 }
 
+bool
+CD_StringIsValidMinecraft (CDString* self)
+{
+    for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
+        bool      has = false;
+        CDString* ch  = CD_CharAt(self, i);
+
+        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
+            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
+
+            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) != 0) {
+                has = true;
+                break;
+            }
+        }
+
+        CD_DestroyString(ch);
+
+        if (!has) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+CDString*
+CD_StringSanitizeForMinecraft (CDString* self)
+{
+    CDString* result = CD_CloneString(self);
+
+    for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
+        bool      has = false;
+        CDString* ch  = CD_CharAt(self, i);
+
+        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
+            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
+
+            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) != 0) {
+                has = true;
+                break;
+            }
+        }
+
+        if (has) {
+            CD_AppendString(result, ch);
+        }
+        else {
+            CD_AppendCString(result, "?");
+        }
+
+        CD_DestroyString(ch);
+    }
+
+    return result;
+}
+
 CDString*
 CD_CharAt (CDString* self, size_t index)
 {
     return CD_CreateStringFromOffset(self, index, 1);
+}
+
+CDString*
+CD_CharAtSet (CDString* self, size_t index, CDString* set)
+{
+    size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
+
+    breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0');
+
+    return self;
+}
+
+CDString*
+CD_AppendString (CDString* self, CDString* append)
+{
+    binsert(self->raw, append->raw->slen, append->raw, '\0');
+
+    return self;
+}
+
+CDString*
+CD_AppendCString (CDString* self, const char* append)
+{
+    CDString* tmp = CD_CreateStringFromCString(append);
+
+    CD_AppendString(self, tmp);
+
+    CD_DestroyString(tmp);
+
+    return self;
 }
 
 const char*
