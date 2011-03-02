@@ -84,7 +84,7 @@ cdnbt_LoadLevelDat (CDPlugin* self)
     spawnPosition->y = *(nbt_cast_int(t_spawnY));
     spawnPosition->z = *(nbt_cast_int(t_spawnZ));
 
-    DEBUG("Spawn position: (%d,%d,%d)", spawnPosition->x, spawnPosition->y, spawnPosition->z);
+    DEBUG("spawn position: (%d, %d, %d)", spawnPosition->x, spawnPosition->y, spawnPosition->z);
 
     CD_HashSet(PRIVATE(self->server), "World.spawnPosition", (CDPointer) spawnPosition);
 
@@ -143,18 +143,18 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         chunkName1, chunkName2
     );
 
-    DEBUG("Loading chunk %s", CD_StringContent(chunkPath));
+    SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
     nbt_file* nf = NULL;
 
     if (nbt_init(&nf) != NBT_OK) {
-        ERR("cannot init chunk struct");
+        SERR(server, "cannot init chunk struct");
 
         goto LOADCHUNK_ERROR;
     }
 
     if (nbt_parse(nf, CD_StringContent(chunkPath)) != NBT_OK) {
-        ERR("cannot parse chunk '%s'", CD_StringContent(chunkPath));
+        SERR(server, "cannot parse chunk '%s'", CD_StringContent(chunkPath));
 
         goto LOADCHUNK_ERROR;
     }
@@ -182,7 +182,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         memcpy(mapdata + offset, blockLight->content, blockLight->length);
     }
     else {
-        ERR("bad chunk file '%s'", CD_StringContent(chunkPath));
+        SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
 
         goto LOADCHUNK_ERROR;
     }

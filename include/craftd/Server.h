@@ -146,9 +146,9 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
             break;                                                                      \
         }                                                                               \
                                                                                         \
-        CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, eventName);     \
+        CDList* __callbacks__ = (CDList*) CD_HashGet(self->event.callbacks, eventName); \
                                                                                         \
-        CD_LIST_FOREACH(callbacks, it) {                                                \
+        CD_LIST_FOREACH(__callbacks__, it) {                                            \
             if (!CD_ListIteratorValue(it)) {                                            \
                 continue;                                                               \
             }                                                                           \
