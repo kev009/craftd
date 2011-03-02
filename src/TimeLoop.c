@@ -24,10 +24,9 @@
  */
 
 #include <craftd/TimeLoop.h>
-#include <craftd/Server.h>
 
 CDTimeLoop*
-CD_CreateTimeLoop (CDServer* server)
+CD_CreateTimeLoop (struct _CDServer* server)
 {
     CDTimeLoop* self = CD_malloc(sizeof(CDTimeLoop));
 
@@ -37,10 +36,14 @@ CD_CreateTimeLoop (CDServer* server)
 
     pthread_spin_init(&self->lock.last, PTHREAD_PROCESS_PRIVATE);
 
-    self->server    = server;
-    self->running   = false;
-    self->callbacks = CD_CreateMap();
-    self->last      = INT_MIN;
+    pthread_attr_init(&self->attributes);
+    pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
+
+    self->server     = server;
+    self->running    = false;
+    self->event.base = event_base_new();
+    self->callbacks  = CD_CreateMap();
+    self->last       = INT_MIN;
 
     return self;
 }
@@ -48,6 +51,8 @@ CD_CreateTimeLoop (CDServer* server)
 void
 CD_DestroyTimeLoop (CDTimeLoop* self)
 {
+    event_base_free(self->event.base);
+
     CD_DestroyMap(self->callbacks);
 
     pthread_spin_destroy(&self->lock.last);
@@ -58,15 +63,13 @@ CD_DestroyTimeLoop (CDTimeLoop* self)
 bool
 CD_RunTimeLoop (CDTimeLoop* self)
 {
-    self->event.base = self->server->event.base;
-
-    return true;
+    return event_base_dispatch(self->event.base);
 }
 
 int
 CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
-    struct timeval timeout      = { (int) seconds, (int) ((seconds - ((int) seconds)) * 1000000) };
+    struct timeval timeout      = { (int) seconds, (int) seconds * 1000000 };
     struct event*  timeoutEvent = event_new(self->event.base, -1, 0, callback, self->server);
     int            result;
 
@@ -93,7 +96,7 @@ CD_ClearTimeout (CDTimeLoop* self, int id)
 int
 CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
-    struct timeval interval      = { (int) seconds, (int) ((seconds - ((int) seconds)) * 1000000) };
+    struct timeval interval      = { (int) seconds, (int) seconds * 1000000 };
     struct event*  intervalEvent = event_new(self->event.base, -1, EV_PERSIST, callback, self->server);
     int            result;
 
