@@ -132,47 +132,53 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
             }
 
             MCPosition* spawnPosition = (MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition");
+            int x = spawnPosition->x / 16;
+            int z = spawnPosition->z / 16;
 
-            CD_PACKET_DO {
-                CDPacketPreChunk pkt;
-                pkt.response.x    = spawnPosition->x / 16;
-                pkt.response.z    = spawnPosition->z / 16;
-                pkt.response.mode = true;
+            // Hack in a square send for now
+            for ( int i = -3; i < 3; i++)
+            {
+            for ( int j = -3; j < 3; j++)
+            {
+                CD_PACKET_DO {
+                    CDPacketPreChunk pkt;
+                    pkt.response.x    = x + i;
+                    pkt.response.z    = z + j;
+                    pkt.response.mode = true;
 
-                CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+                    CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
 
-                CD_PlayerSendPacket(player, &response);
-            }
-
-            CD_PACKET_DO {
-                CDPacketMapChunk pkt;
-                pkt.response.position = *spawnPosition;
-                pkt.response.size.x   = 16;
-                pkt.response.size.y   = 128;
-                pkt.response.size.z   = 16;
-
-                int x = spawnPosition->x / 16;
-                int z = spawnPosition->z / 16;
-
-                SDEBUG(server, "sending chunk (%d, %d)", x, z);
-
-                uint8_t mapdata[81920];
-
-                CD_EventDispatch(server, "Chunk.load", x, z, mapdata);
-
-                uLongf written = 81920;
-                Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
-                if (compress(buffer, &written, mapdata, compressBound(81920)) != Z_OK) {
-                    SERR(server, "zlib compress failure");
+                    CD_PlayerSendPacket(player, &response);
                 }
-                DEBUG("compressed %ld bytes", written);
 
-                pkt.response.length = (MCInteger) written;
-                pkt.response.item   = (MCByte*) buffer;
+                CD_PACKET_DO {
+                    CDPacketMapChunk pkt;
+                    pkt.response.position = *spawnPosition;
+                    pkt.response.size.x   = 16;
+                    pkt.response.size.y   = 128;
+                    pkt.response.size.z   = 16;
 
-                CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
+                    SDEBUG(server, "sending chunk (%d, %d)", x + i, z + j);
 
-                CD_PlayerSendPacket(player, &response);
+                    uint8_t mapdata[81920];
+
+                    CD_EventDispatch(server, "Chunk.load", x + i, z + j, mapdata);
+
+                    uLongf written = 81920;
+                    Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
+                    if (compress(buffer, &written, mapdata, compressBound(81920)) != Z_OK) {
+                        SERR(server, "zlib compress failure");
+                    }
+                    DEBUG("compressed %ld bytes", written);
+
+                    pkt.response.length = (MCInteger) written;
+                    pkt.response.item   = (MCByte*) buffer;
+
+                    CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
+
+                    CD_PlayerSendPacket(player, &response);
+                }
+            }
             }
 
             /* Send Spawn Position to initialize compass */
@@ -187,11 +193,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_PACKET_DO {
                 CDPacketPlayerMoveLook pkt;
-                MCPrecisePosition spawnPrecise = { spawnPosition->x, spawnPosition->y, spawnPosition->z };
+                MCPrecisePosition spawnPrecise = { spawnPosition->x * 16, spawnPosition->y + 6, spawnPosition->z * 16 };
                 pkt.response.position          = spawnPrecise;
-                pkt.response.stance            = 34.3; // HAX
-                pkt.response.yaw               = 35.4; // HAX
-                pkt.response.pitch             = 45.3; // uberhax
+                pkt.response.stance            = spawnPosition->y + 6.1; // TODO: ??
+                pkt.response.yaw               = 0;
+                pkt.response.pitch             = 0;
                 pkt.response.is.onGround       = false;
 
                 CDPacket response = { CDResponse, CDPlayerMoveLook, (CDPointer) &pkt };
