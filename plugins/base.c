@@ -110,6 +110,20 @@ cd_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_HashSet(server->players, CD_StringContent(player->username), (CDPointer) player);
 
+            CDPacketLogin pkt;
+            pkt.response.id = player->entity.id;
+            pkt.response.serverName = CD_CreateStringFromCString("");
+            pkt.response.motd = CD_CreateStringFromCString("");
+            pkt.response.mapSeed = 0;
+            pkt.response.dimension = 0;
+
+            CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
+
+            CD_PlayerSendPacket(player, &response);
+
+            CD_DestroyString(pkt.response.serverName);
+            CD_DestroyString(pkt.response.motd);
+
             pthread_mutex_unlock(&cd_lock.login);
         } break;
 
