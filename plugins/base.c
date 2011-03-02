@@ -151,8 +151,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
                 pkt.response.size.y   = 128;
                 pkt.response.size.z   = 16;
 
-                int x = spawnPosition->x;
-                int z = spawnPosition->z;
+                int x = spawnPosition->x / 16;
+                int z = spawnPosition->z / 16;
 
                 SDEBUG(server, "sending chunk (%d, %d)", x, z);
 
