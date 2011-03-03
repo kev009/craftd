@@ -35,7 +35,7 @@ bstring_HEADERS = craftd/bstring/bsafe.h \
 # jansson headers
 janssondir = $(pkgincludedir)/jansson
 jansson_HEADERS = craftd/jansson/jansson.h \
-		  craftd/jansson_config.h
+		  craftd/jansson/jansson_config.h
 
 # klib headers
 klibdir = $(pkgincludedir)/klib
