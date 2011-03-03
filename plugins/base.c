@@ -153,7 +153,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_PACKET_DO {
                     CDPacketMapChunk pkt;
-                    pkt.response.position = *spawnPosition;
+                    pkt.response.position.x = spawnPosition->x + i;
+                    pkt.response.position.y = 0;
+                    pkt.response.position.z = spawnPosition->z + j;
                     pkt.response.size.x   = 16;
                     pkt.response.size.y   = 128;
                     pkt.response.size.z   = 16;
@@ -164,9 +166,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                     CD_EventDispatch(server, "Chunk.load", x + i, z + j, mapdata);
 
-                    uLongf written = 81920;
+                    uLongf written = compressBound(81920);
                     Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
-                    if (compress(buffer, &written, mapdata, compressBound(81920)) != Z_OK) {
+                    if (compress(buffer, &written, mapdata, 81920) != Z_OK) {
                         SERR(server, "zlib compress failure");
                     }
                     DEBUG("compressed %ld bytes", written);
@@ -193,7 +195,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_PACKET_DO {
                 CDPacketPlayerMoveLook pkt;
-                MCPrecisePosition spawnPrecise = { spawnPosition->x * 16, spawnPosition->y + 6, spawnPosition->z * 16 };
+                MCPrecisePosition spawnPrecise = { spawnPosition->x, spawnPosition->y + 6, spawnPosition->z};
                 pkt.response.position          = spawnPrecise;
                 pkt.response.stance            = spawnPosition->y + 6.1; // TODO: ??
                 pkt.response.yaw               = 0;
