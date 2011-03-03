@@ -29,6 +29,7 @@
 
 #include <craftd/common.h>
 #include <craftd/Player.h>
+#include <craftd/PacketLength.h>
 
 CDServer* CDMainServer = NULL;
 
@@ -171,9 +172,11 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     SDEBUG(player->server, "read data from %s (%s), %d byte/s available", CD_StringContent(player->username), player->ip, evbuffer_get_length(bufferevent_get_input(event)));
 
     if (player->status == CDPlayerIdle) {
-        CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
+        if (CD_PacketParsable(player->buffers)) {
+            CD_BufferReadIn(player->buffers, NONE, NONE);
 
-        if (packet) {
+            CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
+
             SDEBUG(player->server, "received packet 0x%.2X from %s", packet->type, player->ip);
 
             packet = (CDPacket*) CD_HashSet(PRIVATE(player), "packet", (CDPointer) packet);
@@ -186,6 +189,11 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
             player->jobs++;
 
             CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerProcessJob, (CDPointer) player));
+        }
+        else {
+            if (errno == EILSEQ) {
+                CD_ServerKick(player->server, player, "bad packet");
+            }
         }
     }
 
@@ -355,6 +363,11 @@ void
 CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
 {
     cd_ReadCallback(player->buffers->raw, player);
+}
+
+void
+CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
+{
 }
 
 // FIXME: This is just a dummy function

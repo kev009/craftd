@@ -13,6 +13,7 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/memory.h \
 		     craftd/minecraft.h \
 		     craftd/Packet.h \
+			 craftd/PacketLength.h \
 		     craftd/Player.h \
 		     craftd/Plugin.h \
 		     craftd/Plugins.h \

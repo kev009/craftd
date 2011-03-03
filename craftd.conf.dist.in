@@ -2,7 +2,7 @@
   "00": "craftd config file.  Must be valid JSON.",
 
   "server": {
-    "daemonize": true,
+    "daemonize": false,
 
     "connection": {
         "bind": {
@@ -13,7 +13,7 @@
         "port": 25565
     },
 
-    "workers": 10,
+    "workers": 2,
 
     "rate": {
         "sunrise": 20,

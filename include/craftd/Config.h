@@ -110,7 +110,7 @@ void CD_DestroyConfig (CDConfig* self);
 #define J_INT_VALUE \
     json_integer_value(__tmp__)
 
-#define J_OBJ(var, parent, key) \
+#define J_IN(var, parent, key) \
     const json_t* var = json_object_get(parent, key); \
     if (var && !json_is_null(var))
 
