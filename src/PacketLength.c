@@ -29,15 +29,15 @@
 bool
 CD_PacketParsable (CDBuffers* buffers)
 {
-    unsigned int   length = evbuffer_get_length(buffers->input->raw);
-    unsigned char* data   = evbuffer_pullup(buffers->input->raw, -1);
+    unsigned int length = evbuffer_get_length(buffers->input->raw);
+    unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
 
     CDPacketType type     = data[0];
     size_t       variable = 0;
 
     errno = 0;
 
-    if (length <= 1 || length < CDPacketLength[type]) {
+    if (length < CDPacketLength[type]) {
         goto PACKET_PARSABLE_ERROR;
     }
 
