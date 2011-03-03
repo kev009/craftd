@@ -132,6 +132,13 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
             }
 
             MCPosition* spawnPosition = (MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition");
+
+            if (!spawnPosition) {
+                SERR(server, "unknown spawn position, can't finish login procedure");
+
+                return false;
+            }
+
             int x = spawnPosition->x / 16;
             int z = spawnPosition->z / 16;
 
@@ -156,9 +163,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
                     pkt.response.position.x = spawnPosition->x + i;
                     pkt.response.position.y = 0;
                     pkt.response.position.z = spawnPosition->z + j;
-                    pkt.response.size.x   = 16;
-                    pkt.response.size.y   = 128;
-                    pkt.response.size.z   = 16;
+                    pkt.response.size.x     = 16;
+                    pkt.response.size.y     = 128;
+                    pkt.response.size.z     = 16;
 
                     SDEBUG(server, "sending chunk (%d, %d)", x + i, z + j);
 
@@ -170,8 +177,10 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
                     Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
                     if (compress(buffer, &written, mapdata, 81920) != Z_OK) {
                         SERR(server, "zlib compress failure");
+
+                        return false;
                     }
-                    DEBUG("compressed %ld bytes", written);
+                    SDEBUG(server, "compressed %ld bytes", written);
 
                     pkt.response.length = (MCInteger) written;
                     pkt.response.item   = (MCByte*) buffer;

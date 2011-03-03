@@ -53,7 +53,7 @@ CD_PacketParsable (CDBuffers* buffers)
         if (errno != EILSEQ) {
             errno = EAGAIN;
 
-            CD_BufferReadIn(buffers, CDPacketLength[type] + variable, NONE);
+            CD_BufferReadIn(buffers, CDPacketLength[type] + variable, CDNull);
         }
 
         return false;

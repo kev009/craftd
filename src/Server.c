@@ -173,7 +173,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 
     if (player->status == CDPlayerIdle) {
         if (CD_PacketParsable(player->buffers)) {
-            CD_BufferReadIn(player->buffers, NONE, NONE);
+            CD_BufferReadIn(player->buffers, CDNull, CDNull);
 
             CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
 
