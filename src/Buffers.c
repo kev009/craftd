@@ -69,3 +69,13 @@ CD_DestroyBuffers (CDBuffers* self)
 
     CD_free(self);
 }
+
+void
+CD_BufferReadIn (CDBuffers* self, size_t low, size_t high)
+{
+    if (high == 0) {
+        high = CD_DEFAULT_HIGHMARK;
+    }
+
+    bufferevent_setwatermark(self->raw, EV_READ, low, high);
+}

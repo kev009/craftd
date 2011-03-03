@@ -23,30 +23,39 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_BUFFERS_H
-#define CRAFTD_BUFFERS_H
+#include <craftd/PacketLength.h>
+#include <craftd/Packet.h>
 
-#include <craftd/common.h>
+bool
+CD_PacketParsable (CDBuffers* buffers)
+{
+    unsigned int length = evbuffer_get_length(buffers->input->raw);
+    unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
 
-#define CD_DEFAULT_HIGHMARK 0
+    CDPacketType type     = data[0];
+    size_t       variable = 0;
 
-typedef struct bufferevent* CDRawBuffers;
+    errno = 0;
 
-typedef struct _CDBuffers {
-    CDRawBuffers raw;
+    if (length < CDPacketLength[type]) {
+        goto PACKET_PARSABLE_ERROR;
+    }
 
-    CDBuffer* input;
-    CDBuffer* output;
+    switch (type) {
+        // TODO: trololololol
+    }
 
-    bool external;
-} CDBuffers;
+    PACKET_PARSABLE_DONE: {
+        return true;
+    }
 
-CDBuffers* CD_CreateBuffers (void);
+    PACKET_PARSABLE_ERROR: {
+        if (errno != EILSEQ) {
+            errno = EAGAIN;
 
-CDBuffers* CD_WrapBuffers (CDRawBuffers buffers);
+            CD_BufferReadIn(buffers, CDPacketLength[type] + variable, NONE);
+        }
 
-void CD_DestroyBuffers (CDBuffers* self);
-
-void CD_BufferReadIn (CDBuffers* self, size_t low, size_t high);
-
-#endif
+        return false;
+    }
+}

@@ -119,6 +119,8 @@ bool CD_RunServer (CDServer* self);
  */
 void CD_ReadFromPlayer (CDServer* self, CDPlayer* player);
 
+void CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason);
+
 /**
  * Get a new unique entity ID
  *

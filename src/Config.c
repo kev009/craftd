@@ -86,34 +86,34 @@ CD_ParseConfig (const char* path)
     self->cache.maxPlayers = 0;
 
     J_DO {
-        J_OBJ(server, self->data, "server") {
+        J_IN(server, self->data, "server") {
             J_BOOL(server, "daemonize",   self->cache.daemonize);
             J_INT(server,  "workers",     self->cache.workers);
             J_INT(server,  "max-players", self->cache.maxPlayers);
 
-            J_OBJ(files, server, "file") {
+            J_IN(files, server, "file") {
                 J_STRING(files, "motd",  self->cache.files.motd);
                 J_STRING(files, "world", self->cache.files.world);
             }
 
-            J_OBJ(rate, server, "rate") {
+            J_IN(rate, server, "rate") {
                 J_INT(rate, "sunrise", self->cache.rate.sunrise);
                 J_INT(rate, "day",     self->cache.rate.day);
                 J_INT(rate, "sunset",  self->cache.rate.sunset);
                 J_INT(rate, "night",   self->cache.rate.night);
             }
 
-            J_OBJ(spawn, server, "spawn") {
+            J_IN(spawn, server, "spawn") {
                 J_INT(spawn, "x", self->cache.spawn.x);
                 J_INT(spawn, "y", self->cache.spawn.y);
                 J_INT(spawn, "z", self->cache.spawn.z);
             }
 
-            J_OBJ(connection, server, "connection") {
+            J_IN(connection, server, "connection") {
                 J_INT(connection, "port",    self->cache.connection.port);
                 J_INT(connection, "backlog", self->cache.connection.backlog);
 
-                J_OBJ(bind, connection, "bind") {
+                J_IN(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
                         if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
                             self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
@@ -129,14 +129,14 @@ CD_ParseConfig (const char* path)
             }
         }
 
-        J_OBJ(httpd, self->data, "httpd") {
+        J_IN(httpd, self->data, "httpd") {
             J_BOOL(httpd,   "enabled", self->cache.httpd.enabled);
             J_STRING(httpd, "root",    self->cache.httpd.root);
 
-            J_OBJ(connection, httpd, "connection") {
+            J_IN(connection, httpd, "connection") {
                 J_INT(connection, "port", self->cache.httpd.connection.port);
 
-                J_OBJ(bind, connection, "bind") {
+                J_IN(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
                         if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
                             self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;

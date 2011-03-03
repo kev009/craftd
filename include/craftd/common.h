@@ -41,6 +41,8 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
+#define NONE 0
+
 #include <craftd/config.h>
 #include <craftd/memory.h>
 
