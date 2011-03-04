@@ -29,20 +29,79 @@
 bool
 CD_PacketParsable (CDBuffers* buffers)
 {
-    unsigned int length = evbuffer_get_length(buffers->input->raw);
-    unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
+    unsigned int   length = evbuffer_get_length(buffers->input->raw);
+    unsigned char* data   = evbuffer_pullup(buffers->input->raw, -1);
 
     CDPacketType type     = data[0];
     size_t       variable = 0;
-
-    errno = 0;
+                 errno    = 0;
 
     if (length < CDPacketLength[type]) {
         goto error;
     }
 
     switch (type) {
-        // TODO: trololololol
+        case CDKeepAlive: {
+            goto done;
+        }
+
+        case CDLogin: {
+        }
+
+        case CDHandshake: {
+        }
+
+        case CDChat: {
+        }
+
+        case CDUseEntity: {
+        }
+
+        case CDRespawn: {
+            goto done;
+        }
+
+        case CDOnGround: {
+        }
+
+        case CDPlayerPosition: {
+        }
+
+        case CDPlayerLook: {
+        }
+
+        case CDPlayerMoveLook: {
+        }
+
+        case CDPlayerDigging: {
+        }
+
+        case CDPlayerBlockPlacement: {
+        }
+
+        case CDHoldChange: {
+        }
+
+        case CDEntityAction: {
+        }
+
+        case CDEntityMetadata: {
+        }
+
+        case CDCloseWindow: {
+        }
+
+        case CDWindowClick: {
+        }
+
+        case CDTransaction: {
+        }
+
+        case CDUpdateSign: {
+        }
+
+        case CDDisconnect: {
+        }
     }
 
     done: {
