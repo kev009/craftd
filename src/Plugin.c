@@ -40,6 +40,14 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     self->handle = lt_dlopenext(path);
 
     if (!self->handle) {
+        CDString* tmp = CD_CreateStringFromFormat("libcd%s", path);
+
+        self->handle = lt_dlopenext(CD_StringContent(tmp));
+
+        CD_DestroyString(tmp);
+    }
+
+    if (!self->handle) {
         CD_DestroyPlugin(self);
 
         errno = ENOENT;
@@ -54,6 +62,10 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
 
     if (self->initialize) {
         self->initialize(self);
+    }
+
+    if (!self->name) {
+        self->name = self->path;
     }
 
     return self;

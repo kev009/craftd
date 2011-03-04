@@ -4,3 +4,6 @@
 [submodule "third-party/jansson"]
 	path = third-party/jansson
 	url = git://github.com/akheron/jansson.git
+[submodule "plugins/tests/tinytest"]
+	path = plugins/tests/tinytest
+	url = git://github.com/nmathewson/tinytest.git

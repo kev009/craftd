@@ -43,6 +43,16 @@ CD_CreatePlugins (struct _CDServer* server)
 
     lt_dladdsearchdir("plugins");
 
+    J_DO {
+        J_IN(server, self->server->config->data, "server") {
+            J_IN(plugin, server, "plugin") {
+                J_FOREACH(path, plugin, "paths") {
+                    lt_dladdsearchdir(J_STRING_CAST(path));
+                }
+            }
+        }
+    }
+
     return self;
 }
 
@@ -60,6 +70,24 @@ CD_DestroyPlugins (CDPlugins* self)
     CD_free(self);
 }
 
+bool
+CD_LoadPlugins (CDPlugins* self)
+{
+    J_DO {
+        J_IN(server, self->server->config->data, "server") {
+            J_IN(plugin, server, "plugin") {
+                J_FOREACH(plugin, plugin, "plugins") {
+                    J_IF_STRING(plugin, "name") {
+                        CD_LoadPlugin(self, J_STRING_VALUE);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
@@ -73,12 +101,8 @@ CD_LoadPlugin (CDPlugins* self, const char* path)
         return NULL;
     }
 
-    if (plugin->name) {
-        CD_HashSet(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
-    }
-    else {
-        CD_HashSet(self->items, path, (CDPointer) plugin);
-    }
+    CD_HashSet(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
+
 
     return plugin;
 }

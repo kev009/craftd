@@ -350,10 +350,7 @@ CD_RunServer (CDServer* self)
 
     event_add(self->event.listener, NULL);
 
-    // TODO: replace this with the plugin load cycle
-    CD_LoadPlugin(self->plugins, "libcdbase");
-    CD_LoadPlugin(self->plugins, "libcdnbt");
-    CD_LoadPlugin(self->plugins, "libcdtests");
+    CD_LoadPlugins(self->plugins);
 
     return event_base_dispatch(self->event.base) != 0;
 }

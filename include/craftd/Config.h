@@ -101,18 +101,37 @@ void CD_DestroyConfig (CDConfig* self);
 
 #define J_DO for (const json_t* __tmp__ = NULL, *__check__ = NULL; __check__ == NULL; __check__++)
 
+#define J_IN(var, parent, key)                          \
+    const json_t* var = json_object_get(parent, key);   \
+    if (var && !json_is_null(var))
+
+#define J_FOREACH(var, parent, key)                                     \
+    for (const json_t* __array__ = json_object_get(parent, key),        \
+         *var = json_array_get(__array__, 0),                           \
+         *__i__ = 0, *__ie__ = (json_t*) json_array_size(__array__);    \
+                                                                        \
+         ((size_t) __i__) < ((size_t) __ie__);                          \
+                                                                        \
+         __i__ = (json_t*) (((size_t) __i__) + 1),                       \
+         var = json_array_get(__array__, (size_t) __i__))
+
+#define J_BOOL_CAST(var) \
+    json_is_true(var)
+
+#define J_STRING_CAST(var) \
+    json_string_value(var)
+
+#define J_INT_CAST(var) \
+    json_integer_value(var)
+
 #define J_BOOL_VALUE \
-    json_is_true(__tmp__)
+    J_BOOL_CAST(__tmp__)
 
 #define J_STRING_VALUE \
-    json_string_value(__tmp__)
+    J_STRING_CAST(__tmp__)
 
 #define J_INT_VALUE \
-    json_integer_value(__tmp__)
-
-#define J_IN(var, parent, key) \
-    const json_t* var = json_object_get(parent, key); \
-    if (var && !json_is_null(var))
+    J_INT_CAST(__tmp__)
 
 #define J_IF_BOOL(parent, key) \
     if ((__tmp__ = json_object_get(parent, key)) && !json_is_null(__tmp__))

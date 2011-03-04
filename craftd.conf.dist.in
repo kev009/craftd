@@ -28,6 +28,19 @@
     "file": {
         "motd": "@sysconfdir@/craftd/motd.conf.dist",
         "world": "@datadir@/craftd/world"
+    },
+
+    "plugin": {
+        "paths": [
+            "plugins",
+            "@libdir@/craftd/plugins"
+        ],
+
+        "plugins": [
+            { "name": "base" },
+            { "name": "nbt" },
+            { "name": "tests" }
+        ]
     }
   },
 

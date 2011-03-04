@@ -54,6 +54,11 @@ CDPlugins* CD_CreatePlugins (struct _CDServer* server);
 void CD_DestroyPlugins (CDPlugins* self);
 
 /**
+ * Load plugins referenced in the Config
+ */
+bool CD_LoadPlugins (CDPlugins* self);
+
+/**
  * Load a Plugin from the given path and save it as loaded plugin.
  *
  * @param path The path to the plugin
