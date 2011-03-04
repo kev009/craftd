@@ -38,18 +38,18 @@ CD_PacketParsable (CDBuffers* buffers)
     errno = 0;
 
     if (length < CDPacketLength[type]) {
-        goto PACKET_PARSABLE_ERROR;
+        goto error;
     }
 
     switch (type) {
         // TODO: trololololol
     }
 
-    PACKET_PARSABLE_DONE: {
+    done: {
         return true;
     }
 
-    PACKET_PARSABLE_ERROR: {
+    error: {
         if (errno != EILSEQ) {
             errno = EAGAIN;
 

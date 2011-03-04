@@ -99,7 +99,7 @@ CDConfig* CD_ParseConfig (const char* path);
  */
 void CD_DestroyConfig (CDConfig* self);
 
-#define J_DO for (const json_t* __tmp__ = NULL, *__check__ = NULL; __check__ == NULL; __check__++)
+#define J_DO for (const json_t* __tmp__ = NULL, *__check__ = NULL; __check__ == NULL; __check__ = __tmp__ + 1)
 
 #define J_IN(var, parent, key)                          \
     const json_t* var = json_object_get(parent, key);   \
@@ -112,7 +112,7 @@ void CD_DestroyConfig (CDConfig* self);
                                                                         \
          ((size_t) __i__) < ((size_t) __ie__);                          \
                                                                         \
-         __i__ = (json_t*) (((size_t) __i__) + 1),                       \
+         __i__ = (json_t*) (((size_t) __i__) + 1),                      \
          var = json_array_get(__array__, (size_t) __i__))
 
 #define J_BOOL_CAST(var) \
