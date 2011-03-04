@@ -18,5 +18,6 @@ libcdnbt_la_SOURCES = cdnbt/cdnbt.c cdnbt/nbt.c cdnbt/nbt.h cdnbt/itoa.c cdnbt/i
 libcdnbt_la_LDFLAGS = -version-info 0:0:0
 
 # The base plugin handles default game rules
-libcdtests_la_SOURCES = tests.c
+libcdtests_la_SOURCES = tests/tests.c tests/tinytest/tinytest.c
+libcdtests_la_CFLAGS  = -Itests/tinytest
 libcdtests_la_LDFLAGS = -version-info 0:0:0

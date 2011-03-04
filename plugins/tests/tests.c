@@ -27,18 +27,42 @@
 #include <craftd/Plugin.h>
 #include <craftd/Player.h>
 
-bool
-CD_PluginInitialize (CDPlugin* self)
+#include "tinytest.h"
+#include "tinytest_macros.h"
+
+void
+cdtest_String (void* data)
 {
     // String tests
 
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* sanitized = CD_StringSanitizeForMinecraft(string);
 
-    printf("%s\n%s\n", CD_StringContent(string), CD_StringContent(sanitized));
+    tt_assert(strcmp(CD_StringContent(sanitized), "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?") == 0);
 
-    CD_DestroyString(string);
-    CD_DestroyString(sanitized);
+    end: {
+        CD_DestroyString(string);
+        CD_DestroyString(sanitized);
+    }
+}
+
+struct testcase_t cd_utils_tests[] = {
+    { "String", cdtest_String, },
+    END_OF_TESTCASES
+};
+
+struct testgroup_t cd_groups[] = {
+    /* Every group has a 'prefix', and an array of tests. That's it. */
+    { "utils/", cd_utils_tests },
+    END_OF_GROUPS
+};
+
+bool
+CD_PluginInitialize (CDPlugin* self)
+{
+    puts("");
+    tinytest_main(0, NULL, cd_groups);
+    puts("");
 
     return true;
 }
