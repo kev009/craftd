@@ -27,8 +27,8 @@
 #include <craftd/Plugin.h>
 #include <craftd/Player.h>
 
-#include "tinytest.h"
-#include "tinytest_macros.h"
+#include "tinytest/tinytest.h"
+#include "tinytest/tinytest_macros.h"
 
 void
 cdtest_String (void* data)
