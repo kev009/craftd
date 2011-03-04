@@ -270,11 +270,12 @@ CD_StringIsValidForMinecraft (CDString* self)
             }
         }
 
-        CD_DestroyString(ch);
-
         if (!has && !(strncmp(CD_StringContent(ch), "§", 2) == 0 && i < ie - 2)) {
+            CD_DestroyString(ch);
             return false;
         }
+
+        CD_DestroyString(ch);
     }
 
     return true;

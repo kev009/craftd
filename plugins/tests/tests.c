@@ -31,14 +31,47 @@
 #include "tinytest/tinytest_macros.h"
 
 void
-cdtest_String (void* data)
+cdtest_String_UTF8_length (void* data)
 {
-    // String tests
+    CDString* test = CD_CreateStringFromCString("Æ§Ð");
 
+    tt_assert(CD_StringLength(test) == 3);
+    tt_assert(CD_StringSize(test)   == 6);
+
+    end: {
+        CD_DestroyString(test);
+    }
+}
+
+void
+cdtest_String_UTF8_charAt (void* data)
+{
+    CDString* test = CD_CreateStringFromCString("Æ§Ð");
+    CDString* ch   = CD_CharAt(test, 1);
+
+    tt_assert(strcmp(CD_StringContent(ch), "§") == 0);
+
+    end: {
+        CD_DestroyString(test);
+        CD_DestroyString(ch);
+    }
+}
+
+struct testcase_t cd_utils_String_UTF8_tests[] = {
+    { "length", cdtest_String_UTF8_length, },
+    { "charAt", cdtest_String_UTF8_charAt, },
+
+    END_OF_TESTCASES
+};
+
+void
+cdtest_String_Minecraft_sanitize (void* data)
+{
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* sanitized = CD_StringSanitizeForMinecraft(string);
 
-    tt_assert(strcmp(CD_StringContent(sanitized), "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?") == 0);
+    tt_assert(strcmp(CD_StringContent(sanitized),
+        "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?") == 0);
 
     end: {
         CD_DestroyString(string);
@@ -46,14 +79,32 @@ cdtest_String (void* data)
     }
 }
 
-struct testcase_t cd_utils_tests[] = {
-    { "String", cdtest_String, },
+void
+cdtest_String_Minecraft_valid (void* data)
+{
+    CDString* invalid = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
+    CDString* valid   = CD_CreateStringFromCString("æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?");
+
+    tt_assert(CD_StringIsValidForMinecraft(invalid) == false);
+    tt_assert(CD_StringIsValidForMinecraft(valid) == true);
+
+    end: {
+        CD_DestroyString(invalid);
+        CD_DestroyString(valid);
+    }
+}
+
+struct testcase_t cd_utils_String_Minecraft_tests[] = {
+    { "sanitize", cdtest_String_Minecraft_sanitize, },
+    { "valid",    cdtest_String_Minecraft_valid, },
+
     END_OF_TESTCASES
 };
 
 struct testgroup_t cd_groups[] = {
-    /* Every group has a 'prefix', and an array of tests. That's it. */
-    { "utils/", cd_utils_tests },
+    { "utils/String/UTF8/", cd_utils_String_UTF8_tests },
+    { "utils/String/Minecraft/", cd_utils_String_Minecraft_tests },
+
     END_OF_GROUPS
 };
 
