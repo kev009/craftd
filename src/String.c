@@ -98,7 +98,7 @@ CD_CreateString (void)
     self->length   = 0;
     self->external = false;
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    self->length = 0;
 
     return self;
 }
@@ -255,7 +255,7 @@ CD_DestroyStringKeepData (CDString* self)
 }
 
 bool
-CD_StringIsValidMinecraft (CDString* self)
+CD_StringIsValidForMinecraft (CDString* self)
 {
     for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
         bool      has = false;
@@ -264,7 +264,7 @@ CD_StringIsValidMinecraft (CDString* self)
         for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
             const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
 
-            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) != 0) {
+            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
                 break;
             }
@@ -283,7 +283,7 @@ CD_StringIsValidMinecraft (CDString* self)
 CDString*
 CD_StringSanitizeForMinecraft (CDString* self)
 {
-    CDString* result = CD_CloneString(self);
+    CDString* result = CD_CreateString();
 
     for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
         bool      has = false;
@@ -292,7 +292,7 @@ CD_StringSanitizeForMinecraft (CDString* self)
         for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
             const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
 
-            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) != 0) {
+            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
                 break;
             }
@@ -322,17 +322,23 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
 {
     size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
 
-    breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0');
-
-    return self;
+    if (breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0') == BSTR_OK) {
+        return self;
+    }
+    else {
+        return NULL;
+    }
 }
 
 CDString*
 CD_AppendString (CDString* self, CDString* append)
 {
-    binsert(self->raw, append->raw->slen, append->raw, '\0');
-
-    return self;
+    if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
+        return self;
+    }
+    else {
+        return NULL;
+    }
 }
 
 CDString*
@@ -340,7 +346,9 @@ CD_AppendCString (CDString* self, const char* append)
 {
     CDString* tmp = CD_CreateStringFromCString(append);
 
-    CD_AppendString(self, tmp);
+    if (!CD_AppendString(self, tmp)) {
+        self = NULL;
+    }
 
     CD_DestroyString(tmp);
 

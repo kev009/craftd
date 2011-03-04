@@ -86,6 +86,12 @@ CD_DestroyPacket (CDPacket* self)
                     MC_DestroyString(packet->request.third);
                     MC_DestroyString(packet->request.fourth);
                 } break;
+
+                case CDDisconnect: {
+                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
+
+                    MC_DestroyString(packet->request.reason);
+                }
             }
         } break;
 
@@ -385,6 +391,14 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
                 &packet->request.third,
                 &packet->request.fourth
             );
+
+            return (CDPointer) packet;
+        }
+
+        case CDDisconnect: {
+            CDPacketDisconnect* packet = (CDPacketDisconnect*) CD_malloc(sizeof(CDPacketDisconnect));
+
+            packet->request.reason = CD_BufferRemoveString(input);
 
             return (CDPointer) packet;
         }

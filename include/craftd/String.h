@@ -152,7 +152,15 @@ CDString* CD_AppendCString (CDString* self, const char* append);
  *
  * @return true if valid, false otherwise
  */
-bool CD_StringIsValidMinecraft (CDString* self);
+bool CD_StringIsValidForMinecraft (CDString* self);
+
+/**
+ * Get a sanitized String to send to Minecraft clients, replaces unknown characters
+ * with ?.
+ *
+ * @return The sanitized String
+ */
+CDString* CD_StringSanitizeForMinecraft (CDString* self);
 
 /**
  * Get the char at the given index

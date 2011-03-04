@@ -224,9 +224,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
     SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
 
-    CDJob* job = CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player);
-
-    CD_AddJob(player->server->workers, job);
+    CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player));
 
     pthread_mutex_unlock(&player->lock.status);
 }
@@ -355,6 +353,7 @@ CD_RunServer (CDServer* self)
     // TODO: replace this with the plugin load cycle
     CD_LoadPlugin(self->plugins, "libcdbase");
     CD_LoadPlugin(self->plugins, "libcdnbt");
+//    CD_LoadPlugin(self->plugins, "libcdtests");
 
     return event_base_dispatch(self->event.base) != 0;
 }
@@ -368,6 +367,26 @@ CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
 void
 CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
 {
+    pthread_mutex_lock(&player->lock.status);
+
+    player->status = CDPlayerDisconnect;
+
+    SLOG(self, LOG_NOTICE, "%s (%s) kicked: %s", CD_StringContent(player->username), player->ip, reason);
+
+    CD_PACKET_DO {
+        CDPacketDisconnect pkt;
+        pkt.response.reason = CD_CreateStringFromCString(reason);
+
+        CDPacket response = { CDResponse, CDDisconnect, (CDPointer) &pkt };
+
+        CD_PlayerSendPacket(player, &response);
+
+        CD_DestroyString(pkt.response.reason);
+    }
+
+    CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player));
+
+    pthread_mutex_unlock(&player->lock.status);
 }
 
 // FIXME: This is just a dummy function

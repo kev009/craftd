@@ -668,6 +668,10 @@ typedef union _CDPacketUpdateSign {
 typedef union _CDPacketDisconnect {
     struct {
         MCString reason;
+    } request;
+
+    struct {
+        MCString reason;
     } response;
 } CDPacketDisconnect;
 

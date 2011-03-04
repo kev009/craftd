@@ -192,10 +192,12 @@ CD_BufferAddBoolean (CDBuffer* self, MCBoolean data)
 void
 CD_BufferAddString (CDBuffer* self, CDString* data)
 {
-    MCShort size = htons(CD_StringSize(data));
+    CDString* sanitized = CD_StringSanitizeForMinecraft(data);
+
+    MCShort size = htons(CD_StringSize(sanitized));
 
     evbuffer_add(self->raw, &size, MCShortSize);
-    evbuffer_add(self->raw, CD_StringContent(data), CD_StringSize(data));
+    evbuffer_add(self->raw, CD_StringContent(sanitized), CD_StringSize(sanitized));
 }
 
 void
