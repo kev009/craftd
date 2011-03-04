@@ -28,8 +28,6 @@
 
 #include <craftd/common.h>
 
-#define CD_DEFAULT_HIGHMARK 0
-
 typedef struct bufferevent* CDRawBuffers;
 
 typedef struct _CDBuffers {

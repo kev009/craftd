@@ -150,13 +150,13 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
     if (nbt_init(&nf) != NBT_OK) {
         SERR(server, "cannot init chunk struct");
 
-        goto LOADCHUNK_ERROR;
+        goto error;
     }
 
     if (nbt_parse(nf, CD_StringContent(chunkPath)) != NBT_OK) {
         SERR(server, "cannot parse chunk '%s'", CD_StringContent(chunkPath));
 
-        goto LOADCHUNK_ERROR;
+        goto error;
     }
 
     if (cdnbt_ValidChunk(nf->root) == true) {
@@ -184,10 +184,10 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
     else {
         SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
 
-        goto LOADCHUNK_ERROR;
+        goto error;
     }
 
-    LOADCHUNK_DONE: {
+    done: {
         if (nf) {
             nbt_free(nf);
         }
@@ -197,7 +197,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         return true;
     }
 
-    LOADCHUNK_ERROR: {
+    error: {
         if (nf) {
             nbt_free(nf);
         }
