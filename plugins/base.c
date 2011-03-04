@@ -143,9 +143,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
             int z = spawnPosition->z / 16;
 
             // Hack in a square send for now
-            for ( int i = -3; i < 3; i++)
+            for ( int i = -7; i < 8; i++)
             {
-            for ( int j = -3; j < 3; j++)
+            for ( int j = -7; j < 8; j++)
             {
                 CD_PACKET_DO {
                     CDPacketPreChunk pkt;
@@ -160,9 +160,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_PACKET_DO {
                     CDPacketMapChunk pkt;
-                    pkt.response.position.x = spawnPosition->x + i;
+                    pkt.response.position.x = x + i;
                     pkt.response.position.y = 0;
-                    pkt.response.position.z = spawnPosition->z + j;
+                    pkt.response.position.z = z + j;
                     pkt.response.size.x     = 16;
                     pkt.response.size.y     = 128;
                     pkt.response.size.z     = 16;
@@ -204,7 +204,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             CD_PACKET_DO {
                 CDPacketPlayerMoveLook pkt;
-                MCPrecisePosition spawnPrecise = { spawnPosition->x, spawnPosition->y + 6, spawnPosition->z};
+                MCPrecisePosition spawnPrecise = { spawnPosition->x, spawnPosition->y + 6, spawnPosition->z };
                 pkt.response.position          = spawnPrecise;
                 pkt.response.stance            = spawnPosition->y + 6.1; // TODO: ??
                 pkt.response.yaw               = 0;
