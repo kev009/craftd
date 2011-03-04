@@ -35,8 +35,8 @@ cdtest_String_UTF8_length (void* data)
 {
     CDString* test = CD_CreateStringFromCString("Æ§Ð");
 
-    tt_assert(CD_StringLength(test) == 3);
-    tt_assert(CD_StringSize(test)   == 6);
+    tt_int_op(CD_StringLength(test), ==, 3);
+    tt_int_op(CD_StringSize(test), ==, 6);
 
     end: {
         CD_DestroyString(test);
@@ -49,7 +49,7 @@ cdtest_String_UTF8_charAt (void* data)
     CDString* test = CD_CreateStringFromCString("Æ§Ð");
     CDString* ch   = CD_CharAt(test, 1);
 
-    tt_assert(strcmp(CD_StringContent(ch), "§") == 0);
+    tt_int_op(strcmp(CD_StringContent(ch), "§"), ==, 0);
 
     end: {
         CD_DestroyString(test);
@@ -70,8 +70,8 @@ cdtest_String_Minecraft_sanitize (void* data)
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* sanitized = CD_StringSanitizeForMinecraft(string);
 
-    tt_assert(strcmp(CD_StringContent(sanitized),
-        "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?") == 0);
+    tt_int_op(strcmp(CD_StringContent(sanitized),
+        "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?"), ==, 0);
 
     end: {
         CD_DestroyString(string);
