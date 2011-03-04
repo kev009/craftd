@@ -247,6 +247,12 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
             }
         } break;
 
+        case CDDisconnect: {
+            CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
+
+            CD_ServerKick(server, player, CD_StringContent(data->request.reason));
+        } break;
+
         default: {
             SERR(server, "unimplemented packet 0x%.2X from %s (%s)", packet->type, CD_StringContent(player->username), player->ip);
         }

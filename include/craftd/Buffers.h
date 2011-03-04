@@ -28,6 +28,8 @@
 
 #include <craftd/common.h>
 
+#define CD_DEFAULT_HIGH_WATERMARK 4096
+
 typedef struct bufferevent* CDRawBuffers;
 
 typedef struct _CDBuffers {

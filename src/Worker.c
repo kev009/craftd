@@ -148,6 +148,7 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_rdlock(&player->lock.jobs);
 
                     if (player->jobs < 1) {
+                        pthread_rwlock_unlock(&player->lock.jobs);
                         break;
                     }
 
@@ -165,22 +166,24 @@ CD_RunWorker (CDWorker* self)
         }
         else if (CD_JOB_IS_SERVER(self->job)) {
             if (self->job->type == CDServerBroadcastJob) {
-                CDPacketChat pkt;
-                pkt.response.message = (CDString*) self->job->data;
+                CD_PACKET_DO {
+                    CDPacketChat pkt;
+                    pkt.response.message = (CDString*) self->job->data;
 
-                CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+                    CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
 
-                CD_HASH_FOREACH(self->server->players, it) {
-                    CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(self->server->players, it);
+                    CD_HASH_FOREACH(self->server->players, it) {
+                        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(self->server->players, it);
 
-                    pthread_mutex_lock(&player->lock.status);
-                    if (player->status != CDPlayerDisconnect) {
-                        CD_PlayerSendPacket(player, &response);
+                        pthread_mutex_lock(&player->lock.status);
+                        if (player->status != CDPlayerDisconnect) {
+                            CD_PlayerSendPacket(player, &response);
+                        }
+                        pthread_mutex_unlock(&player->lock.status);
                     }
-                    pthread_mutex_unlock(&player->lock.status);
-                }
 
-                CD_DestroyString((CDString*) self->job->data);
+                    CD_DestroyString((CDString*) self->job->data);
+                }
             }
         }
     }

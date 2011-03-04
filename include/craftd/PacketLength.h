@@ -296,7 +296,7 @@ static const size_t CDPacketLength[] = {
     CDNull,
     CDNull,
     CDNull,
-    2       // Disconnect
+    3       // Disconnect
 };
 
 #endif

@@ -153,8 +153,19 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         goto error;
     }
 
-    if (nbt_parse(nf, CD_StringContent(chunkPath)) != NBT_OK) {
-        SERR(server, "cannot parse chunk '%s'", CD_StringContent(chunkPath));
+    int reasonCode;
+
+    if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {
+        const char* reason;
+
+        switch (reasonCode) {
+            case NBT_EGZ:  reason = strerror(errno);      break;
+            case NBT_EMEM: reason = "out of memory";      break;
+            case NBT_ERR:  reason = "chunk format error"; break;
+            default:       reason = "unknown error";      break;
+        }
+
+        SERR(server, "cannot parse chunk '%s': %s", CD_StringContent(chunkPath), reason);
 
         goto error;
     }
