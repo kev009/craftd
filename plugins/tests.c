@@ -32,7 +32,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     // String tests
 
-    CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ");
+    CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* sanitized = CD_StringSanitizeForMinecraft(string);
 
     printf("%s\n%s\n", CD_StringContent(string), CD_StringContent(sanitized));
