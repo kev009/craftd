@@ -52,7 +52,7 @@ typedef enum _CDPacketType {
     CDPlayerBlockPlacement = 0x0F,
     CDHoldChange           = 0x10,
     CDUseBed               = 0x11,
-    CDAnimation           = 0x12,
+    CDAnimation            = 0x12,
     CDEntityAction         = 0x13,
     CDNamedEntitySpawn     = 0x14,
     CDPickupSpawn          = 0x15,

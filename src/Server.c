@@ -179,7 +179,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
         if (CD_PacketParsable(player->buffers) && (packet = CD_PacketFromBuffer(player->buffers->input))) {
             CD_BufferReadIn(player->buffers, CDNull, CDNull);
 
-            SDEBUG(player->server, "received packet 0x%.2X from %s", packet->type, player->ip);
+            SDEBUG(player->server, "received packet 0x%.2X from %s", (uint8_t) packet->type, player->ip);
 
             packet = (CDPacket*) CD_HashSet(PRIVATE(player), "packet", (CDPointer) packet);
 

@@ -40,6 +40,8 @@ CD_PacketFromBuffer (CDBuffer* input)
     self->data  = CD_GetPacketDataFromBuffer(self, input);
 
     if (!self->data) {
+        ERR("unparsable packet 0x%.2X", (uint32_t) self->type);
+
         CD_DestroyPacket(self);
 
         errno = EILSEQ;
@@ -301,16 +303,21 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
         case CDPlayerBlockPlacement: {
             CDPacketPlayerBlockPlacement* packet = (CDPacketPlayerBlockPlacement*) CD_malloc(sizeof(CDPacketPlayerBlockPlacement));
 
-            CD_BufferRemoveFormat(input, "ibibsbs",
+            CD_BufferRemoveFormat(input, "ibibs",
                 &packet->request.position.x,
                 &packet->request.position.y,
                 &packet->request.position.z,
 
                 &packet->request.direction,
-                &packet->request.item.id,
-                &packet->request.item.count,
-                &packet->request.item.uses
+                &packet->request.item.id
             );
+
+            if (packet->request.item.id != -1) {
+                CD_BufferRemoveFormat(input, "bs",
+                    &packet->request.item.count,
+                    &packet->request.item.uses
+                );
+            }
 
             return (CDPointer) packet;
         }

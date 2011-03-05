@@ -114,6 +114,10 @@ CD_PacketParsable (CDBuffers* buffers)
             goto done;
         }
 
+        case CDAnimation: {
+            goto done;
+        }
+
         case CDEntityAction: {
             goto done;
         }
@@ -122,7 +126,7 @@ CD_PacketParsable (CDBuffers* buffers)
             offset += MCIntegerSize;
 
             while (length > offset && *((MCByte*) data + offset) != 127) {
-                switch (*((MCByte*) data + offset) >> 5) {
+                switch (*((MCByte*) (data + offset)) >> 5) {
                     case MCTypeByte:           offset += MCByteSize;                                break;
                     case MCTypeShort:          offset += MCShortSize;                               break;
                     case MCTypeInteger:        offset += MCIntegerSize;                             break;
