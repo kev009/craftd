@@ -36,8 +36,16 @@ CD_PacketFromBuffer (CDBuffer* input)
     }
 
     self->chain = CDRequest;
-    self->type  = (uint8_t) CD_BufferRemoveByte(input);
+    self->type  = (uint32_t) CD_BufferRemoveByte(input);
     self->data  = CD_GetPacketDataFromBuffer(self, input);
+
+    if (!self->data) {
+        CD_DestroyPacket(self);
+
+        errno = EILSEQ;
+
+        return NULL;
+    }
 
     return self;
 }

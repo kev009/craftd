@@ -57,8 +57,6 @@ CD_CloneMap (CDMap* self)
 void
 CD_DestroyMap (CDMap* self)
 {
-    pthread_mutex_unlock(&self->lock.iterating);
-
     kh_destroy(cdMap, self->raw);
 
     pthread_rwlock_destroy(&self->lock.rw);

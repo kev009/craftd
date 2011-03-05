@@ -57,8 +57,6 @@ CD_CloneHash (CDHash* self)
 void
 CD_DestroyHash (CDHash* self)
 {
-    pthread_mutex_unlock(&self->lock.iterating);
-
     kh_destroy(cdHash, self->raw);
 
     pthread_rwlock_destroy(&self->lock.rw);

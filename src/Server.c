@@ -174,10 +174,10 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
         evbuffer_get_length(bufferevent_get_input(event)));
 
     if (player->status == CDPlayerIdle) {
-        if (CD_PacketParsable(player->buffers)) {
-            CD_BufferReadIn(player->buffers, CDNull, CDNull);
+        CDPacket* packet;
 
-            CDPacket* packet = CD_PacketFromBuffer(player->buffers->input);
+        if (CD_PacketParsable(player->buffers) && (packet = CD_PacketFromBuffer(player->buffers->input))) {
+            CD_BufferReadIn(player->buffers, CDNull, CDNull);
 
             SDEBUG(player->server, "received packet 0x%.2X from %s", packet->type, player->ip);
 
@@ -194,7 +194,12 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
         }
         else {
             if (errno == EILSEQ) {
+                pthread_rwlock_unlock(&player->lock.jobs);
+                pthread_mutex_unlock(&player->lock.status);
+
                 CD_ServerKick(player->server, player, "bad packet");
+
+                return;
             }
         }
     }

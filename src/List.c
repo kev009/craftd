@@ -60,8 +60,6 @@ CD_CloneList (CDList* self)
 void
 CD_DestroyList (CDList* self)
 {
-    pthread_mutex_unlock(&self->lock.iterating);
-
     kl_destroy(cdList, self->raw);
 
     pthread_mutex_destroy(&self->lock.iterating);
