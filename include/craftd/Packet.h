@@ -284,33 +284,27 @@ typedef union _CDPacketUseBed {
     } response;
 } CDPacketUseBed;
 
+typedef enum _CDAnimationType {
+    CDNoAnimation,
+    CDSwingArm,
+
+    CDUnknownAnimation = 102,
+
+    CDCrouchAnimation = 104,
+    CDUncrouchAnimation
+} CDAnimationType;
+
 typedef union _CDPacketAnimation {
     struct {
         MCEntity entity;
 
-        enum {
-            CDNoAnimation,
-            CDSwingArm,
-
-            CDUnknownAnimation = 102,
-
-            CDCrouchAnimation = 104,
-            CDUncrouchAnimation
-        } type;
+        CDAnimationType type;
     } request;
 
     struct {
         MCEntity entity;
 
-        enum {
-            CDNoAnimation,
-            CDSwingArm,
-
-            CDUnknownAnimation = 102,
-
-            CDCrouchAnimation = 104,
-            CDUncrouchAnimation
-        } type;
+        CDAnimationType type;
     } response;
 } CDPacketAnimation;
 
