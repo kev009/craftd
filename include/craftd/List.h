@@ -37,10 +37,16 @@ KLIST_INIT(cdList, CDPointer, __cdList_free);
  * The List class.
  */
 typedef struct _CDList {
-    klist_t(cdList)* list;
+    klist_t(cdList)* raw;
 
-    pthread_rwlock_t lock;
-    pthread_mutex_t  iterating;
+    size_t length;
+    bool   changed;
+
+    struct {
+        pthread_rwlock_t rw;
+        pthread_mutex_t  iterating;
+        pthread_mutex_t  length;
+    } lock;
 } CDList;
 
 typedef struct _CDListIterator {
@@ -64,10 +70,8 @@ CDList* CD_CloneList (CDList* self);
 
 /**
  * Destroy a List object and return its remaining data as a NULL terminated CDPointer array.
- *
- * @return The NULL terminated CDPointer array
  */
-CDPointer* CD_DestroyList (CDList* self);
+void CD_DestroyList (CDList* self);
 
 /**
  * Get an iterator to the beginning of the List.
@@ -186,7 +190,7 @@ bool CD_ListStopIterating (CDList* self, bool stop);
     if (self && CD_ListLength(self) > 0 && CD_ListStartIterating(self))             \
         for (CDListIterator it = CD_ListBegin(self), __end__ = CD_ListEnd(self);    \
                                                                                     \
-        CD_ListStopIterating(self, !CD_ListIteratorIsEqual(it, __end__));           \
+        CD_ListStopIterating(self, !CD_ListIteratorIsEqual(it, __end__) && it.raw); \
                                                                                     \
         it = CD_ListNext(it))
 

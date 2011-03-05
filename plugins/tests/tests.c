@@ -101,9 +101,166 @@ struct testcase_t cd_utils_String_Minecraft_tests[] = {
     END_OF_TESTCASES
 };
 
+void
+cdtest_Hash_set (void* data)
+{
+    CDHash* hash = CD_CreateHash();
+
+    CD_HashSet(hash, "lol", 2);
+
+    tt_int_op((int) CD_HashGet(hash, "lol"), ==, 2);
+
+    end: {
+        CD_DestroyHash(hash);
+    }
+}
+
+void
+cdtest_Hash_foreach (void* data)
+{
+    CDHash* hash = CD_CreateHash();
+
+    CD_HashSet(hash, "lol", 1);
+    CD_HashSet(hash, "omg", 2);
+    CD_HashSet(hash, "wat", 3);
+    CD_HashSet(hash, "win", 4);
+
+    CD_HASH_FOREACH(hash, it) {
+        if (strcmp("lol", CD_HashIteratorKey(it)) == 0) {
+            tt_int_op((int) CD_HashIteratorValue(it), ==, 1);
+        }
+        else if (strcmp("omg", CD_HashIteratorKey(it)) == 0) {
+            tt_int_op((int) CD_HashIteratorValue(it), ==, 2);
+        }
+        else if (strcmp("wat", CD_HashIteratorKey(it)) == 0) {
+            tt_int_op((int) CD_HashIteratorValue(it), ==, 3);
+        }
+        else if (strcmp("win", CD_HashIteratorKey(it)) == 0) {
+            tt_int_op((int) CD_HashIteratorValue(it), ==, 4);
+        }
+        else {
+            tt_abort_msg("Unknown hash key");
+        }
+    }
+
+    end: {
+        CD_DestroyHash(hash);
+    }
+}
+
+struct testcase_t cd_utils_Hash_tests[] = {
+    { "set", cdtest_Hash_set, },
+    { "foreach", cdtest_Hash_foreach, },
+
+    END_OF_TESTCASES
+};
+
+void
+cdtest_Map_set (void* data)
+{
+    CDMap* map = CD_CreateMap();
+
+    CD_MapSet(map, 9001, 2);
+
+    tt_int_op((int) CD_MapGet(map, 9001), ==, 2);
+
+    end: {
+        CD_DestroyMap(map);
+    }
+}
+
+void
+cdtest_Map_foreach (void* data)
+{
+    CDMap* map = CD_CreateMap();
+
+    CD_MapSet(map, 23, 1);
+    CD_MapSet(map, 42, 2);
+    CD_MapSet(map, 9001, 3);
+    CD_MapSet(map, 911, 4);
+
+    CD_MAP_FOREACH(map, it) {
+        if (CD_MapIteratorKey(it) == 23) {
+            tt_int_op((int) CD_MapIteratorValue(it), ==, 1);
+        }
+        else if (CD_MapIteratorKey(it) == 42) {
+            tt_int_op((int) CD_MapIteratorValue(it), ==, 2);
+        }
+        else if (CD_MapIteratorKey(it) == 9001) {
+            tt_int_op((int) CD_MapIteratorValue(it), ==, 3);
+        }
+        else if (CD_MapIteratorKey(it) == 911) {
+            tt_int_op((int) CD_MapIteratorValue(it), ==, 4);
+        }
+        else {
+            tt_abort_msg("Unknown map key");
+        }
+    }
+
+    end: {
+        CD_DestroyMap(map);
+    }
+}
+
+struct testcase_t cd_utils_Map_tests[] = {
+    { "set", cdtest_Map_set, },
+    { "foreach", cdtest_Map_foreach, },
+
+    END_OF_TESTCASES
+};
+
+void
+cdtest_List_push (void* data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListPush(list, 42);
+
+    tt_int_op(CD_ListShift(list), ==, 42);
+
+    end: {
+        CD_DestroyList(list);
+    }
+}
+
+void
+cdtest_List_foreach (void* data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListPush(list, 23);
+    CD_ListPush(list, 42);
+    CD_ListPush(list, 9001);
+    CD_ListPush(list, 911);
+
+    CD_LIST_FOREACH(list, it) {
+        switch (CD_ListIteratorValue(it)) {
+            case 23: case 42: case 9001: case 911: break;
+
+            default: {
+                tt_abort_msg("Unknown value in list");
+            }
+        }
+    }
+
+    end: {
+        CD_DestroyList(list);
+    }
+}
+
+struct testcase_t cd_utils_List_tests[] = {
+    { "push", cdtest_List_push, },
+    { "foreach", cdtest_List_foreach, },
+
+    END_OF_TESTCASES
+};
+
 struct testgroup_t cd_groups[] = {
-    { "utils/String/UTF8/", cd_utils_String_UTF8_tests },
-    { "utils/String/Minecraft/", cd_utils_String_Minecraft_tests },
+    { "utils/String/UTF8/",         cd_utils_String_UTF8_tests },
+    { "utils/String/Minecraft/",    cd_utils_String_Minecraft_tests },
+    { "utils/Hash/",                cd_utils_Hash_tests },
+    { "utils/Map/",                 cd_utils_Map_tests },
+    { "utils/List/",                cd_utils_List_tests },
 
     END_OF_GROUPS
 };

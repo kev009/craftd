@@ -34,10 +34,13 @@ CD_CreateList (void)
         return NULL;
     }
 
-    self->list = kl_init(cdList);
+    self->raw     = kl_init(cdList);
+    self->changed = false;
+    self->length  = 0;
 
-    pthread_rwlock_init(&self->lock, NULL);
-    pthread_mutex_init(&self->iterating, NULL);
+    pthread_rwlock_init(&self->lock.rw, NULL);
+    pthread_mutex_init(&self->lock.iterating, NULL);
+    pthread_mutex_init(&self->lock.length, NULL);
 
     return self;
 }
@@ -54,19 +57,17 @@ CD_CloneList (CDList* self)
     return cloned;
 }
 
-CDPointer*
+void
 CD_DestroyList (CDList* self)
 {
-    CDPointer* result = CD_ListClear(self);
+    pthread_mutex_unlock(&self->lock.iterating);
 
-    kl_destroy(cdList, self->list);
+    kl_destroy(cdList, self->raw);
 
-    pthread_mutex_destroy(&self->iterating);
-    pthread_rwlock_destroy(&self->lock);
+    pthread_mutex_destroy(&self->lock.iterating);
+    pthread_rwlock_destroy(&self->lock.rw);
 
     CD_free(self);
-
-    return result;
 }
 
 CDListIterator
@@ -74,12 +75,12 @@ CD_ListBegin (CDList* self)
 {
     CDListIterator it;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
 
-    it.raw    = kl_begin(self->list);
+    it.raw    = kl_begin(self->raw);
     it.parent = self;
 
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return it;
 }
@@ -89,12 +90,12 @@ CD_ListEnd (CDList* self)
 {
     CDListIterator it;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
 
-    it.raw    = kl_end(self->list);
+    it.raw    = kl_end(self->raw);
     it.parent = self;
 
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return it;
 }
@@ -102,7 +103,9 @@ CD_ListEnd (CDList* self)
 CDListIterator
 CD_ListNext (CDListIterator it)
 {
-    it.raw = kl_next(it.raw);
+    if (it.raw != NULL) {
+        it.raw = kl_next(it.raw);
+    }
 
     return it;
 }
@@ -110,14 +113,21 @@ CD_ListNext (CDListIterator it)
 size_t
 CD_ListLength (CDList* self)
 {
-    size_t         result = 0;
-    CDListIterator it;
+    pthread_mutex_lock(&self->lock.length);
+    if (self->changed) {
+        size_t         result = 0;
+        CDListIterator it;
 
-    for (it = CD_ListBegin(self); !CD_ListIteratorIsEqual(it, CD_ListEnd(self)); it = CD_ListNext(it)) {
-        result++;
+        for (it.raw = kl_begin(self->raw); it.raw != kl_end(self->raw); it.raw = kl_next(it.raw)) {
+            result++;
+        }
+
+        self->length  = result;
+        self->changed = false;
     }
+    pthread_mutex_unlock(&self->lock.length);
 
-    return result;
+    return self->length;
 }
 
 bool
@@ -136,13 +146,17 @@ CD_ListIteratorValue (CDListIterator it)
 CDList*
 CD_ListPush (CDList* self, CDPointer data)
 {
-    pthread_rwlock_wrlock(&self->lock);
-    pthread_mutex_lock(&self->iterating);
+    pthread_rwlock_wrlock(&self->lock.rw);
+    pthread_mutex_lock(&self->lock.iterating);
+    pthread_mutex_lock(&self->lock.length);
 
-    *kl_pushp(cdList, self->list) = data;
+    *kl_pushp(cdList, self->raw) = data;
 
-    pthread_mutex_unlock(&self->iterating);
-    pthread_rwlock_unlock(&self->lock);
+    self->changed = true;
+
+    pthread_mutex_unlock(&self->lock.length);
+    pthread_mutex_unlock(&self->lock.iterating);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return self;
 }
@@ -152,13 +166,17 @@ CD_ListShift (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_wrlock(&self->lock);
-    pthread_mutex_lock(&self->iterating);
+    pthread_rwlock_wrlock(&self->lock.rw);
+    pthread_mutex_lock(&self->lock.iterating);
+    pthread_mutex_lock(&self->lock.length);
 
-    kl_shift(cdList, self->list, &result);
+    kl_shift(cdList, self->raw, &result);
 
-    pthread_mutex_unlock(&self->iterating);
-    pthread_rwlock_unlock(&self->lock);
+    self->changed = true;
+
+    pthread_mutex_unlock(&self->lock.length);
+    pthread_mutex_unlock(&self->lock.iterating);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -168,9 +186,9 @@ CD_ListFirst (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&self->lock);
-    result = kl_val(kl_begin(self->list));
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
+    result = kl_val(kl_begin(self->raw));
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -180,9 +198,9 @@ CD_ListLast (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&self->lock);
-    result = kl_val(kl_begin(self->list));
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
+    result = kl_val(kl_begin(self->raw));
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -194,15 +212,20 @@ CD_ListDelete (CDList* self, CDPointer data)
     CDPointer      result = CDNull;
     CDListIterator del;
 
+    pthread_mutex_lock(&self->lock.length);
+
     CD_LIST_FOREACH(self, it) {
         if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
             result       = CD_ListIteratorValue(del);
             it.raw->next = CD_ListNext(del).raw;
-            kmp_free(cdList, self->list->mp, del.raw);
+            kmp_free(cdList, self->raw->mp, del.raw);
 
             break;
         }
     }
+
+    self->changed = true;
+    pthread_mutex_unlock(&self->lock.length);
 
     return result;
 }
@@ -215,10 +238,15 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
     CDListIterator del;
 
     CD_LIST_FOREACH(self, it) {
-        if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
+        if (CD_ListNext(it).raw && CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
+            pthread_mutex_lock(&self->lock.length);
+
             result       = CD_ListIteratorValue(del);
             it.raw->next = del.raw->next;
-            kmp_free(cdList, self->list->mp, del.raw);
+            kmp_free(cdList, self->raw->mp, del.raw);
+
+            self->changed = true;
+            pthread_mutex_unlock(&self->lock.length);
         }
     }
 
@@ -229,17 +257,14 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
 CDPointer*
 CD_ListClear (CDList* self)
 {
-    CDPointer* result = (CDPointer*) CD_malloc(sizeof(CDPointer));
+    CDPointer* result = (CDPointer*) CD_malloc(sizeof(CDPointer) * (CD_ListLength(self) + 1));
     size_t     i      = 0;
 
     while (CD_ListLength(self) > 0) {
-        i++;
-
-        result        = (CDPointer*) CD_realloc(result, sizeof(CDPointer) * (i + 1));
-        result[i - 1] = CD_ListDeleteAll(self, CD_ListFirst(self));
+        result[i++] = CD_ListDeleteAll(self, CD_ListFirst(self));
     }
 
-    result[i] = (CDPointer) NULL;
+    result[i] = CDNull;
 
     return result;
 }
@@ -247,7 +272,7 @@ CD_ListClear (CDList* self)
 bool
 CD_ListStartIterating (CDList* self)
 {
-    pthread_mutex_lock(&self->iterating);
+    pthread_mutex_lock(&self->lock.iterating);
 
     return true;
 }
@@ -256,7 +281,7 @@ bool
 CD_ListStopIterating (CDList* self, bool stop)
 {
     if (!stop) {
-        pthread_mutex_unlock(&self->iterating);
+        pthread_mutex_unlock(&self->lock.iterating);
     }
 
     return stop;

@@ -36,8 +36,8 @@ CD_CreateMap (void)
 
     self->raw = kh_init(cdMap);
 
-    pthread_rwlock_init(&self->lock, NULL);
-    pthread_mutex_init(&self->iterating, NULL);
+    pthread_rwlock_init(&self->lock.rw, NULL);
+    pthread_mutex_init(&self->lock.iterating, NULL);
 
     return self;
 }
@@ -57,10 +57,12 @@ CD_CloneMap (CDMap* self)
 void
 CD_DestroyMap (CDMap* self)
 {
+    pthread_mutex_unlock(&self->lock.iterating);
+
     kh_destroy(cdMap, self->raw);
 
-    pthread_rwlock_destroy(&self->lock);
-    pthread_mutex_destroy(&self->iterating);
+    pthread_rwlock_destroy(&self->lock.rw);
+    pthread_mutex_destroy(&self->lock.iterating);
 
     CD_free(self);
 }
@@ -70,9 +72,9 @@ CD_MapLength (CDMap* self)
 {
     size_t result;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
     result = kh_size(self->raw);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -82,14 +84,14 @@ CD_MapBegin (CDMap* self)
 {
     CDMapIterator it;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
     it.raw    = kh_end(self->raw);
     it.parent = self;
 
     if (!kh_exist(self->raw, it.raw)) {
         it = CD_MapNext(it);
     }
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return it;
 }
@@ -99,10 +101,10 @@ CD_MapEnd (CDMap* self)
 {
     CDMapIterator it;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
     it.raw    = kh_begin(self->raw) - 1;
     it.parent = self;
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return it;
 }
@@ -110,13 +112,17 @@ CD_MapEnd (CDMap* self)
 CDMapIterator
 CD_MapNext (CDMapIterator it)
 {
+    if (it.raw == kh_begin(it.parent->raw)) {
+        return CD_MapEnd(it.parent);
+    }
+
     it.raw--;
 
-    pthread_rwlock_rdlock(&it.parent->lock);
+    pthread_rwlock_rdlock(&it.parent->lock.rw);
     for (; it.raw != kh_begin(it.parent->raw) && !kh_exist(it.parent->raw, it.raw); it.raw--) {
         continue;
     }
-    pthread_rwlock_unlock(&it.parent->lock);
+    pthread_rwlock_unlock(&it.parent->lock.rw);
 
     if (!kh_exist(it.parent->raw, it.raw)) {
         it = CD_MapEnd(it.parent);
@@ -128,13 +134,17 @@ CD_MapNext (CDMapIterator it)
 CDMapIterator
 CD_MapPrevious (CDMapIterator it)
 {
+    if (it.raw == kh_end(it.parent->raw)) {
+        return CD_MapBegin(it.parent);
+    }
+
     it.raw++;
 
-    pthread_rwlock_rdlock(&it.parent->lock);
+    pthread_rwlock_rdlock(&it.parent->lock.rw);
     for (; it.raw != kh_end(it.parent->raw) && !kh_exist(it.parent->raw, it.raw); it.raw++) {
         continue;
     }
-    pthread_rwlock_unlock(&it.parent->lock);
+    pthread_rwlock_unlock(&it.parent->lock.rw);
 
     if (!kh_exist(it.parent->raw, it.raw)) {
         it = CD_MapBegin(it.parent);
@@ -154,9 +164,9 @@ CD_MapIteratorKey (CDMapIterator it)
 {
     int result = 0;
 
-    pthread_rwlock_rdlock(&it.parent->lock);
+    pthread_rwlock_rdlock(&it.parent->lock.rw);
     result = kh_key(it.parent->raw, it.raw);
-    pthread_rwlock_unlock(&it.parent->lock);
+    pthread_rwlock_unlock(&it.parent->lock.rw);
 
     return result;
 }
@@ -166,9 +176,9 @@ CD_MapIteratorValue (CDMapIterator it)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&it.parent->lock);
+    pthread_rwlock_rdlock(&it.parent->lock.rw);
     result = kh_value(it.parent->raw, it.raw);
-    pthread_rwlock_unlock(&it.parent->lock);
+    pthread_rwlock_unlock(&it.parent->lock.rw);
 
     return result;
 }
@@ -178,9 +188,9 @@ CD_MapIteratorValid (CDMapIterator it)
 {
     bool result = false;
 
-    pthread_rwlock_rdlock(&it.parent->lock);
+    pthread_rwlock_rdlock(&it.parent->lock.rw);
     result = kh_exist(it.parent->raw, it.raw);
-    pthread_rwlock_unlock(&it.parent->lock);
+    pthread_rwlock_unlock(&it.parent->lock.rw);
 
     return result;
 }
@@ -191,13 +201,13 @@ CD_MapGet (CDMap* self, int id)
     CDPointer result = (CDPointer) NULL;
     khiter_t  it;
 
-    pthread_rwlock_rdlock(&self->lock);
+    pthread_rwlock_rdlock(&self->lock.rw);
     it = kh_get(cdMap, self->raw, id);
 
     if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
         result = kh_value(self->raw, it);
     }
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -209,8 +219,8 @@ CD_MapSet (CDMap* self, int id, CDPointer data)
     khiter_t  it;
     int       ret;
 
-    pthread_rwlock_wrlock(&self->lock);
-    pthread_mutex_lock(&self->iterating);
+    pthread_rwlock_wrlock(&self->lock.rw);
+    pthread_mutex_lock(&self->lock.iterating);
 
     it = kh_get(cdMap, self->raw, id);
 
@@ -223,8 +233,8 @@ CD_MapSet (CDMap* self, int id, CDPointer data)
 
     kh_value(self->raw, it) = data;
 
-    pthread_mutex_unlock(&self->iterating);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_mutex_unlock(&self->lock.iterating);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return old;
 }
@@ -235,8 +245,8 @@ CD_MapDelete (CDMap* self, int id)
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;
 
-    pthread_rwlock_rdlock(&self->lock);
-    pthread_mutex_lock(&self->iterating);
+    pthread_rwlock_rdlock(&self->lock.rw);
+    pthread_mutex_lock(&self->lock.iterating);
 
     it = kh_get(cdMap, self->raw, id);
 
@@ -246,8 +256,8 @@ CD_MapDelete (CDMap* self, int id)
 
     kh_del(cdMap, self->raw, it);
 
-    pthread_mutex_unlock(&self->iterating);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_mutex_unlock(&self->lock.iterating);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return old;
 }
@@ -271,8 +281,8 @@ CD_MapClear (CDMap* self)
     size_t     i      = 0;
     khiter_t   it;
 
-    pthread_rwlock_wrlock(&self->lock);
-    pthread_mutex_lock(&self->iterating);
+    pthread_rwlock_wrlock(&self->lock.rw);
+    pthread_mutex_lock(&self->lock.iterating);
 
     for (it = kh_begin(self->raw); it != kh_end(self->raw); it++) {
         if (kh_exist(self->raw, it)) {
@@ -284,8 +294,8 @@ CD_MapClear (CDMap* self)
 
     kh_clear(cdMap, self->raw);
 
-    pthread_mutex_unlock(&self->iterating);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_mutex_unlock(&self->lock.iterating);
+    pthread_rwlock_unlock(&self->lock.rw);
 
     return result;
 }
@@ -293,7 +303,7 @@ CD_MapClear (CDMap* self)
 bool
 CD_MapStartIterating (CDMap* self)
 {
-    pthread_mutex_lock(&self->iterating);
+    pthread_mutex_lock(&self->lock.iterating);
 
     return true;
 }
@@ -302,7 +312,7 @@ bool
 CD_MapStopIterating (CDMap* self, bool stop)
 {
     if (!stop) {
-        pthread_mutex_unlock(&self->iterating);
+        pthread_mutex_unlock(&self->lock.iterating);
     }
 
     return stop;

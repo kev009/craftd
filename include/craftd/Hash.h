@@ -37,8 +37,10 @@ KHASH_MAP_INIT_STR(cdHash, CDPointer);
 typedef struct _CDHash {
     khash_t(cdHash)* raw;
 
-    pthread_rwlock_t lock;
-    pthread_mutex_t  iterating;
+    struct {
+        pthread_rwlock_t rw;
+        pthread_mutex_t  iterating;
+    } lock;
 } CDHash;
 
 /**
