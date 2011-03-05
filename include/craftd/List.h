@@ -40,9 +40,13 @@ typedef struct _CDList {
     klist_t(cdList)* list;
 
     pthread_rwlock_t lock;
+    pthread_mutex_t  iterating;
 } CDList;
 
-typedef kliter_t(cdList)* CDListIterator;
+typedef struct _CDListIterator {
+    kliter_t(cdList)* raw;
+    CDList*           parent;
+} CDListIterator;
 
 /**
  * Create a List object
@@ -91,7 +95,7 @@ CDListIterator CD_ListEnd (CDList* self);
  *
  * @return The iterator to the next element
  */
-CDListIterator CD_ListNext (CDListIterator self);
+CDListIterator CD_ListNext (CDListIterator it);
 
 /**
  * Get the number of elements in the List
@@ -99,6 +103,11 @@ CDListIterator CD_ListNext (CDListIterator self);
  * @return The number of elements in the List
  */
 size_t CD_ListLength (CDList* self);
+
+/**
+ * Check if an iterator is equal to another
+ */
+bool CD_ListIteratorIsEqual (CDListIterator a, CDListIterator b);
 
 /**
  * Get the value of the given iterator position.
@@ -164,12 +173,21 @@ CDPointer CD_ListLast (CDList* self);
  */
 CDPointer* CD_ListClear (CDList* self);
 
+bool CD_ListStartIterating (CDList* self);
+
+bool CD_ListStopIterating (CDList* self, bool stop);
+
 /**
  * Iterate over the given map
  *
  * @parameter it The name of the iterator variable
  */
-#define CD_LIST_FOREACH(self, it) \
-    if (self && CD_ListLength(self) > 0) for (CDListIterator it = CD_ListBegin(self), __end__ = CD_ListEnd(self); it != __end__; it = CD_ListNext(it))
+#define CD_LIST_FOREACH(self, it)                                                   \
+    if (self && CD_ListLength(self) > 0 && CD_ListStartIterating(self))             \
+        for (CDListIterator it = CD_ListBegin(self), __end__ = CD_ListEnd(self);    \
+                                                                                    \
+        CD_ListStopIterating(self, !CD_ListIteratorIsEqual(it, __end__));           \
+                                                                                    \
+        it = CD_ListNext(it))
 
 #endif

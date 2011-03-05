@@ -41,8 +41,6 @@ CD_CreatePlugins (struct _CDServer* server)
 
     lt_dlinit();
 
-    lt_dladdsearchdir("plugins");
-
     J_DO {
         J_IN(server, self->server->config->data, "server") {
             J_IN(plugin, server, "plugin") {
@@ -62,7 +60,7 @@ CD_DestroyPlugins (CDPlugins* self)
     lt_dlexit();
 
     CD_HASH_FOREACH(self->items, it) {
-        CD_DestroyPlugin((CDPlugin*) CD_HashIteratorValue(self->items, it));
+        CD_DestroyPlugin((CDPlugin*) CD_HashIteratorValue(it));
     }
 
     CD_DestroyHash(self->items);

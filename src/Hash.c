@@ -34,9 +34,10 @@ CD_CreateHash (void)
         return NULL;
     }
 
-    self->hash = kh_init(cdHash);
+    self->raw = kh_init(cdHash);
 
     pthread_rwlock_init(&self->lock, NULL);
+    pthread_mutex_init(&self->iterating, NULL);
 
     return self;
 }
@@ -47,7 +48,7 @@ CD_CloneHash (CDHash* self)
     CDHash* cloned = CD_CreateHash();
 
     CD_HASH_FOREACH(self, it) {
-        CD_HashSet(cloned, CD_HashIteratorKey(self, it), CD_HashIteratorValue(self, it));
+        CD_HashSet(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
     }
 
     return cloned;
@@ -56,11 +57,24 @@ CD_CloneHash (CDHash* self)
 void
 CD_DestroyHash (CDHash* self)
 {
-    kh_destroy(cdHash, self->hash);
+    kh_destroy(cdHash, self->raw);
 
     pthread_rwlock_destroy(&self->lock);
+    pthread_mutex_destroy(&self->iterating);
 
     CD_free(self);
+}
+
+size_t
+CD_HashLength (CDHash* self)
+{
+    size_t result;
+
+    pthread_rwlock_rdlock(&self->lock);
+    result = kh_size(self->raw);
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
 }
 
 CDHashIterator
@@ -69,10 +83,11 @@ CD_HashBegin (CDHash* self)
     CDHashIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_end(self->hash);
+    it.raw    = kh_end(self->raw);
+    it.parent = self;
 
-    if (!kh_exist(self->hash, it)) {
-        it = CD_HashNext(self, it);
+    if (!kh_exist(self->raw, it.raw)) {
+        it = CD_HashNext(it);
     }
     pthread_rwlock_unlock(&self->lock);
 
@@ -85,92 +100,87 @@ CD_HashEnd (CDHash* self)
     CDHashIterator it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_begin(self->hash) - 1;
+    it.raw    = kh_begin(self->raw) - 1;
+    it.parent = self;
     pthread_rwlock_unlock(&self->lock);
 
     return it;
 }
 
 CDHashIterator
-CD_HashNext (CDHash* self, CDHashIterator iterator)
+CD_HashNext (CDHashIterator it)
 {
-    iterator--;
+    it.raw--;
 
-    pthread_rwlock_rdlock(&self->lock);
-    for (; iterator != kh_begin(self->hash) && !kh_exist(self->hash, iterator); iterator--) {
+    pthread_rwlock_rdlock(&it.parent->lock);
+    for (; it.raw != kh_begin(it.parent->raw) && !kh_exist(it.parent->raw, it.raw); it.raw--) {
         continue;
     }
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&it.parent->lock);
 
-    if (!kh_exist(self->hash, iterator)) {
-        iterator = CD_HashEnd(self);
+    if (!kh_exist(it.parent->raw, it.raw)) {
+        it = CD_HashEnd(it.parent);
     }
 
-    return iterator;
+    return it;
 }
 
 CDHashIterator
-CD_HashPrevious (CDHash* self, CDHashIterator iterator)
+CD_HashPrevious (CDHashIterator it)
 {
-    iterator++;
+    it.raw++;
 
-    pthread_rwlock_rdlock(&self->lock);
-    for (; iterator != CD_HashBegin(self) && !CD_HashIteratorValid(self, iterator); iterator++) {
+    pthread_rwlock_rdlock(&it.parent->lock);
+    for (; it.raw != kh_end(it.parent->raw) && !kh_exist(it.parent->raw, it.raw); it.raw++) {
         continue;
     }
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_unlock(&it.parent->lock);
 
-    if (!kh_exist(self->hash, iterator)) {
-        iterator = CD_HashBegin(self);
+    if (!kh_exist(it.parent->raw, it.raw)) {
+        it = CD_HashBegin(it.parent);
     }
 
-    return iterator;
+    return it;
 }
 
-size_t
-CD_HashLength (CDHash* self)
+bool
+CD_HashIteratorIsEqual (CDHashIterator a, CDHashIterator b)
 {
-    size_t result;
-
-    pthread_rwlock_rdlock(&self->lock);
-    result = kh_size(self->hash);
-    pthread_rwlock_unlock(&self->lock);
-
-    return result;
+    return a.raw == b.raw && a.parent == b.parent;
 }
 
 const char*
-CD_HashIteratorKey (CDHash* self, CDHashIterator iterator)
+CD_HashIteratorKey (CDHashIterator it)
 {
     const char* result = NULL;
 
-    pthread_rwlock_rdlock(&self->lock);
-    result = kh_key(self->hash, iterator);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_rdlock(&it.parent->lock);
+    result = kh_key(it.parent->raw, it.raw);
+    pthread_rwlock_unlock(&it.parent->lock);
 
     return result;
 }
 
 CDPointer
-CD_HashIteratorValue (CDHash* self, CDHashIterator iterator)
+CD_HashIteratorValue (CDHashIterator it)
 {
-    CDPointer result = (CDPointer) NULL;
+    CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&self->lock);
-    result = kh_value(self->hash, iterator);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_rdlock(&it.parent->lock);
+    result = kh_value(it.parent->raw, it.raw);
+    pthread_rwlock_unlock(&it.parent->lock);
 
     return result;
 }
 
 bool
-CD_HashIteratorValid (CDHash* self, CDHashIterator iterator)
+CD_HashIteratorValid (CDHashIterator it)
 {
     bool result = false;
 
-    pthread_rwlock_rdlock(&self->lock);
-    result = kh_exist(self->hash, iterator);
-    pthread_rwlock_unlock(&self->lock);
+    pthread_rwlock_rdlock(&it.parent->lock);
+    result = kh_exist(it.parent->raw, it.raw);
+    pthread_rwlock_unlock(&it.parent->lock);
 
     return result;
 }
@@ -182,10 +192,10 @@ CD_HashGet (CDHash* self, const char* name)
     khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_get(cdHash, self->hash, name);
+    it = kh_get(cdHash, self->raw, name);
 
-    if (it != kh_end(self->hash) && kh_exist(self->hash, it)) {
-        result = kh_value(self->hash, it);
+    if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
+        result = kh_value(self->raw, it);
     }
     pthread_rwlock_unlock(&self->lock);
 
@@ -200,16 +210,20 @@ CD_HashSet (CDHash* self, const char* name, CDPointer data)
     int       ret;
 
     pthread_rwlock_wrlock(&self->lock);
-    it = kh_get(cdHash, self->hash, name);
+    pthread_mutex_lock(&self->iterating);
 
-    if (it != kh_end(self->hash) && kh_exist(self->hash, it)) {
-        old = kh_value(self->hash, it);
+    it = kh_get(cdHash, self->raw, name);
+
+    if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
+        old = kh_value(self->raw, it);
     }
     else {
-        it = kh_put(cdHash, self->hash, name, &ret);
+        it = kh_put(cdHash, self->raw, name, &ret);
     }
 
-    kh_value(self->hash, it) = data;
+    kh_value(self->raw, it) = data;
+
+    pthread_mutex_unlock(&self->iterating);
     pthread_rwlock_unlock(&self->lock);
 
     return old;
@@ -222,13 +236,17 @@ CD_HashDelete (CDHash* self, const char* name)
     khiter_t  it;
 
     pthread_rwlock_rdlock(&self->lock);
-    it = kh_get(cdHash, self->hash, name);
+    pthread_mutex_lock(&self->iterating);
 
-    if (it != kh_end(self->hash) && kh_exist(self->hash, it)) {
-        old = kh_value(self->hash, it);
+    it = kh_get(cdHash, self->raw, name);
+
+    if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
+        old = kh_value(self->raw, it);
     }
 
-    kh_del(cdHash, self->hash, it);
+    kh_del(cdHash, self->raw, it);
+
+    pthread_mutex_unlock(&self->iterating);
     pthread_rwlock_unlock(&self->lock);
 
     return old;
@@ -237,37 +255,55 @@ CD_HashDelete (CDHash* self, const char* name)
 CDPointer
 CD_HashFirst (CDHash* self)
 {
-    return CD_HashIteratorValue(self, CD_HashBegin(self));
+    return CD_HashIteratorValue(CD_HashBegin(self));
 }
 
 CDPointer
 CD_HashLast (CDHash* self)
 {
-    return CD_HashIteratorValue(self, CD_HashPrevious(self, CD_HashEnd(self)));
+    return CD_HashIteratorValue(CD_HashPrevious(CD_HashEnd(self)));
 }
 
 CDPointer*
 CD_HashClear (CDHash* self)
 {
-    CDPointer* result = NULL;
+    CDPointer* result = CD_malloc(sizeof(CDPointer) * (CD_HashLength(self) + 1));
     size_t     i      = 0;
     khiter_t   it;
 
     pthread_rwlock_wrlock(&self->lock);
+    pthread_mutex_lock(&self->iterating);
 
-    for (it = kh_begin(self->hash); it != kh_end(self->hash); it++) {
-        if (kh_exist(self->hash, it)) {
-            i++;
-
-            result        = CD_realloc(result, sizeof(CDPointer) * (i + 1));
-            result[i - 1] = kh_value(self->hash, it);
+    for (it = kh_begin(self->raw); it != kh_end(self->raw); it++) {
+        if (kh_exist(self->raw, it)) {
+            result[i++] = kh_value(self->raw, it);
         }
     }
 
-    result[i] = (CDPointer) NULL;
+    result[i] = CDNull;
 
-    kh_clear(cdHash, self->hash);
+    kh_clear(cdHash, self->raw);
+
+    pthread_mutex_unlock(&self->iterating);
     pthread_rwlock_unlock(&self->lock);
 
     return result;
+}
+
+bool
+CD_HashStartIterating (CDHash* self)
+{
+    pthread_mutex_lock(&self->iterating);
+
+    return true;
+}
+
+bool
+CD_HashStopIterating (CDHash* self, bool stop)
+{
+    if (!stop) {
+        pthread_mutex_unlock(&self->iterating);
+    }
+
+    return stop;
 }

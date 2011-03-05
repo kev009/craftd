@@ -71,7 +71,7 @@ cdbase_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
         CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
         CD_HASH_FOREACH(self->players, it) {
-            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
         }
     }
 }
@@ -84,7 +84,7 @@ cdbase_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
         CDPacket packet = { CDResponse, CDKeepAlive, };
 
         CD_HASH_FOREACH(self->players, it) {
-            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
         }
     }
 }

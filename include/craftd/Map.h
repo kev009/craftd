@@ -35,15 +35,19 @@ KHASH_MAP_INIT_INT(cdMap, CDPointer);
  * The Map class
  */
 typedef struct _CDMap {
-    khash_t(cdMap)* map;
+    khash_t(cdMap)* raw;
 
     pthread_rwlock_t lock;
+    pthread_mutex_t  iterating;
 } CDMap;
 
 /**
  * The Map iterator type
  */
-typedef khiter_t CDMapIterator;
+typedef struct _CDMapIterator {
+    khiter_t raw;
+    CDMap*   parent;
+} CDMapIterator;
 
 /**
  * Create an Map object
@@ -95,7 +99,7 @@ CDMapIterator CD_MapEnd (CDMap* self);
  *
  * @return The iterator to the next element
  */
-CDMapIterator CD_MapNext (CDMap* self, CDMapIterator iterator);
+CDMapIterator CD_MapNext (CDMapIterator iterator);
 
 /**
  * Get the previous iterator with content, it automagically jumps empty buckets.
@@ -104,7 +108,7 @@ CDMapIterator CD_MapNext (CDMap* self, CDMapIterator iterator);
  *
  * @return The iterator to the previous element
  */
-CDMapIterator CD_MapPrevious (CDMap* self, CDMapIterator iterator);
+CDMapIterator CD_MapPrevious (CDMapIterator iterator);
 
 /**
  * Get the number of elements in the Map
@@ -114,13 +118,18 @@ CDMapIterator CD_MapPrevious (CDMap* self, CDMapIterator iterator);
 size_t CD_MapLength (CDMap* self);
 
 /**
+ * Check if an iterator is equal to another
+ */
+bool CD_MapIteratorIsEqual (CDMapIterator a, CDMapIterator b);
+
+/**
  * Get the key of the given iterator position.
  *
  * @param iterator The iterator to the current position
  *
- * @return The key (string) value
+ * @return The key (int) value
  */
-int CD_MapIteratorKey (CDMap* self, CDMapIterator iterator);
+int CD_MapIteratorKey (CDMapIterator iterator);
 
 /**
  * Get the value of the given iterator position.
@@ -129,7 +138,7 @@ int CD_MapIteratorKey (CDMap* self, CDMapIterator iterator);
  *
  * @return The value (whatever) value
  */
-CDPointer CD_MapIteratorValue (CDMap* self, CDMapIterator iterator);
+CDPointer CD_MapIteratorValue (CDMapIterator iterator);
 
 /**
  * Checks if a iterator is valid (points to an existing element)
@@ -138,21 +147,21 @@ CDPointer CD_MapIteratorValue (CDMap* self, CDMapIterator iterator);
  *
  * @return true if there's an element, false otherwise.
  */
-bool CD_MapIteratorValid (CDMap* self, CDMapIterator iterator);
+bool CD_MapIteratorValid (CDMapIterator iterator);
 
 /**
- * Get the value of the element with the given name.
+ * Get the value of the element with the given id.
  *
- * @param name A string with the name you want to get
+ * @param id A string with the id you want to get
  *
  * @return The value or NULL
  */
 CDPointer CD_MapGet (CDMap* self, int id);
 
 /**
- * Set the value of the element with the given name.
+ * Set the value of the element with the given id.
  *
- * @param name A string with the name you want to set
+ * @param id A string with the id you want to set
  * @param data The pointer to the data you want to set
  *
  * @return The old data if present or NULL
@@ -160,9 +169,9 @@ CDPointer CD_MapGet (CDMap* self, int id);
 CDPointer CD_MapSet (CDMap* self, int id, CDPointer data);
 
 /**
- * Delete the element with the given name
+ * Delete the element with the given id
  *
- * @param name A string with the name you want to delete
+ * @param id A string with the id you want to delete
  *
  * @return The delete data if present or NULL
  */
@@ -189,12 +198,21 @@ CDPointer CD_MapLast (CDMap* self);
  */
 CDPointer* CD_MapClear (CDMap* self);
 
+bool CD_MapStartIterating (CDMap* self);
+
+bool CD_MapStopIterating (CDMap* self, bool stop);
+
 /**
  * Iterate over the given map
  *
- * @parameter it The name of the iterator variable
+ * @parameter it The id of the iterator variable
  */
-#define CD_MAP_FOREACH(self, it) \
-    if (self && CD_MapLength(self) > 0) for (CDMapIterator it = CD_MapBegin(self), __end__ = CD_MapEnd(self); it != __end__; it = CD_MapNext(self, it))
+#define CD_MAP_FOREACH(self, it)                                                \
+    if (self && CD_MapLength(self) > 0 && CD_MapStartIterating(self))           \
+        for (CDMapIterator it = CD_MapBegin(self), __end__ = CD_MapEnd(self);   \
+                                                                                \
+        CD_MapStopIterating(self, !CD_MapIteratorIsEqual(it, __end__));         \
+                                                                                \
+        it = CD_MapNext(it))
 
 #endif

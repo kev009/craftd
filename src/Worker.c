@@ -67,28 +67,24 @@ CD_RunWorker (CDWorker* self)
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
-        pthread_mutex_lock(&self->workers->lock.mutex);
+        if (!CD_HasJobs(self->workers)) {
+            pthread_mutex_lock(&self->workers->lock.mutex);
 
-        SDEBUG(self->server, "worker %d ready", self->id);
+            SDEBUG(self->server, "worker %d ready", self->id);
 
-        pthread_cond_wait(&self->workers->lock.condition, &self->workers->lock.mutex);
+            pthread_cond_wait(&self->workers->lock.condition, &self->workers->lock.mutex);
 
-        if (!self->working) {
             pthread_mutex_unlock(&self->workers->lock.mutex);
-            break;
         }
 
-        if (!CD_HasJobs(self->workers)) {
-            SDEBUG(self->server, "no jobs for %d :<", self->id);
-            pthread_mutex_unlock(&self->workers->lock.mutex);
-            continue;
+        if (!self->working) {
+            break;
         }
 
         self->job = CD_NextJob(self->workers);
 
-        pthread_mutex_unlock(&self->workers->lock.mutex);
-
         if (!self->job) {
+            SDEBUG(self->server, "no jobs for %d :<", self->id);
             continue;
         }
 
@@ -175,7 +171,7 @@ CD_RunWorker (CDWorker* self)
                     CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
 
                     CD_HASH_FOREACH(self->server->players, it) {
-                        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(self->server->players, it);
+                        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
 
                         pthread_mutex_lock(&player->lock.status);
                         if (player->status != CDPlayerDisconnect) {

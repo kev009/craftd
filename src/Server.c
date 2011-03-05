@@ -101,7 +101,7 @@ CD_DestroyServer (CDServer* self)
     }
 
     CD_HASH_FOREACH(self->players, it) {
-        CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(self->players, it));
+        CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(it));
     }
 
     if (self->event.base) {

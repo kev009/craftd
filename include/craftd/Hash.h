@@ -35,15 +35,19 @@ KHASH_MAP_INIT_STR(cdHash, CDPointer);
  * The Hash class
  */
 typedef struct _CDHash {
-    khash_t(cdHash)* hash;
+    khash_t(cdHash)* raw;
 
     pthread_rwlock_t lock;
+    pthread_mutex_t  iterating;
 } CDHash;
 
 /**
  * The Hash iterator type
  */
-typedef khiter_t CDHashIterator;
+typedef struct _CDHashIterator {
+    khiter_t raw;
+    CDHash*  parent;
+} CDHashIterator;
 
 /**
  * Create an Hash object
@@ -67,6 +71,13 @@ CDHash* CD_CloneHash (CDHash* self);
  * Keep in mind that you have to destroy the saved data yourself.
  */
 void CD_DestroyHash (CDHash* self);
+
+/**
+ * Get the number of elements in the Hash
+ *
+ * @return The number of elements in the Hash
+ */
+size_t CD_HashLength (CDHash* self);
 
 /**
  * Get an iterator to the beginning of the Hash.
@@ -95,7 +106,7 @@ CDHashIterator CD_HashEnd (CDHash* self);
  *
  * @return The iterator to the next element
  */
-CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
+CDHashIterator CD_HashNext (CDHashIterator iterator);
 
 /**
  * Get the previous iterator with content, it automagically jumps empty buckets.
@@ -104,14 +115,12 @@ CDHashIterator CD_HashNext (CDHash* self, CDHashIterator iterator);
  *
  * @return The iterator to the previous element
  */
-CDHashIterator CD_HashPrevious (CDHash* self, CDHashIterator iterator);
+CDHashIterator CD_HashPrevious (CDHashIterator iterator);
 
 /**
- * Get the number of elements in the Hash
- *
- * @return The number of elements in the Hash
+ * Check if an iterator is equal to another
  */
-size_t CD_HashLength (CDHash* self);
+bool CD_HashIteratorIsEqual (CDHashIterator a, CDHashIterator b);
 
 /**
  * Get the key of the given iterator position.
@@ -120,7 +129,7 @@ size_t CD_HashLength (CDHash* self);
  *
  * @return The key (string) value
  */
-const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
+const char* CD_HashIteratorKey (CDHashIterator iterator);
 
 /**
  * Get the value of the given iterator position.
@@ -129,7 +138,7 @@ const char* CD_HashIteratorKey (CDHash* self, CDHashIterator iterator);
  *
  * @return The value (whatever) value
  */
-CDPointer CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
+CDPointer CD_HashIteratorValue (CDHashIterator iterator);
 
 /**
  * Checks if a iterator is valid (points to an existing element)
@@ -138,7 +147,7 @@ CDPointer CD_HashIteratorValue (CDHash* self, CDHashIterator iterator);
  *
  * @return true if there's an element, false otherwise.
  */
-bool CD_HashIteratorValid (CDHash* self, CDHashIterator iterator);
+bool CD_HashIteratorValid (CDHashIterator iterator);
 
 /**
  * Get the value of the element with the given name.
@@ -189,12 +198,21 @@ CDPointer CD_HashLast (CDHash* self);
  */
 CDPointer* CD_HashClear (CDHash* self);
 
+bool CD_HashStartIterating (CDHash* self);
+
+bool CD_HashStopIterating (CDHash* self, bool stop);
+
 /**
  * Iterate over the given hash
  *
  * @parameter it The name of the iterator variable
  */
-#define CD_HASH_FOREACH(self, it) \
-    if (self && CD_HashLength(self) > 0) for (CDHashIterator it = CD_HashBegin(self), __end__ = CD_HashEnd(self); it != __end__; it = CD_HashNext(self, it))
+#define CD_HASH_FOREACH(self, it)                                                   \
+    if (self && CD_HashLength(self) > 0 && CD_HashStartIterating(self))             \
+        for (CDHashIterator it = CD_HashBegin(self), __end__ = CD_HashEnd(self);    \
+                                                                                    \
+        CD_HashStopIterating(self, !CD_HashIteratorIsEqual(it, __end__));           \
+                                                                                    \
+        it = CD_HashNext(it))
 
 #endif
