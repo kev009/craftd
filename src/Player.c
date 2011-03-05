@@ -67,8 +67,6 @@ CD_DestroyPlayer (CDPlayer* self)
     bufferevent_free(self->buffers->raw);
     CD_DestroyBuffers(self->buffers);
 
-    close(self->socket);
-
     if (self->username) {
         CD_DestroyString(self->username);
     }
