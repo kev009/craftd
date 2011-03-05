@@ -37,6 +37,7 @@ CD_CreateList (void)
     self->list = kl_init(cdList);
 
     pthread_rwlock_init(&self->lock, NULL);
+    pthread_mutex_init(&self->iterating, NULL);
 
     return self;
 }
@@ -60,6 +61,7 @@ CD_DestroyList (CDList* self)
 
     kl_destroy(cdList, self->list);
 
+    pthread_mutex_destroy(&self->iterating);
     pthread_rwlock_destroy(&self->lock);
 
     CD_free(self);
