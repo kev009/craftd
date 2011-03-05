@@ -30,7 +30,7 @@ AC_CONFIG_SRCDIR([src/craftd.c])
 AX_LIB_SOCKET_NSL
 AX_CHECK_ZLIB
 AX_PTHREAD([], AC_MSG_ERROR([pthreads is required]))
-AX_PATH_LIB_PCRE
+#AX_PATH_LIB_PCRE
 
 PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.9],
 , ,
