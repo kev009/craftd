@@ -24,6 +24,14 @@
  */
 
 #include <craftd/TimeLoop.h>
+#include <craftd/Logger.h>
+
+static
+void
+cd_KeepTimeLoopAlive (void)
+{
+    return;
+}
 
 CDTimeLoop*
 CD_CreateTimeLoop (struct _CDServer* server)
@@ -44,6 +52,8 @@ CD_CreateTimeLoop (struct _CDServer* server)
     self->event.base = event_base_new();
     self->callbacks  = CD_CreateMap();
     self->last       = INT_MIN;
+
+    CD_SetInterval(self, 10000000, (event_callback_fn) cd_KeepTimeLoopAlive);
 
     return self;
 }
@@ -69,15 +79,23 @@ CD_RunTimeLoop (CDTimeLoop* self)
 int
 CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
-    struct timeval timeout      = { (int) seconds, (int) ((seconds - ((int) seconds)) * 1000000) };
+    struct timeval timeout      = { (int) seconds, (seconds - (int) seconds) * 1000000 };
     struct event*  timeoutEvent = event_new(self->event.base, -1, 0, callback, self->server);
     int            result;
 
+    if (evtimer_add(timeoutEvent, &timeout) < 0) {
+        SERR(self->server, "could not add a timeout");
+        event_free(timeoutEvent);
+        return 0;
+    }
+
     pthread_spin_lock(&self->lock.last);
+    if ((self->last + 1) == 0) {
+        self->last++;
+    }
+
     CD_MapSet(self->callbacks, (result = self->last++), (CDPointer) timeoutEvent);
     pthread_spin_unlock(&self->lock.last);
-
-    evtimer_add(timeoutEvent, &timeout);
 
     return result;
 }
@@ -96,15 +114,23 @@ CD_ClearTimeout (CDTimeLoop* self, int id)
 int
 CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
 {
-    struct timeval interval      = { (int) seconds, (int) ((seconds - ((int) seconds)) * 1000000) };
+    struct timeval interval      = { (int) seconds, (seconds - (int) seconds) * 1000000 };
     struct event*  intervalEvent = event_new(self->event.base, -1, EV_PERSIST, callback, self->server);
     int            result;
 
+    if (evtimer_add(intervalEvent, &interval) < 0) {
+        SERR(self->server, "could not add an interval");
+        event_free(intervalEvent);
+        return 0;
+    }
+
     pthread_spin_lock(&self->lock.last);
+    if ((self->last + 1) == 0) {
+        self->last++;
+    }
+
     CD_MapSet(self->callbacks, (result = self->last++), (CDPointer) intervalEvent);
     pthread_spin_unlock(&self->lock.last);
-
-    evtimer_add(intervalEvent, &interval);
 
     return result;
 }

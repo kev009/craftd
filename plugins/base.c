@@ -64,13 +64,15 @@ static
 void
 cdbase_TimeUpdate (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDPacketTimeUpdate pkt;
-    pkt.response.time = CD_ServerGetTime(self);
+    CD_PACKET_DO {
+        CDPacketTimeUpdate pkt;
+        pkt.response.time = CD_ServerGetTime(self);
 
-    CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
+        CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
-    CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+        CD_HASH_FOREACH(self->players, it) {
+            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+        }
     }
 }
 
@@ -78,10 +80,12 @@ static
 void
 cdbase_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 {
-    CDPacket packet = { CDResponse, CDKeepAlive, (CDPointer) NULL };
+    CD_PACKET_DO {
+        CDPacket packet = { CDResponse, CDKeepAlive, };
 
-    CD_HASH_FOREACH(self->players, it) {
-        CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+        CD_HASH_FOREACH(self->players, it) {
+            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(self->players, it), &packet);
+        }
     }
 }
 
@@ -160,9 +164,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_PACKET_DO {
                     CDPacketMapChunk pkt;
-                    pkt.response.position.x = x + i;
-                    pkt.response.position.y = 0;
-                    pkt.response.position.z = z + j;
+                    pkt.response.position.x = CD_WORLD_COORD(x + i);
+                    pkt.response.position.y = CD_WORLD_COORD(0);
+                    pkt.response.position.z = CD_WORLD_COORD(z + j);
                     pkt.response.size.x     = 16;
                     pkt.response.size.y     = 128;
                     pkt.response.size.z     = 16;

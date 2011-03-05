@@ -41,8 +41,6 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 
-#define CDNull (0)
-
 #include <craftd/config.h>
 #include <craftd/memory.h>
 
@@ -51,6 +49,15 @@
 #else
     typedef int64_t CDPointer;
 #endif
+
+#define PRIVATE(data) ((data)->_private)
+
+#define ERROR(x) ((x->error > 0) ? x->error : -x->error)
+
+#define CDNull (0)
+
+#define CD_CHUNK_COORD(x) (x)
+#define CD_WORLD_COORD(x) ((x) << 4)
 
 #include <craftd/List.h>
 #include <craftd/Map.h>
@@ -63,9 +70,5 @@
 
 #include <craftd/Buffer.h>
 #include <craftd/Buffers.h>
-
-#define PRIVATE(data) ((data)->_private)
-
-#define ERROR(x) ((x->error > 0) ? x->error : -x->error)
 
 #endif
