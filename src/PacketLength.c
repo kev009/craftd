@@ -26,6 +26,8 @@
 #include <craftd/PacketLength.h>
 #include <craftd/Packet.h>
 
+#define CHECK (length < (CDPacketLength[type] + variable))
+
 bool
 CD_PacketParsable (CDBuffers* buffers)
 {
@@ -34,6 +36,7 @@ CD_PacketParsable (CDBuffers* buffers)
 
     CDPacketType type     = data[0];
     size_t       variable = 0;
+    size_t       offset   = MCByteSize;
                  errno    = 0;
 
     if (length < CDPacketLength[type]) {
@@ -46,15 +49,31 @@ CD_PacketParsable (CDBuffers* buffers)
         }
 
         case CDLogin: {
+            variable += ntohs(*((MCShort*) (data + (offset += MCIntegerSize))));
+
+            if (CHECK) {
+                goto error;
+            }
+
+            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+
+            goto check;
         }
 
         case CDHandshake: {
+            variable += ntohs(*((MCShort*) (data + offset)));
+
+            goto check;
         }
 
         case CDChat: {
+            variable += ntohs(*((MCShort*) (data + offset)));
+
+            goto check;
         }
 
         case CDUseEntity: {
+            goto done;
         }
 
         case CDRespawn: {
@@ -62,45 +81,119 @@ CD_PacketParsable (CDBuffers* buffers)
         }
 
         case CDOnGround: {
+            goto done;
         }
 
         case CDPlayerPosition: {
+            goto done;
         }
 
         case CDPlayerLook: {
+            goto done;
         }
 
         case CDPlayerMoveLook: {
+            goto done;
         }
 
         case CDPlayerDigging: {
+            goto done;
         }
 
         case CDPlayerBlockPlacement: {
+            offset += MCIntegerSize + MCByteSize + MCIntegerSize + MCByteSize;
+
+            if (ntohs(*((MCShort*) (data + offset))) != -1) {
+                variable += 3;
+            }
+
+            goto check;
         }
 
         case CDHoldChange: {
+            goto done;
         }
 
         case CDEntityAction: {
+            goto done;
         }
 
         case CDEntityMetadata: {
+            offset += MCIntegerSize;
+
+            while (length > offset && *((MCByte*) data + offset) != 127) {
+                switch (*((MCByte*) data + offset) >> 5) {
+                    case MCTypeByte:           offset += MCByteSize;                                break;
+                    case MCTypeShort:          offset += MCShortSize;                               break;
+                    case MCTypeInteger:        offset += MCIntegerSize;                             break;
+                    case MCTypeFloat:          offset += MCFloatSize;                               break;
+                    case MCTypeString:         offset += *((MCShort*) (data + offset)) + MCShortSize; break;
+                    case MCTypeShortByteShort: offset += MCByteSize + MCShortSize + MCByteSize;     break;
+                }
+            }
+
+            if (length >= offset) {
+                goto done;
+            }
+            else {
+                goto error;
+            }
         }
 
         case CDCloseWindow: {
+            goto done;
         }
 
         case CDWindowClick: {
+            offset += MCByteSize + MCShortSize + MCByteSize + MCShortSize;
+
+            if (ntohs(*((MCShort*) (data + offset))) != -1) {
+                variable += 3;
+            }
+
+            goto check;
         }
 
         case CDTransaction: {
+            goto done;
         }
 
         case CDUpdateSign: {
+            offset += MCIntegerSize + MCShortSize + MCIntegerSize;
+
+            variable += ntohs(*((MCShort*) (data + offset)));
+
+            if (CHECK) {
+                goto error;
+            }
+
+            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+
+            if (CHECK) {
+                goto error;
+            }
+
+            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+
+            if (CHECK) {
+                goto error;
+            }
+
+            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+
+            goto check;
         }
 
         case CDDisconnect: {
+            variable += ntohs(*((MCShort*) (data + offset)));
+
+            goto check;
+        }
+    }
+
+    check: {
+        if (CHECK) {
+            goto error;
         }
     }
 

@@ -169,7 +169,9 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
     pthread_mutex_lock(&player->lock.status);
     pthread_rwlock_wrlock(&player->lock.jobs);
 
-    SDEBUG(player->server, "read data from %s (%s), %d byte/s available", CD_StringContent(player->username), player->ip, evbuffer_get_length(bufferevent_get_input(event)));
+    SDEBUG(player->server, "read data from %s (%s), %d byte/s available",
+        CD_StringContent(player->username), player->ip,
+        evbuffer_get_length(bufferevent_get_input(event)));
 
     if (player->status == CDPlayerIdle) {
         if (CD_PacketParsable(player->buffers)) {

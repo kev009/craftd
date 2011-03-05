@@ -36,7 +36,7 @@ CD_PacketFromBuffer (CDBuffer* input)
     }
 
     self->chain = CDRequest;
-    self->type  = (int) CD_BufferRemoveByte(input);
+    self->type  = CD_BufferRemoveByte(input) & 0x000000FF;
     self->data  = CD_GetPacketDataFromBuffer(self, input);
 
     return self;

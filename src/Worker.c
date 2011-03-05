@@ -92,6 +92,8 @@ CD_RunWorker (CDWorker* self)
             continue;
         }
 
+        SDEBUG(self->server, "worker %d running", self->id);
+
         if (CD_JOB_IS_CUSTOM(self->job)) {
             CDCustomJobData* data = (CDCustomJobData*) self->job->data;
 
