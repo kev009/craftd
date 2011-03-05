@@ -63,9 +63,11 @@ CD_DestroyPlayer (CDPlayer* self)
 {
     CD_EventDispatch(self->server, "Player.destroy", self);
 
-    close(self->socket);
-
+    bufferevent_disable(self->buffers->raw, EV_READ | EV_WRITE);
+    bufferevent_free(self->buffers->raw);
     CD_DestroyBuffers(self->buffers);
+
+    close(self->socket);
 
     if (self->username) {
         CD_DestroyString(self->username);

@@ -373,9 +373,9 @@ CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
 {
     pthread_mutex_lock(&player->lock.status);
 
-    player->status = CDPlayerDisconnect;
-
     SLOG(self, LOG_NOTICE, "%s (%s) kicked: %s", CD_StringContent(player->username), player->ip, reason);
+
+    player->status = CDPlayerDisconnect;
 
     CD_PACKET_DO {
         CDPacketDisconnect pkt;
