@@ -297,6 +297,20 @@ typedef union _CDPacketAnimation {
             CDCrouchAnimation = 104,
             CDUncrouchAnimation
         } type;
+    } request;
+
+    struct {
+        MCEntity entity;
+
+        enum {
+            CDNoAnimation,
+            CDSwingArm,
+
+            CDUnknownAnimation = 102,
+
+            CDCrouchAnimation = 104,
+            CDUncrouchAnimation
+        } type;
     } response;
 } CDPacketAnimation;
 

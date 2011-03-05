@@ -323,6 +323,17 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
+        case CDAnimation: {
+            CDPacketAnimation* packet = (CDPacketAnimation*) CD_malloc(sizeof(CDPacketAnimation));
+
+            CD_BufferRemoveFormat(input, "ib",
+                &packet->request.entity.id,
+                &packet->request.type
+            );
+
+            return (CDPointer) packet;
+        }
+
         case CDEntityAction: {
             CDPacketEntityAction* packet = (CDPacketEntityAction*) CD_malloc(sizeof(CDPacketEntityAction));
 
