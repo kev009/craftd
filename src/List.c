@@ -38,7 +38,7 @@ CD_CreateList (void)
     self->length  = 0;
 
     assert(self->raw);
-    assert(pthread_rwlock_init(&self->lock, NULL) != 0);
+    assert(pthread_rwlock_init(&self->lock, NULL) == 0);
 
     return self;
 }

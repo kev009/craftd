@@ -43,8 +43,8 @@ CD_CreateWorkers (CDServer* server)
     pthread_attr_init(&self->attributes);
     pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
 
-    assert(pthread_mutex_init(&self->lock.mutex, NULL) != 0);
-    assert(pthread_cond_init(&self->lock.condition, NULL) != 0);
+    assert(pthread_mutex_init(&self->lock.mutex, NULL) == 0);
+    assert(pthread_cond_init(&self->lock.condition, NULL) == 0);
 
     return self;
 }

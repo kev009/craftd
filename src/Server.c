@@ -40,7 +40,7 @@ CD_CreateServer (const char* path)
 
     assert(self);
 
-    assert(pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE) != 0);
+    assert(pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE) == 0);
 
     self->name     = NULL;
     self->logger   = CDConsoleLogger;

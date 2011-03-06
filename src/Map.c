@@ -35,7 +35,7 @@ CD_CreateMap (void)
     self->raw = kh_init(cdMap);
 
     assert(self->raw);
-    assert(pthread_rwlock_init(&self->lock, NULL) != 0);
+    assert(pthread_rwlock_init(&self->lock, NULL) == 0);
 
     return self;
 }

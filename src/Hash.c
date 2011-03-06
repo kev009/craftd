@@ -36,7 +36,7 @@ CD_CreateHash (void)
     self->raw = kh_init(cdHash);
 
     assert(self->raw);
-    assert(pthread_rwlock_init(&self->lock, NULL) != 0);
+    assert(pthread_rwlock_init(&self->lock, NULL) == 0);
 
     return self;
 }
