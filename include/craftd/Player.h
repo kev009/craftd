@@ -48,6 +48,8 @@ typedef struct _CDPlayer {
     CDString* username;
     char      ip[128];
 
+    CDSet loadedchunks;
+
     evutil_socket_t socket;
 
     CDBuffers* buffers;

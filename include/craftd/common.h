@@ -62,6 +62,7 @@
 #include <craftd/List.h>
 #include <craftd/Map.h>
 #include <craftd/Hash.h>
+#include <craftd/Set.h>
 #include <craftd/String.h>
 #include <craftd/Regexp.h>
 

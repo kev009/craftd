@@ -255,12 +255,33 @@ struct testcase_t cd_utils_List_tests[] = {
     END_OF_TESTCASES
 };
 
+void
+cdtest_Set_put (void* data)
+{
+    CDSet set = CD_CreateSet(10, NULL, NULL);
+
+    CD_SetPut(set, 1);
+    
+    tt_assert(CD_SetMember(set, 1) != 0);
+
+    end: {
+        CD_DestroySet(&set);
+    }
+}
+
+struct testcase_t cd_utils_Set_tests[] = {
+    { "put", cdtest_Set_put, },
+
+    END_OF_TESTCASES
+};
+
 struct testgroup_t cd_groups[] = {
     { "utils/String/UTF8/",         cd_utils_String_UTF8_tests },
     { "utils/String/Minecraft/",    cd_utils_String_Minecraft_tests },
     { "utils/Hash/",                cd_utils_Hash_tests },
     { "utils/Map/",                 cd_utils_Map_tests },
     { "utils/List/",                cd_utils_List_tests },
+    { "utils/Set/",                 cd_utils_Set_tests },
 
     END_OF_GROUPS
 };
