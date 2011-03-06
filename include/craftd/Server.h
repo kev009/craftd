@@ -114,6 +114,8 @@ uint16_t CD_ServerSetTime (CDServer* self, uint16_t time);
  */
 bool CD_RunServer (CDServer* self);
 
+void CD_ServerFlush (CDServer* self);
+
 /**
  * Get a new unique entity ID
  *
