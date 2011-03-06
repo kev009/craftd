@@ -3,7 +3,7 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/config.h \
 		     craftd/Config.h \
 		     craftd/Hash.h \
-             craftd/Buffer.h \
+		     craftd/Buffer.h \
 		     craftd/Buffers.h \
 		     craftd/javaendian.h \
 		     craftd/Job.h \
@@ -13,12 +13,13 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/memory.h \
 		     craftd/minecraft.h \
 		     craftd/Packet.h \
-			 craftd/PacketLength.h \
+		     craftd/PacketLength.h \
 		     craftd/Player.h \
 		     craftd/Plugin.h \
 		     craftd/Plugins.h \
 		     craftd/Regexp.h \
 		     craftd/Server.h \
+		     craftd/Set.h \
 		     craftd/String.h \
 		     craftd/TimeLoop.h \
 		     craftd/version.h \
