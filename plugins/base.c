@@ -247,7 +247,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             }
             else {
-                SLOG(server, LOG_NOTICE, "<%s> %s");
+                SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
+                        CD_StringContent(data->request.message));
             }
         } break;
 
