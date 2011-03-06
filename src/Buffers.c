@@ -46,7 +46,7 @@ CD_CreateBuffers (void)
 CDBuffers*
 CD_WrapBuffers (CDRawBuffers buffers)
 {
-     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
+    CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
     if (!self) {
         return NULL;

@@ -42,11 +42,7 @@ typedef struct _CDList {
     size_t length;
     bool   changed;
 
-    struct {
-        pthread_rwlock_t rw;
-        pthread_mutex_t  iterating;
-        pthread_mutex_t  length;
-    } lock;
+    pthread_rwlock_t lock;
 } CDList;
 
 typedef struct _CDListIterator {

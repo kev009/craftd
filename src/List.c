@@ -38,9 +38,7 @@ CD_CreateList (void)
     self->changed = false;
     self->length  = 0;
 
-    pthread_rwlock_init(&self->lock.rw, NULL);
-    pthread_mutex_init(&self->lock.iterating, NULL);
-    pthread_mutex_init(&self->lock.length, NULL);
+    pthread_rwlock_init(&self->lock, NULL);
 
     return self;
 }
@@ -62,8 +60,7 @@ CD_DestroyList (CDList* self)
 {
     kl_destroy(cdList, self->raw);
 
-    pthread_mutex_destroy(&self->lock.iterating);
-    pthread_rwlock_destroy(&self->lock.rw);
+    pthread_rwlock_destroy(&self->lock);
 
     CD_free(self);
 }
@@ -73,12 +70,10 @@ CD_ListBegin (CDList* self)
 {
     CDListIterator it;
 
-    pthread_rwlock_rdlock(&self->lock.rw);
-
+    pthread_rwlock_rdlock(&self->lock);
     it.raw    = kl_begin(self->raw);
     it.parent = self;
-
-    pthread_rwlock_unlock(&self->lock.rw);
+    pthread_rwlock_unlock(&self->lock);
 
     return it;
 }
@@ -88,12 +83,10 @@ CD_ListEnd (CDList* self)
 {
     CDListIterator it;
 
-    pthread_rwlock_rdlock(&self->lock.rw);
-
+    pthread_rwlock_rdlock(&self->lock);
     it.raw    = kl_end(self->raw);
     it.parent = self;
-
-    pthread_rwlock_unlock(&self->lock.rw);
+    pthread_rwlock_unlock(&self->lock);
 
     return it;
 }
@@ -111,7 +104,7 @@ CD_ListNext (CDListIterator it)
 size_t
 CD_ListLength (CDList* self)
 {
-    pthread_mutex_lock(&self->lock.length);
+    pthread_rwlock_rdlock(&self->lock);
     if (self->changed) {
         size_t         result = 0;
         CDListIterator it;
@@ -123,7 +116,7 @@ CD_ListLength (CDList* self)
         self->length  = result;
         self->changed = false;
     }
-    pthread_mutex_unlock(&self->lock.length);
+    pthread_rwlock_unlock(&self->lock);
 
     return self->length;
 }
@@ -144,17 +137,10 @@ CD_ListIteratorValue (CDListIterator it)
 CDList*
 CD_ListPush (CDList* self, CDPointer data)
 {
-    pthread_rwlock_wrlock(&self->lock.rw);
-    pthread_mutex_lock(&self->lock.iterating);
-    pthread_mutex_lock(&self->lock.length);
-
+    pthread_rwlock_wrlock(&self->lock);
     *kl_pushp(cdList, self->raw) = data;
-
-    self->changed = true;
-
-    pthread_mutex_unlock(&self->lock.length);
-    pthread_mutex_unlock(&self->lock.iterating);
-    pthread_rwlock_unlock(&self->lock.rw);
+    self->changed                = true;
+    pthread_rwlock_unlock(&self->lock);
 
     return self;
 }
@@ -164,17 +150,10 @@ CD_ListShift (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_wrlock(&self->lock.rw);
-    pthread_mutex_lock(&self->lock.iterating);
-    pthread_mutex_lock(&self->lock.length);
-
+    pthread_rwlock_wrlock(&self->lock);
     kl_shift(cdList, self->raw, &result);
-
     self->changed = true;
-
-    pthread_mutex_unlock(&self->lock.length);
-    pthread_mutex_unlock(&self->lock.iterating);
-    pthread_rwlock_unlock(&self->lock.rw);
+    pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
@@ -184,9 +163,9 @@ CD_ListFirst (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&self->lock.rw);
+    pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->raw));
-    pthread_rwlock_unlock(&self->lock.rw);
+    pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
@@ -196,9 +175,9 @@ CD_ListLast (CDList* self)
 {
     CDPointer result = CDNull;
 
-    pthread_rwlock_rdlock(&self->lock.rw);
+    pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->raw));
-    pthread_rwlock_unlock(&self->lock.rw);
+    pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
@@ -209,8 +188,6 @@ CD_ListDelete (CDList* self, CDPointer data)
 {
     CDPointer      result = CDNull;
     CDListIterator del;
-
-    pthread_mutex_lock(&self->lock.length);
 
     CD_LIST_FOREACH(self, it) {
         if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
@@ -223,7 +200,6 @@ CD_ListDelete (CDList* self, CDPointer data)
     }
 
     self->changed = true;
-    pthread_mutex_unlock(&self->lock.length);
 
     return result;
 }
@@ -237,14 +213,11 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
 
     CD_LIST_FOREACH(self, it) {
         if (CD_ListNext(it).raw && CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
-            pthread_mutex_lock(&self->lock.length);
-
             result       = CD_ListIteratorValue(del);
             it.raw->next = del.raw->next;
             kmp_free(cdList, self->raw->mp, del.raw);
 
             self->changed = true;
-            pthread_mutex_unlock(&self->lock.length);
         }
     }
 
@@ -270,7 +243,7 @@ CD_ListClear (CDList* self)
 bool
 CD_ListStartIterating (CDList* self)
 {
-    pthread_mutex_lock(&self->lock.iterating);
+    pthread_rwlock_rdlock(&self->lock);
 
     return true;
 }
@@ -279,7 +252,7 @@ bool
 CD_ListStopIterating (CDList* self, bool stop)
 {
     if (!stop) {
-        pthread_mutex_unlock(&self->lock.iterating);
+        pthread_rwlock_unlock(&self->lock);
     }
 
     return stop;
