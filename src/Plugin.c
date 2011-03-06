@@ -60,8 +60,8 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    PRIVATE(self)    = CD_CreateHash();
-    PERSISTENT(self) = CD_CreateHash();
+    PRIVATE(self) = CD_CreateHash();
+    ERROR(self)   = CDNull;
 
     if (self->initialize) {
         self->initialize(self);

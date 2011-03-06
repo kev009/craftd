@@ -56,8 +56,7 @@
 typedef int CDError;
 
 #define PRIVATE(data) ((data)->_private)
-#define PERSISTENT(data) ((data)->_persistent)
-#define ERROR(data) ((data)->_error)
+#define ERROR(data)   ((data)->_error)
 
 #define CDNull (0)
 

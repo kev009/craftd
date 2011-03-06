@@ -67,7 +67,6 @@ typedef struct _CDServer {
     evutil_socket_t socket;
 
     CDHash* _private;
-    CDHash* _persistent;
     CDError _error;
 } CDServer;
 
