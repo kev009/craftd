@@ -48,7 +48,7 @@ CD_ParseConfig (const char* path)
     self->cache.daemonize = true;
 
     self->cache.connection.port    = 25565;
-    self->cache.connection.backlog = 42;
+    self->cache.connection.backlog = 16;
 
     self->cache.connection.bind.ipv4.sin_family      = AF_INET;
     self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
@@ -83,13 +83,20 @@ CD_ParseConfig (const char* path)
 
     self->cache.workers = 2;
 
-    self->cache.maxPlayers = 0;
+    self->cache.game.players.max = 0;
 
     J_DO {
         J_IN(server, self->data, "server") {
             J_BOOL(server, "daemonize",   self->cache.daemonize);
             J_INT(server,  "workers",     self->cache.workers);
-            J_INT(server,  "max-players", self->cache.maxPlayers);
+
+            J_IN(game, server, "game") {
+                J_IN(players, game, "players") {
+                    J_INT(players, "max", self->cache.game.players.max);
+                }
+
+                J_BOOL(game, "standard", self->cache.game.standard);
+            }
 
             J_IN(files, server, "file") {
                 J_STRING(files, "motd",  self->cache.files.motd);
@@ -118,7 +125,7 @@ CD_ParseConfig (const char* path)
                         if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
                             self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
                         }
-            }
+                    }
 
                     J_IF_STRING(bind, "ipv6") {
                         if (evutil_inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {

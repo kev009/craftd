@@ -10,7 +10,8 @@
             "ipv6": "::"
         },
 
-        "port": 25565
+        "port": 25565,
+        "backlog": 16
     },
 
     "workers": 2,
@@ -22,12 +23,17 @@
         "night": 20
     },
 
-    "max-listenbacklog": 16,
-    "minecraft-stringmax": 100,
-
     "file": {
         "motd": "@sysconfdir@/craftd/motd.conf.dist",
         "world": "@datadir@/craftd/world"
+    },
+
+    "game": {
+        "players": {
+            "max": 0
+        },
+
+        "standard": true
     },
 
     "plugin": {

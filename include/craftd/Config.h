@@ -43,7 +43,7 @@ typedef struct _CDConfig {
             } bind;
 
             uint16_t port;
-            int backlog;
+            int      backlog;
         } connection;
 
         struct {
@@ -81,7 +81,13 @@ typedef struct _CDConfig {
 
         int workers;
 
-        int maxPlayers;
+        struct {
+            bool standard;
+
+            struct {
+                int max;
+            } players;
+        } game;
     } cache;
 } CDConfig;
 

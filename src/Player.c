@@ -35,7 +35,6 @@ CD_CreatePlayer (struct _CDServer* server)
         return NULL;
     }
 
-    assert(pthread_mutex_init(&self->lock.reading, NULL) == 0);
     assert(pthread_rwlock_init(&self->lock.status, NULL) == 0);
 
     self->server = server;
@@ -76,7 +75,6 @@ CD_DestroyPlayer (CDPlayer* self)
 
     CD_DestroyHash(PRIVATE(self));
 
-    pthread_mutex_destroy(&self->lock.reading);
     pthread_rwlock_destroy(&self->lock.status);
 
     CD_free(self);

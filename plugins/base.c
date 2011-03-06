@@ -108,7 +108,10 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             if (CD_HashGet(server->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s exists on the server", CD_StringContent(data->request.username));
 
-                // TODO: kill it with fire or give it another name IRC-like.
+                if (server->config->cache.game.standard) {
+                    CD_ServerKick(server, player, CD_CreateStringFromFormat("%s nick already exists", CD_StringContent(data->request.username)));
+                    return false;
+                }
             }
 
             player->username = CD_CloneString(data->request.username);
@@ -215,8 +218,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            CD_EventDispatch(server, "Player.login", player);
-
+            CD_EventDispatch(server, "Player.login", player, true);
         } break;
 
         case CDHandshake: {
@@ -256,7 +258,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         case CDDisconnect: {
             CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
 
-            CD_ServerKick(server, player, CD_StringContent(data->request.reason));
+            CD_ServerKick(server, player, CD_CloneString(data->request.reason));
         } break;
 
         default: {
@@ -269,7 +271,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
 static
 bool
-cdbase_PlayerLoginMessage (CDServer* server, CDPlayer* player)
+cdbase_HandleLogin (CDServer* server, CDPlayer* player)
 {
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has joined the game",
                 CD_StringContent(player->username)));
@@ -279,7 +281,7 @@ cdbase_PlayerLoginMessage (CDServer* server, CDPlayer* player)
 
 static
 bool
-cdbase_PlayerDisconnectMessage (CDServer* server, CDPlayer* player)
+cdbase_HandleDisconnect (CDServer* server, CDPlayer* player)
 {
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)));
@@ -301,8 +303,8 @@ CD_PluginInitialize (CDPlugin* self)
 
     CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
 
-    CD_EventRegister(self->server, "Player.login", cdbase_PlayerLoginMessage);
-    CD_EventRegister(self->server, "Player.disconnect", cdbase_PlayerDisconnectMessage);
+    CD_EventRegister(self->server, "Player.login", cdbase_HandleLogin);
+    CD_EventRegister(self->server, "Player.disconnect", cdbase_HandleDisconnect);
 
     return true;
 }

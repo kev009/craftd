@@ -59,7 +59,6 @@ typedef struct _CDPlayer {
     uint8_t        jobs;
 
     struct {
-        pthread_mutex_t  reading;
         pthread_rwlock_t status;
     } lock;
 

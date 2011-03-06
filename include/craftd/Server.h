@@ -117,13 +117,6 @@ uint16_t CD_ServerSetTime (CDServer* self, uint16_t time);
 bool CD_RunServer (CDServer* self);
 
 /**
- * Call the read callback for the given player.
- *
- * @param player The player to read from
- */
-void CD_ReadFromPlayer (CDServer* self, CDPlayer* player);
-
-/**
  * Get a new unique entity ID
  *
  * @return The generated entity ID
@@ -191,10 +184,21 @@ extern CDServer* CDMainServer;
  */
 
 /**
- * Kick a Player from the server
+ * Kick a Player from the server.
+ *
+ * The passed string is destroyed after being used, so clone it if you want to keep it
+ *
+ * @param reason The reason for the kicking
  */
-void CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason);
+void CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason);
 
+/**
+ * Broadcast a chat message to every connected player.
+ *
+ * The passed string is destroyed after being used, so clone it if you want to keep it
+ *
+ * @param message The message to send
+ */
 void CD_ServerBroadcast (CDServer* self, CDString* message);
 
 #endif
