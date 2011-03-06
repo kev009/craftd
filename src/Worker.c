@@ -131,15 +131,15 @@ CD_RunWorker (CDWorker* self)
                 }
                 pthread_mutex_unlock(&player->lock.status);
 
-                pthread_rwlock_wrlock(&player->lock.jobs);
-                player->jobs--;
-                pthread_rwlock_unlock(&player->lock.jobs);
-
                 CD_DestroyJob(self->job);
 
                 if (CD_BufferLength(player->buffers->input) > 0) {
                     CD_ReadFromPlayer(player->server, player);
                 }
+
+                pthread_rwlock_wrlock(&player->lock.jobs);
+                player->jobs--;
+                pthread_rwlock_unlock(&player->lock.jobs);
             }
             else if (self->job->type == CDPlayerDisconnectJob) {
                 while (true) {
