@@ -355,11 +355,7 @@ CD_RunServer (CDServer* self)
     self->running = true;
 
     while (self->running) {
-        if (event_base_loop(self->event.base, EVLOOP_ONCE) < 0) {
-            self->running = false;
-
-            return false;
-        }
+        event_base_loop(self->event.base, 0);
 
         if (CD_ListLength(self->disconnecting) > 0) {
             CD_LIST_FOREACH(self->disconnecting, it) {
@@ -379,6 +375,14 @@ CD_RunServer (CDServer* self)
     }
 
     return true;
+}
+
+void
+CD_ServerFlush (CDServer* self)
+{
+    struct timeval interval = { 0, 0 };
+
+    event_base_loopexit(self->event.base, &interval);
 }
 
 // FIXME: This is just a dummy function

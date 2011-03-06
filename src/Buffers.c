@@ -79,3 +79,9 @@ CD_BufferReadIn (CDBuffers* self, size_t low, size_t high)
 
     bufferevent_setwatermark(self->raw, EV_READ, low, high);
 }
+
+void
+CD_BuffersFlush (CDBuffers* self)
+{
+    bufferevent_flush(self->raw, EV_READ | EV_WRITE, BEV_FLUSH);
+}
