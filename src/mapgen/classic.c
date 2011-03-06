@@ -132,8 +132,12 @@ static void generate_skylight(struct chunk *ch)
 	int x, y, z;
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
-			for (y = 1 ; y < 128 ; y++) {
-				ch->skylight[((z*128) + (x*128*16)+y)/2] = (light_val | (light_val << 4));
+			for (y = ch->heightmap[x+(z*16)] ; y < 128 ; y++) {
+				if (y%2) {
+					ch->skylight[((z*128) + (x*128*16)+y)/2] |= (light_val << 4);
+				} else {
+					ch->skylight[((z*128) + (x*128*16)+y)/2] |= (light_val);
+				}
 			}
 		}
 	}
