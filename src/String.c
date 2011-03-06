@@ -242,11 +242,12 @@ CD_CloneString (CDString* self)
 {
     CDString* cloned = CD_CreateString();
 
-    cloned->raw = bstrcpy(self->raw);
+    bdestroy(cloned->raw);
+    cloned->raw = (CDRawString) bstrcpy(self->raw);
 
     assert(cloned->raw);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cloned->length = cd_UTF8_strlen(CD_StringContent(cloned));
 
     return cloned;
 }
