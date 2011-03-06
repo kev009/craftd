@@ -20,12 +20,15 @@
 #include "../algos/arith.h"
 #include "../noise/simplexnoise1234.h"
 
-static unsigned char _blocks[32768] = {0};
-static unsigned char _data[16384] = {0};
-static unsigned char _skylight[16384] = {0};
-static unsigned char _blocklight[16384] = {0};
-static unsigned char _heightmap[256] = {0};
-
+struct chunk {
+	int x;
+	int z;
+	unsigned char blocks[16*16*128];
+	unsigned char data[16384];
+	unsigned char blocklight[16384];
+	unsigned char skylight[16384];
+	unsigned char heightmap[256];
+};
 
 #define OCTAVES 8
 
@@ -89,123 +92,192 @@ float multifractal_3d(float x, float y, float z, float lacunarity, int octaves)
 	return res /*/ total_weight*/;
 }
 
-/**
- * Initialize byte arrays for a standard chunk
- *
- */
-static void _init_data(int ch_x, int ch_z)
+static void generate_heightmap(struct chunk *ch)
 {
-	int x, z, y;
-	float a;
-	int light_val = 0x0F;
-	/* this should only put 1 layer of bedrock */
-	int block_height[16][16];
+	int x, z;
 	float lacunarity;
+	float a;
 
 	/* step 1: generate the height map */
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			float total_x, total_z;
-			total_x = ((((float)ch_x)*16.0) + ((float)x)) * 0.00155; /* magic */
-			total_z = ((((float)ch_z)*16.0) + ((float)z)) * 0.00155;
+			total_x = ((((float)ch->x)*16.0) + ((float)x)) * 0.00155; /* magic */
+			total_z = ((((float)ch->z)*16.0) + ((float)z)) * 0.00155;
 			lacunarity = (((cos(total_x/5.0) + cos(total_z/5.0))/4.0)+1.0);
 
 			a = multifractal_2d(total_x, total_z, 2.7, 20); /* magic settings */
 			a = a * 13.5 + 55; /* magic settings */
 
-			block_height[(int)x][(int)z] = a;
+			ch->heightmap[x + (z*16)] = a;
 		}
 	}
-	/* step 2: fill the chunk with rock according to the height map */
-	memset(_blocks, 0, 32768);
-	for (x = 0 ; x < 16 ; x++) {
-		for (z = 0 ; z < 16 ; z++) {
-			for (y = 0 ; y < block_height[x][z] && y < 128 ; y++) {
-				_blocks[y + (z*128) + (x*128*16)] = 1; /* stone is the basis of MC worlds */
-			}
-			_heightmap[x+(z*16)] = block_height[x][z]; /* max height is 1 */
+}
 
-			for (y = 1 ; y < 128 ; y++) {
-				_skylight[((z*128) + (x*128*16)+y)/2] = (light_val | (light_val << 4)); /* full light for first 2 layers */
+static void generate_filled_chunk(struct chunk *ch, char block_type)
+{
+	int x, y, z;
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
+			for (y = 0 ; y < ch->heightmap[x + (z*16)] && y < 128 ; y++) {
+				ch->blocks[y + (z*128) + (x*128*16)] = block_type; /* stone is the basis of MC worlds */
 			}
 		}
 	}
-	float total_x, total_z;
-	float res;
-	/* dig caves / erosion */
+}
+
+static void generate_skylight(struct chunk *ch)
+{
+	int light_val = 0x0F;
+	int x, y, z;
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
-			total_x = ((((float)ch_x)*16.0) + ((float)x));
-			total_z = ((((float)ch_z)*16.0) + ((float)z));
-			/* caves (underground) */
+			for (y = 1 ; y < 128 ; y++) {
+				ch->skylight[((z*128) + (x*128*16)+y)/2] = (light_val | (light_val << 4));
+			}
+		}
+	}
+}
+
+static void dig_caves(struct chunk *ch)
+{
+	float res;
+	int x, y, z;
+	float total_x, total_z;
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
+			total_x = ((((float)ch->x)*16.0) + ((float)x));
+			total_z = ((((float)ch->z)*16.0) + ((float)z));
 			for (y = 0 ; y < 54 ; y++) {
 				res = snoise3(total_x/12.0, y/12.0, total_z/12.0);
 				res += (0.5 * snoise3(total_x/24.0, y/24.0, total_z/24.0));
 				res /= 1.5;
 				if (res > 0.35) {
 					if (y < 16)
-						_blocks[y + (z*128) + (x*128*16)] = 11; /* lava */
+						ch->blocks[y + (z*128) + (x*128*16)] = 11; /* lava */
 					else
-						_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+						ch->blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
 				}
 			}
-			for (y = 54 ; y < _heightmap[x+(z*16)] - 4 ; y++) {
+			for (y = 54 ; y < ch->heightmap[x+(z*16)] - 4 ; y++) {
 				res = snoise3(total_x/12.0, y/12.0, total_z/12.0);
 				res += (0.5 * snoise3(total_x/24.0, y/24.0, total_z/24.0));
 				res /= 1.5;
 				if (res > 0.45) {
-						_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+					ch->blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
 				}
 			}
+			/* update height map */
+			y = ch->heightmap[x+(z*16)];
+			while (y > 0 && ch->blocks[y + (z*128) + (x*128*16)] == 0) {
+				ch->heightmap[x+(z*16)] = y;
+				y--;
+			}
+		}
+	}
+}
+
+static void erode_landscape(struct chunk *ch)
+{
+	float res;
+	int x, y, z;
+	float total_x, total_z;
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
+			total_x = ((((float)ch->x)*16.0) + ((float)x));
+			total_z = ((((float)ch->z)*16.0) + ((float)z));
+
 			/* erosion (over ground) */
-			for (y = 65 ; y < _heightmap[x+(z*16)] ; y++) {
+			for (y = 65 ; y < ch->heightmap[x+(z*16)] ; y++) {
 				res = snoise3(total_x/40.0, y/50.0, total_z/40.0);
 				res += (0.5 * snoise3(total_x/80.0, y/100.0, total_z/80.0));
 				res /= 1.5;
 				if (res > 0.50)
-					_blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+					ch->blocks[y + (z*128) + (x*128*16)] = 0; /* cave */
+			}
+			/* update height map */
+			y = ch->heightmap[x+(z*16)];
+			while (y > 0 && ch->blocks[y + (z*128) + (x*128*16)] == 0) {
+				ch->heightmap[x+(z*16)] = y;
+				y--;
 			}
 		}
 	}
+}
+
+static void add_sediments(struct chunk *ch)
+{
+	int x, y, z;
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
 			/* step 3: replace top with grass / the higher, the less blocks / 0 to 3 */
-			y = _heightmap[x+(z*16)];
-			while (_blocks[y + (z*128) + (x*128*16)] == 0) {
-				y--;
-				_heightmap[x+(z*16)]--;
-				
-			}
-			int sediment_height = (128 - _heightmap[x+(z*16)])/21; /* 0 - 3 blocks */
+			y = ch->heightmap[x+(z*16)];
+			int sediment_height = (128 - ch->heightmap[x+(z*16)])/21; /* 0 - 3 blocks */
 			int i;
 			if (y < 64) {
 				for (i = 0 ; i < sediment_height ; i++) {
-					_blocks[y + (z*128) + (x*128*16)+i] = 12; /* sand underwater */
+					ch->blocks[y + (z*128) + (x*128*16)+i] = 12; /* sand underwater */
 				}
 			} else if (y >= 64 && sediment_height > 0) {
 				for (i = 0 ; i < sediment_height-1 ; i++) {
-					_blocks[y + (z*128) + (x*128*16)+i] = 3; /* sand underwater */
+					ch->blocks[y + (z*128) + (x*128*16)+i] = 3; /* sand underwater */
 					sediment_height--;
 				}
-				_blocks[y + (z*128) + (x*128*16)+sediment_height-1] = 2; /* grass */
+				ch->blocks[y + (z*128) + (x*128*16)+sediment_height-1] = 2; /* grass */
 			}
-			_heightmap[x+(z*16)] += 2;
+			ch->heightmap[x+(z*16)] += sediment_height;
+		}
+	}
+}
+
+static void flood_with_water(struct chunk *ch, char water_level)
+{
+	int x, y, z;
+	for (x = 0 ; x < 16 ; x++) {
+		for (z = 0 ; z < 16 ; z++) {
 
 			/* step 4: flood with water at level 64 */
-			y = 64;
-			while (_blocks[y + (z*128) + (x*128*16)] == 0) {
-				_blocks[y + (z*128) + (x*128*16)] = 9; /* water */
+			y = water_level;
+			while (ch->blocks[y + (z*128) + (x*128*16)] == 0) {
+				ch->blocks[y + (z*128) + (x*128*16)] = 9; /* water */
 				y--;
 			}
 		}
 	}
-	/* add 2 layers of bedrock */
+}
+
+static void bedrock_ground(struct chunk *ch)
+{
+	int x, z;
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
-			_blocks[0 + (z*128) + (x*128*16)] = 7; // bedrock
-			_blocks[1 + (z*128) + (x*128*16)] = 7; // bedrock
+			ch->blocks[0 + (z*128) + (x*128*16)] = 7; // bedrock
+			ch->blocks[1 + (z*128) + (x*128*16)] = 7; // bedrock
+			ch->heightmap[x+(z*16)] = Arith_max(ch->heightmap[x+(z*16)], 2);
 		}
 	}
+}
+
+/**
+ * Initialize byte arrays for a standard chunk
+ *
+ */
+static struct chunk *_init_data(int ch_x, int ch_z)
+{
+	struct chunk *ch = calloc(1, sizeof(struct chunk));
+	ch->x = ch_x;
+	ch->z = ch_z;
+
+	generate_heightmap(ch);
+	generate_filled_chunk(ch, 1);
+	dig_caves(ch);
+	erode_landscape(ch);
+	add_sediments(ch);
+	flood_with_water(ch, 64);
+	bedrock_ground(ch);
+	generate_skylight(ch);
+
+	return ch;
 }
 
 /**
@@ -230,6 +302,7 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	nbt_tag *level_tag;
 	nbt_tag *sub_tag;
 	struct stat sbuf;
+	struct chunk *ch;
 
 	itoa(x, x_file, 36);
 	itoa(z, z_file, 36);
@@ -256,7 +329,7 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	}
 
 	/* we use static data here */
-	_init_data(x, z);
+	ch = _init_data(x, z);
 
 	printf("Generating chunk : %s\n", full_path);
 	/* generate the chunk */
@@ -268,23 +341,23 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	nbt_add_tag(level_tag, nbt->root);
 	// Blocks
 	nbt_new_byte_array(&sub_tag, "Blocks");
-	nbt_set_byte_array(sub_tag, _blocks, 32768);
+	nbt_set_byte_array(sub_tag, ch->blocks, 32768);
 	nbt_add_tag(sub_tag, level_tag);
 	// Data
 	nbt_new_byte_array(&sub_tag, "Data");
-	nbt_set_byte_array(sub_tag, _data, 16384);
+	nbt_set_byte_array(sub_tag, ch->data, 16384);
 	nbt_add_tag(sub_tag, level_tag);
 	// SkyLight
 	nbt_new_byte_array(&sub_tag, "SkyLight");
-	nbt_set_byte_array(sub_tag, _skylight, 16384);
+	nbt_set_byte_array(sub_tag, ch->skylight, 16384);
 	nbt_add_tag(sub_tag, level_tag);
 	// BlockLight
 	nbt_new_byte_array(&sub_tag, "BlockLight");
-	nbt_set_byte_array(sub_tag, _blocklight, 16384);
+	nbt_set_byte_array(sub_tag, ch->blocklight, 16384);
 	nbt_add_tag(sub_tag, level_tag);
 	// HeigtMap
 	nbt_new_byte_array(&sub_tag, "HeightMap");
-	nbt_set_byte_array(sub_tag, _heightmap, 256);
+	nbt_set_byte_array(sub_tag, ch->heightmap, 256);
 	nbt_add_tag(sub_tag, level_tag);
 	// Entities
 	nbt_new_list(&sub_tag, "Entities", TAG_COMPOUND);
@@ -314,6 +387,7 @@ static void gen_chunk(struct mapgen* mg, int x, int z)
 	//nbt_write_compound(nbt, nbt_cast_compound(level_tag));
 	nbt_write(nbt, full_path);
 	free(full_path);
+	free(ch);
 	printf("Done\n");
 }
 
