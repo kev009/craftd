@@ -258,6 +258,61 @@ static void bedrock_ground(struct chunk *ch)
 	}
 }
 
+static void add_mineral(struct chunk *ch, int x, int z, int y, float total_x, float total_z, float total_y, char block_type, float probability)
+{
+	float res;
+	//res = snoise3(total_x + (block_type * 128), total_y + (block_type * 128), total_z + (block_type * 128));
+	res = snoise4(total_x, total_y, total_z, block_type);
+	if (res+1.0 <= (0.25*probability)) {
+		ch->blocks[y + (z*128) + (x*128*16)] = block_type;
+	}
+	
+}
+
+static void add_minerals(struct chunk *ch)
+{
+	int x, y, z;
+	float total_x, total_z, total_y;
+	for (x = 0 ; x < 16 ; x++) {
+		total_x = ((((float)ch->x)*16.0) + ((float)x))* 0.075;
+		for (z = 0 ; z < 16 ; z++) {
+			total_z = ((((float)ch->z)*16.0) + ((float)z))* 0.075;
+			for (y = 2 ; y < ch->heightmap[x+(z*16)] ; y++) {
+				if (ch->blocks[y + (z*128) + (x*128*16)] == 0)
+					continue;
+
+				total_y = (((float)y))* 0.075;
+				/* coal (16) */
+				add_mineral(ch, x, z, y, total_x, total_z, total_y, 16, 1.3);
+				/* dirt (3) */
+				add_mineral(ch, x, z, y, total_x, total_z, total_y, 3, 2.5);
+				/* gravel (13), 10 % */
+				add_mineral(ch, x, z, y, total_x, total_z, total_y, 13, 2.5);
+
+				/* 5 blocks under the surface */
+				if (y < ch->heightmap[x+(z*16)] - 5) {
+					/* iron (15) */
+					add_mineral(ch, x, z, y, total_x, total_z, total_y, 15, 1.15);
+				}
+				/* y < 40 */
+				if (y < 40) {
+					/* lapis lazulis (22) */
+					add_mineral(ch, x, z, y, total_x, total_z, total_y, 22, 0.80);
+					/* gold (14) */
+					add_mineral(ch, x, z, y, total_x, total_z, total_y, 14, 0.85);
+				}
+				/* y < 20 */
+				if (y < 20) {
+					/* diamond (56) */
+					add_mineral(ch, x, z, y, total_x, total_z, total_y, 56, 0.80);
+					/* redstone (73) */
+					add_mineral(ch, x, z, y, total_x, total_z, total_y, 73, 1.2);
+				}
+			}
+		}
+	}
+}
+
 /**
  * Initialize byte arrays for a standard chunk
  *
@@ -272,6 +327,7 @@ static struct chunk *_init_data(int ch_x, int ch_z)
 	generate_filled_chunk(ch, 1);
 	dig_caves(ch);
 	erode_landscape(ch);
+	add_minerals(ch);
 	add_sediments(ch);
 	flood_with_water(ch, 64);
 	bedrock_ground(ch);
