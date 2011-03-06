@@ -180,11 +180,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
         }
         else {
             if (errno == EILSEQ) {
-                pthread_rwlock_unlock(&player->lock.status);
-
                 CD_ServerKick(player->server, player, CD_CreateStringFromCString("bad packet"));
-
-                return;
             }
         }
     }
@@ -383,6 +379,14 @@ CD_ServerFlush (CDServer* self)
     struct timeval interval = { 0, 0 };
 
     event_base_loopexit(self->event.base, &interval);
+}
+
+void
+CD_ReadFromPlayer (CDPlayer* player)
+{
+    bufferevent_lock(player->buffers->raw);
+    cd_ReadCallback(player->buffers->raw, player);
+    bufferevent_unlock(player->buffers->raw);
 }
 
 // FIXME: This is just a dummy function

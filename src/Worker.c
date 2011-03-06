@@ -137,7 +137,7 @@ CD_RunWorker (CDWorker* self)
                 pthread_rwlock_unlock(&player->lock.status);
 
                 if (CD_BufferLength(player->buffers->input) > 0) {
-                    CD_BuffersFlush(player->buffers);
+                    CD_ReadFromPlayer(player);
                 }
             }
             else if (self->job->type == CDPlayerProcessJob) {
@@ -155,7 +155,7 @@ CD_RunWorker (CDWorker* self)
                 pthread_rwlock_unlock(&player->lock.status);
 
                 if (CD_BufferLength(player->buffers->input) > 0) {
-                    CD_BuffersFlush(player->buffers);
+                    CD_ReadFromPlayer(player);
                 }
             }
             else if (self->job->type == CDPlayerDisconnectJob) {

@@ -116,6 +116,8 @@ bool CD_RunServer (CDServer* self);
 
 void CD_ServerFlush (CDServer* self);
 
+void CD_ReadFromPlayer (CDPlayer* player);
+
 /**
  * Get a new unique entity ID
  *

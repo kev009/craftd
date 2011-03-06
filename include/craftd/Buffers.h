@@ -49,6 +49,4 @@ void CD_DestroyBuffers (CDBuffers* self);
 
 void CD_BufferReadIn (CDBuffers* self, size_t low, size_t high);
 
-void CD_BuffersFlush (CDBuffers* self);
-
 #endif
