@@ -97,6 +97,36 @@ CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 }
 
 void
+CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
+{
+    if (!self->buffers) {
+        return;
+    }
+
+    CDBuffer* data = CD_PacketToBuffer(packet);
+
+    CD_PlayerSendBuffer(self, data);
+
+    CD_DestroyBuffer(data);
+    CD_DestroyPacket(packet);
+}
+
+void
+CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
+{
+    if (!self->buffers) {
+        return;
+    }
+
+    CDBuffer* data = CD_PacketToBuffer(packet);
+
+    CD_PlayerSendBuffer(self, data);
+
+    CD_DestroyBuffer(data);
+    CD_DestroyPacketData(packet);
+}
+
+void
 CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* buffer)
 {
     if (!self->buffers) {

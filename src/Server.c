@@ -127,10 +127,10 @@ CD_ServerToString (CDServer* self)
     }
 }
 
-short
+uint16_t
 CD_ServerGetTime (CDServer* self)
 {
-    short result;
+    uint16_t result;
 
     assert(self);
 
@@ -141,8 +141,8 @@ CD_ServerGetTime (CDServer* self)
     return result;
 }
 
-short
-CD_ServerSetTime (CDServer* self, short time)
+uint16_t
+CD_ServerSetTime (CDServer* self, uint16_t time)
 {
     assert(self);
 

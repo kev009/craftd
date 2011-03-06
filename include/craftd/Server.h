@@ -53,7 +53,7 @@ typedef struct _CDServer {
 
     bool running;
 
-    short time;
+    uint16_t time;
 
     struct {
         struct event_base* base;
@@ -98,7 +98,7 @@ const char* CD_ServerToString (CDServer* self);
  *
  * @return The current time in ticks
  */
-short CD_ServerGetTime (CDServer* self);
+uint16_t CD_ServerGetTime (CDServer* self);
 
 /**
  * Set the current Server time in ticks.
@@ -107,7 +107,7 @@ short CD_ServerGetTime (CDServer* self);
  *
  * @return The set time
  */
-short CD_ServerSetTime (CDServer* self, short time);
+uint16_t CD_ServerSetTime (CDServer* self, uint16_t time);
 
 /**
  * Run a Server instance.

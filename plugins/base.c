@@ -38,26 +38,26 @@ static
 void
 cdbase_TimeIncrease (evutil_socket_t fd, short event, CDServer* self)
 {
-    short current = CD_ServerGetTime(self);
+    uint16_t current = CD_ServerGetTime(self);
 
     if (current >= 0 && current <= 11999) {
-        CD_ServerSetTime(self, current + self->config->cache.rate.day);
+        CD_ServerSetTime(self, current += self->config->cache.rate.day);
     }
     else if (current >= 12000 && current <= 13799) {
-        CD_ServerSetTime(self, current + self->config->cache.rate.sunset);
+        CD_ServerSetTime(self, current += self->config->cache.rate.sunset);
     }
     else if (current >= 13800 && current <= 22199) {
-        CD_ServerSetTime(self, current + self->config->cache.rate.night);
+        CD_ServerSetTime(self, current += self->config->cache.rate.night);
     }
     else if (current >= 22200 && current <= 23999) {
-        CD_ServerSetTime(self, current + self->config->cache.rate.sunrise);
+        CD_ServerSetTime(self, current += self->config->cache.rate.sunrise);
     }
-
-    current = CD_ServerGetTime(self);
 
     if (current >= 24000) {
         CD_ServerSetTime(self, current - 24000);
     }
+
+    CD_ServerSetTime(self, current % 24000);
 }
 
 static
@@ -84,7 +84,7 @@ cdbase_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
         CDPacket packet = { CDResponse, CDKeepAlive, };
 
         CD_HASH_FOREACH(self->players, it) {
-            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
+            CD_PlayerSendPacketAndCleanData((CDPlayer*) CD_HashIteratorValue(it), &packet);
         }
     }
 }
@@ -127,10 +127,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
                 CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
 
-                CD_PlayerSendPacket(player, &response);
-
-                CD_DestroyString(pkt.response.serverName);
-                CD_DestroyString(pkt.response.motd);
+                CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
             MCPosition* spawnPosition = (MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition");
@@ -157,7 +154,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
                     CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
 
-                    CD_PlayerSendPacket(player, &response);
+                    CD_PlayerSendPacketAndCleanData(player, &response);
                 }
 
                 CD_PACKET_DO {
@@ -189,7 +186,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
                     CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
 
-                    CD_PlayerSendPacket(player, &response);
+                    CD_PlayerSendPacketAndCleanData(player, &response);
                 }
             }
             }
@@ -201,7 +198,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
                 CDPacket response = { CDResponse, CDSpawnPosition, (CDPointer) &pkt };
 
-                CD_PlayerSendPacket(player, &response);
+                CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
             CD_PACKET_DO {
@@ -215,7 +212,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
                 CDPacket response = { CDResponse, CDPlayerMoveLook, (CDPointer) &pkt };
 
-                CD_PlayerSendPacket(player, &response);
+                CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
             CD_EventDispatch(server, "Player.login", player);
@@ -232,9 +229,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             CDPacket response = { CDResponse, CDHandshake, (CDPointer) &pkt };
 
-            CD_PlayerSendPacket(player, &response);
-
-            CD_DestroyString(pkt.response.hash);
+            CD_PlayerSendPacketAndCleanData(player, &response);
         } break;
 
         case CDChat: {
@@ -251,22 +246,10 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
                         CD_StringContent(data->request.message));
 
-                CD_PACKET_DO {
-                    MCString inband = CD_CreateStringFromFormat("<%s> %s", 
-                            CD_StringContent(player->username),
-                            CD_StringContent(data->request.message));
-
-                    CDPacketChat pkt;
-                    pkt.response.message = inband;
-
-                    CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
-
-                    CD_HASH_FOREACH(server->players, it) {
-                        CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
-                    }
-
-                    MC_DestroyString(inband);
-                }
+                // TODO: Area chat instead of global
+                CD_ServerBroadcast(server, CD_CreateStringFromFormat("<%s> %s",
+                    CD_StringContent(player->username),
+                    CD_StringContent(data->request.message)));
             }
         } break;
 

@@ -89,6 +89,20 @@ void CD_DestroyPlayer (CDPlayer* self);
 void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
 
 /**
+ * Send a Packet to a Player and destroy the packet
+ *
+ * @param packet The Packet object to send
+ */
+void CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet);
+
+/**
+ * Send a Packet to a Player and destroy the packet data
+ *
+ * @param packet The Packet object to send
+ */
+void CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet);
+
+/**
  * Send a raw String to a Player
  *
  * @param data The raw String to send
