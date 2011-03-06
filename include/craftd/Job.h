@@ -44,7 +44,8 @@ typedef enum _CDJobType {
 )
 
 #define CD_JOB_IS_PLAYER(job) (             \
-        job->type == CDPlayerProcessJob     \
+        job->type == CDPlayerConnectJob     \
+    ||  job->type == CDPlayerProcessJob     \
     ||  job->type == CDPlayerDisconnectJob  \
 )
 

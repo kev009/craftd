@@ -159,41 +159,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
     assert(player);
 
-    pthread_mutex_lock(&player->lock.status);
-    pthread_rwlock_wrlock(&player->lock.jobs);
-
-    SDEBUG(player->server, "read data from %s (%s), %d byte/s available",
-        CD_StringContent(player->username), player->ip,
-        evbuffer_get_length(bufferevent_get_input(event)));
-
-    if (player->status == CDPlayerIdle) {
-        CDPacket* packet;
-
-        if (CD_PacketParsable(player->buffers) && (packet = CD_PacketFromBuffer(player->buffers->input))) {
-            CD_BufferReadIn(player->buffers, CDNull, CDNull);
-
-            SDEBUG(player->server, "received packet 0x%.2X from %s", (uint8_t) packet->type, player->ip);
-
-            player->status = CDPlayerProcess;
-            player->jobs++;
-
-            CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerProcessJob,
-                (CDPointer) CD_CreatePlayerProcessJob(player, packet)));
-        }
-        else {
-            if (errno == EILSEQ) {
-                pthread_rwlock_unlock(&player->lock.jobs);
-                pthread_mutex_unlock(&player->lock.status);
-
-                CD_ServerKick(player->server, player, "bad packet");
-
-                return;
-            }
-        }
-    }
-
-    pthread_rwlock_unlock(&player->lock.jobs);
-    pthread_mutex_unlock(&player->lock.status);
+    CD_ReadFromPlayer(player->server, player);
 }
 
 static
@@ -206,7 +172,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
         return;
     }
 
-    pthread_mutex_lock(&player->lock.status);
+    pthread_rwlock_wrlock(&player->lock.status);
 
     player->status = CDPlayerDisconnect;
 
@@ -223,7 +189,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 
     CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player));
 
-    pthread_mutex_unlock(&player->lock.status);
+    pthread_rwlock_unlock(&player->lock.status);
 }
 
 static
@@ -289,12 +255,12 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
 
     player->buffers = CD_WrapBuffers(bufferevent_socket_new(self->event.base, player->socket, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE));
 
-    CD_AddJob(self->workers, CD_CreateJob(CDPlayerConnectJob, (CDPointer) player));
-
     bufferevent_setcb(player->buffers->raw, (bufferevent_data_cb) cd_ReadCallback, NULL, (bufferevent_event_cb) cd_ErrorCallback, player);
     bufferevent_enable(player->buffers->raw, EV_READ | EV_WRITE);
 
     CD_MapPut(self->entities, player->entity.id, (CDPointer) player);
+
+    CD_AddJob(self->workers, CD_CreateJob(CDPlayerConnectJob, (CDPointer) player));
 }
 
 bool
@@ -383,7 +349,44 @@ CD_RunServer (CDServer* self)
 void
 CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
 {
-    cd_ReadCallback(player->buffers->raw, player);
+    if (pthread_mutex_trylock(&player->lock.reading) < 0) {
+        puts("Lol");
+        return;
+    }
+
+    pthread_rwlock_wrlock(&player->lock.status);
+
+    SDEBUG(player->server, "read data from %s (%s), %d byte/s available",
+        CD_StringContent(player->username), player->ip, CD_BufferLength(player->buffers->input));
+
+    if (player->status == CDPlayerIdle) {
+        CDPacket* packet;
+
+        if (CD_PacketParsable(player->buffers) && (packet = CD_PacketFromBuffer(player->buffers->input))) {
+            CD_BufferReadIn(player->buffers, CDNull, CDNull);
+
+            SDEBUG(player->server, "received packet 0x%.2X from %s", (uint8_t) packet->type, player->ip);
+
+            player->status = CDPlayerProcess;
+            player->jobs++;
+
+            CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerProcessJob,
+                (CDPointer) CD_CreatePlayerProcessJob(player, packet)));
+        }
+        else {
+            if (errno == EILSEQ) {
+                pthread_rwlock_unlock(&player->lock.status);
+                pthread_mutex_unlock(&player->lock.reading);
+
+                CD_ServerKick(player->server, player, "bad packet");
+
+                return;
+            }
+        }
+    }
+
+    pthread_rwlock_unlock(&player->lock.status);
+    pthread_mutex_unlock(&player->lock.reading);
 }
 
 // FIXME: This is just a dummy function
@@ -491,7 +494,7 @@ CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
     assert(self);
     assert(player);
 
-    pthread_mutex_lock(&player->lock.status);
+    pthread_rwlock_wrlock(&player->lock.status);
 
     SLOG(self, LOG_NOTICE, "%s (%s) kicked: %s", CD_StringContent(player->username), player->ip, reason);
 
@@ -510,7 +513,7 @@ CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
 
     CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player));
 
-    pthread_mutex_unlock(&player->lock.status);
+    pthread_rwlock_unlock(&player->lock.status);
 }
 
 void
@@ -527,11 +530,11 @@ CD_ServerBroadcast (CDServer* self, const char* message)
         CD_HASH_FOREACH(self->players, it) {
             CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
 
-            pthread_mutex_lock(&player->lock.status);
+            pthread_rwlock_rdlock(&player->lock.status);
             if (player->status != CDPlayerDisconnect) {
                 CD_PlayerSendBuffer(player, buffer);
             }
-            pthread_mutex_unlock(&player->lock.status);
+            pthread_rwlock_unlock(&player->lock.status);
         }
 
         CD_DestroyBuffer(buffer);

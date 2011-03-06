@@ -32,6 +32,7 @@
 struct _CDServer;
 
 typedef enum _CDPlayerStatus {
+    CDPlayerConnect,
     CDPlayerIdle,
     CDPlayerProcess,
     CDPlayerDisconnect
@@ -58,8 +59,8 @@ typedef struct _CDPlayer {
     uint8_t        jobs;
 
     struct {
-        pthread_mutex_t status;
-        pthread_rwlock_t jobs;
+        pthread_mutex_t  reading;
+        pthread_rwlock_t status;
     } lock;
 
     CDHash* _private;
