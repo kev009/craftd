@@ -52,9 +52,7 @@ MC_CreateMetadata (void)
 void
 MC_DestroyMetadata (MCMetadata* self)
 {
-    size_t i;
-
-    for (i = 0; i < self->length; i++) {
+    for (size_t i = 0; i < self->length; i++) {
         MC_DestroyData(self->item[i]);
     }
 
@@ -88,9 +86,7 @@ MC_DestroyData (MCData* self)
 MCMetadata*
 MC_ConcatDatas (MCMetadata* metadata, MCData** items, size_t length)
 {
-    size_t i;
-
-    for (i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         MC_AppendData(metadata, items[i]);
     }
 

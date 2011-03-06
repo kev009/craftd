@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <craftd/common.h>
 #include <craftd/List.h>
 
 CDList*
@@ -30,15 +31,14 @@ CD_CreateList (void)
 {
     CDList* self = CD_malloc(sizeof(CDList));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->raw     = kl_init(cdList);
     self->changed = false;
     self->length  = 0;
 
-    pthread_rwlock_init(&self->lock, NULL);
+    assert(self->raw);
+    assert(pthread_rwlock_init(&self->lock, NULL) != 0);
 
     return self;
 }
@@ -47,6 +47,8 @@ CDList*
 CD_CloneList (CDList* self)
 {
     CDList* cloned = CD_CreateList();
+
+    assert(self);
 
     CD_LIST_FOREACH(self, it) {
         CD_ListPush(cloned, CD_ListIteratorValue(it));
@@ -58,6 +60,8 @@ CD_CloneList (CDList* self)
 void
 CD_DestroyList (CDList* self)
 {
+    assert(self);
+
     kl_destroy(cdList, self->raw);
 
     pthread_rwlock_destroy(&self->lock);
@@ -69,6 +73,8 @@ CDListIterator
 CD_ListBegin (CDList* self)
 {
     CDListIterator it;
+
+    assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
     it.raw    = kl_begin(self->raw);
@@ -82,6 +88,8 @@ CDListIterator
 CD_ListEnd (CDList* self)
 {
     CDListIterator it;
+
+    assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
     it.raw    = kl_end(self->raw);
@@ -104,6 +112,8 @@ CD_ListNext (CDListIterator it)
 size_t
 CD_ListLength (CDList* self)
 {
+    assert(self);
+
     pthread_rwlock_rdlock(&self->lock);
     if (self->changed) {
         size_t         result = 0;
@@ -137,6 +147,8 @@ CD_ListIteratorValue (CDListIterator it)
 CDList*
 CD_ListPush (CDList* self, CDPointer data)
 {
+    assert(self);
+
     pthread_rwlock_wrlock(&self->lock);
     *kl_pushp(cdList, self->raw) = data;
     self->changed                = true;
@@ -149,6 +161,8 @@ CDPointer
 CD_ListShift (CDList* self)
 {
     CDPointer result = CDNull;
+
+    assert(self);
 
     pthread_rwlock_wrlock(&self->lock);
     kl_shift(cdList, self->raw, &result);
@@ -163,6 +177,8 @@ CD_ListFirst (CDList* self)
 {
     CDPointer result = CDNull;
 
+    assert(self);
+
     pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->raw));
     pthread_rwlock_unlock(&self->lock);
@@ -174,6 +190,8 @@ CDPointer
 CD_ListLast (CDList* self)
 {
     CDPointer result = CDNull;
+
+    assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
     result = kl_val(kl_begin(self->raw));
@@ -188,6 +206,8 @@ CD_ListDelete (CDList* self, CDPointer data)
 {
     CDPointer      result = CDNull;
     CDListIterator del;
+
+    assert(self);
 
     CD_LIST_FOREACH(self, it) {
         if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
@@ -211,6 +231,8 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
     CDPointer      result = CDNull;
     CDListIterator del;
 
+    assert(self);
+
     CD_LIST_FOREACH(self, it) {
         if (CD_ListNext(it).raw && CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
             result       = CD_ListIteratorValue(del);
@@ -231,6 +253,9 @@ CD_ListClear (CDList* self)
     CDPointer* result = (CDPointer*) CD_malloc(sizeof(CDPointer) * (CD_ListLength(self) + 1));
     size_t     i      = 0;
 
+    assert(self);
+    assert(result);
+
     while (CD_ListLength(self) > 0) {
         result[i++] = CD_ListDeleteAll(self, CD_ListFirst(self));
     }
@@ -243,6 +268,8 @@ CD_ListClear (CDList* self)
 bool
 CD_ListStartIterating (CDList* self)
 {
+    assert(self);
+
     pthread_rwlock_rdlock(&self->lock);
 
     return true;
@@ -251,6 +278,8 @@ CD_ListStartIterating (CDList* self)
 bool
 CD_ListStopIterating (CDList* self, bool stop)
 {
+    assert(self);
+
     if (!stop) {
         pthread_rwlock_unlock(&self->lock);
     }

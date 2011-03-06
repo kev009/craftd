@@ -102,7 +102,7 @@ struct testcase_t cd_utils_String_Minecraft_tests[] = {
 };
 
 void
-cdtest_Hash_set (void* data)
+cdtest_Hash_put (void* data)
 {
     CDHash* hash = CD_CreateHash();
 
@@ -149,14 +149,14 @@ cdtest_Hash_foreach (void* data)
 }
 
 struct testcase_t cd_utils_Hash_tests[] = {
-    { "set", cdtest_Hash_set, },
+    { "put", cdtest_Hash_put, },
     { "foreach", cdtest_Hash_foreach, },
 
     END_OF_TESTCASES
 };
 
 void
-cdtest_Map_set (void* data)
+cdtest_Map_put (void* data)
 {
     CDMap* map = CD_CreateMap();
 
@@ -203,7 +203,7 @@ cdtest_Map_foreach (void* data)
 }
 
 struct testcase_t cd_utils_Map_tests[] = {
-    { "set", cdtest_Map_set, },
+    { "put", cdtest_Map_put, },
     { "foreach", cdtest_Map_foreach, },
 
     END_OF_TESTCASES
@@ -258,28 +258,59 @@ struct testcase_t cd_utils_List_tests[] = {
 void
 cdtest_Set_put (void* data)
 {
-    CDSet set = CD_CreateSet(10, NULL, NULL);
+    CDSet* set = CD_CreateSet(10, NULL, NULL);
+
+    CD_SetPut(set, 1);
+    CD_SetPut(set, 9001);
+
+    tt_assert(CD_SetHas(set, 1));
+    tt_assert(CD_SetHas(set, 9001));
+
+    end: {
+        CD_DestroySet(set);
+    }
+}
+
+void
+cdtest_Set_delete (void* data)
+{
+    CDSet* set = CD_CreateSet(10, NULL, NULL);
+
+    CD_SetPut(set, 1);
+    CD_SetPut(set, 2);
+
+    tt_int_op(CD_SetDelete(set, 2), ==, 2);
+    tt_assert(!CD_SetHas(set, 2));
+
+    tt_int_op(CD_SetLength(set), ==, 1);
+
+    end: {
+        CD_DestroySet(set);
+    }
+}
+
+void
+cdtest_Set_length (void* data)
+{
+    CDSet* set = CD_CreateSet(10, NULL, NULL);
 
     CD_SetPut(set, 1);
     CD_SetPut(set, 3);
     CD_SetPut(set, 3); // Redundant element should not get added
     CD_SetPut(set, 2);
-    
-    tt_assert(CD_SetMember(set, 1) != 0);
-    tt_assert(CD_SetMember(set, 5) == 0);
 
-    tt_int_op(CD_SetDelete(set, 2), ==, 2);
-    tt_assert(CD_SetMember(set, 2) == 0);
-
-    tt_int_op(CD_SetLength(set), ==, 2);
+    tt_int_op(CD_SetLength(set), ==, 3);
 
     end: {
-        CD_DestroySet(&set);
+        CD_DestroySet(set);
     }
+
 }
 
 struct testcase_t cd_utils_Set_tests[] = {
     { "put", cdtest_Set_put, },
+    { "delete", cdtest_Set_delete, },
+    { "length", cdtest_Set_length, },
 
     END_OF_TESTCASES
 };

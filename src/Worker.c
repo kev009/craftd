@@ -34,11 +34,10 @@ CD_CreateWorker (CDServer* server)
 {
     CDWorker* self = CD_malloc(sizeof(CDWorker));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->server  = server;
+    self->thread  = 0;
     self->id      = 0;
     self->working = false;
     self->job     = NULL;
@@ -49,7 +48,9 @@ CD_CreateWorker (CDServer* server)
 void
 CD_DestroyWorker (CDWorker* self)
 {
-    if (self->thread) {
+    assert(self);
+
+    if (self->thread && self->working) {
         self->working = false;
         pthread_cancel(self->thread);
     }

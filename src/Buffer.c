@@ -203,12 +203,10 @@ CD_BufferAddString (CDBuffer* self, CDString* data)
 void
 CD_BufferAddMetadata (CDBuffer* self, MCMetadata* data)
 {
-    size_t i;
-
     // Format strings of the different metadata types
     static char* formats[] = { "b", "s", "i", "f", "S" };
 
-    for (i = 0; i < data->length; i++) {
+    for (size_t i = 0; i < data->length; i++) {
         if (data->item[i]->type == MCTypeShortByteShort) {
             CD_BufferAddFormat(self, "sbs",
                 data->item[i]->data.sbs.first,

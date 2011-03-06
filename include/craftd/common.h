@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <pthread.h>
 
@@ -43,6 +44,8 @@
 
 #include <craftd/config.h>
 #include <craftd/memory.h>
+
+#define CD_DO
 
 #if SIZEOF_FP == 4 && SIZEOF_INTPTR_T == 4
     typedef int32_t CDPointer;

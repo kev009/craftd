@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <craftd/common.h>
 #include <craftd/Hash.h>
 
 CDHash*
@@ -30,13 +31,12 @@ CD_CreateHash (void)
 {
     CDHash* self = CD_malloc(sizeof(CDHash));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->raw = kh_init(cdHash);
 
-    pthread_rwlock_init(&self->lock, NULL);
+    assert(self->raw);
+    assert(pthread_rwlock_init(&self->lock, NULL) != 0);
 
     return self;
 }
@@ -45,6 +45,8 @@ CDHash*
 CD_CloneHash (CDHash* self)
 {
     CDHash* cloned = CD_CreateHash();
+
+    assert(self);
 
     CD_HASH_FOREACH(self, it) {
         CD_HashSet(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
@@ -56,6 +58,8 @@ CD_CloneHash (CDHash* self)
 void
 CD_DestroyHash (CDHash* self)
 {
+    assert(self);
+
     kh_destroy(cdHash, self->raw);
 
     pthread_rwlock_destroy(&self->lock);
@@ -68,6 +72,8 @@ CD_HashLength (CDHash* self)
 {
     size_t result;
 
+    assert(self);
+
     pthread_rwlock_rdlock(&self->lock);
     result = kh_size(self->raw);
     pthread_rwlock_unlock(&self->lock);
@@ -79,6 +85,8 @@ CDHashIterator
 CD_HashBegin (CDHash* self)
 {
     CDHashIterator it;
+
+    assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
     it.raw    = kh_end(self->raw);
@@ -96,6 +104,8 @@ CDHashIterator
 CD_HashEnd (CDHash* self)
 {
     CDHashIterator it;
+
+    assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
     it.raw    = kh_begin(self->raw) - 1;
@@ -197,6 +207,9 @@ CD_HashGet (CDHash* self, const char* name)
     CDPointer result = (CDPointer) NULL;
     khiter_t  it;
 
+    assert(self);
+    assert(name);
+
     pthread_rwlock_rdlock(&self->lock);
     it = kh_get(cdHash, self->raw, name);
 
@@ -214,6 +227,9 @@ CD_HashSet (CDHash* self, const char* name, CDPointer data)
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;
     int       ret;
+
+    assert(self);
+    assert(name);
 
     pthread_rwlock_wrlock(&self->lock);
     it = kh_get(cdHash, self->raw, name);
@@ -236,6 +252,9 @@ CD_HashDelete (CDHash* self, const char* name)
 {
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;
+
+    assert(self);
+    assert(name);
 
     pthread_rwlock_wrlock(&self->lock);
     it = kh_get(cdHash, self->raw, name);
@@ -269,6 +288,9 @@ CD_HashClear (CDHash* self)
     size_t     i      = 0;
     khiter_t   it;
 
+    assert(self);
+    assert(result);
+
     pthread_rwlock_wrlock(&self->lock);
     for (it = kh_begin(self->raw); it != kh_end(self->raw); it++) {
         if (kh_exist(self->raw, it)) {
@@ -287,6 +309,8 @@ CD_HashClear (CDHash* self)
 bool
 CD_HashStartIterating (CDHash* self)
 {
+    assert(self);
+
     pthread_rwlock_rdlock(&self->lock);
 
     return true;
@@ -295,6 +319,8 @@ CD_HashStartIterating (CDHash* self)
 bool
 CD_HashStopIterating (CDHash* self, bool stop)
 {
+    assert(self);
+
     if (!stop) {
         pthread_rwlock_unlock(&self->lock);
     }

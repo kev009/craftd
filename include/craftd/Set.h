@@ -13,7 +13,26 @@
 
 #include <craftd/common.h>
 
-typedef struct CDSet *CDSet;
+typedef struct _CDSetMember {
+    struct _CDSetMember* next;
+    CDPointer            value;
+} CDSetMember;
+
+typedef bool         (*CDSetCompare) (const CDPointer a, const CDPointer b);
+typedef unsigned int (*CDSetHash)    (const CDPointer pointer);
+typedef void         (*CDSetApply)   (const CDPointer value, CDPointer context);
+
+typedef struct _CDSet {
+    size_t       length;
+    unsigned int timestamp;
+
+    CDSetCompare cmp;
+    CDSetHash    hash;
+
+    size_t size;
+
+    CDSetMember** buckets;
+} CDSet;
 
 /**
  * Allocate and create a new Set
@@ -22,61 +41,53 @@ typedef struct CDSet *CDSet;
  * @param cmp a comparison function for two members
  * @param hash a hash function for the member
  *
- * @return CDSet pointer (opaque)
+ * @return The instantiated Set object
  */
-CDSet CD_CreateSet (int hint, int cmp(const CDPointer x, const CDPointer y), 
-                      unsigned hash(const CDPointer x));
+CDSet* CD_CreateSet (int hint, CDSetCompare cmp, CDSetHash hash);
+
+CDSet* CD_CloneSet (CDSet* self, int hint);
 
 /**
  * Free a Set
- *
- * @param set pointer to a CDSet
  */
-void CD_DestroySet(CDSet* set);
+void CD_DestroySet (CDSet* self);
 
 /**
  * Get the number of lengths in the Set
- *
- * @param set pointer to a CDSet
  */
-int CD_SetLength(CDSet set);
+int CD_SetLength (CDSet* self);
 
 /**
  * Test for membership of an element in the Set
  *
- * @param set pointer to a CDSet
  * @param member pointer to the member to search for
  *
- * @return non-zero if member exists
+ * @return true if member exists, false otherwise
  */
-int CD_SetMember(CDSet set, const CDPointer member);
+bool CD_SetHas (CDSet* self, const CDPointer member);
 
 /**
  * Add a member to the Set
  *
- * @param set pointer to a CDSet
  * @param member pointer to a member
  */
-void CD_SetPut (CDSet set, const CDPointer member);
+void CD_SetPut (CDSet* self, const CDPointer member);
 
 /**
  * Remove a member from the set
  *
- * @param set pointer to a CDSet
  * @param member pointer to a member
  *
  * @return pointer to the removed member
  */
-CDPointer CD_SetDelete(CDSet set, const CDPointer member);
+CDPointer CD_SetDelete (CDSet* self, const CDPointer member);
 
 /**
  * Apply a function to all members of the Set
  *
- * @param set pointer to a CDSet
  * @param apply function to apply to the set
  */
-void CD_SetMap (CDSet set,
-        void apply(const CDPointer member, CDPointer cl), CDPointer cl);
+void CD_SetMap (CDSet* set, void (apply) (const CDPointer member, CDPointer cl), CDPointer cl);
 
 /**
  * Create a C array of the Set members
@@ -86,7 +97,7 @@ void CD_SetMap (CDSet set,
  *
  * @return a C array of with the members of the set
  */
-CDPointer* CD_SetToArray(CDSet set, CDPointer end);
+CDPointer* CD_SetToArray (CDSet* set, CDPointer end);
 
 /**
  * Perfrom a union of s+t of to sets, returning a new set with all elements of both
@@ -96,7 +107,7 @@ CDPointer* CD_SetToArray(CDSet set, CDPointer end);
  *
  * @return a new CDSet with the union, s+t,  of s and t
  */
-CDSet CD_SetUnion(CDSet s, CDSet t);
+CDSet* CD_SetUnion (CDSet* s, CDSet* t);
 
 /**
  * Perform an intersection s*t of two sets, returing a new set with the common
@@ -107,7 +118,7 @@ CDSet CD_SetUnion(CDSet s, CDSet t);
  *
  * @return a new CDSet with the intersection, s*t, of s and t
  */
-CDSet CD_SetIntersect(CDSet s, CDSet t);
+CDSet* CD_SetIntersect (CDSet* s, CDSet* t);
 
 /**
  * Perform a Set minus, s-t, returning  members from s that do not appear in t
@@ -117,7 +128,7 @@ CDSet CD_SetIntersect(CDSet s, CDSet t);
  *
  * @return a new CDSet, s-t, of s and t
  */
-CDSet CD_SetMinus(CDSet s, CDSet t);
+CDSet* CD_SetMinus (CDSet* s, CDSet* t);
 
 /**
  * Perform the symmetric difference, s/t, returning the members that appear in
@@ -128,6 +139,6 @@ CDSet CD_SetMinus(CDSet s, CDSet t);
  *
  * @return the symmetric difference, s/t, of s and t
  */
-CDSet CD_SetDifference (CDSet s, CDSet t);
+CDSet* CD_SetDifference (CDSet* s, CDSet* t);
 
 #endif

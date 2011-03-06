@@ -31,16 +31,14 @@ CD_PacketFromBuffer (CDBuffer* input)
 {
     CDPacket* self = CD_malloc(sizeof(CDPacket));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->chain = CDRequest;
     self->type  = (uint32_t) (uint8_t) CD_BufferRemoveByte(input);
     self->data  = CD_GetPacketDataFromBuffer(self, input);
 
     if (!self->data) {
-        ERR("unparsable packet 0x%.2X", (uint32_t) self->type);
+        ERR("unparsable packet 0x%.2X", self->type);
 
         CD_DestroyPacket(self);
 
@@ -55,6 +53,8 @@ CD_PacketFromBuffer (CDBuffer* input)
 void
 CD_DestroyPacket (CDPacket* self)
 {
+    assert(self);
+
     if (!self->data) {
         CD_free(self);
         return;
@@ -185,6 +185,9 @@ CD_DestroyPacket (CDPacket* self)
 CDPointer
 CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
 {
+    assert(self);
+    assert(input);
+
     switch (self->type) {
         case CDKeepAlive: {
             return (CDPointer) CD_malloc(sizeof(CDPacketKeepAlive));
@@ -439,6 +442,8 @@ CDBuffer*
 CD_PacketToBuffer (CDPacket* self)
 {
     CDBuffer* data = CD_CreateBuffer();
+
+    assert(self);
 
     CD_BufferAddByte(data, self->type);
 
@@ -843,8 +848,7 @@ CD_PacketToBuffer (CDPacket* self)
 
                     CD_BufferAddByte(data, packet->response.id);
 
-                    size_t i;
-                    for (i = 0; i < packet->response.length; i++) {
+                    for (size_t i = 0; i < packet->response.length; i++) {
                         if (packet->response.item[i].id == -1) {
                             CD_BufferAddShort(data, -1);
                         }

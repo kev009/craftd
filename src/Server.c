@@ -38,11 +38,9 @@ CD_CreateServer (const char* path)
 {
     CDServer* self = CD_malloc(sizeof(CDServer));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
-    pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE);
+    assert(pthread_spin_init(&self->lock.time, PTHREAD_PROCESS_PRIVATE) != 0);
 
     self->name     = NULL;
     self->logger   = CDConsoleLogger;
@@ -51,30 +49,11 @@ CD_CreateServer (const char* path)
     self->workers  = CD_CreateWorkers(self);
     self->plugins  = CD_CreatePlugins(self);
 
-    if (!self->config || !self->workers || !self->timeloop || !self->plugins) {
-        if (!self->config) {
-            SERR(self, "Config couldn't be initialized");
-        }
-
-        if (!self->workers) {
-            SERR(self, "Workers couldn't be initialized");
-        }
-
-        if (!self->timeloop) {
-            SERR(self, "TimeLoop couldn't be initialized");
-        }
-
-        if (!self->plugins) {
-            SERR(self, "Plugins couldn't be initialized");
-        }
-
-        CD_DestroyServer(self);
-
-        return NULL;
-    }
-
     self->entities = CD_CreateMap();
     self->players  = CD_CreateHash();
+
+    assert(self->config && self->workers && self->timeloop && self->plugins
+        && self->entities && self->players);
 
     self->event.callbacks = CD_CreateHash();
 
@@ -88,6 +67,8 @@ CD_CreateServer (const char* path)
 void
 CD_DestroyServer (CDServer* self)
 {
+    assert(self);
+
     if (self->config) {
         CD_DestroyConfig(self->config);
     }
@@ -132,6 +113,8 @@ CD_DestroyServer (CDServer* self)
 const char*
 CD_ServerToString (CDServer* self)
 {
+    assert(self);
+
     if (!self->name) {
         return "craftd";
     }
@@ -145,6 +128,8 @@ CD_ServerGetTime (CDServer* self)
 {
     short result;
 
+    assert(self);
+
     pthread_spin_lock(&self->lock.time);
     result = self->time;
     pthread_spin_unlock(&self->lock.time);
@@ -155,6 +140,8 @@ CD_ServerGetTime (CDServer* self)
 short
 CD_ServerSetTime (CDServer* self, short time)
 {
+    assert(self);
+
     pthread_spin_lock(&self->lock.time);
     self->time = time;
     pthread_spin_unlock(&self->lock.time);
@@ -166,6 +153,8 @@ static
 void
 cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 {
+    assert(player);
+
     pthread_mutex_lock(&player->lock.status);
     pthread_rwlock_wrlock(&player->lock.jobs);
 
@@ -212,6 +201,8 @@ static
 void
 cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
 {
+    assert(player);
+
     if (!((error & BEV_EVENT_EOF) || (error & BEV_EVENT_ERROR) || (error & BEV_EVENT_TIMEOUT))) {
         return;
     }
@@ -371,6 +362,9 @@ CD_ReadFromPlayer (CDServer* self, CDPlayer* player)
 void
 CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
 {
+    assert(self);
+    assert(player);
+
     pthread_mutex_lock(&player->lock.status);
 
     SLOG(self, LOG_NOTICE, "%s (%s) kicked: %s", CD_StringContent(player->username), player->ip, reason);
@@ -398,6 +392,8 @@ MCEntityId
 CD_ServerGenerateEntityId (CDServer* self)
 {
     MCEntityId result;
+
+    assert(self);
 
     if (CD_MapLength(self->entities) != 0) {
         result = ((MCEntity*) CD_MapLast(self->entities))->id + 1;

@@ -30,9 +30,7 @@ CD_CreateBuffers (void)
 {
     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->input  = CD_CreateBuffer();
     self->output = CD_CreateBuffer();
@@ -48,9 +46,7 @@ CD_WrapBuffers (CDRawBuffers buffers)
 {
     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->input  = CD_WrapBuffer(bufferevent_get_input(buffers));
     self->output = CD_WrapBuffer(bufferevent_get_output(buffers));
@@ -64,6 +60,8 @@ CD_WrapBuffers (CDRawBuffers buffers)
 void
 CD_DestroyBuffers (CDBuffers* self)
 {
+    assert(self);
+
     CD_DestroyBuffer(self->input);
     CD_DestroyBuffer(self->output);
 
@@ -73,6 +71,8 @@ CD_DestroyBuffers (CDBuffers* self)
 void
 CD_BufferReadIn (CDBuffers* self, size_t low, size_t high)
 {
+    assert(self);
+
     if (high == 0) {
         high = CD_DEFAULT_HIGH_WATERMARK;
     }

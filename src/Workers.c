@@ -31,9 +31,7 @@ CD_CreateWorkers (CDServer* server)
 {
     CDWorkers* self = CD_malloc(sizeof(CDWorkers));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->server = server;
     self->last   = 0;
@@ -45,17 +43,8 @@ CD_CreateWorkers (CDServer* server)
     pthread_attr_init(&self->attributes);
     pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
 
-    if (pthread_mutex_init(&self->lock.mutex, NULL)) {
-        CD_DestroyWorkers(self);
-
-        return NULL;
-    }
-
-    if (pthread_cond_init(&self->lock.condition, NULL) != 0) {
-        CD_DestroyWorkers(self);
-
-        return NULL;
-    }
+    assert(pthread_mutex_init(&self->lock.mutex, NULL) != 0);
+    assert(pthread_cond_init(&self->lock.condition, NULL) != 0);
 
     return self;
 }
@@ -63,9 +52,9 @@ CD_CreateWorkers (CDServer* server)
 void
 CD_DestroyWorkers (CDWorkers* self)
 {
-    size_t i;
+    assert(self);
 
-    for (i = 0; i < self->length; i++) {
+    for (size_t i = 0; i < self->length; i++) {
         CD_DestroyWorker(self->item[i]);
     }
 
@@ -83,9 +72,8 @@ CDWorker**
 CD_SpawnWorkers (CDWorkers* self, size_t number)
 {
     CDWorker** result = CD_malloc(sizeof(CDWorker*) * number);
-    size_t i;
 
-    for (i = 0; i < number; i++) {
+    for (size_t i = 0; i < number; i++) {
         result[i]          = CD_CreateWorker(self->server);
         result[i]->id      = ++self->last;
         result[i]->working = true;
@@ -104,9 +92,7 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
 CDWorkers*
 CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t length)
 {
-    size_t i;
-
-    for (i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         CD_AppendWorker(self, workers[i]);
     }
 
