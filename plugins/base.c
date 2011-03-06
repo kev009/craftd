@@ -259,6 +259,24 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
         } break;
 
+        case CDOnGround: {
+            // Stub.  Probably not needed
+        } break;
+
+        case CDPlayerPosition: {
+            // Stub.  Do dead reckoning or some other sanity check for data
+            // and send CD_SetDifference of chunks on boundary change.
+        } break;
+
+        case CDPlayerLook: {
+            // Stub
+        } break;
+
+        case CDPlayerMoveLook: {
+            // Stub.  Do dead reckoning or some other sanity check for data
+            // and send CD_SetDifference of chunks on boundary change.
+        } break;
+
         case CDDisconnect: {
             CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
 
