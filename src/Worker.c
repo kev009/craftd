@@ -170,7 +170,7 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_unlock(&player->lock.status);
                 }
 
-                CD_EventDispatch(self->server, "Player.disconnect", player);
+                CD_EventDispatch(self->server, "Player.disconnect", player, (bool) ERROR(player));
 
                 CD_ListPush(self->server->disconnecting, (CDPointer) player);
 

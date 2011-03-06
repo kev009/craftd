@@ -39,8 +39,6 @@
 typedef struct _CDServer {
     char* name;
 
-    int error;
-
     CDTimeLoop* timeloop;
     CDWorkers*  workers;
     CDConfig*   config;
@@ -70,6 +68,7 @@ typedef struct _CDServer {
 
     CDHash* _private;
     CDHash* _persistent;
+    CDError _error;
 } CDServer;
 
 /**

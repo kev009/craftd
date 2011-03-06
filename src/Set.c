@@ -8,7 +8,6 @@
  * license.
  */
 
-#include <craftd/Arithmetic.h>
 #include <craftd/Set.h>
 
 static

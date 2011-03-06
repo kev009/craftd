@@ -11,6 +11,8 @@
 #ifndef CRAFTD_ARITHMETIC_H
 #define CRAFTD_ARITHMETIC_H
 
+#define ABS(x) ((x < 0) ? -x : x)
+
 /**
  * Return the maximum of two values
  *

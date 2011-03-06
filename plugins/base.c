@@ -109,7 +109,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 SLOG(server, LOG_NOTICE, "%s exists on the server", CD_StringContent(data->request.username));
 
                 if (server->config->cache.game.standard) {
-                    CD_ServerKick(server, player, CD_CreateStringFromFormat("%s nick already exists", CD_StringContent(data->request.username)));
+                    CD_ServerKick(server, player, CD_CreateStringFromFormat("%s nick already exists",
+                        CD_StringContent(data->request.username)));
+
+                    CD_EventDispatch(server, "Player.login", player, false);
+
                     return false;
                 }
             }

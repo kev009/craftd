@@ -54,6 +54,7 @@ CD_CreatePlayer (struct _CDServer* server)
 
     PRIVATE(self)    = CD_CreateHash();
     PERSISTENT(self) = CD_CreateHash();
+    ERROR(self)      = CDNull;
 
     return self;
 }

@@ -53,16 +53,18 @@
     typedef int64_t CDPointer;
 #endif
 
+typedef int CDError;
+
 #define PRIVATE(data) ((data)->_private)
 #define PERSISTENT(data) ((data)->_persistent)
-
-#define ERROR(x) ((x->error > 0) ? x->error : -x->error)
+#define ERROR(data) ((data)->_error)
 
 #define CDNull (0)
 
 #define CD_CHUNK_COORD(x) (x)
 #define CD_WORLD_COORD(x) ((x) << 4)
 
+#include <craftd/Arithmetic.h>
 #include <craftd/List.h>
 #include <craftd/Map.h>
 #include <craftd/Hash.h>

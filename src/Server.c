@@ -215,6 +215,8 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDPlayer* player)
         SERR(self, "A bufferevent timeout?");
     }
 
+    ERROR(player) = error;
+
     SLOG(self, LOG_NOTICE, "%s (%s) disconnected", CD_StringContent(player->username), player->ip);
 
     CD_AddJob(player->server->workers, CD_CreateJob(CDPlayerDisconnectJob, (CDPointer) player));
@@ -322,13 +324,13 @@ CD_RunServer (CDServer* self)
     }
     #endif
 
-    if ((self->error = bind(self->socket, (struct sockaddr*) &self->config->cache.connection.bind.ipv4, sizeof(self->config->cache.connection.bind.ipv4))) < 0) {
-        SERR(self, "cannot bind: %s", strerror(ERROR(self)));
+    if ((ERROR(self) = bind(self->socket, (struct sockaddr*) &self->config->cache.connection.bind.ipv4, sizeof(self->config->cache.connection.bind.ipv4))) < 0) {
+        SERR(self, "cannot bind: %s", strerror(ABS(ERROR(self))));
         return false;
     }
 
-    if ((self->error = listen(self->socket, self->config->cache.connection.backlog)) < 0) {
-        SERR(self, "listen error: %s", strerror(ERROR(self)));
+    if ((ERROR(self) = listen(self->socket, self->config->cache.connection.backlog)) < 0) {
+        SERR(self, "listen error: %s", strerror(ABS(ERROR(self))));
         return false;
     }
 
