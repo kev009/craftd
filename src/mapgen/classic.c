@@ -169,19 +169,25 @@ static void _init_data(int ch_x, int ch_z)
 	}
 	for (x = 0 ; x < 16 ; x++) {
 		for (z = 0 ; z < 16 ; z++) {
-			/* step 3: replace top with grass */
+			/* step 3: replace top with grass / the higher, the less blocks / 0 to 3 */
 			y = _heightmap[x+(z*16)];
 			while (_blocks[y + (z*128) + (x*128*16)] == 0) {
 				y--;
 				_heightmap[x+(z*16)]--;
 				
 			}
-			if (y < 64 && y > 60) {
-				_blocks[y + (z*128) + (x*128*16)] = 12; /* sand underwater */
-				_blocks[y + (z*128) + (x*128*16)+1] = 12; /* sand underwater */
-			} else if (y >= 64) {
-				_blocks[y + (z*128) + (x*128*16)] = 3; /* dirt */
-				_blocks[y + (z*128) + (x*128*16)+1] = 2; /* dirt */
+			int sediment_height = (128 - _heightmap[x+(z*16)])/21; /* 0 - 3 blocks */
+			int i;
+			if (y < 64) {
+				for (i = 0 ; i < sediment_height ; i++) {
+					_blocks[y + (z*128) + (x*128*16)+i] = 12; /* sand underwater */
+				}
+			} else if (y >= 64 && sediment_height > 0) {
+				for (i = 0 ; i < sediment_height-1 ; i++) {
+					_blocks[y + (z*128) + (x*128*16)+i] = 3; /* sand underwater */
+					sediment_height--;
+				}
+				_blocks[y + (z*128) + (x*128*16)+sediment_height-1] = 2; /* grass */
 			}
 			_heightmap[x+(z*16)] += 2;
 
