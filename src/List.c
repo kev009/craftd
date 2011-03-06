@@ -75,6 +75,7 @@ CD_ListBegin (CDList* self)
     CDListIterator it;
 
     assert(self);
+    assert(self->raw);
 
     pthread_rwlock_rdlock(&self->lock);
     it.raw    = kl_begin(self->raw);
@@ -119,7 +120,7 @@ CD_ListLength (CDList* self)
         size_t         result = 0;
         CDListIterator it;
 
-        for (it.raw = kl_begin(self->raw); it.raw != kl_end(self->raw); it.raw = kl_next(it.raw)) {
+        for (it.raw = kl_begin(self->raw); it.raw && it.raw != kl_end(self->raw); it.raw = kl_next(it.raw)) {
             result++;
         }
 
@@ -148,6 +149,7 @@ CDList*
 CD_ListPush (CDList* self, CDPointer data)
 {
     assert(self);
+    assert(data);
 
     pthread_rwlock_wrlock(&self->lock);
     *kl_pushp(cdList, self->raw) = data;
@@ -163,6 +165,7 @@ CD_ListShift (CDList* self)
     CDPointer result = CDNull;
 
     assert(self);
+    assert(self->raw);
 
     pthread_rwlock_wrlock(&self->lock);
     kl_shift(cdList, self->raw, &result);
@@ -180,7 +183,11 @@ CD_ListFirst (CDList* self)
     assert(self);
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kl_val(kl_begin(self->raw));
+    CDListIterator it = CD_ListBegin(self);
+
+    if (it.raw) {
+        result = kl_val(it.raw);
+    }
     pthread_rwlock_unlock(&self->lock);
 
     return result;
@@ -208,6 +215,11 @@ CD_ListDelete (CDList* self, CDPointer data)
     CDListIterator del;
 
     assert(self);
+    assert(data);
+
+    while (CD_ListFirst(self) == data) {
+        CD_ListShift(self);
+    }
 
     CD_LIST_FOREACH(self, it) {
         if (CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
@@ -228,18 +240,15 @@ CD_ListDelete (CDList* self, CDPointer data)
 CDPointer
 CD_ListDeleteAll (CDList* self, CDPointer data)
 {
-    CDPointer      result = CDNull;
-    CDListIterator del;
+    CDPointer result = CDNull;
 
     assert(self);
 
-    CD_LIST_FOREACH(self, it) {
-        if (CD_ListNext(it).raw && CD_ListIteratorValue(del = CD_ListNext(it)) == data) {
-            result       = CD_ListIteratorValue(del);
-            it.raw->next = del.raw->next;
-            kmp_free(cdList, self->raw->mp, del.raw);
+    result = CD_ListDelete(self, data);
 
-            self->changed = true;
+    if (result) {
+        while (CD_ListDelete(self, data)) {
+            continue;
         }
     }
 

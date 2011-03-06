@@ -49,6 +49,9 @@ typedef struct _CDServer {
 
     CDHash* players;
     CDMap*  entities;
+    CDList* disconnecting;
+
+    bool running;
 
     short time;
 
@@ -66,6 +69,7 @@ typedef struct _CDServer {
     evutil_socket_t socket;
 
     CDHash* _private;
+    CDHash* _persistent;
 } CDServer;
 
 /**
@@ -118,8 +122,6 @@ bool CD_RunServer (CDServer* self);
  * @param player The player to read from
  */
 void CD_ReadFromPlayer (CDServer* self, CDPlayer* player);
-
-void CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason);
 
 /**
  * Get a new unique entity ID
@@ -183,5 +185,16 @@ CDEventCallback* CD_EventUnregister (CDServer* server, const char* eventName, CD
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN
 extern CDServer* CDMainServer;
 #endif
+
+/**
+ * Various server utils
+ */
+
+/**
+ * Kick a Player from the server
+ */
+void CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason);
+
+void CD_ServerBroadcast (CDServer* self, const char* message);
 
 #endif

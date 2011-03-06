@@ -698,6 +698,11 @@ CDPacket* CD_PacketFromBuffer (CDBuffer* input);
 void CD_DestroyPacket (CDPacket* self);
 
 /**
+ * Destroy Packet data
+ */
+void CD_DestroyPacketData (CDPacket* self);
+
+/**
  * Generate a CDPacket* object from the given bufferevent and return it.
  *
  * This is used internally by CD_PacketFromEvent but can be used in other situations.

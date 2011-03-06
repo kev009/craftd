@@ -30,9 +30,7 @@ CD_CreateJob (CDJobType type, CDPointer data)
 {
     CDJob* self = CD_malloc(sizeof(CDJob));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->type = type;
     self->data = data;
@@ -40,9 +38,29 @@ CD_CreateJob (CDJobType type, CDPointer data)
     return self;
 }
 
-CDPointer
+void
 CD_DestroyJob (CDJob* self)
 {
+    assert(self);
+
+    switch (self->type) {
+        case CDCustomJob: {
+            CD_free((CDCustomJobData*) self->data);
+        } break;
+
+        case CDPlayerProcessJob: {
+            CD_DestroyPacket(((CDPlayerProcessJobData*) self->data)->packet);
+        } break;
+    }
+
+    CD_free(self);
+}
+
+CDPointer
+CD_DestroyJobKeepData (CDJob* self)
+{
+    assert(self);
+
     CDPointer result = self->data;
 
     CD_free(self);
@@ -51,16 +69,27 @@ CD_DestroyJob (CDJob* self)
 }
 
 CDCustomJobData*
-CD_CreateCustomJob (void (*callback)(CDPointer), CDPointer data)
+CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data)
 {
     CDCustomJobData* self = CD_malloc(sizeof(CDCustomJobData));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->callback = callback;
     self->data     = data;
+
+    return self;
+}
+
+CDPlayerProcessJobData*
+CD_CreatePlayerProcessJob (CDPlayer* player, CDPacket* packet)
+{
+    CDPlayerProcessJobData* self = CD_malloc(sizeof(CDPlayerProcessJobData));
+
+    assert(self);
+
+    self->player = player;
+    self->packet = packet;
 
     return self;
 }

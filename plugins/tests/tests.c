@@ -248,9 +248,30 @@ cdtest_List_foreach (void* data)
     }
 }
 
+void
+cdtest_List_clear (void* data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListPush(list, 23);
+    CD_ListPush(list, 42);
+    CD_ListPush(list, 9001);
+    CD_ListPush(list, 911);
+
+    CD_ListClear(list);
+
+    tt_int_op(CD_ListLength(list), ==, 0);
+
+    end: {
+        CD_DestroyList(list);
+    }
+
+}
+
 struct testcase_t cd_utils_List_tests[] = {
     { "push", cdtest_List_push, },
     { "foreach", cdtest_List_foreach, },
+    { "clear", cdtest_List_clear, },
 
     END_OF_TESTCASES
 };

@@ -54,6 +54,7 @@
 #endif
 
 #define PRIVATE(data) ((data)->_private)
+#define PERSISTENT(data) ((data)->_persistent)
 
 #define ERROR(x) ((x->error > 0) ? x->error : -x->error)
 

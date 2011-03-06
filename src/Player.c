@@ -35,8 +35,8 @@ CD_CreatePlayer (struct _CDServer* server)
         return NULL;
     }
 
-    pthread_mutex_init(&self->lock.status, NULL);
-    pthread_rwlock_init(&self->lock.jobs, NULL);
+    assert(pthread_mutex_init(&self->lock.status, NULL) == 0);
+    assert(pthread_rwlock_init(&self->lock.jobs, NULL) == 0);
 
     self->server = server;
 
@@ -53,7 +53,8 @@ CD_CreatePlayer (struct _CDServer* server)
 
     self->buffers = NULL;
 
-    PRIVATE(self) = CD_CreateHash();
+    PRIVATE(self)    = CD_CreateHash();
+    PERSISTENT(self) = CD_CreateHash();
 
     return self;
 }
@@ -63,7 +64,7 @@ CD_DestroyPlayer (CDPlayer* self)
 {
     CD_EventDispatch(self->server, "Player.destroy", self);
 
-    bufferevent_flush(self->buffers->raw, EV_WRITE, BEV_FINISHED);
+    bufferevent_flush(self->buffers->raw, EV_READ | EV_WRITE, BEV_FINISHED);
     bufferevent_disable(self->buffers->raw, EV_READ | EV_WRITE);
     bufferevent_free(self->buffers->raw);
     CD_DestroyBuffers(self->buffers);

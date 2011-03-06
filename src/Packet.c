@@ -55,8 +55,16 @@ CD_DestroyPacket (CDPacket* self)
 {
     assert(self);
 
+    CD_DestroyPacketData(self);
+
+    CD_free((void*) self->data);
+    CD_free(self);
+}
+
+void
+CD_DestroyPacketData (CDPacket* self)
+{
     if (!self->data) {
-        CD_free(self);
         return;
     }
 
@@ -177,9 +185,6 @@ CD_DestroyPacket (CDPacket* self)
             }
         } break;
     }
-
-    CD_free((void*) self->data);
-    CD_free(self);
 }
 
 CDPointer
@@ -847,6 +852,7 @@ CD_PacketToBuffer (CDPacket* self)
                     CDPacketWindowItems* packet = (CDPacketWindowItems*) self->data;
 
                     CD_BufferAddByte(data, packet->response.id);
+                    CD_BufferAddShort(data, packet->response.length);
 
                     for (size_t i = 0; i < packet->response.length; i++) {
                         if (packet->response.item[i].id == -1) {

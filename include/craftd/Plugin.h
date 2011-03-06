@@ -58,6 +58,7 @@ typedef struct _CDPlugin {
     CDPluginFinalizer   finalize;
 
     CDHash* _private;
+    CDHash* _persistent;
 } CDPlugin;
 
 /**

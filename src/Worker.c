@@ -91,16 +91,22 @@ CD_RunWorker (CDWorker* self)
 
         SDEBUG(self->server, "worker %d running", self->id);
 
-        if (CD_JOB_IS_CUSTOM(self->job)) {
+        if (self->job->type == CDCustomJob) {
             CDCustomJobData* data = (CDCustomJobData*) self->job->data;
 
             data->callback(data->data);
 
-            CD_free(data);
             CD_DestroyJob(self->job);
         }
         else if (CD_JOB_IS_PLAYER(self->job)) {
-            CDPlayer* player = (CDPlayer*) self->job->data;
+            CDPlayer* player;
+
+            if (self->job->type == CDPlayerProcessJob) {
+                player = ((CDPlayerProcessJobData*) self->job->data)->player;
+            }
+            else {
+                player = (CDPlayer*) self->job->data;
+            }
 
             if (!player) {
                 CD_DestroyJob(self->job);
@@ -124,7 +130,8 @@ CD_RunWorker (CDWorker* self)
             }
 
             if (self->job->type == CDPlayerProcessJob) {
-                CD_EventDispatch(self->server, "Player.process", player);
+                CD_EventDispatch(self->server, "Player.process", player,
+                    ((CDPlayerProcessJobData*) self->job->data)->packet);
 
                 pthread_mutex_lock(&player->lock.status);
                 if (player->status != CDPlayerDisconnect) {
@@ -154,35 +161,9 @@ CD_RunWorker (CDWorker* self)
                     pthread_rwlock_unlock(&player->lock.jobs);
                 }
 
-                CD_MapDelete(self->server->entities, player->entity.id);
+                CD_EventDispatch(self->server, "Player.disconnect", player)
 
-                if (player->username) {
-                    CD_HashDelete(self->server->players, CD_StringContent(player->username));
-                }
-
-                CD_DestroyPlayer(player);
-            }
-        }
-        else if (CD_JOB_IS_SERVER(self->job)) {
-            if (self->job->type == CDServerBroadcastJob) {
-                CD_PACKET_DO {
-                    CDPacketChat pkt;
-                    pkt.response.message = (CDString*) self->job->data;
-
-                    CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
-
-                    CD_HASH_FOREACH(self->server->players, it) {
-                        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
-
-                        pthread_mutex_lock(&player->lock.status);
-                        if (player->status != CDPlayerDisconnect) {
-                            CD_PlayerSendPacket(player, &response);
-                        }
-                        pthread_mutex_unlock(&player->lock.status);
-                    }
-
-                    CD_DestroyString((CDString*) self->job->data);
-                }
+                CD_ListPush(self->server->disconnecting, (CDPointer) player);
             }
         }
     }

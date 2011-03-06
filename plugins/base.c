@@ -91,10 +91,8 @@ cdbase_KeepAlive (evutil_socket_t fd, short event, CDServer* self)
 
 static
 bool
-cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
+cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 {
-    CDPacket* packet = (CDPacket*) CD_HashGet(PRIVATE(player), "packet");
-
     switch (packet->type) {
         case CDKeepAlive: {
             SDEBUG(server, "%s is still alive", CD_StringContent(player->username));

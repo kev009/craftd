@@ -28,11 +28,13 @@
 
 #include <craftd/common.h>
 
+#include <craftd/Player.h>
+#include <craftd/Packet.h>
+
 typedef enum _CDJobType {
+    CDPlayerConnectJob,
     CDPlayerProcessJob,
     CDPlayerDisconnectJob,
-
-    CDServerBroadcastJob,
 
     CDCustomJob
 } CDJobType;
@@ -41,20 +43,22 @@ typedef enum _CDJobType {
     job->type == CDCustomJob    \
 )
 
-
 #define CD_JOB_IS_PLAYER(job) (             \
         job->type == CDPlayerProcessJob     \
     ||  job->type == CDPlayerDisconnectJob  \
 )
 
-#define CD_JOB_IS_SERVER(job) (         \
-    job->type == CDServerBroadcastJob   \
-)
+typedef void (*CDCustomJobCallback) (CDPointer);
 
-typedef struct _CDCustomJob {
-    void      (*callback)(CDPointer);
-    CDPointer data;
+typedef struct _CDCustomJobData {
+    CDCustomJobCallback callback;
+    CDPointer           data;
 } CDCustomJobData;
+
+typedef struct _CDPlayerProcessJobData {
+    CDPlayer* player;
+    CDPacket* packet;
+} CDPlayerProcessJobData;
 
 typedef struct _CDJob {
     CDJobType type;
@@ -63,8 +67,12 @@ typedef struct _CDJob {
 
 CDJob* CD_CreateJob (CDJobType type, CDPointer data);
 
-CDPointer CD_DestroyJob (CDJob* job);
+void CD_DestroyJob (CDJob* job);
 
-CDCustomJobData* CD_CreateCustomJob (void (*callback)(CDPointer), CDPointer data);
+CDPointer CD_DestroyJobKeepData (CDJob* job);
+
+CDCustomJobData* CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data);
+
+CDPlayerProcessJobData* CD_CreatePlayerProcessJob (CDPlayer* player, CDPacket* packet);
 
 #endif

@@ -30,9 +30,7 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
 {
     CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
     self->server = server;
     self->name   = NULL;
@@ -58,14 +56,15 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    PRIVATE(self) = CD_CreateHash();
+    PRIVATE(self)    = CD_CreateHash();
+    PERSISTENT(self) = CD_CreateHash();
 
     if (self->initialize) {
         self->initialize(self);
     }
 
     if (!self->name) {
-        self->name = self->path;
+        self->name = CD_CloneString(self->path);
     }
 
     return self;
@@ -78,14 +77,19 @@ CD_DestroyPlugin (CDPlugin* self)
         self->finalize(self);
     }
 
-    lt_dlclose(self->handle);
+    if (self->handle) {
+        lt_dlclose(self->handle);
+    }
+
     CD_DestroyString(self->path);
 
     if (self->name) {
         CD_DestroyString(self->name);
     }
 
-    CD_DestroyHash(PRIVATE(self));
+    if (PRIVATE(self)) {
+        CD_DestroyHash(PRIVATE(self));
+    }
 
     CD_free(self);
 }
