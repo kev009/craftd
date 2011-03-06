@@ -63,6 +63,7 @@ CD_DestroyPlayer (CDPlayer* self)
 {
     CD_EventDispatch(self->server, "Player.destroy", self);
 
+    bufferevent_flush(self->buffers->raw, EV_WRITE, BEV_FINISHED);
     bufferevent_disable(self->buffers->raw, EV_READ | EV_WRITE);
     bufferevent_free(self->buffers->raw);
     CD_DestroyBuffers(self->buffers);
