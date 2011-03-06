@@ -261,8 +261,17 @@ cdtest_Set_put (void* data)
     CDSet set = CD_CreateSet(10, NULL, NULL);
 
     CD_SetPut(set, 1);
+    CD_SetPut(set, 3);
+    CD_SetPut(set, 3); // Redundant element should not get added
+    CD_SetPut(set, 2);
     
     tt_assert(CD_SetMember(set, 1) != 0);
+    tt_assert(CD_SetMember(set, 5) == 0);
+
+    tt_int_op(CD_SetDelete(set, 2), ==, 2);
+    tt_assert(CD_SetMember(set, 2) == 0);
+
+    tt_int_op(CD_SetLength(set), ==, 2);
 
     end: {
         CD_DestroySet(&set);
