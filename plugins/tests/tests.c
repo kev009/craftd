@@ -106,7 +106,7 @@ cdtest_Hash_put (void* data)
 {
     CDHash* hash = CD_CreateHash();
 
-    CD_HashSet(hash, "lol", 2);
+    CD_HashPut(hash, "lol", 2);
 
     tt_int_op((int) CD_HashGet(hash, "lol"), ==, 2);
 
@@ -120,10 +120,10 @@ cdtest_Hash_foreach (void* data)
 {
     CDHash* hash = CD_CreateHash();
 
-    CD_HashSet(hash, "lol", 1);
-    CD_HashSet(hash, "omg", 2);
-    CD_HashSet(hash, "wat", 3);
-    CD_HashSet(hash, "win", 4);
+    CD_HashPut(hash, "lol", 1);
+    CD_HashPut(hash, "omg", 2);
+    CD_HashPut(hash, "wat", 3);
+    CD_HashPut(hash, "win", 4);
 
     CD_HASH_FOREACH(hash, it) {
         if (strcmp("lol", CD_HashIteratorKey(it)) == 0) {
@@ -160,7 +160,7 @@ cdtest_Map_put (void* data)
 {
     CDMap* map = CD_CreateMap();
 
-    CD_MapSet(map, 9001, 2);
+    CD_MapPut(map, 9001, 2);
 
     tt_int_op((int) CD_MapGet(map, 9001), ==, 2);
 
@@ -174,10 +174,10 @@ cdtest_Map_foreach (void* data)
 {
     CDMap* map = CD_CreateMap();
 
-    CD_MapSet(map, 23, 1);
-    CD_MapSet(map, 42, 2);
-    CD_MapSet(map, 9001, 3);
-    CD_MapSet(map, 911, 4);
+    CD_MapPut(map, 23, 1);
+    CD_MapPut(map, 42, 2);
+    CD_MapPut(map, 9001, 3);
+    CD_MapPut(map, 911, 4);
 
     CD_MAP_FOREACH(map, it) {
         if (CD_MapIteratorKey(it) == 23) {

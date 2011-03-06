@@ -99,7 +99,7 @@ CD_LoadPlugin (CDPlugins* self, const char* path)
         return NULL;
     }
 
-    CD_HashSet(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
+    CD_HashPut(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
 
 
     return plugin;

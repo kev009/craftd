@@ -94,7 +94,7 @@ CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback)
         self->last++;
     }
 
-    CD_MapSet(self->callbacks, (result = self->last++), (CDPointer) timeoutEvent);
+    CD_MapPut(self->callbacks, (result = self->last++), (CDPointer) timeoutEvent);
     pthread_spin_unlock(&self->lock.last);
 
     return result;
@@ -129,7 +129,7 @@ CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback)
         self->last++;
     }
 
-    CD_MapSet(self->callbacks, (result = self->last++), (CDPointer) intervalEvent);
+    CD_MapPut(self->callbacks, (result = self->last++), (CDPointer) intervalEvent);
     pthread_spin_unlock(&self->lock.last);
 
     return result;

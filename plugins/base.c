@@ -115,7 +115,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
             player->username = CD_CloneString(data->request.username);
 
-            CD_HashSet(server->players, CD_StringContent(player->username), (CDPointer) player);
+            CD_HashPut(server->players, CD_StringContent(player->username), (CDPointer) player);
 
             pthread_mutex_unlock(&cdbase_lock.login);
 
@@ -325,9 +325,9 @@ CD_PluginInitialize (CDPlugin* self)
 
     pthread_mutex_init(&cdbase_lock.login, NULL);
 
-    CD_HashSet(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbase_TimeIncrease));
-    CD_HashSet(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbase_TimeUpdate));
-    CD_HashSet(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbase_KeepAlive));
+    CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbase_TimeIncrease));
+    CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbase_TimeUpdate));
+    CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbase_KeepAlive));
 
     CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
 

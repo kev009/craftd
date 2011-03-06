@@ -49,7 +49,7 @@ CD_CloneHash (CDHash* self)
     assert(self);
 
     CD_HASH_FOREACH(self, it) {
-        CD_HashSet(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
+        CD_HashPut(cloned, CD_HashIteratorKey(it), CD_HashIteratorValue(it));
     }
 
     return cloned;
@@ -222,7 +222,7 @@ CD_HashGet (CDHash* self, const char* name)
 }
 
 CDPointer
-CD_HashSet (CDHash* self, const char* name, CDPointer data)
+CD_HashPut (CDHash* self, const char* name, CDPointer data)
 {
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;

@@ -48,7 +48,7 @@ CD_CloneMap (CDMap* self)
     assert(self);
 
     CD_MAP_FOREACH(self, it) {
-        CD_MapSet(cloned, CD_MapIteratorKey(it), CD_MapIteratorValue(it));
+        CD_MapPut(cloned, CD_MapIteratorKey(it), CD_MapIteratorValue(it));
     }
 
     return cloned;
@@ -220,7 +220,7 @@ CD_MapGet (CDMap* self, int id)
 }
 
 CDPointer
-CD_MapSet (CDMap* self, int id, CDPointer data)
+CD_MapPut (CDMap* self, int id, CDPointer data)
 {
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;

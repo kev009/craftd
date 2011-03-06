@@ -165,7 +165,7 @@ CDPointer CD_HashGet (CDHash* self, const char* name);
  *
  * @return The old data if present or NULL
  */
-CDPointer CD_HashSet (CDHash* self, const char* name, CDPointer data);
+CDPointer CD_HashPut (CDHash* self, const char* name, CDPointer data);
 
 /**
  * Delete the element with the given name

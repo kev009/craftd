@@ -165,7 +165,7 @@ CDPointer CD_MapGet (CDMap* self, int id);
  *
  * @return The old data if present or NULL
  */
-CDPointer CD_MapSet (CDMap* self, int id, CDPointer data);
+CDPointer CD_MapPut (CDMap* self, int id, CDPointer data);
 
 /**
  * Delete the element with the given id

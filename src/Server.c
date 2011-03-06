@@ -170,7 +170,7 @@ cd_ReadCallback (struct bufferevent* event, CDPlayer* player)
 
             SDEBUG(player->server, "received packet 0x%.2X from %s", (uint8_t) packet->type, player->ip);
 
-            packet = (CDPacket*) CD_HashSet(PRIVATE(player), "packet", (CDPointer) packet);
+            packet = (CDPacket*) CD_HashPut(PRIVATE(player), "packet", (CDPointer) packet);
 
             if (packet) {
                 CD_DestroyPacket(packet);
@@ -293,7 +293,7 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
     bufferevent_setcb(player->buffers->raw, (bufferevent_data_cb) cd_ReadCallback, NULL, (bufferevent_event_cb) cd_ErrorCallback, player);
     bufferevent_enable(player->buffers->raw, EV_READ | EV_WRITE);
 
-    CD_MapSet(self->entities, player->entity.id, (CDPointer) player);
+    CD_MapPut(self->entities, player->entity.id, (CDPointer) player);
 }
 
 bool
@@ -458,7 +458,7 @@ CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callbac
 
     CD_ListPush(callbacks, (CDPointer) callback);
 
-    CD_HashSet(self->event.callbacks, eventName, (CDPointer) callbacks);
+    CD_HashPut(self->event.callbacks, eventName, (CDPointer) callbacks);
 }
 
 CDEventCallback*
