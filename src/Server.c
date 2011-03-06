@@ -517,11 +517,11 @@ CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason)
 }
 
 void
-CD_ServerBroadcast (CDServer* self, const char* message)
+CD_ServerBroadcast (CDServer* self, CDString* message)
 {
     CD_PACKET_DO {
         CDPacketChat pkt;
-        pkt.response.message = CD_CreateStringFromCString(message);
+        pkt.response.message = message;
 
         CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
 

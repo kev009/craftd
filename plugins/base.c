@@ -218,22 +218,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 CD_PlayerSendPacket(player, &response);
             }
 
-            CD_PACKET_DO {
-                MCString inband = CD_CreateStringFromFormat("%s has joined the game",
-                        CD_StringContent(player->username));
-
-                CDPacketChat pkt;
-                
-                pkt.response.message = inband;
-                
-                CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
-
-                CD_HASH_FOREACH(server->players, it) {
-                    CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
-                }
-
-                MC_DestroyString(inband);
-            }
+            CD_EventDispatch(server, "Player.login", player);
 
         } break;
 
@@ -288,22 +273,6 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         case CDDisconnect: {
             CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
 
-            CD_PACKET_DO {
-                MCString inband = CD_CreateStringFromFormat("%s has left the game",
-                        CD_StringContent(player->username));
-
-                CDPacketChat pkt;
-                pkt.response.message = inband;
-
-                CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
-
-                CD_HASH_FOREACH(server->players, it) {
-                    CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
-                }
-
-                MC_DestroyString(inband);
-            }
- 
             CD_ServerKick(server, player, CD_StringContent(data->request.reason));
         } break;
 
@@ -311,6 +280,26 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             SERR(server, "unimplemented packet 0x%.2X from %s (%s)", packet->type, CD_StringContent(player->username), player->ip);
         }
     }
+
+    return true;
+}
+
+static
+bool
+cdbase_PlayerLoginMessage (CDServer* server, CDPlayer* player)
+{
+    CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has joined the game",
+                CD_StringContent(player->username)));
+
+    return true;
+}
+
+static
+bool
+cdbase_PlayerDisconnectMessage (CDServer* server, CDPlayer* player)
+{
+    CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
+        CD_StringContent(player->username)));
 
     return true;
 }
@@ -328,6 +317,9 @@ CD_PluginInitialize (CDPlugin* self)
     CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbase_KeepAlive));
 
     CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
+
+    CD_EventRegister(self->server, "Player.login", cdbase_PlayerLoginMessage);
+    CD_EventRegister(self->server, "Player.disconnect", cdbase_PlayerDisconnectMessage);
 
     return true;
 }

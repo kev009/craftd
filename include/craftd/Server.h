@@ -195,6 +195,6 @@ extern CDServer* CDMainServer;
  */
 void CD_ServerKick (CDServer* self, CDPlayer* player, const char* reason);
 
-void CD_ServerBroadcast (CDServer* self, const char* message);
+void CD_ServerBroadcast (CDServer* self, CDString* message);
 
 #endif
