@@ -249,6 +249,26 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
             else {
                 SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
                         CD_StringContent(data->request.message));
+
+                CD_PACKET_DO {
+                    MCString inband = CD_CreateStringFromFormat("<%s> %s", 
+                            CD_StringContent(player->username),
+                            CD_StringContent(data->request.message));
+                    CDPacketChat pkt;
+
+                    if(CD_StringIsValidForMinecraft(inband))
+                    {
+                        pkt.response.message = inband;
+                        
+                        CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
+
+                        CD_HASH_FOREACH(server->players, it) {
+                            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
+                        }
+                    }
+                    
+                    MC_DestroyString(inband);
+                }
             }
         } break;
 
