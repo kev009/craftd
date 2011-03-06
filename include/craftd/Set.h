@@ -89,33 +89,33 @@ void CD_SetMap (CDSet set,
 CDPointer* CD_SetToArray(CDSet set, CDPointer end);
 
 /**
- * Perfrom a union of two sets, returning a new set with all elements of both
+ * Perfrom a union of s+t of to sets, returning a new set with all elements of both
  *
  * @param s pointer to a CDSet
  * @param t pointer to another CDSet
  *
- * @return a new CDSet with the union of s and t
+ * @return a new CDSet with the union, s+t,  of s and t
  */
 CDSet CD_SetUnion(CDSet s, CDSet t);
 
 /**
- * Perform an intersection of two sets, returing a new set with the common
+ * Perform an intersection s*t of two sets, returing a new set with the common
  * elements of both
  *
  * @param s pointer to a CDSet
  * @param t pointer to another CDSet
  *
- * @return a new CDSet with the intersection of s and t
+ * @return a new CDSet with the intersection, s*t, of s and t
  */
 CDSet CD_SetIntersect(CDSet s, CDSet t);
 
 /**
- * Perform a Set minus, returning  members from s that do not appear in t
+ * Perform a Set minus, s-t, returning  members from s that do not appear in t
  *
  * @param s pointer to a CDSet
  * @param t pointer to another CDSet
  *
- * @return a new CDSet, s-t
+ * @return a new CDSet, s-t, of s and t
  */
 CDSet CD_SetMinus(CDSet s, CDSet t);
 
@@ -126,7 +126,7 @@ CDSet CD_SetMinus(CDSet s, CDSet t);
  * @param s a pointer to a CDSet
  * @param t a pointer to another CDSet
  *
- * @return the symmetric difference s/t of s and t
+ * @return the symmetric difference, s/t, of s and t
  */
 CDSet CD_SetDifference (CDSet s, CDSet t);
 
