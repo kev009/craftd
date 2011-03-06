@@ -62,8 +62,8 @@ CD_CreateServer (const char* path)
 
     CD_ServerSetTime(self, 0);
 
-    PRIVATE(self)    = CD_CreateHash();
-    PERSISTENT(self) = CD_CreateHash();
+    PRIVATE(self) = CD_CreateHash();
+    ERROR(self)   = CDNull;
 
     return self;
 }

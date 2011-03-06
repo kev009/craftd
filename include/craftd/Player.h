@@ -61,7 +61,6 @@ typedef struct _CDPlayer {
     } lock;
 
     CDHash* _private;
-    CDHash* _persistent;
     CDError _error;
 } CDPlayer;
 
