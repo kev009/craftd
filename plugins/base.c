@@ -219,6 +219,24 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
 
                 CD_PlayerSendPacket(player, &response);
             }
+
+            CD_PACKET_DO {
+                MCString inband = CD_CreateStringFromFormat("%s has joined the game",
+                        CD_StringContent(player->username));
+
+                CDPacketChat pkt;
+                
+                pkt.response.message = inband;
+                
+                CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
+
+                CD_HASH_FOREACH(server->players, it) {
+                    CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
+                }
+
+                MC_DestroyString(inband);
+            }
+
         } break;
 
         case CDHandshake: {
@@ -254,8 +272,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
                     MCString inband = CD_CreateStringFromFormat("<%s> %s", 
                             CD_StringContent(player->username),
                             CD_StringContent(data->request.message));
-                    CDPacketChat pkt;
 
+                    CDPacketChat pkt;
                     pkt.response.message = inband;
 
                     CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
@@ -263,7 +281,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
                     CD_HASH_FOREACH(server->players, it) {
                         CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
                     }
-                    
+
                     MC_DestroyString(inband);
                 }
             }
@@ -272,6 +290,22 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player)
         case CDDisconnect: {
             CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
 
+            CD_PACKET_DO {
+                MCString inband = CD_CreateStringFromFormat("%s has left the game",
+                        CD_StringContent(player->username));
+
+                CDPacketChat pkt;
+                pkt.response.message = inband;
+
+                CDPacket packet = { CDResponse, CDChat, (CDPointer) &pkt };
+
+                CD_HASH_FOREACH(server->players, it) {
+                    CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
+                }
+
+                MC_DestroyString(inband);
+            }
+ 
             CD_ServerKick(server, player, CD_StringContent(data->request.reason));
         } break;
 
