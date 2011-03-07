@@ -198,6 +198,8 @@ CD_BufferAddString (CDBuffer* self, CDString* data)
 
     evbuffer_add(self->raw, &size, MCShortSize);
     evbuffer_add(self->raw, CD_StringContent(sanitized), CD_StringSize(sanitized));
+
+    CD_DestroyString(sanitized);
 }
 
 void
