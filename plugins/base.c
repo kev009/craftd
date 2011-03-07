@@ -35,6 +35,142 @@ static struct {
 } lock;
 
 static
+bool
+cdbase_cmpMCPosition(const CDPointer ptrA, const CDPointer ptrB)
+{
+    MCPosition a = *(MCPosition*)ptrA;
+    MCPosition b = *(MCPosition*)ptrB;
+
+    if ( a.x == b.x && a.y == b.y && a.z == b.z)
+        return true;
+
+    return false;
+}
+
+static
+unsigned int
+cdbase_hashMCPosition(const CDPointer ptrPos)
+{
+    const int HASHMULTIPLIER = 31;
+    MCPosition pos = *(MCPosition*)ptrPos;
+
+    // TODO: find a good 3D hash function
+    return pos.x * HASHMULTIPLIER * pos.z + pos.y;
+}
+
+static
+bool
+cdbase_sendChunk(CDServer* server, CDPlayer* player, MCPosition* coord)
+{
+    CD_PACKET_DO {
+        CDPacketPreChunk pkt;
+        pkt.response.x    = coord->x;
+        pkt.response.z    = coord->z;
+        pkt.response.mode = true;
+
+        CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+
+        CD_PlayerSendPacketAndCleanData(player, &response);
+    }
+
+    CD_PACKET_DO {
+        CDPacketMapChunk pkt;
+        pkt.response.position.x = CD_WORLD_COORD(coord->x);
+        pkt.response.position.y = 0;
+        pkt.response.position.z = CD_WORLD_COORD(coord->z);
+        pkt.response.size.x     = 16;
+        pkt.response.size.y     = 128;
+        pkt.response.size.z     = 16;
+
+        SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
+
+        uint8_t mapdata[81920];
+
+        CD_EventDispatch(server, "Chunk.load", coord->x, coord->z, mapdata);
+
+        uLongf written = compressBound(81920);
+        Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
+        if (compress(buffer, &written, mapdata, 81920) != Z_OK) {
+            SERR(server, "zlib compress failure");
+            return false;
+        }
+        
+        SDEBUG(server, "compressed %ld bytes", written);
+
+        pkt.response.length = (MCInteger) written;
+        pkt.response.item   = (MCByte*) buffer;
+
+        CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
+
+        CD_PlayerSendPacketAndCleanData(player, &response);
+    }
+
+    return true;
+}
+
+static
+void
+cdbase_chunkRadiusUnload(const CDPointer coordptr, const CDPointer player)
+{
+    MCPosition* coord = (MCPosition*) coordptr;
+    CD_PACKET_DO {
+        CDPacketPreChunk pkt;
+        pkt.response.x    = CD_WORLD_COORD(coord->x);
+        pkt.response.z    = CD_WORLD_COORD(coord->z);
+        pkt.response.mode = false;
+
+        CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+
+        CD_PlayerSendPacketAndCleanData((CDPlayer*) player, &response);
+    }
+
+    CD_free((void *)coordptr);
+}
+
+static
+void
+cdbase_chunkRadiusLoad(const CDPointer coordptr, const CDPointer playerptr)
+{
+    MCPosition* coord = (MCPosition*) coordptr;
+    CDPlayer* player  = (CDPlayer*) playerptr;
+
+    cdbase_sendChunk(player->server, player, coord);
+}
+
+static
+void
+cdbase_sendChunkRadius(CDPlayer* player, MCPosition* area, int radius)
+{
+    CDSet* loadedChunks = (CDSet*) CD_HashGet(PRIVATE(player), "Player.loadedChunks");
+    CDSet* oldchunks = loadedChunks;
+    CDSet* newchunks = (CDSet*) CD_CreateSet(400, cdbase_cmpMCPosition, cdbase_hashMCPosition);
+
+    for (int x = -radius; x < radius; x++)
+    {
+        for (int z = -radius; z < radius; z++)
+        {
+            if (x*x + z*z <= radius*radius)
+            {
+                MCPosition* coord = CD_malloc(sizeof(MCPosition));
+                coord->x = x + area->x;
+                coord->y = 0;
+                coord->z = z + area->z;
+                CD_SetPut(newchunks, (CDPointer) coord);
+            }
+        }
+    }
+
+    CDSet* toremove = CD_SetMinus(oldchunks, newchunks);
+    CDSet* toadd    = CD_SetMinus(newchunks, oldchunks);
+
+    CD_SetMap(toremove, cdbase_chunkRadiusUnload, (CDPointer) player);
+    CD_SetMap(toadd, cdbase_chunkRadiusLoad, (CDPointer) player);
+
+    CD_DestroySet(oldchunks);
+    loadedChunks = newchunks;
+}
+
+static
 void
 cdbase_TimeIncrease (void* _, void* __, CDServer* self)
 {
@@ -146,57 +282,21 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 return false;
             }
 
-            int x = spawnPosition->x / 16;
-            int z = spawnPosition->z / 16;
-
             // Hack in a square send for now
             for ( int i = -7; i < 8; i++)
             {
-            for ( int j = -7; j < 8; j++)
-            {
-                CD_PACKET_DO {
-                    CDPacketPreChunk pkt;
-                    pkt.response.x    = x + i;
-                    pkt.response.z    = z + j;
-                    pkt.response.mode = true;
-
-                    CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
-
-                    CD_PlayerSendPacketAndCleanData(player, &response);
-                }
-
-                CD_PACKET_DO {
-                    CDPacketMapChunk pkt;
-                    pkt.response.position.x = CD_WORLD_COORD(x + i);
-                    pkt.response.position.y = CD_WORLD_COORD(0);
-                    pkt.response.position.z = CD_WORLD_COORD(z + j);
-                    pkt.response.size.x     = 16;
-                    pkt.response.size.y     = 128;
-                    pkt.response.size.z     = 16;
-
-                    SDEBUG(server, "sending chunk (%d, %d)", x + i, z + j);
-
-                    uint8_t mapdata[81920];
-
-                    CD_EventDispatch(server, "Chunk.load", x + i, z + j, mapdata);
-
-                    uLongf written = compressBound(81920);
-                    Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
-                    if (compress(buffer, &written, mapdata, 81920) != Z_OK) {
-                        SERR(server, "zlib compress failure");
-
+                for ( int j = -7; j < 8; j++)
+                {
+                    MCPosition coords;
+                    coords.x = CD_Div(spawnPosition->x, 16) + i;
+                    coords.y = 0;
+                    coords.z = CD_Div(spawnPosition->z, 16) + j;
+                    
+                    if (!cdbase_sendChunk(server, player, &coords))
+                    {
                         return false;
                     }
-                    SDEBUG(server, "compressed %ld bytes", written);
-
-                    pkt.response.length = (MCInteger) written;
-                    pkt.response.item   = (MCByte*) buffer;
-
-                    CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
-
-                    CD_PlayerSendPacketAndCleanData(player, &response);
                 }
-            }
             }
 
             /* Send Spawn Position to initialize compass */
@@ -276,6 +376,20 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         case CDPlayerMoveLook: {
             // Stub.  Do dead reckoning or some other sanity check for data
             // and send CD_SetDifference of chunks on boundary change.
+            
+            CDPacketPlayerMoveLook* data = (CDPacketPlayerMoveLook*) packet->data;
+
+            int newx = CD_Div(data->request.position.x, 16);
+            int newz = CD_Div(data->request.position.z, 16);
+            MCPosition area = { newx, 0, newz };
+
+            if ( newx != CD_Div(player->entity.position.x, 16) &&
+                 newz != CD_Div(player->entity.position.z, 16))
+            {
+                cdbase_sendChunkRadius(player, &area, 10);
+            }
+
+
         } break;
 
         case CDDisconnect: {
@@ -285,7 +399,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         } break;
 
         default: {
-            SERR(server, "unimplemented packet 0x%.2X from %s (%s)", packet->type, CD_StringContent(player->username), player->ip);
+            SERR(server, "unimplemented packet 0x%.2X from %s (%s)", packet->type, 
+                    CD_StringContent(player->username), player->ip);
         }
     }
 
@@ -296,6 +411,8 @@ static
 bool
 cdbase_HandleLogin (CDServer* server, CDPlayer* player)
 {
+    CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) CD_CreateSet (400,
+                cdbase_cmpMCPosition, cdbase_hashMCPosition));
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has joined the game",
                 CD_StringContent(player->username)));
 
@@ -306,6 +423,7 @@ static
 bool
 cdbase_HandleDisconnect (CDServer* server, CDPlayer* player)
 {
+    CD_DestroySet((CDSet*) CD_HashGet(PRIVATE(player), "Player.loadedChunks"));
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)));
 
@@ -335,7 +453,7 @@ CD_PluginInitialize (CDPlugin* self)
 extern
 bool
 CD_PluginFinalize (CDPlugin* self)
-{
+{ 
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeIncrease"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
