@@ -12,14 +12,14 @@
 
 static
 bool
-cmpAtom (const CDPointer a, const CDPointer b)
+cmpAtom (CDSet* self, CDPointer a, CDPointer b)
 {
     return a == b;
 }
 
 static
 unsigned int
-hashAtom (const CDPointer pointer)
+hashAtom (CDSet* self, CDPointer pointer)
 {
     return (unsigned long) pointer >> 2;
 }
@@ -69,9 +69,9 @@ CD_CloneSet (CDSet* self, int hint)
 
         for (size_t i = 0; i < self->size; i++) {
             for (oldMember = self->buckets[i]; oldMember != NULL; oldMember = oldMember->next) {
-                CDSetMember*    newMember = CD_malloc(sizeof(CDSetMember));
-                const CDPointer value     = oldMember->value;
-                int             index     = cloned->hash(value) % cloned->size;
+                CDSetMember* newMember = CD_malloc(sizeof(CDSetMember));
+                CDPointer    value     = oldMember->value;
+                int          index     = cloned->hash(cloned, value) % cloned->size;
 
                 assert(newMember);
 
@@ -105,11 +105,12 @@ CD_DestroySet (CDSet* self)
         }
     }
 
-    CD_free(self);
+    // FIXME: this seems to be double free'd, maybe the stuff above frees it?
+    // CD_free(self);
 }
 
 bool
-CD_SetHas (CDSet* self, const CDPointer value)
+CD_SetHas (CDSet* self, CDPointer value)
 {
     int          index;
     CDSetMember* member;
@@ -117,10 +118,10 @@ CD_SetHas (CDSet* self, const CDPointer value)
     assert(self);
     assert(value);
 
-    index = self->hash(value) % self->size;
+    index = self->hash(self, value) % self->size;
 
     for (member = self->buckets[index]; member != NULL; member = member->next) {
-        if (self->cmp(value, member->value)) {
+        if (self->cmp(self, value, member->value)) {
             return true;
         }
     }
@@ -129,7 +130,7 @@ CD_SetHas (CDSet* self, const CDPointer value)
 }
 
 void
-CD_SetPut (CDSet* self, const CDPointer value)
+CD_SetPut (CDSet* self, CDPointer value)
 {
     int          index;
     CDSetMember* member;
@@ -137,10 +138,10 @@ CD_SetPut (CDSet* self, const CDPointer value)
     assert(self);
     assert(value);
 
-    index = self->hash(value) % self->size;
+    index = self->hash(self, value) % self->size;
 
     for (member = self->buckets[index]; member != NULL; member = member->next) {
-        if (self->cmp(value, member->value)) {
+        if (self->cmp(self, value, member->value)) {
             break;
         }
     }
@@ -173,10 +174,10 @@ CD_SetDelete (CDSet* self, CDPointer value)
 
     self->timestamp++;
 
-    index = self->hash(value) % self->size;
+    index = self->hash(self, value) % self->size;
 
     for (members = &self->buckets[index]; *members != NULL; members = &(*members)->next) {
-        if (self->cmp(value, (*members)->value)) {
+        if (self->cmp(self, value, (*members)->value)) {
             CDSetMember* member = *members;
             *members            = member->next;
             value               = member->value;
@@ -213,7 +214,7 @@ CD_SetMap (CDSet* self, CDSetApply apply, CDPointer context)
 
     for (size_t i = 0; i < self->size; i++) {
         for (member = self->buckets[i]; member != NULL; member = member->next) {
-            apply(member->value, context);
+            apply(self, member->value, context);
 
             assert(self->timestamp == stamp);
         }
@@ -301,9 +302,9 @@ CD_SetIntersect (CDSet* a, CDSet* b)
         for (size_t i = 0; i < b->size; i++) {
             for (member = b->buckets[i]; member != NULL; member = member->next) {
                 if (CD_SetHas(a, member->value)) {
-                    CDSetMember*    current = CD_malloc(sizeof(CDSetMember));
-                    const CDPointer value   = member->value;
-                    int             index   = result->hash(value) % result->size;
+                    CDSetMember* current = CD_malloc(sizeof(CDSetMember));
+                    CDPointer    value   = member->value;
+                    int          index   = result->hash(result, value) % result->size;
 
                     assert(current);
 
@@ -342,9 +343,9 @@ CD_SetMinus (CDSet* a, CDSet* b)
         for (size_t i = 0; i < a->size; i++) {
             for (member = a->buckets[i]; member != NULL; member = member->next) {
                 if (!CD_SetHas(b, member->value)) {
-                    CDSetMember*    current = CD_malloc(sizeof(CDSetMember));
-                    const CDPointer value   = member->value;
-                    int             index   = result->hash(value) % result->size;
+                    CDSetMember* current = CD_malloc(sizeof(CDSetMember));
+                    CDPointer    value   = member->value;
+                    int          index   = result->hash(result, value) % result->size;
 
                     assert(current);
 
@@ -389,9 +390,9 @@ CD_SetDifference (CDSet* a, CDSet* b)
             for (size_t i = 0; i < b->size; i++) {
                 for (member = b->buckets[i]; member != NULL; member = member->next) {
                     if (!CD_SetHas(a, member->value)) {
-                        CDSetMember*    current = CD_malloc(sizeof(CDSetMember));
-                        const CDPointer value   = member->value;
-                        int             index   = result->hash(value) % result->size;
+                        CDSetMember* current = CD_malloc(sizeof(CDSetMember));
+                        CDPointer    value   = member->value;
+                        int          index   = result->hash(result, value) % result->size;
 
                         assert(current);
 

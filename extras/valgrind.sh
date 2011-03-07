@@ -12,7 +12,7 @@ if [ -d "src" ]; then
         ;;
 
         *)
-            valgrind -v --show-reachable=yes --leak-check=full --track-origins=yes src/craftd -c craftd.conf.dist
+            valgrind -v --show-reachable=yes --leak-check=full --track-origins=yes src/craftd -d -c craftd.conf.dist
         ;;
     esac
 else

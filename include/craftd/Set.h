@@ -18,9 +18,10 @@ typedef struct _CDSetMember {
     CDPointer            value;
 } CDSetMember;
 
-typedef bool         (*CDSetCompare) (const CDPointer a, const CDPointer b);
-typedef unsigned int (*CDSetHash)    (const CDPointer pointer);
-typedef void         (*CDSetApply)   (const CDPointer value, CDPointer context);
+struct _CDSet;
+
+typedef bool         (*CDSetCompare) (struct _CDSet* self, CDPointer a, CDPointer b);
+typedef unsigned int (*CDSetHash)    (struct _CDSet* self, CDPointer pointer);
 
 typedef struct _CDSet {
     size_t       length;
@@ -33,6 +34,8 @@ typedef struct _CDSet {
 
     CDSetMember** buckets;
 } CDSet;
+
+typedef void (*CDSetApply) (CDSet* self, CDPointer value, CDPointer context);
 
 /**
  * Allocate and create a new Set
@@ -64,14 +67,14 @@ int CD_SetLength (CDSet* self);
  *
  * @return true if member exists, false otherwise
  */
-bool CD_SetHas (CDSet* self, const CDPointer member);
+bool CD_SetHas (CDSet* self, CDPointer member);
 
 /**
  * Add a member to the Set
  *
  * @param member pointer to a member
  */
-void CD_SetPut (CDSet* self, const CDPointer member);
+void CD_SetPut (CDSet* self, CDPointer member);
 
 /**
  * Remove a member from the set
@@ -80,14 +83,14 @@ void CD_SetPut (CDSet* self, const CDPointer member);
  *
  * @return pointer to the removed member
  */
-CDPointer CD_SetDelete (CDSet* self, const CDPointer member);
+CDPointer CD_SetDelete (CDSet* self, CDPointer member);
 
 /**
  * Apply a function to all members of the Set
  *
  * @param apply function to apply to the set
  */
-void CD_SetMap (CDSet* set, void (apply) (const CDPointer member, CDPointer cl), CDPointer cl);
+void CD_SetMap (CDSet* set, CDSetApply apply, CDPointer context);
 
 /**
  * Create a C array of the Set members
