@@ -524,6 +524,9 @@ CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
     CD_InsertString(self, end, b);
     CD_InsertString(self, start, a);
 
+    CD_DestroyString(start);
+    CD_DestroyString(end);
+
     return self;
 }
 

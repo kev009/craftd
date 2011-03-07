@@ -121,6 +121,12 @@ CD_DestroyPacketData (CDPacket* self)
                     MC_DestroyString(packet->response.hash);
                 } break;
 
+                case CDChat: {
+                    CDPacketChat* packet = (CDPacketChat*) self->data;
+
+                    MC_DestroyString(packet->request.message);
+                } break;
+
                 case CDNamedEntitySpawn: {
                     CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
 
