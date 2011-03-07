@@ -119,6 +119,13 @@ cdbase_chunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 
 static
 void
+cdbase_chunkMemberFree (CDSet* self, MCPosition* coord, CDPointer unused)
+{
+    CD_free((void*)coord);
+}
+
+static
+void
 cdbase_chunkRadiusLoad (CDSet* self, MCPosition* coord, CDPlayer* player)
 {
     cdbase_sendChunk(player->server, player, coord);
@@ -410,7 +417,10 @@ static
 bool
 cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 {
-    CD_DestroySet((CDSet*) CD_HashGet(PRIVATE(player), "Player.loadedChunks"));
+    CDSet* chunkset = (CDSet*)CD_HashGet(PRIVATE(player), "Player.loadedChunks");
+
+    CD_SetMap(chunkset, (CDSetApply) cdbase_chunkMemberFree, CDNull);
+    CD_DestroySet(chunkset);
 
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)));
