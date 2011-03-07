@@ -57,8 +57,6 @@ CD_CreatePlugins (struct _CDServer* server)
 void
 CD_DestroyPlugins (CDPlugins* self)
 {
-    lt_dlexit();
-
     CD_HASH_FOREACH(self->items, it) {
         CD_DestroyPlugin((CDPlugin*) CD_HashIteratorValue(it));
     }
@@ -66,6 +64,8 @@ CD_DestroyPlugins (CDPlugins* self)
     CD_DestroyHash(self->items);
 
     CD_free(self);
+
+    lt_dlexit();
 }
 
 bool

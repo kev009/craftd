@@ -27,6 +27,7 @@
 #include <craftd/Server.h>
 #include <craftd/Logger.h>
 #include <craftd/version.h>
+#include <signal.h>
 
 /**
  * Try and perform cleanup with an atexit call
@@ -36,6 +37,10 @@ cd_ExitHandler (void)
 {
     LOG(LOG_INFO, "Exiting.");
     LOG_CLOSE();
+
+    if (CDMainServer) {
+        CD_DestroyServer(CDMainServer);
+    }
 }
 
 int
@@ -129,6 +134,8 @@ main (int argc, char** argv)
     if (debugging) {
         evthread_enable_lock_debuging();
     }
+
+    signal(SIGINT, (void (*)(int)) cd_ExitHandler);
 
     CDMainServer = server = CD_CreateServer(config);
 

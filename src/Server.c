@@ -73,6 +73,24 @@ CD_DestroyServer (CDServer* self)
 {
     assert(self);
 
+    CD_HASH_FOREACH(self->players, it) {
+        CD_ServerKick(self, (CDPlayer*) CD_HashIteratorValue(it), CD_CreateStringFromCString("shutting down"));
+    }
+
+    self->running = false;
+
+    event_base_loopbreak(self->event.base);
+
+    if (self->event.base) {
+        event_base_free(self->event.base);
+        self->event.base = NULL;
+    }
+
+    if (self->event.listener) {
+        event_free(self->event.listener);
+        self->event.listener = NULL;
+    }
+
     if (self->config) {
         CD_DestroyConfig(self->config);
     }
@@ -89,15 +107,6 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(it));
     }
 
-    if (self->event.base) {
-        event_base_free(self->event.base);
-        self->event.base = NULL;
-    }
-
-    if (self->event.listener) {
-        event_free(self->event.listener);
-        self->event.listener = NULL;
-    }
 
     if (self->event.callbacks) {
         CD_DestroyHash(self->event.callbacks);
