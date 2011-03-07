@@ -113,7 +113,7 @@ CD_CreateString (void)
 CDString*
 CD_CreateStringFromCString (const char* string)
 {
-    CDString* self = CD_CreateString();
+    CDString* self = CD_malloc(sizeof(CDString));
 
     assert(self);
 
@@ -133,7 +133,7 @@ CD_CreateStringFromCString (const char* string)
 
     self->external = true;
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -150,7 +150,7 @@ CD_CreateStringFromCStringCopy (const char* string)
 
     assert(self->raw);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -171,7 +171,7 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
     self->raw->mlen = length;
     self->raw->slen = length;
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -188,7 +188,7 @@ CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
 
     assert(self->raw);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -215,7 +215,7 @@ CD_CreateStringFromFormatList (const char* format, va_list ap)
 
     bvcformata(self->raw, 9001, format, ap);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -237,9 +237,10 @@ CD_CreateStringFromOffset (CDString* self, int offset, int limit)
         data += cd_UTF8_offset((const char*) self->raw->data, offset);
     }
 
-    self = CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
+    self           = CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
+    self->external = false;
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    cd_UpdateLength(self);
 
     return self;
 }
@@ -254,7 +255,7 @@ CD_CloneString (CDString* self)
 
     assert(cloned->raw);
 
-    cloned->length = cd_UTF8_strlen(CD_StringContent(cloned));
+    cd_UpdateLength(cloned);
 
     return cloned;
 }
@@ -366,6 +367,10 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
 {
     assert(self);
 
+    if (self->external) {
+        return NULL;
+    }
+
     size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
 
     if (breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0') == BSTR_OK) {
@@ -384,6 +389,10 @@ CD_InsertString (CDString* self, CDString* insert, size_t position)
     assert(self);
     assert(insert);
 
+    if (self->external) {
+        return NULL;
+    }
+
     if (binsert(self->raw, cd_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
     }
@@ -400,6 +409,10 @@ CD_AppendString (CDString* self, CDString* append)
     assert(self);
     assert(append);
 
+    if (self->external) {
+        return NULL;
+    }
+
     if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
     }
@@ -415,6 +428,10 @@ CD_AppendCString (CDString* self, const char* append)
 {
     assert(self);
     assert(append);
+
+    if (self->external) {
+        return NULL;
+    }
 
     CDString* tmp = CD_CreateStringFromCString(append);
 
@@ -493,6 +510,10 @@ CD_StringEndWith (CDString* self, const char* check)
 CDString*
 CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
 {
+    if (self->external) {
+        return NULL;
+    }
+
     CDString* start = CD_CreateStringFromFormat("§%x", color);
     CDString* end   = CD_CreateStringFromFormat("§%x", CDColorWhite);
 
