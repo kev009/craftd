@@ -115,6 +115,13 @@ CD_DestroyPacketData (CDPacket* self)
 
         case CDResponse: {
             switch (self->type) {
+                case CDLogin: {
+                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+
+                    MC_DestroyString(packet->response.serverName);
+                    MC_DestroyString(packet->response.motd);
+                } break;
+
                 case CDHandshake: {
                     CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
 

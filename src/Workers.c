@@ -71,7 +71,7 @@ CD_DestroyWorkers (CDWorkers* self)
 CDWorker**
 CD_SpawnWorkers (CDWorkers* self, size_t number)
 {
-    CDWorker** result = CD_malloc(sizeof(CDWorker*) * number);
+    CDWorker** result = CD_malloc(sizeof(CDWorker*) * (number + 1));
 
     for (size_t i = 0; i < number; i++) {
         result[i]          = CD_CreateWorker(self->server);
@@ -83,6 +83,8 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
             SERR(self->server, "worker pool startup failed!");
         }
     }
+
+    result[number] = NULL;
 
     CD_ConcatWorkers(self, result, number);
 

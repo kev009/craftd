@@ -337,7 +337,7 @@ CD_RunServer (CDServer* self)
         SLOG(self, LOG_INFO, "server can host max %d players", self->config->cache.game.players.max);
     }
 
-    CD_SpawnWorkers(self->workers, self->config->cache.workers);
+    CD_free(CD_SpawnWorkers(self->workers, self->config->cache.workers));
 
     // Start the TimeLoop for timed events
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
@@ -366,7 +366,7 @@ CD_RunServer (CDServer* self)
                 CD_DestroyPlayer(player);
             }
 
-            CD_ListClear(self->disconnecting);
+            CD_free(CD_ListClear(self->disconnecting));
         }
     }
 
