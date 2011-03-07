@@ -226,7 +226,8 @@ cdtest_List_push (void* data)
 void
 cdtest_List_foreach (void* data)
 {
-    CDList* list = CD_CreateList();
+    CDList* list  = CD_CreateList();
+    int     total = 0;
 
     CD_ListPush(list, 23);
     CD_ListPush(list, 42);
@@ -235,13 +236,15 @@ cdtest_List_foreach (void* data)
 
     CD_LIST_FOREACH(list, it) {
         switch (CD_ListIteratorValue(it)) {
-            case 23: case 42: case 9001: case 911: break;
+            case 23: case 42: case 9001: case 911: total += CD_ListIteratorValue(it); break;
 
             default: {
                 tt_abort_msg("Unknown value in list");
             }
         }
     }
+
+    tt_int_op(total, ==, 23 + 42 + 9001 + 911);
 
     end: {
         CD_DestroyList(list);
@@ -258,7 +261,7 @@ cdtest_List_clear (void* data)
     CD_ListPush(list, 9001);
     CD_ListPush(list, 911);
 
-    CD_ListClear(list);
+    CD_free(CD_ListClear(list));
 
     tt_int_op(CD_ListLength(list), ==, 0);
 

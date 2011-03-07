@@ -154,7 +154,7 @@ CD_ListEnd (CDList* self)
 
     assert(self);
 
-    it.raw    = self->tail;
+    it.raw    = CDNull;
     it.parent = self;
 
     return it;
