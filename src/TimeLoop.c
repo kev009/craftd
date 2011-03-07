@@ -61,6 +61,7 @@ CD_CreateTimeLoop (struct _CDServer* server)
 void
 CD_DestroyTimeLoop (CDTimeLoop* self)
 {
+    event_base_loopbreak(self->event.base);
     event_base_free(self->event.base);
 
     CD_DestroyMap(self->callbacks);
@@ -73,7 +74,7 @@ CD_DestroyTimeLoop (CDTimeLoop* self)
 bool
 CD_RunTimeLoop (CDTimeLoop* self)
 {
-    return event_base_dispatch(self->event.base);
+    return event_base_loop(self->event.base, 0);
 }
 
 int

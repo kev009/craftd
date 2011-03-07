@@ -58,7 +58,7 @@ CD_DestroyJobData (CDJob* self)
 
         case CDPlayerProcessJob: {
             CD_DestroyPacket(((CDPlayerProcessJobData*) self->data)->packet);
-            CD_free(self->data);
+            CD_free((void*) self->data);
         } break;
     }
 }

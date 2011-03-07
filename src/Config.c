@@ -167,7 +167,7 @@ void
 CD_DestroyConfig (CDConfig* self)
 {
     if (self->data) {
-        json_decref(self->data);
+        json_delete(self->data);
     }
 
     CD_free(self);

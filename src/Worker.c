@@ -50,9 +50,9 @@ CD_DestroyWorker (CDWorker* self)
 {
     assert(self);
 
-    if (self->thread && self->working) {
+    if (self->thread) {
         self->working = false;
-        pthread_cancel(self->thread);
+        pthread_join(self->thread, NULL);
     }
 
     if (self->job) {
@@ -186,8 +186,6 @@ CD_RunWorker (CDWorker* self)
             }
         }
     }
-
-    SLOG(self->server, LOG_INFO, "worker %d stopped", self->id);
 
     return NULL;
 }

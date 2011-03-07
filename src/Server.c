@@ -30,8 +30,18 @@
 #include <craftd/common.h>
 #include <craftd/Player.h>
 #include <craftd/PacketLength.h>
+#include <signal.h>
 
 CDServer* CDMainServer = NULL;
+
+static
+void
+cd_HandleSignal (evutil_socket_t fd, short what, CDServer* self)
+{
+    self->running = false;
+
+    CD_ServerFlush(self);
+}
 
 CDServer*
 CD_CreateServer (const char* path)
@@ -73,9 +83,15 @@ CD_DestroyServer (CDServer* self)
 {
     assert(self);
 
+    if (self->plugins) {
+        CD_DestroyPlugins(self->plugins);
+    }
+
     CD_HASH_FOREACH(self->players, it) {
         CD_ServerKick(self, (CDPlayer*) CD_HashIteratorValue(it), CD_CreateStringFromCString("shutting down"));
     }
+
+    CD_DestroyTimeLoop(self->timeloop);
 
     self->running = false;
 
@@ -91,6 +107,7 @@ CD_DestroyServer (CDServer* self)
         self->event.listener = NULL;
     }
 
+
     if (self->config) {
         CD_DestroyConfig(self->config);
     }
@@ -99,14 +116,9 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyWorkers(self->workers);
     }
 
-    if (self->plugins) {
-        CD_DestroyPlugins(self->plugins);
-    }
-
     CD_HASH_FOREACH(self->players, it) {
         CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(it));
     }
-
 
     if (self->event.callbacks) {
         CD_DestroyHash(self->event.callbacks);
@@ -313,6 +325,8 @@ CD_RunServer (CDServer* self)
 
         return false;
     }
+
+    event_add(evsignal_new(self->event.base, SIGINT, (event_callback_fn) cd_HandleSignal, self), NULL);
 
     if ((self->socket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         SERR(self, "could not create socket: %s", strerror(-self->socket));

@@ -55,10 +55,22 @@ CD_DestroyWorkers (CDWorkers* self)
     assert(self);
 
     for (size_t i = 0; i < self->length; i++) {
+        self->item[i]->working = false;
+    }
+
+    pthread_mutex_lock(&self->lock.mutex);
+    pthread_cond_signal(&self->lock.condition);
+    pthread_mutex_unlock(&self->lock.mutex);
+
+    for (size_t i = 0; i < self->length; i++) {
         CD_DestroyWorker(self->item[i]);
     }
 
     CD_free(self->item);
+
+    CD_LIST_FOREACH(self->jobs, it) {
+        CD_DestroyJob((CDJob*) CD_ListIteratorValue(it));
+    }
 
     CD_DestroyList(self->jobs);
 

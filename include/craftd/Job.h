@@ -70,6 +70,8 @@ CDJob* CD_CreateJob (CDJobType type, CDPointer data);
 
 void CD_DestroyJob (CDJob* job);
 
+void CD_DestroyJobData (CDJob* job);
+
 CDPointer CD_DestroyJobKeepData (CDJob* job);
 
 CDCustomJobData* CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data);
