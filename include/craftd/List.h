@@ -27,17 +27,20 @@
 #define CRAFTD_LIST_H
 
 #include <craftd/common.h>
-#include <craftd/klib/klist.h>
 
-#define __cdList_free(x)
+typedef struct _CDListItem {
+    struct _CDListItem* next;
+    struct _CDListItem* prev;
 
-KLIST_INIT(cdList, CDPointer, __cdList_free);
+    CDPointer value;
+} CDListItem;
 
 /**
  * The List class.
  */
 typedef struct _CDList {
-    klist_t(cdList)* raw;
+    CDListItem* head;
+    CDListItem* tail;
 
     size_t length;
     bool   changed;
@@ -46,8 +49,8 @@ typedef struct _CDList {
 } CDList;
 
 typedef struct _CDListIterator {
-    kliter_t(cdList)* raw;
-    CDList*           parent;
+    CDListItem* raw;
+    CDList*     parent;
 } CDListIterator;
 
 /**
@@ -96,6 +99,15 @@ CDListIterator CD_ListEnd (CDList* self);
  * @return The iterator to the next element
  */
 CDListIterator CD_ListNext (CDListIterator it);
+
+/**
+ * Get the prev iterator with content, it automagically jumps empty buckets.
+ *
+ * @param iterator The iterator to the current position
+ *
+ * @return The iterator to the prev element
+ */
+CDListIterator CD_ListPrev (CDListIterator it);
 
 /**
  * Get the number of elements in the List
