@@ -389,6 +389,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 cdbase_sendChunkRadius(player, &area, 10);
             }
 
+            player->entity.position = data->request.position;
 
         } break;
 
@@ -453,7 +454,7 @@ CD_PluginInitialize (CDPlugin* self)
 extern
 bool
 CD_PluginFinalize (CDPlugin* self)
-{ 
+{
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeIncrease"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
