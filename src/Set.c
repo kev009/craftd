@@ -105,8 +105,7 @@ CD_DestroySet (CDSet* self)
         }
     }
 
-    // FIXME: this seems to be double free'd, maybe the stuff above frees it?
-    // CD_free(self);
+    CD_free(self);
 }
 
 bool
