@@ -247,16 +247,10 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             if (CD_StringStartWith(data->request.message, "/")) {
-
+                CD_EventDispatch(server, "Player.command", player, data->request.message);
             }
             else {
-                SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
-                        CD_StringContent(data->request.message));
-
-                // TODO: Area chat instead of global
-                CD_ServerBroadcast(server, CD_CreateStringFromFormat("<%s> %s",
-                    CD_StringContent(player->username),
-                    CD_StringContent(data->request.message)));
+                CD_EventDispatch(server, "Player.chat", player, data->request.message);
             }
         } break;
 
@@ -294,10 +288,14 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
 static
 bool
-cdbase_HandleLogin (CDServer* server, CDPlayer* player)
+cdbase_HandleLogin (CDServer* server, CDPlayer* player, int status)
 {
-    CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has joined the game",
-                CD_StringContent(player->username)));
+    if (!status) {
+        return true;
+    }
+
+    CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("%s has joined the game",
+                CD_StringContent(player->username)), CDColorYellow));
 
     return true;
 }
@@ -308,6 +306,28 @@ cdbase_HandleDisconnect (CDServer* server, CDPlayer* player)
 {
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)));
+
+    return true;
+}
+
+static
+bool
+cdbase_HandleCommand (CDServer* server, CDPlayer* player, CDString* command, CDString* parameters)
+{
+    return true;
+}
+
+static
+bool
+cdbase_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
+{
+    SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
+            CD_StringContent(message));
+
+    // TODO: Area chat instead of global
+    CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("<%s> %s",
+        CD_StringContent(player->username),
+        CD_StringContent(message)), CDColorYellow));
 
     return true;
 }
@@ -329,6 +349,9 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "Player.login", cdbase_HandleLogin);
     CD_EventRegister(self->server, "Player.disconnect", cdbase_HandleDisconnect);
 
+    CD_EventRegister(self->server, "Player.command", cdbase_HandleCommand);
+    CD_EventRegister(self->server, "Player.chat", cdbase_HandleChat);
+
     return true;
 }
 
@@ -341,6 +364,12 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_HashGet(PRIVATE(self), "Event.keepAlive"));
 
     CD_EventUnregister(self->server, "Player.process", cdbase_PlayerProcess);
+
+    CD_EventUnregister(self->server, "Player.login", cdbase_HandleLogin);
+    CD_EventUnregister(self->server, "Player.disconnect", cdbase_HandleDisconnect);
+
+    CD_EventUnregister(self->server, "Player.command", cdbase_HandleCommand);
+    CD_EventUnregister(self->server, "Player.chat", cdbase_HandleChat);
 
     pthread_mutex_destroy(&lock.login);
 

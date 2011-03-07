@@ -31,6 +31,25 @@
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 
+typedef enum _CDStringColor {
+    CDColorBlack,
+    CDColorDarkBlue,
+    CDColorDarkGreen,
+    CDColorDarkCyan,
+    CDColorDarkRed,
+    CDColorPurple,
+    CDColorGold,
+    CDColorGray,
+    CDColorDarkGray,
+    CDColorBlue,
+    CDColorLightGreen,
+    CDColorCyan,
+    CDColorRed,
+    CDColorPink,
+    CDColorYellow,
+    CDColorWhite
+} CDStringColor;
+
 #ifndef CRAFTD_STRING_IGNORE_EXTERN
 extern const char* MCCharset;
 #endif
@@ -217,5 +236,9 @@ bool CD_StringStartWith (CDString* self, const char* check);
  * @return true if it ends with it, false otherwise
  */
 bool CD_StringEndWith (CDString* self, const char* check);
+
+CDString* CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b);
+
+CDString* CD_StringColor (CDString* self, CDStringColor color);
 
 #endif

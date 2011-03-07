@@ -85,6 +85,15 @@ cd_UTF8_offset (const char* data, size_t offset)
     return result;
 }
 
+static
+void
+cd_UpdateLength (CDString* self)
+{
+    assert(self);
+
+    self->length = cd_UTF8_strlen(CD_StringContent(self));
+}
+
 CDString*
 CD_CreateString (void)
 {
@@ -97,8 +106,6 @@ CD_CreateString (void)
     self->external = false;
 
     assert(self->raw);
-
-    self->length = 0;
 
     return self;
 }
@@ -341,6 +348,8 @@ CD_StringSanitizeForMinecraft (CDString* self)
         CD_DestroyString(ch);
     }
 
+    cd_UpdateLength(self);
+
     return result;
 }
 
@@ -360,11 +369,29 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
     size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
 
     if (breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0') == BSTR_OK) {
-        return self;
+        cd_UpdateLength(self);
     }
     else {
-        return NULL;
+        self = NULL;
     }
+
+    return self;
+}
+
+CDString*
+CD_InsertString (CDString* self, CDString* insert, size_t position)
+{
+    assert(self);
+    assert(insert);
+
+    if (binsert(self->raw, cd_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
+        cd_UpdateLength(self);
+    }
+    else {
+        self = NULL;
+    }
+
+    return self;
 }
 
 CDString*
@@ -374,11 +401,13 @@ CD_AppendString (CDString* self, CDString* append)
     assert(append);
 
     if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
-        return self;
+        cd_UpdateLength(self);
     }
     else {
-        return NULL;
+        self = NULL;
     }
+
+    return self;
 }
 
 CDString*
@@ -449,16 +478,40 @@ CD_StringBlank (CDString* self)
     return true;
 }
 
-// TODO: itself
 bool
 CD_StringStartWith (CDString* self, const char* check)
 {
-    return false;
+    return strncmp(CD_StringContent(self), check, strlen(check)) == 0;
 }
 
-// TODO: itself
 bool
 CD_StringEndWith (CDString* self, const char* check)
 {
-    return false;
+    return strncmp(CD_StringContent(self) + strlen(check), check, strlen(check));
+}
+
+CDString*
+CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
+{
+    CDString* start = CD_CreateStringFromFormat("§%x", color);
+    CDString* end   = CD_CreateStringFromFormat("§%x", CDColorWhite);
+
+    assert(self);
+    assert(a < b);
+    assert(a >= 0 && b <= CD_StringLength(self));
+
+    CD_InsertString(self, end, b);
+    CD_InsertString(self, start, a);
+
+    printf("%s\n", CD_StringContent(self));
+
+    return self;
+}
+
+CDString*
+CD_StringColor (CDString* self, CDStringColor color)
+{
+    assert(self);
+
+    return CD_StringColorRange(self, color, 0, CD_StringLength(self));
 }
