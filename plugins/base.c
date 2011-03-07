@@ -106,8 +106,8 @@ cdbase_chunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 {
     CD_PACKET_DO {
         CDPacketPreChunk pkt;
-        pkt.response.x    = CD_WORLD_COORD(coord->x);
-        pkt.response.z    = CD_WORLD_COORD(coord->z);
+        pkt.response.x    = coord->x;
+        pkt.response.z    = coord->z;
         pkt.response.mode = false;
 
         CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
@@ -361,7 +361,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             int newz = CD_Div(data->request.position.z, 16);
             MCPosition area = { newx, 0, newz };
 
-            if ( newx != CD_Div(player->entity.position.x, 16) &&
+            if ( newx != CD_Div(player->entity.position.x, 16) ||
                  newz != CD_Div(player->entity.position.z, 16))
             {
                 cdbase_sendChunkRadius(player, &area, 10);
