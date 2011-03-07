@@ -43,6 +43,14 @@ CD_DestroyJob (CDJob* self)
 {
     assert(self);
 
+    CD_DestroyJobData(self);
+
+    CD_free(self);
+}
+
+void
+CD_DestroyJobData (CDJob* self)
+{
     switch (self->type) {
         case CDCustomJob: {
             CD_free((CDCustomJobData*) self->data);
@@ -50,10 +58,9 @@ CD_DestroyJob (CDJob* self)
 
         case CDPlayerProcessJob: {
             CD_DestroyPacket(((CDPlayerProcessJobData*) self->data)->packet);
+            CD_free(self->data);
         } break;
     }
-
-    CD_free(self);
 }
 
 CDPointer
