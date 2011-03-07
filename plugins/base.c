@@ -152,6 +152,8 @@ cdbase_sendChunkRadius (CDPlayer* player, MCPosition* area, int radius)
     CD_SetMap(toRemove, (CDSetApply) cdbase_chunkRadiusUnload, (CDPointer) player);
     CD_SetMap(toAdd, (CDSetApply) cdbase_chunkRadiusLoad, (CDPointer) player);
 
+    CD_DestroySet(toRemove);
+    CD_DestroySet(toAdd);
     CD_DestroySet(oldChunks);
 
     CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) newChunks);
