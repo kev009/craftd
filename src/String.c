@@ -503,8 +503,6 @@ CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
     CD_InsertString(self, end, b);
     CD_InsertString(self, start, a);
 
-    printf("%s\n", CD_StringContent(self));
-
     return self;
 }
 
