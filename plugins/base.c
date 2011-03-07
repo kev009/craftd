@@ -114,6 +114,7 @@ cdbase_chunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 
         CD_PlayerSendPacketAndCleanData(player, &response);
     }
+    CD_free((void*)coord);
 }
 
 static
