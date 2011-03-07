@@ -124,7 +124,7 @@ cdbase_chunkRadiusUnload(const CDPointer coordptr, const CDPointer player)
         CD_PlayerSendPacketAndCleanData((CDPlayer*) player, &response);
     }
 
-    CD_free((void *)coordptr);
+  //  CD_free((void *)coordptr);
 }
 
 static
@@ -282,7 +282,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 return false;
             }
 
-            // Hack in a square send for now
+            // Hack in a square send for login
             for ( int i = -7; i < 8; i++)
             {
                 for ( int j = -7; j < 8; j++)
@@ -446,7 +446,7 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
 
     CD_EventRegister(self->server, "Player.login", cdbase_HandleLogin);
-    CD_EventRegister(self->server, "Player.disconnect", cdbase_HandleDisconnect);
+    CD_EventRegister(self->server, "Player.logout", cdbase_HandleDisconnect); // FIXME: add proper disconnect handler
 
     return true;
 }
