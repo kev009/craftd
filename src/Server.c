@@ -111,7 +111,6 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyConfig(self->config);
     }
 
-
     if (self->event.callbacks) {
         CD_DestroyHash(self->event.callbacks);
     }
@@ -380,6 +379,8 @@ CD_StopServer (CDServer* self)
     self->running = false;
 
     CD_ServerFlush(self, true);
+
+    return true;
 }
 
 void

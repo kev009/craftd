@@ -118,7 +118,7 @@ bool CD_StopServer (CDServer* self);
 
 void CD_ServerFlush (CDServer* self, bool now);
 
-void CD_ServerCleanDisconnects(self);
+void CD_ServerCleanDisconnects (CDServer* self);
 
 void CD_ReadFromPlayer (CDPlayer* player);
 
