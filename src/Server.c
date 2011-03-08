@@ -97,14 +97,14 @@ CD_DestroyServer (CDServer* self)
 
     CD_DestroyTimeLoop(self->timeloop);
 
-    if (self->event.base) {
-        event_base_free(self->event.base);
-        self->event.base = NULL;
-    }
-
     if (self->event.listener) {
         event_free(self->event.listener);
         self->event.listener = NULL;
+    }
+
+    if (self->event.base) {
+        event_base_free(self->event.base);
+        self->event.base = NULL;
     }
 
     if (self->config) {
