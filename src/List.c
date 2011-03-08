@@ -27,7 +27,7 @@
 #include <craftd/List.h>
 
 static
-char
+int8_t
 cd_ListCompare (CDPointer a, CDPointer b)
 {
     if (a > b) {
@@ -38,6 +38,83 @@ cd_ListCompare (CDPointer a, CDPointer b)
     }
     else {
         return 0;
+    }
+}
+
+static
+CDListItem*
+cd_ListCreateItem (CDPointer data)
+{
+    CDListItem* item = (CDListItem*) CD_malloc(sizeof(CDListItem));
+
+    assert(item);
+
+    item->next  = NULL;
+    item->prev  = NULL;
+    item->value = data;
+
+    return item;
+}
+
+static
+void
+cd_ListInsertSorted (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    CDListItem* item = cd_ListCreateItem(data);
+
+    assert(self);
+
+    if (self->head == NULL) {
+        self->head = item;
+        self->tail = item;
+    }
+    else if (callback(data, self->head->value) <= 0) {
+        item->next       = self->head;
+        self->head->prev = item;
+        self->head       = item;
+    }
+    else {
+        CDListItem* walker = self->head;
+
+        while (walker->next) {
+            if (callback(data, walker->next->value) <= 0) {
+                item->next = walker->next;
+                item->prev = walker;
+                walker->next->prev = item;
+                walker->next = item;
+                walker = NULL;
+                break;
+            }
+
+            walker = walker->next;
+        }
+
+        if (walker != NULL) {
+            item->prev = walker;
+            walker->next = item;
+        }
+    }
+
+    self->changed = true;
+}
+
+static
+void
+cd_ListSortInsert (CDList* self, CDListCompareCallback callback)
+{
+    CDListItem* walker = self->head;
+
+    self->head = NULL;
+    self->tail = NULL;
+
+    while (walker) {
+        CDListItem* toDestroy = walker;
+
+        cd_ListInsertSorted(self, walker->value, callback);
+
+        walker = walker->next;
+
+        CD_free(toDestroy);
     }
 }
 
@@ -326,6 +403,35 @@ CD_ListLast (CDList* self)
     return result;
 }
 
+CDList *
+CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    pthread_rwlock_wrlock(&self->lock);
+
+    cd_ListInsertSorted(self, data, callback);
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return self;
+}
+
+CDList *
+CD_ListSort (CDList* self, CDListSortAlgorithm algorithm, CDListCompareCallback callback)
+{
+    pthread_rwlock_wrlock(&self->lock);
+
+    switch (algorithm) {
+        case CDSortInsert: {
+            cd_ListSortInsert(self, callback);
+        } break;
+    }
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return self;
+}
+
+
 CDPointer
 CD_ListDelete (CDList* self, CDPointer data)
 {
@@ -353,7 +459,7 @@ CD_ListDeleteIf (CDList* self, CDPointer data, CDListCompareCallback callback)
 
     pthread_rwlock_wrlock(&self->lock);
 
-    result = cd_ListDelete(self, data, cd_ListCompare);
+    result = cd_ListDelete(self, data, callback);
 
     pthread_rwlock_unlock(&self->lock);
 

@@ -53,7 +53,12 @@ typedef struct _CDListIterator {
     CDList*     parent;
 } CDListIterator;
 
-typedef bool (*CDListCompareCallback) (CDPointer a, CDPointer b);
+/* Sorting the list */
+typedef enum _CDListSortAlgorithm {
+    CDSortInsert
+} CDListSortAlgorithm;
+
+typedef int8_t (*CDListCompareCallback) (CDPointer a, CDPointer b);
 
 /**
  * Create a List object
@@ -147,6 +152,24 @@ CDList* CD_ListPush (CDList* self, CDPointer data);
  * @return The shifted value
  */
 CDPointer CD_ListShift (CDList* self);
+
+/**
+ * Insert the data sorted in the list. Please only use with alread sorted
+ * list (e.g. A list where item are only inserted using this function or after a
+ * call to CD_ListSort()
+ *
+ * @parameter data the data that needs to be inserted in the list
+ * @parameter callback a strcmp like callback function
+ */
+CDList* CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback callback);
+
+/**
+ * Sorts the provided list using the algorith specified in the parameters
+ *
+ * @parameter algorithm The algorithm to use when sorting the list.
+ * @parameter callback a strcmp like callback function
+ */
+CDList* CD_ListSort (CDList* self, CDListSortAlgorithm algorithm, CDListCompareCallback callback);
 
 /**
  * Delete the first value matching the passed one from the List.

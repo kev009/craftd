@@ -268,13 +268,72 @@ cdtest_List_clear (void* data)
     end: {
         CD_DestroyList(list);
     }
+}
 
+static
+int8_t
+cdtest_ListCompare (CDPointer a, CDPointer b)
+{
+    if (a < b) {
+        return -1;
+    }
+    else if (a > b) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+void
+cdtest_List_sort (void* data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListPush(list, 30);
+    CD_ListPush(list, 40);
+    CD_ListPush(list, 20);
+    CD_ListPush(list, 10);
+
+    CD_ListSort(list, CDSortInsert, cdtest_ListCompare);
+
+    tt_int_op(CD_ListShift(list), ==, 10);
+    tt_int_op(CD_ListShift(list), ==, 20);
+    tt_int_op(CD_ListShift(list), ==, 30);
+    tt_int_op(CD_ListShift(list), ==, 40);
+
+    end: {
+        CD_DestroyList(list);
+    }
+}
+
+void
+cdtest_List_insertSorted (void *data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListSortedPush(list, 30, cdtest_ListCompare);
+    CD_ListSortedPush(list, 10, cdtest_ListCompare);
+    CD_ListSortedPush(list, 40, cdtest_ListCompare);
+    CD_ListSortedPush(list, 20, cdtest_ListCompare);
+
+    tt_int_op(CD_ListShift(list), ==, 10);
+    tt_int_op(CD_ListShift(list), ==, 20);
+    tt_int_op(CD_ListShift(list), ==, 30);
+    tt_int_op(CD_ListShift(list), ==, 40);
+
+    end: {
+        CD_DestroyList(list);
+    }
 }
 
 struct testcase_t cd_utils_List_tests[] = {
     { "push", cdtest_List_push, },
     { "foreach", cdtest_List_foreach, },
     { "clear", cdtest_List_clear, },
+    { "sort", cdtest_List_sort, },
+    { "insert sorted", cdtest_List_insertSorted, },
+
 
     END_OF_TESTCASES
 };
