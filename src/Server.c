@@ -87,6 +87,8 @@ CD_DestroyServer (CDServer* self)
         CD_ServerKick(self, (CDPlayer*) CD_HashIteratorValue(it), CD_CreateStringFromCString("shutting down"));
     }
 
+    CD_DestroyMap(self->entities);
+
     if (self->workers) {
         CD_DestroyWorkers(self->workers);
     }

@@ -65,6 +65,8 @@ CD_DestroyWorker (CDWorker* self)
 bool
 CD_RunWorker (CDWorker* self)
 {
+    assert(self);
+
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
