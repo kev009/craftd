@@ -129,61 +129,6 @@ void CD_ReadFromPlayer (CDPlayer* player);
  */
 MCEntityId CD_ServerGenerateEntityId (CDServer* self);
 
-typedef bool (*CDEventCallback)();
-
-bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
-
-bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
-
-/**
- * Dispatch an event with the given name and the given parameters.
- *
- * Pay attention to the parameters you pass, those go on the stack and passing float/double
- * could get them borked. Pointers are always safe to pass.
- *
- * @param eventName The name of the event to dispatch
- */
-#define CD_EventDispatch(self, eventName, ...)                                          \
-    do {                                                                                \
-        assert(self);                                                                   \
-        assert(eventName);                                                              \
-                                                                                        \
-        if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__)) {                  \
-            break;                                                                      \
-        }                                                                               \
-                                                                                        \
-        CDList* __callbacks__ = (CDList*) CD_HashGet(self->event.callbacks, eventName); \
-                                                                                        \
-        CD_LIST_FOREACH(__callbacks__, it) {                                            \
-            if (!CD_ListIteratorValue(it)) {                                            \
-                continue;                                                               \
-            }                                                                           \
-                                                                                        \
-            if (!((CDEventCallback) CD_ListIteratorValue(it))(self, ##__VA_ARGS__)) {   \
-                break;                                                                  \
-            }                                                                           \
-        }                                                                               \
-                                                                                        \
-        cd_EventAfterDispatch(self, eventName, ##__VA_ARGS__);                          \
-    } while (0)
-
-/**
- * Register a callback for an event.
- *
- * @param eventName The name of the event
- * @param callback The callback to be added
- */
-void CD_EventRegister (CDServer* server, const char* eventName, CDEventCallback callback);
-
-/**
- * Unregister the event with the passed name, unregisters only the passed callback or every callback if NULL.
- *
- * @param callback The callback to unregister or NULL to unregister every callback
- *
- * @return The unregistered callbacks
- */
-CDEventCallback* CD_EventUnregister (CDServer* server, const char* eventName, CDEventCallback callback);
-
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN
 extern CDServer* CDMainServer;
 #endif
@@ -209,5 +154,7 @@ void CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason);
  * @param message The message to send
  */
 void CD_ServerBroadcast (CDServer* self, CDString* message);
+
+#include <craftd/Event.h>
 
 #endif

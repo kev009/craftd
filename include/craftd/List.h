@@ -53,6 +53,8 @@ typedef struct _CDListIterator {
     CDList*     parent;
 } CDListIterator;
 
+typedef bool (*CDListCompareCallback) (CDPointer a, CDPointer b);
+
 /**
  * Create a List object
  *
@@ -155,6 +157,8 @@ CDPointer CD_ListShift (CDList* self);
  */
 CDPointer CD_ListDelete (CDList* self, CDPointer data);
 
+CDPointer CD_ListDeleteIf (CDList* self, CDPointer data, CDListCompareCallback callback);
+
 /**
  * Delete all the items matching the passed one from the List.
  *
@@ -163,6 +167,8 @@ CDPointer CD_ListDelete (CDList* self, CDPointer data);
  * @return The reoved data
  */
 CDPointer CD_ListDeleteAll (CDList* self, CDPointer data);
+
+CDPointer CD_ListDeleteAllIf (CDList* self, CDPointer data, CDListCompareCallback callback);
 
 /**
  * Get the first element in the List.

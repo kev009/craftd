@@ -418,6 +418,8 @@ cdbase_HandleLogin (CDServer* server, CDPlayer* player, int status)
         return true;
     }
 
+    cdbase_TimeUpdate(NULL, NULL, server);
+
     CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("%s has joined the game",
                 CD_StringContent(player->username)), CDColorYellow));
 
@@ -431,13 +433,6 @@ static
 bool
 cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 {
-    CDSet* chunks = (CDSet*) CD_HashDelete(PRIVATE(player), "Player.loadedChunks");
-
-    if (chunks) {
-        CD_SetMap(chunks, (CDSetApply) cdbase_ChunkMemberFree, CDNull);
-        CD_DestroySet(chunks);
-    }
-
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)));
 
@@ -458,7 +453,6 @@ cdbase_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
     SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
             CD_StringContent(message));
 
-    // TODO: Area chat instead of global
     CD_ServerBroadcast(server, CD_CreateStringFromFormat("<%s> %s",
         CD_StringContent(player->username),
         CD_StringContent(message)));
@@ -481,7 +475,7 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "Player.process", cdbase_PlayerProcess);
 
     CD_EventRegister(self->server, "Player.login", cdbase_HandleLogin);
-    CD_EventRegister(self->server, "Player.logout", cdbase_HandleLogout); // FIXME: add proper disconnect handler
+    CD_EventRegister(self->server, "Player.logout", cdbase_HandleLogout);
 
     CD_EventRegister(self->server, "Player.command", cdbase_HandleCommand);
     CD_EventRegister(self->server, "Player.chat", cdbase_HandleChat);

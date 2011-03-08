@@ -26,8 +26,16 @@
 #include <craftd/common.h>
 #include <craftd/List.h>
 
-static CDPointer
-cd_listDelete (CDList* self, CDPointer data)
+static
+bool
+cd_ListCompare (CDPointer a, CDPointer b)
+{
+    return a == b;
+}
+
+static
+CDPointer
+cd_ListDelete (CDList* self, CDPointer data, CDListCompareCallback callback)
 {
     CDPointer result = CDNull;
 
@@ -37,7 +45,7 @@ cd_listDelete (CDList* self, CDPointer data)
         return CDNull;
     }
 
-    if (self->head->value == data) {
+    if (callback(data, self->head->value)) {
         CDListItem* item = self->head;
         result           = item->value;
         self->head       = item->next;
@@ -54,7 +62,7 @@ cd_listDelete (CDList* self, CDPointer data)
         CDListItem *item = self->head;
 
         while (item->next) {
-            if (item->next->value == data) {
+            if (callback(data, item->next->value)) {
                             result     = item->value;
                 CDListItem* toDelete   = item->next;
                             item->next = toDelete->next;
@@ -265,7 +273,7 @@ CD_ListShift (CDList* self)
         result = CDNull;
     }
     else {
-        result = cd_listDelete(self, self->head->value);
+        result = cd_ListDelete(self, self->head->value, cd_ListCompare);
     }
     self->changed = true;
 
@@ -320,14 +328,31 @@ CD_ListDelete (CDList* self, CDPointer data)
 
     pthread_rwlock_wrlock(&self->lock);
 
-    result = cd_listDelete(self, data);
+    result = cd_ListDelete(self, data, cd_ListCompare);
 
     pthread_rwlock_unlock(&self->lock);
 
     return result;
 }
 
-/* This function will always return CDNull.... */
+CDPointer
+CD_ListDeleteIf (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    CDPointer result = CDNull;
+
+    assert(self);
+    assert(data);
+
+    pthread_rwlock_wrlock(&self->lock);
+
+    result = cd_ListDelete(self, data, cd_ListCompare);
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
+
 CDPointer
 CD_ListDeleteAll (CDList* self, CDPointer data)
 {
@@ -335,10 +360,10 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
 
     pthread_rwlock_wrlock(&self->lock);
 
-    result = cd_listDelete(self, data);
+    result = cd_ListDelete(self, data, cd_ListCompare);
 
     if (result) {
-        while (cd_listDelete(self, data) != CDNull ) {
+        while (cd_ListDelete(self, data, cd_ListCompare) != CDNull ) {
             continue;
         }
     }
@@ -347,6 +372,27 @@ CD_ListDeleteAll (CDList* self, CDPointer data)
 
     return result;
 }
+
+CDPointer
+CD_ListDeleteAllIf (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    CDPointer result = CDNull;
+
+    pthread_rwlock_wrlock(&self->lock);
+
+    result = cd_ListDelete(self, data, callback);
+
+    if (result) {
+        while (cd_ListDelete(self, data, callback) != CDNull ) {
+            continue;
+        }
+    }
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
 
 // TODO: This doesn't work as it should.
 CDPointer*
@@ -363,7 +409,7 @@ CD_ListClear (CDList* self)
     while (self->head) {
         CDPointer value = result[i++] = self->head->value;
 
-        while ((value = cd_listDelete(self, value)) != CDNull ) {
+        while ((value = cd_ListDelete(self, value, cd_ListCompare)) != CDNull ) {
             continue;
         }
     }
