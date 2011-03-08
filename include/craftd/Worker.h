@@ -61,6 +61,8 @@ void CD_DestroyWorker (CDWorker* self);
 /**
  * Main thread function, pass the result of CD_CreateWorker as argument.
  */
-void* CD_RunWorker (CDWorker* self);
+bool CD_RunWorker (CDWorker* self);
+
+bool CD_StopWorker (CDWorker* self);
 
 #endif

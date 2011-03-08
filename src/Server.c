@@ -81,6 +81,8 @@ CD_DestroyServer (CDServer* self)
 {
     assert(self);
 
+    CD_StopTimeLoop(self->timeloop);
+
     CD_HASH_FOREACH(self->players, it) {
         CD_ServerKick(self, (CDPlayer*) CD_HashIteratorValue(it), CD_CreateStringFromCString("shutting down"));
     }

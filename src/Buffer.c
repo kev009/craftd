@@ -37,6 +37,8 @@ CD_CreateBuffer (void)
     self->raw      = evbuffer_new();
     self->external = false;
 
+    evbuffer_enable_locking(self->raw, NULL);
+
     return self;
 }
 
@@ -51,6 +53,8 @@ CD_WrapBuffer (CDRawBuffer buffer)
 
     self->raw      = buffer;
     self->external = true;
+
+    evbuffer_enable_locking(self->raw, NULL);
 
     return self;
 }

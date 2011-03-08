@@ -73,6 +73,8 @@ void CD_DestroyTimeLoop (CDTimeLoop* self);
  */
 bool CD_RunTimeLoop (CDTimeLoop* self);
 
+bool CD_StopTimeLoop (CDTimeLoop* self);
+
 /**
  * Create an event that will run after the given seconds and delete itself after that
  *

@@ -62,7 +62,7 @@ CD_DestroyWorker (CDWorker* self)
     CD_free(self);
 }
 
-void*
+bool
 CD_RunWorker (CDWorker* self)
 {
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
@@ -185,7 +185,23 @@ CD_RunWorker (CDWorker* self)
                 CD_DestroyJob(self->job);
             }
         }
+
+        self->job = NULL;
     }
 
-    return NULL;
+    return true;
+}
+
+bool
+CD_StopWorker (CDWorker* self)
+{
+    assert(self);
+
+    self->working = false;
+
+    while (self->job) {
+        continue;
+    }
+
+    return true;
 }
