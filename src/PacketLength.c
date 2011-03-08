@@ -31,21 +31,23 @@
 bool
 CD_PacketParsable (CDBuffers* buffers)
 {
-    unsigned int   length = evbuffer_get_length(buffers->input->raw);
-    unsigned char* data   = evbuffer_pullup(buffers->input->raw, -1);
-
-    if (length == 0 || !data) {
-        return false;
-    }
-
-    CDPacketType type     = data[0];
+    size_t       length   = evbuffer_get_length(buffers->input->raw);
+    CDPacketType type     = 0;
     size_t       variable = 0;
     size_t       offset   = MCByteSize;
                  errno    = 0;
 
+    if (length < 1) {
+        goto error;
+    }
+
+    evbuffer_copyout(buffers->input->raw, &type, 1);
+
     if (length < CDPacketLength[type]) {
         goto error;
     }
+
+    unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
 
     switch (type) {
         case CDKeepAlive: {
