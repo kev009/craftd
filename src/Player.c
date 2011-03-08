@@ -132,4 +132,6 @@ CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* buffer)
     }
 
     CD_BufferAddBuffer(self->buffers->output, buffer);
+
+    CD_BuffersFlush(self->buffers);
 }

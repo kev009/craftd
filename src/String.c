@@ -36,7 +36,7 @@ const char* MCCharset =
     "abcdefghijklmnopqrstuvwxyz"
     "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
 
-static
+static inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {

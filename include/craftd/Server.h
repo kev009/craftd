@@ -114,7 +114,11 @@ uint16_t CD_ServerSetTime (CDServer* self, uint16_t time);
  */
 bool CD_RunServer (CDServer* self);
 
-void CD_ServerFlush (CDServer* self);
+bool CD_StopServer (CDServer* self);
+
+void CD_ServerFlush (CDServer* self, bool now);
+
+void CD_ServerCleanDisconnects(self);
 
 void CD_ReadFromPlayer (CDPlayer* player);
 
@@ -141,6 +145,9 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
  */
 #define CD_EventDispatch(self, eventName, ...)                                          \
     do {                                                                                \
+        assert(self);                                                                   \
+        assert(eventName);                                                              \
+                                                                                        \
         if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__)) {                  \
             break;                                                                      \
         }                                                                               \

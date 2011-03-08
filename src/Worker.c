@@ -180,7 +180,7 @@ CD_RunWorker (CDWorker* self)
 
                 CD_ListPush(self->server->disconnecting, (CDPointer) player);
 
-                CD_ServerFlush(player->server);
+                CD_ServerFlush(player->server, false);
 
                 CD_DestroyJob(self->job);
             }

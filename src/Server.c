@@ -38,9 +38,7 @@ static
 void
 cd_HandleSignal (evutil_socket_t fd, short what, CDServer* self)
 {
-    self->running = false;
-
-    CD_ServerFlush(self);
+    CD_StopServer(self);
 }
 
 CDServer*
@@ -83,19 +81,21 @@ CD_DestroyServer (CDServer* self)
 {
     assert(self);
 
-    if (self->plugins) {
-        CD_DestroyPlugins(self->plugins);
-    }
-
     CD_HASH_FOREACH(self->players, it) {
         CD_ServerKick(self, (CDPlayer*) CD_HashIteratorValue(it), CD_CreateStringFromCString("shutting down"));
     }
 
+    if (self->workers) {
+        CD_DestroyWorkers(self->workers);
+    }
+
+    CD_StopServer(self);
+
+    if (self->plugins) {
+        CD_DestroyPlugins(self->plugins);
+    }
+
     CD_DestroyTimeLoop(self->timeloop);
-
-    self->running = false;
-
-    event_base_loopbreak(self->event.base);
 
     if (self->event.base) {
         event_base_free(self->event.base);
@@ -107,18 +107,10 @@ CD_DestroyServer (CDServer* self)
         self->event.listener = NULL;
     }
 
-
     if (self->config) {
         CD_DestroyConfig(self->config);
     }
 
-    if (self->workers) {
-        CD_DestroyWorkers(self->workers);
-    }
-
-    CD_HASH_FOREACH(self->players, it) {
-        CD_DestroyPlayer((CDPlayer*) CD_HashIteratorValue(it));
-    }
 
     if (self->event.callbacks) {
         CD_DestroyHash(self->event.callbacks);
@@ -376,32 +368,51 @@ CD_RunServer (CDServer* self)
     while (self->running) {
         event_base_loop(self->event.base, 0);
 
-        if (CD_ListLength(self->disconnecting) > 0) {
-            CD_LIST_FOREACH(self->disconnecting, it) {
-                CDPlayer* player = (CDPlayer*) CD_ListIteratorValue(it);
-
-                CD_MapDelete(self->entities, player->entity.id);
-
-                if (player->username) {
-                    CD_HashDelete(self->players, CD_StringContent(player->username));
-                }
-
-                CD_DestroyPlayer(player);
-            }
-
-            CD_free(CD_ListClear(self->disconnecting));
-        }
+        CD_ServerCleanDisconnects(self);
     }
 
     return true;
 }
 
-void
-CD_ServerFlush (CDServer* self)
+bool
+CD_StopServer (CDServer* self)
 {
-    struct timeval interval = { 0, 0 };
+    self->running = false;
 
-    event_base_loopexit(self->event.base, &interval);
+    CD_ServerFlush(self, true);
+}
+
+void
+CD_ServerFlush (CDServer* self, bool now)
+{
+    if (now) {
+        event_base_loopbreak(self->event.base);
+    }
+    else {
+        struct timeval interval = { 0, 0 };
+
+        event_base_loopexit(self->event.base, &interval);
+    }
+}
+
+void
+CD_ServerCleanDisconnects (CDServer* self)
+{
+    if (CD_ListLength(self->disconnecting) > 0) {
+        CD_LIST_FOREACH(self->disconnecting, it) {
+            CDPlayer* player = (CDPlayer*) CD_ListIteratorValue(it);
+
+            CD_MapDelete(self->entities, player->entity.id);
+
+            if (player->username) {
+                CD_HashDelete(self->players, CD_StringContent(player->username));
+            }
+
+            CD_DestroyPlayer(player);
+        }
+
+        CD_free(CD_ListClear(self->disconnecting));
+    }
 }
 
 void
@@ -454,6 +465,8 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 bool
 cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 {
+    assert(self);
+
     CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, "Event.dispatch:after");
     va_list ap;
 
@@ -475,6 +488,8 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
 void
 CD_EventRegister (CDServer* self, const char* eventName, CDEventCallback callback)
 {
+    assert(self);
+
     CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, eventName);
 
     if (!callbacks) {
