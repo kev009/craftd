@@ -43,8 +43,6 @@ bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
 bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
 
-int8_t cd_EventSortCallback (CDEventCallback* a, CDEventCallback* b);
-
 /**
  * Dispatch an event with the given name and the given parameters.
  *
@@ -63,10 +61,6 @@ int8_t cd_EventSortCallback (CDEventCallback* a, CDEventCallback* b);
         }                                                                                           \
                                                                                                     \
         CDList* __callbacks__ = (CDList*) CD_HashGet(self->event.callbacks, eventName);             \
-                                                                                                    \
-        if (__callbacks__) {                                                                        \
-            CD_ListSort(__callbacks__, NULL, cd_EventSortCallback);                                 \
-        }                                                                                           \
                                                                                                     \
         CD_LIST_FOREACH(__callbacks__, it) {                                                        \
             if (!CD_ListIteratorValue(it)) {                                                        \

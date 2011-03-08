@@ -26,10 +26,28 @@
 #include <craftd/Event.h>
 
 static
-bool
+int8_t
 cd_EventIsEqual (CDEventCallbackFunction a, CDEventCallback* b)
 {
-    return a == b->function;
+    if (a == b->function) {
+        return 0;
+    }
+
+    return 1;
+}
+
+int8_t
+cd_EventCompare (CDEventCallback* a, CDEventCallback* b)
+{
+    if (a->priority > b->priority) {
+        return 1;
+    }
+    else if (a->priority < b->priority) {
+        return -1;
+    }
+    else {
+        return 0;
+    }
 }
 
 CDEventCallback*
@@ -101,20 +119,6 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
     return result;
 }
 
-int8_t
-cd_EventSortCallback (CDEventCallback* a, CDEventCallback* b)
-{
-    if (a->priority > b->priority) {
-        return 1;
-    }
-    else if (a->priority < b->priority) {
-        return -1;
-    }
-    else {
-        return 0;
-    }
-}
-
 void
 CD_EventRegister (CDServer* self, const char* eventName, CDEventCallbackFunction callback)
 {
@@ -127,7 +131,7 @@ CD_EventRegister (CDServer* self, const char* eventName, CDEventCallbackFunction
         CD_HashPut(self->event.callbacks, eventName, (CDPointer) callbacks);
     }
 
-    CD_ListPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, 0));
+    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, 0), cd_EventCompare);
 }
 
 void
@@ -142,7 +146,7 @@ CD_EventRegisterWithPriority (CDServer* self, const char* eventName, int priorit
         CD_HashPut(self->event.callbacks, eventName, (CDPointer) callbacks);
     }
 
-    CD_ListPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, priority));
+    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, priority), cd_EventCompare);
 }
 
 CDEventCallback**

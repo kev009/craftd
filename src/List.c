@@ -27,10 +27,18 @@
 #include <craftd/List.h>
 
 static
-bool
+char
 cd_ListCompare (CDPointer a, CDPointer b)
 {
-    return a == b;
+    if (a > b) {
+        return 1;
+    }
+    else if (a < b) {
+        return -1;
+    }
+    else {
+        return 0;
+    }
 }
 
 static
@@ -45,7 +53,7 @@ cd_ListDelete (CDList* self, CDPointer data, CDListCompareCallback callback)
         return CDNull;
     }
 
-    if (callback(data, self->head->value)) {
+    if (callback(data, self->head->value) == 0) {
         CDListItem* item = self->head;
         result           = item->value;
         self->head       = item->next;
@@ -62,7 +70,7 @@ cd_ListDelete (CDList* self, CDPointer data, CDListCompareCallback callback)
         CDListItem *item = self->head;
 
         while (item->next) {
-            if (callback(data, item->next->value)) {
+            if (callback(data, item->next->value) == 0) {
                             result     = item->value;
                 CDListItem* toDelete   = item->next;
                             item->next = toDelete->next;
