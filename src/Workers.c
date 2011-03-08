@@ -70,8 +70,9 @@ CD_DestroyWorkers (CDWorkers* self)
 
     CD_DestroyList(self->jobs);
 
-    pthread_mutex_destroy(&self->lock.mutex);
-    pthread_cond_destroy(&self->lock.condition);
+    // FIXME:  we need to flush/cancel any blocked workers first
+    //pthread_mutex_destroy(&self->lock.mutex);
+    //pthread_cond_destroy(&self->lock.condition);
 
     CD_free(self);
 }
