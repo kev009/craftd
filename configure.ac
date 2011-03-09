@@ -7,32 +7,32 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Build bundled libjansson
-#AC_CONFIG_SUBDIRS([third-party/jansson])
-
 # Don't look for C++ or Fortran compilers
 m4_undefine([AC_PROG_CXX])
 m4_defun([AC_PROG_CXX],[])
 m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
 
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC_C99
-AC_PROG_LIBTOOL
+AC_USE_SYSTEM_EXTENSIONS
+LT_PREREQ([2.2])
+AM_PROG_LIBTOOL
+AC_LTDL_DLLIB
 AC_SUBST(LIBTOOL_DEPS)
-#AC_LTDL_DLLIB
+LT_INIT([dlopen])
 
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile htdocs/Makefile \
-                 third-party/jansson/src/jansson_config.h \
-		 src/noise/Makefile])
-AC_CONFIG_SRCDIR([src/mapchunk.h])
+AC_CONFIG_HEADERS([include/craftd/config.h])
+AC_CONFIG_FILES([Makefile src/Makefile include/Makefile \
+                 plugins/Makefile plugins/mapgen/Makefile \
+                 htdocs/Makefile third-party/jansson/src/jansson_config.h])
+AC_CONFIG_SRCDIR([src/craftd.c])
 
 # Checks for libraries.
 AC_CHECK_LIB([ltdl], [lt_dlopen])
 AX_LIB_SOCKET_NSL
 AX_CHECK_ZLIB
 AX_PTHREAD([], AC_MSG_ERROR([pthreads is required]))
+AX_PATH_LIB_PCRE
 
 PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.9],
 , ,
@@ -45,12 +45,15 @@ PTHREAD_LIBS="$PTHREAD_LIBS"
 PTHREAD_CFLAGS="$PTHREAD_CFLAGS"
 # Force pthread for everything?
 #LIBS="$PTHREAD_LIBS $LIBS"
-#CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CFLAGS="$CFLAGS -Wno-switch-enum -Wno-unused-function -Wno-unused-label"
 #CC="$PTHREAD_CC"
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
-                  sys/socket.h unistd.h endian.h sys/endian.h])
+                  sys/socket.h unistd.h endian.h sys/endian.h ltdl.h])
+
+# Check for libraries
+AC_SEARCH_LIBS([lt_dlopen], [ltdl])
 
 # Define libjansson stuff
 AC_TYPE_LONG_LONG_INT
@@ -79,6 +82,9 @@ AC_TYPE_UINT32_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
 AC_TYPE_SIZE_T
+AC_TYPE_INTPTR_T
+AC_CHECK_SIZEOF([intptr_t])
+AC_CHECK_SIZEOF([fp], [], [typedef void (*fp)();])
 
 AC_C_BIGENDIAN
 AC_CHECK_DECLS([be64toh,htobe64], [], [],

@@ -1,12 +1,14 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src htdocs
 
-EXTRA_DIST = compat craftd.conf.dist.in motd.conf.dist
+SUBDIRS = include src plugins htdocs
+
+EXTRA_DIST = craftd.conf.dist.in motd.conf.dist
 
 # Make a correct default config file
 edit = sed \
        -e 's|@datadir[@]|$(datadir)|g' \
-       -e 's|@sysconfdir[@]|$(sysconfdir)|g'
+       -e 's|@sysconfdir[@]|$(sysconfdir)|g' \
+       -e 's|@libdir[@]|$(libdir)|g'
 craftd.conf.dist: Makefile
 	rm -f $@ $@.tmp
 	srcdir='' \

@@ -49,9 +49,9 @@ Makefile.in
 /config.log
 /config.status
 /config.sub
-/config.h
-/config.h.in
-/stamp-h1
+include/craftd/config.h
+include/craftd/config.h.in
+include/craftd/stamp-h1
 
 # libtool
 build-aux/ltmain.sh
@@ -151,6 +151,7 @@ DocProject/Help/html
 publish
 
 # Others
+dox
 bin
 Bin
 obj
@@ -162,3 +163,4 @@ ClientBin
 stylecop.*
 ~$*
 *.dbmdl
+test
