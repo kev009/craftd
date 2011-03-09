@@ -320,6 +320,7 @@ static
 bool
 cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
+	memset(data, 0, sizeof(MCChunkData));
 	generate_heightmap(data, chunkX, chunkZ);
 	generate_filled_chunk(data, chunkX, chunkZ, MCStone);
 	dig_caves(data, chunkX, chunkZ);
