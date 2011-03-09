@@ -30,312 +30,313 @@
 #include "noise/simplexnoise1234.h"
 
 static
-MCBlockType
-cdmg_LookupTypeMountain (float value)
+float
+cdmg_Multifractal2d (float x, float z, float lacunarity, int octaves)
 {
-    if (value < -0.50) {
-        return MCGravel;
+    float exponentArray[octaves];
+    float frequency = 1.0;
+    float H         = 0.25;
+    float offset    = 0.7;
+    float weight    = 1.0;
+    float result    = 0.0;
+
+    for (int i = 0; i < octaves; i++) {
+        exponentArray[i] = pow(frequency, -H);
+        frequency       *= lacunarity;
     }
 
-    if (value < 0.0) {
-        return MCDirt;
+    for (int i = 0; i < octaves; i++) {
+        float _signal = (snoise2(x, z) + offset) * exponentArray[i];
+
+        if (weight > 1.0) {
+            weight = 1.0;
+        }
+
+        result += (weight * _signal);
+        weight *= _signal;
+        x      *= lacunarity;
+        z      *= lacunarity;
     }
 
-    if (value < 0.30) {
-        return MCStone;
-    }
-
-    if (value < 0.35) {
-        return MCCoalOre;
-    }
-
-    if (value < 0.50) {
-        return MCStone;
-    }
-
-    if (value < 0.55) {
-        return MCIronOre;
-    }
-
-    return MCAir;
+    return result;
 }
 
 static
-MCBlockType
-cdmg_LookupTypeHills (float value)
+float
+cdmg_Multifractal3d (float x, float y, float z, float lacunarity, int octaves)
 {
-    if (value < -0.50) {
-        return MCAir;
+    float exponentArray[octaves];
+    float frequency   = 1.0;
+    float H           = 0.25;
+    float offset      = 0.7;
+    float weight      = 1.0;
+    float totalWeight = 0.0;
+    float result      = 0.0;
+
+    for (int i = 0; i < octaves; i++) {
+        exponentArray[i] = pow(frequency, -H);
+        frequency       *= lacunarity;
     }
 
-    if (value < -0.05) {
-        return MCDirt;
+    for (int i = 0; i < octaves; i++) {
+        float _signal = (snoise3(x, y, z) + offset) * exponentArray[i];
+
+        if (weight > 1.0) {
+            weight = 1.0;
+        }
+
+        result      += (weight * _signal);
+        totalWeight += (exponentArray[i] * weight);
+
+        weight *= _signal;
+        x      *= lacunarity;
+        z      *= lacunarity;
     }
 
-    if (value < 0.0) {
-        return MCGravel;
-    }
-
-    if (value < 0.25) {
-        return MCStone;
-    }
-
-    if (value < 0.40) {
-        return MCAir;
-    }
-
-    if (value < 0.50) {
-        return MCStone;
-    }
-
-    if (value < 0.58) {
-        return MCDirt;
-    }
-
-    if (value < 0.62) {
-        return MCAir;
-    }
-
-    if (value < 0.72) {
-        return MCDirt;
-    }
-
-    if (value < 0.722) {
-        return MCCoalOre;
-    }
-
-    if (value < 0.84) {
-        return MCStone;
-    }
-
-    if (value < 0.85) {
-        return MCIronOre;
-    }
-
-    return MCAir;
+    return result;
 }
 
 static
-MCBlockType
-cdmg_LookupTypeSealevel (float value)
+void
+cdmg_GenerateHeightMap (MCChunkData* chunkData, int chunkX, int chunkZ)
 {
-    if (value < -0.07) {
-        return MCSand;
-    }
+    // step 1: generate the height map
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.00155; // magic
+            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.00155;
 
-    if (value < 0.0) {
-        return MCStone;
+            chunkData->heightMap[x + (z * 16)] = cdmg_Multifractal2d(totalX, totalZ, 2.7, 20) * 13.5 + 55;
+        }
     }
-
-    if (value < 0.07) {
-        return MCDirt;
-    }
-
-    return MCSand;
 }
 
 static
-MCBlockType
-cdmg_LookupTypeUndergroundFirst (float value)
+void
+cdmg_GenerateFilledChunk (MCChunkData* chunkData, int chunkX, int chunkZ, MCBlockType blockType)
 {
-    if (value < -0.2) {
-        return MCSand;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            for (int y = 0; y < chunkData->heightMap[x + (z * 16)] && y < 128; y++) {
+                // stone is the basis of MC worlds
+                chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
+            }
+        }
     }
-
-    if (value < -0.19) {
-        return MCAir;
-    }
-
-    if (value < -0.17) {
-        return MCStone;
-    }
-
-    if (value < -0.15) {
-        return MCDirt;
-    }
-
-    if (value < -0.05) {
-        return MCAir;
-    }
-
-    if (value < 0.2) {
-        return MCStone;
-    }
-
-    if (value < 0.25) {
-        return MCAir;
-    }
-
-    if (value < 0.5) {
-        return MCStone;
-    }
-
-    return MCSand;
 }
 
 static
-MCBlockType
-cdmg_LookupTypeUndergroundSecond (float value)
+void
+cdmg_GenerateSkyLight (MCChunkData* chunkData, int chunkX, int chunkZ)
 {
-    return MCBedrock;
+    int lightValue = 0x0F;
+
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            for (int y = chunkData->heightMap[x + (z * 16)]; y < 128; y++) {
+                if (y % 2) {
+                    chunkData->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] |= (lightValue << 4);
+                }
+                else {
+                    chunkData->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] |= (lightValue);
+                }
+            }
+        }
+    }
 }
 
 static
-MCBlockType
-cdmg_LookupTypeUndergroundThird (float value)
+void
+cdmg_DigCaves (MCChunkData* chunkData, int chunkX, int chunkZ)
 {
-    return MCBedrock;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            float totalX = ((((float) chunkX) * 16.0) + ((float) x));
+            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z));
+
+            for (int y = 0; y < 54; y++) {
+                float result  = (snoise3(totalX / 12.0, y / 12.0, totalZ / 12.0)
+                    + (0.5 * snoise3(totalX / 24.0, y / 24.0, totalZ / 24.0))) / 1.5;
+
+                if (result > 0.35) {
+                    if (y < 16) {
+                        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCLava;
+                    }
+                    else {
+                        // cave
+                        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                    }
+                }
+            }
+
+            for (int y = 54; y < chunkData->heightMap[x + (z * 16)] - 4; y++) {
+                float result = (snoise3(totalX / 12.0, y / 12.0, totalZ / 12.0)
+                    + (0.5 * snoise3(totalX / 24.0, y / 24.0, totalZ / 24.0))) / 1.5;
+
+                if (result > 0.45) {
+                    // cave
+                    chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                }
+            }
+
+            // update height map
+            for (int y = chunkData->heightMap[x + (z * 16)]; y > 0 && chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
+                chunkData->heightMap[x + (z * 16)] = y;
+            }
+        }
+    }
 }
 
 static
-MCBlockType
-cdmg_LookupTypeBottom (float value)
+void
+cdmg_ErodeLandscape (MCChunkData* chunkData, int chunkX, int chunkZ)
 {
-    return MCBedrock;
-}
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            float totalX = ((((float) chunkX) * 16.0) + ((float) x));
+            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z));
 
-/**
- * Determine a block's type (sand, bedrock, ...)
- *
- * @param value a noise generated value [-1.0, 1.0]
- * @param height the altitude of the block
- *
- * @return the block type
- */
-static
-MCBlockType
-cdmg_LookupType (float value, int height)
-{
-    if (height <= 1) {
-        return cdmg_LookupTypeBottom(value);
+            // erosion (over ground)
+            for (int y = 65; y < chunkData->heightMap[x + (z * 16)]; y++) {
+                float result = (snoise3(totalX / 40.0, y / 50.0, totalZ / 40.0)
+                    + (0.5 * snoise3(totalX / 80.0, y / 100.0, totalZ / 80.0))) / 1.5;
+
+                if (result > 0.50) {
+                    // cave
+                    chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                }
+            }
+
+            // update height map
+            int y = chunkData->heightMap[x + (z * 16)];
+            while (y > 0 && chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
+                chunkData->heightMap[x + (z * 16)] = y--;
+            }
+        }
     }
-
-    if (height <= 20) {
-        return cdmg_LookupTypeUndergroundThird(value);
-    }
-
-    if (height <= 35) {
-        return cdmg_LookupTypeUndergroundSecond(value);
-    }
-
-    if (height <= 50) {
-        return cdmg_LookupTypeUndergroundFirst(value);
-    }
-
-    if (height <= 66) {
-        return cdmg_LookupTypeSealevel(value);
-    }
-
-    if (height <= 75) {
-        return cdmg_LookupTypeHills(value);
-    }
-
-    // really high
-    return cdmg_LookupTypeMountain(value);
 }
 
 static
-MCBlockType
-cdmg_BlockType (int chunkX, int chunkZ, int x, int y, int z)
+void
+cdmg_AddSediments (MCChunkData* chunkData, int chunkX, int chunkZ)
 {
-    float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.053;
-    float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.053;
-    float totalY = ((float) y) * 0.015;
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            // step 3: replace top with grass / the higher, the less blocks / 0 to 3
 
-    float val = snoise3(totalX, totalY, totalZ);
+            int y              = chunkData->heightMap[x + (z * 16)];
+            int sedimentHeight = (128 - chunkData->heightMap[x + (z * 16)]) / 21; // 0 - 3 blocks
 
-    val += (0.5   * (snoise3(totalX * 2.0, totalY * 2.0, totalZ * 2.0)));
-    val += (0.25  * (snoise3(totalX * 4.0, totalY * 4.0, totalZ * 4.0)));
-    val += (0.125 * (snoise3(totalX * 8.0, totalY * 8.0, totalZ * 8.0)));
+            if (y < 64) {
+                for (int i = 0; i < sedimentHeight; i++) {
+                    // sand underwater
+                    chunkData->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCSand;
+                }
+            }
+            else if (y >= 64 && sedimentHeight > 0) {
+                for (int i = 0; i < sedimentHeight - 1; i++, sedimentHeight--) {
+                    chunkData->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCDirt;
+                }
 
-    val /= (1.0 + 0.5 + 0.25 + 0.125);
+                chunkData->blocks[y + (z * 128) + (x * 128 * 16) + sedimentHeight - 1] = MCGrass;
+            }
 
-    return cdmg_LookupType(val, y);
+            chunkData->heightMap[x + (z * 16)] += sedimentHeight;
+        }
+    }
+}
+
+static
+void
+cdmg_FloodWithWater (MCChunkData* chunkData, int chunkX, int chunkZ, int8_t waterLevel)
+{
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            // step 4: flood with water at level 64
+            for (int y = waterLevel; chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
+                chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCWater;
+            }
+        }
+    }
+}
+
+static
+void
+cdmg_BedrockGround (MCChunkData* chunkData, int chunkX, int chunkZ)
+{
+    for (int x = 0; x < 16; x++) {
+        for (int z = 0; z < 16; z++) {
+            chunkData->blocks[0 + (z * 128) + (x*128*16)] = MCBedrock;
+            chunkData->blocks[1 + (z * 128) + (x*128*16)] = MCBedrock;
+            chunkData->heightMap[x+(z * 16)]              = CD_Max(chunkData->heightMap[x + (z * 16)], 2);
+        }
+    }
+}
+
+static
+void
+cdmg_AddMineral (MCChunkData* chunkData, int x, int z, int y, float totalX, float totalZ, float totalY, MCBlockType blockType, float probability)
+{
+    if (snoise4(totalX, totalY, totalZ, blockType) + 1.0 <= (0.25 * probability)) {
+        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
+    }
+}
+
+static
+void
+cdmg_AddMinerals (MCChunkData* chunkData, int chunkX, int chunkZ)
+{
+    for (int x = 0; x < 16; x++) {
+        float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.075;
+
+        for (int z = 0; z < 16; z++) {
+            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.075;
+
+            for (int y = 2; y < chunkData->heightMap[x + (z * 16)]; y++) {
+                if (chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
+                    continue;
+                }
+
+                float totalY = (((float) y)) * 0.075;
+
+                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCCoalOre, 1.3);
+                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCDirt, 2.5);
+                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCGravel, 2.5);
+
+                // 5 blocks under the surface
+                if (y < chunkData->heightMap[x + (z * 16)] - 5) {
+                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCIronOre, 1.15);
+                }
+
+                if (y < 40) {
+                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCLapisLazuliOre, 0.80);
+                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCGoldOre, 0.85);
+                }
+
+                if (y < 20) {
+                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCDiamondOre, 0.80);
+                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCRedstoneOre, 1.2);
+                }
+            }
+        }
+    }
 }
 
 static
 bool
 cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
-    int lightValue = 0x0F;
-    int blockHeight[16][16];
+    memset(data, 0, sizeof(MCChunkData));
 
-    // step 1: generate the height map
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            float totalX;
-            float totalZ;
-            float block;
-
-            totalX  = ((((float) chunkX) * 16.0) + ((float) x)) * 0.015;
-            totalZ  = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.015;
-
-            block = snoise2(totalX, totalZ);
-
-            block += (snoise2(totalX * 2.0, totalZ * 2.0) * 0.5);
-            block += (snoise2(totalX * 4.0, totalZ * 4.0) * 0.25);
-            block += (snoise2(totalX * 8.0, totalZ * 8.0) * 0.125);
-
-            block /= (1.0 + 0.5 + 0.25 + 0.125);
-            // noise tends to be of repetitive height (-1.0 -> 1.0)
-            // which would tend to result in hills of the same height
-            // so we need to multiply it by a cos/sin to give more
-            // randomness  to it
-            block *= (cos(totalZ)+cos(totalX));
-
-            // fill the minimum height, we get flat bottom lakes like that
-            block = (block < -0.40 ? -0.40 : block);
-            block = ((block / 2.5)*48.0 + 64.0);
-
-            blockHeight[(int) x][(int) z] = block;
-        }
-    }
-
-    // step 2: fill the chunk with sand according to the height map
-    memset(data->blocks, 0, 32768);
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            for (int y = 0; y < blockHeight[x][z]; y++) {
-                data->blocks[y + (z * 128) + (x * 128 * 16)] = cdmg_BlockType(chunkX, chunkZ, x, y, z);
-            }
-
-            data->heightMap[x + (z * 16)] = blockHeight[x][z]; // max height is 1
-
-            for (int y = 1; y < 128; y++) {
-                // full light for first 2 layers
-                data->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] = (lightValue | (lightValue << 4));
-            }
-        }
-    }
-
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            // step 3: replace top with grass
-            int y = data->heightMap[x + (z * 16)];
-
-            while (data->blocks[y + (z * 128) + (x * 128 * 16)] == 0 && y > 64) {
-                y--;
-            }
-
-            switch (data->blocks[(y) + (z * 128) + (x * 128 * 16)]) {
-                case MCAir:
-                case MCSand: {
-                    break;
-                }
-
-                default: {
-                    data->blocks[(y + 1) + (z * 128) + (x * 128 * 16)] = MCGrass;
-                }
-            }
-
-            // step 4: flood with water at level 64
-            y = 62;
-            while (data->blocks[y + (z * 128) + (x * 128 * 16)] == 0) {
-                data->blocks[y + (z * 128) + (x * 128 * 16)] = MCStationaryWater;
-                y--;
-            }
-        }
-    }
+    cdmg_GenerateHeightMap(data, chunkX, chunkZ);
+    cdmg_GenerateFilledChunk(data, chunkX, chunkZ, MCStone);
+    cdmg_DigCaves(data, chunkX, chunkZ);
+    cdmg_ErodeLandscape(data, chunkX, chunkZ);
+    cdmg_AddMinerals(data, chunkX, chunkZ);
+    cdmg_AddSediments(data, chunkX, chunkZ);
+    cdmg_FloodWithWater(data, chunkX, chunkZ, 64);
+    cdmg_BedrockGround(data, chunkX, chunkZ);
+    cdmg_GenerateSkyLight(data, chunkX, chunkZ);
 
     return false;
 }
