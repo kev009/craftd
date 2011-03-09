@@ -73,8 +73,13 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
         uint8_t mapdata[81920];
+        bool    interrupted;
 
-        CD_EventDispatch(server, "Chunk.load", coord->x, coord->z, mapdata);
+        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, mapdata);
+
+        if (interrupted) {
+            return false;
+        }
 
         uLongf written = compressBound(81920);
         Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
