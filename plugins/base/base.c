@@ -32,7 +32,7 @@
 
 static struct {
     pthread_mutex_t login;
-} lock;
+} _lock;
 
 static
 bool
@@ -56,10 +56,13 @@ bool
 cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 {
     CD_PACKET_DO {
-        CDPacketPreChunk pkt;
-        pkt.response.x    = coord->x;
-        pkt.response.z    = coord->z;
-        pkt.response.mode = true;
+        CDPacketPreChunk pkt = {
+            .response = {
+                .x = coord->x,
+                .z = coord->z,
+                .mode = true
+            }
+        };
 
         CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
 
@@ -67,14 +70,6 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
     }
 
     CD_PACKET_DO {
-        CDPacketMapChunk pkt;
-        pkt.response.position.x = CD_WORLD_COORD(coord->x);
-        pkt.response.position.y = 0;
-        pkt.response.position.z = CD_WORLD_COORD(coord->z);
-        pkt.response.size.x     = 16;
-        pkt.response.size.y     = 128;
-        pkt.response.size.z     = 16;
-
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
         uint8_t mapdata[81920];
@@ -89,8 +84,25 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
         }
         SDEBUG(server, "compressed %ld bytes", written);
 
-        pkt.response.length = (MCInteger) written;
-        pkt.response.item   = (MCByte*) buffer;
+        CDPacketMapChunk pkt = {
+            .response = {
+                .position = {
+                    .x = CD_WORLD_COORD(coord->x),
+                    .y = 0,
+                    .z = CD_WORLD_COORD(coord->z)
+                },
+
+                .size = {
+                    .x = 16,
+                    .y = 128,
+                    .z = 16
+                },
+
+                .length = written,
+                .item   = (MCByte*) buffer
+            }
+
+        };
 
         CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
 
@@ -105,10 +117,13 @@ void
 cdbase_ChunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 {
     CD_PACKET_DO {
-        CDPacketPreChunk pkt;
-        pkt.response.x    = coord->x;
-        pkt.response.z    = coord->z;
-        pkt.response.mode = false;
+        CDPacketPreChunk pkt = {
+            .response = {
+                .x    = coord->x,
+                .z    = coord->z,
+                .mode = false
+            }
+        };
 
         CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
 
@@ -196,8 +211,11 @@ void
 cdbase_TimeUpdate (void* _, void* __, CDServer* self)
 {
     CD_PACKET_DO {
-        CDPacketTimeUpdate pkt;
-        pkt.response.time = CD_ServerGetTime(self);
+        CDPacketTimeUpdate pkt = {
+            .response = {
+                .time = CD_ServerGetTime(self)
+            }
+        };
 
         CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
@@ -232,7 +250,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         case CDLogin: {
             CDPacketLogin* data = (CDPacketLogin*) packet->data;
 
-            pthread_mutex_lock(&lock.login);
+            pthread_mutex_lock(&_lock.login);
 
             SLOG(server, LOG_NOTICE, "%s tried login with client version %d", CD_StringContent(data->request.username), data->request.version);
 
@@ -253,15 +271,18 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             CD_HashPut(server->players, CD_StringContent(player->username), (CDPointer) player);
 
-            pthread_mutex_unlock(&lock.login);
+            pthread_mutex_unlock(&_lock.login);
 
             CD_PACKET_DO {
-                CDPacketLogin pkt;
-                pkt.response.id         = player->entity.id;
-                pkt.response.serverName = CD_CreateStringFromCString("");
-                pkt.response.motd       = CD_CreateStringFromCString("");
-                pkt.response.mapSeed    = 0;
-                pkt.response.dimension  = 0;
+                CDPacketLogin pkt = {
+                    .response = {
+                        .id         = player->entity.id,
+                        .serverName = CD_CreateStringFromCString(""),
+                        .motd       = CD_CreateStringFromCString(""),
+                        .mapSeed    = 0,
+                        .dimension  = 0
+                    }
+                };
 
                 CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
 
@@ -279,10 +300,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
-                    MCPosition coords;
-                    coords.x = CD_Div(spawnPosition->x, 16) + i;
-                    coords.y = 0;
-                    coords.z = CD_Div(spawnPosition->z, 16) + j;
+                    MCPosition coords = {
+                        .x = CD_Div(spawnPosition->x, 16) + i,
+                        .y = 0,
+                        .z = CD_Div(spawnPosition->z, 16) + j
+                    };
 
                     if (!cdbase_SendChunk(server, player, &coords)) {
                         return false;
@@ -292,8 +314,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             /* Send Spawn Position to initialize compass */
             CD_PACKET_DO {
-                CDPacketSpawnPosition pkt;
-                pkt.response.position = *spawnPosition;
+                CDPacketSpawnPosition pkt = {
+                    .response = {
+                        .position = *spawnPosition
+                    }
+                };
 
                 CDPacket response = { CDResponse, CDSpawnPosition, (CDPointer) &pkt };
 
@@ -301,14 +326,23 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             CD_PACKET_DO {
-                CDPacketPlayerMoveLook pkt;
-                pkt.response.position.x  = spawnPosition->x;
-                pkt.response.position.y  = spawnPosition->y + 6;
-                pkt.response.position.z  = spawnPosition->z;
-                pkt.response.stance      = spawnPosition->y + 6.1; // TODO: ??
-                pkt.response.yaw         = 0;
-                pkt.response.pitch       = 0;
-                pkt.response.is.onGround = false;
+                CDPacketPlayerMoveLook pkt = {
+                    .response = {
+                        .position = {
+                            .x = spawnPosition->x,
+                            .y = spawnPosition->y + 6,
+                            .z = spawnPosition->z
+                        },
+
+                        .stance = spawnPosition->y + 6.1,
+                        .yaw    = 0,
+                        .pitch  = 0,
+
+                        .is = {
+                            .onGround = false
+                        }
+                    }
+                };
 
                 CDPacket response = { CDResponse, CDPlayerMoveLook, (CDPointer) &pkt };
 
@@ -323,8 +357,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
 
-            CDPacketHandshake pkt;
-            pkt.response.hash = CD_CreateStringFromCString("-");
+            CDPacketHandshake pkt = {
+                .response = {
+                    .hash = CD_CreateStringFromCString("-")
+                }
+            };
 
             CDPacket response = { CDResponse, CDHandshake, (CDPointer) &pkt };
 
@@ -466,7 +503,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Base");
 
-    pthread_mutex_init(&lock.login, NULL);
+    pthread_mutex_init(&_lock.login, NULL);
 
     CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbase_TimeIncrease));
     CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbase_TimeUpdate));
@@ -501,7 +538,7 @@ CD_PluginFinalize (CDPlugin* self)
     CD_EventUnregister(self->server, "Player.command", cdbase_HandleCommand);
     CD_EventUnregister(self->server, "Player.chat", cdbase_HandleChat);
 
-    pthread_mutex_destroy(&lock.login);
+    pthread_mutex_destroy(&_lock.login);
 
     return true;
 }

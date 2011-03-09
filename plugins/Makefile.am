@@ -6,15 +6,17 @@ AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(top_srcdir)/include/craftd/jansson # Temprorary for jansson
 
+SUBDIRS = mapgen
+
 # The list of core libraries that are always built
 pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la libcdtests.la
 
 # The base plugin handles default game rules
-libcdbase_la_SOURCES = base.c
+libcdbase_la_SOURCES = base/base.c
 libcdbase_la_LDFLAGS = -version-info 0:0:0
 
 # cdnbt loads Notch's NBT region file format
-libcdnbt_la_SOURCES = cdnbt/cdnbt.c cdnbt/nbt.c cdnbt/nbt.h cdnbt/itoa.c cdnbt/itoa.h
+libcdnbt_la_SOURCES = nbt/cdnbt.c nbt/nbt.c nbt/nbt.h nbt/itoa.c nbt/itoa.h
 libcdnbt_la_LDFLAGS = -version-info 0:0:0
 
 # The base plugin handles default game rules
