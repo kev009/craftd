@@ -119,7 +119,7 @@ cdnbt_ValidChunk (nbt_tag* nbtRoot)
 
 static
 bool
-cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
+cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 {
     const char bufferSize = 8; // Big enough for all base36 int values and -,nul
 
@@ -146,6 +146,14 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
     SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
     nbt_file* nf = NULL;
+
+    if (access(CD_StringContent(chunkPath), R_OK) < 0) {
+        printf("Generating chunk: %d %d\n", x, z );
+
+        CD_EventDispatch(server, "Mapgen.generateChunk", x, z, chunkData);
+
+        goto done;
+    }
 
     if (nbt_init(&nf) != NBT_OK) {
         SERR(server, "cannot init chunk struct");
@@ -182,15 +190,10 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, uint8_t* mapdata)
         nbt_byte_array* skyLight   = nbt_cast_byte_array(t_skyLight);
         nbt_byte_array* blockLight = nbt_cast_byte_array(t_blockLight);
 
-        int offset = 0;
-
-        memcpy(mapdata + offset, blocks->content, blocks->length);
-        offset += blocks->length;
-        memcpy(mapdata + offset, data->content, data->length);
-        offset += data->length;
-        memcpy(mapdata + offset, skyLight->content, skyLight->length);
-        offset += skyLight->length;
-        memcpy(mapdata + offset, blockLight->content, blockLight->length);
+        memcpy(chunkData->blocks,     blocks->content,     blocks->length);
+        memcpy(chunkData->data,       data->content,       data->length);
+        memcpy(chunkData->skyLight,   skyLight->content,   skyLight->length);
+        memcpy(chunkData->blockLight, blockLight->content, blockLight->length);
     }
     else {
         SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));

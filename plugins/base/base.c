@@ -72,10 +72,10 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
     CD_PACKET_DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
-        uint8_t mapdata[81920];
-        bool    interrupted;
+        MCChunkData data;
+        bool        interrupted;
 
-        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, mapdata);
+        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, &data);
 
         if (interrupted) {
             return false;
@@ -83,7 +83,7 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 
         uLongf written = compressBound(81920);
         Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
-        if (compress(buffer, &written, mapdata, 81920) != Z_OK) {
+        if (compress(buffer, &written, (Bytef*) &data, 81920) != Z_OK) {
             SERR(server, "zlib compress failure");
             return false;
         }

@@ -28,7 +28,6 @@
 
 #include <math.h>
 #include "noise/simplexnoise1234.h"
-#include "mapgen.h"
 
 static
 MCBlockType
@@ -255,8 +254,8 @@ cdmg_BlockType (int chunkX, int chunkZ, int x, int y, int z)
 }
 
 static
-void
-cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
+bool
+cdmg_GenerateChunk (int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
     int lightValue = 0x0F;
     int blockHeight[16][16];
@@ -337,6 +336,8 @@ cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
             }
         }
     }
+
+    return false;
 }
 
 extern
@@ -345,7 +346,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Mapgen.classic");
 
-    CD_EventRegister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
+    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }
@@ -354,7 +355,7 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
+    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }

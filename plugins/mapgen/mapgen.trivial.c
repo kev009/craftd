@@ -28,11 +28,10 @@
 
 #include <math.h>
 #include "noise/simplexnoise1234.h"
-#include "mapgen.h"
 
 static
-void
-cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
+bool
+cdmg_GenerateChunk (int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
     int lightValue = CD_Max(0x0F - ABS(chunkX) - ABS(chunkZ), 0);
 
@@ -48,6 +47,8 @@ cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
             }
         }
     }
+
+    return false;
 }
 
 extern
@@ -56,7 +57,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Mapgen.trivial");
 
-    CD_EventRegister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
+    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }
@@ -65,7 +66,7 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
+    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }
