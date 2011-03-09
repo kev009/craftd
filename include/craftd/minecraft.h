@@ -278,7 +278,7 @@ typedef enum _MCBlockType {
     MCCackeBlock          = 0x5C,
     MCRedstoneRepeaterOff = 0x5D,
     MCRedstoneRepeaterOn  = 0x5E
-} MCType;
+} MCBlockType;
 
 typedef enum _MCWoolColor {
     MCWhiteWool,

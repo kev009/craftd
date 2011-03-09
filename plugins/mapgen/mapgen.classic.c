@@ -31,7 +31,7 @@
 #include "mapgen.h"
 
 static
-int
+MCBlockType
 cdmg_LookupTypeMountain (float value)
 {
     if (value < -0.50) {
@@ -62,7 +62,7 @@ cdmg_LookupTypeMountain (float value)
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeHills (float value)
 {
     if (value < -0.50) {
@@ -117,7 +117,7 @@ cdmg_LookupTypeHills (float value)
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeSealevel (float value)
 {
     if (value < -0.07) {
@@ -136,7 +136,7 @@ cdmg_LookupTypeSealevel (float value)
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeUndergroundFirst (float value)
 {
     if (value < -0.2) {
@@ -175,21 +175,21 @@ cdmg_LookupTypeUndergroundFirst (float value)
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeUndergroundSecond (float value)
 {
     return MCBedrock;
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeUndergroundThird (float value)
 {
     return MCBedrock;
 }
 
 static
-int
+MCBlockType
 cdmg_LookupTypeBottom (float value)
 {
     return MCBedrock;
@@ -204,7 +204,7 @@ cdmg_LookupTypeBottom (float value)
  * @return the block type
  */
 static
-int
+MCBlockType
 cdmg_LookupType (float value, int height)
 {
     if (height <= 1) {
@@ -236,7 +236,7 @@ cdmg_LookupType (float value, int height)
 }
 
 static
-int
+MCBlockType
 cdmg_BlockType (int chunkX, int chunkZ, int x, int y, int z)
 {
     float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.053;
