@@ -402,18 +402,16 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             CDPacketPlayerMoveLook* data = (CDPacketPlayerMoveLook*) packet->data;
 
-            int newx = CD_Div(data->request.position.x, 16);
-            int newz = CD_Div(data->request.position.z, 16);
-            MCPosition area = { newx, 0, newz };
+            int newX = CD_Div(data->request.position.x, 16);
+            int newZ = CD_Div(data->request.position.z, 16);
 
-            if ( newx != CD_Div(player->entity.position.x, 16) ||
-                 newz != CD_Div(player->entity.position.z, 16))
-            {
+            MCPosition area = { newX, 0, newZ };
+
+            if (newX != CD_Div(player->entity.position.x, 16) || newZ != CD_Div(player->entity.position.z, 16)) {
                 cdbase_SendChunkRadius(player, &area, 10);
             }
 
             player->entity.position = data->request.position;
-
         } break;
 
         case CDDisconnect: {
