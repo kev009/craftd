@@ -279,10 +279,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
-                    MCPosition coords;
-                    coords.x = CD_Div(spawnPosition->x, 16) + i;
-                    coords.y = 0;
-                    coords.z = CD_Div(spawnPosition->z, 16) + j;
+                    MCPosition coords = {
+                        .x = CD_Div(spawnPosition->x, 16) + i,
+                        .y = 0,
+                        .z = CD_Div(spawnPosition->z, 16) + j
+                    };
 
                     if (!cdbase_SendChunk(server, player, &coords)) {
                         return false;
@@ -292,8 +293,11 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             /* Send Spawn Position to initialize compass */
             CD_PACKET_DO {
-                CDPacketSpawnPosition pkt;
-                pkt.response.position = *spawnPosition;
+                CDPacketSpawnPosition pkt = {
+                    .response = {
+                        .position = *spawnPosition
+                    }
+                };
 
                 CDPacket response = { CDResponse, CDSpawnPosition, (CDPointer) &pkt };
 
@@ -301,14 +305,23 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             CD_PACKET_DO {
-                CDPacketPlayerMoveLook pkt;
-                pkt.response.position.x  = spawnPosition->x;
-                pkt.response.position.y  = spawnPosition->y + 6;
-                pkt.response.position.z  = spawnPosition->z;
-                pkt.response.stance      = spawnPosition->y + 6.1; // TODO: ??
-                pkt.response.yaw         = 0;
-                pkt.response.pitch       = 0;
-                pkt.response.is.onGround = false;
+                CDPacketPlayerMoveLook pkt = {
+                    .response = {
+                        .position = {
+                            .x = spawnPosition->x,
+                            .y = spawnPosition->y + 6,
+                            .z = spawnPosition->z
+                        },
+
+                        .stance = spawnPosition->y + 6.1,
+                        .yaw    = 0,
+                        .pitch  0 0,
+
+                        .is = {
+                            .onGround = false
+                        }
+                    }
+                };
 
                 CDPacket response = { CDResponse, CDPlayerMoveLook, (CDPointer) &pkt };
 

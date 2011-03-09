@@ -345,7 +345,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Mapgen.classic");
 
-    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventRegister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
 
     return true;
 }
@@ -354,7 +354,7 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventUnregister(self->server, "Mapgen.generateChunk", (CDEventCallbackFunction) cdmg_GenerateChunk);
 
     return true;
 }
