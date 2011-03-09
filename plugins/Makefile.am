@@ -6,6 +6,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(top_srcdir)/include/craftd/jansson # Temprorary for jansson
 
+SUBDIRS = mapgen
+
 # The list of core libraries that are always built
 pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la libcdtests.la
 
