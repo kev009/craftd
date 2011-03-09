@@ -26,12 +26,9 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-static unsigned char* _seed              = NULL;
-static unsigned char  _blocks[32768]     = { 0 };
-static unsigned char  _data[16384]       = { 0 };
-static unsigned char  _skyLight[16384]   = { 0 };
-static unsigned char  _blockLight[16384] = { 0 };
-static unsigned char  _heightMap[256]    = { 0 };
+#include <math.h>
+#include "noise/simplexnoise1234.h"
+#include "mapgen.h"
 
 static
 int
@@ -210,7 +207,7 @@ static
 int
 cdmg_LookupType (float value, int height)
 {
-    if (height <= 1) { {
+    if (height <= 1) {
         return cdmg_LookupTypeBottom(value);
     }
 
@@ -259,7 +256,7 @@ cdmg_BlockType (int chunkX, int chunkZ, int x, int y, int z)
 
 static
 void
-cdmg_InitializeData (int chunkX, int chunkZ)
+cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
 {
     int lightValue = 0x0F;
     int blockHeight[16][16];
@@ -296,18 +293,18 @@ cdmg_InitializeData (int chunkX, int chunkZ)
     }
 
     // step 2: fill the chunk with sand according to the height map
-    memset(_blocks, 0, 32768);
+    memset(data->blocks, 0, 32768);
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
             for (int y = 0; y < blockHeight[x][z]; y++) {
-                _blocks[y + (z * 128) + (x * 128 * 16)] = cdmg_BlockType(chunkX, chunkZ, x, y, z);
+                data->blocks[y + (z * 128) + (x * 128 * 16)] = cdmg_BlockType(chunkX, chunkZ, x, y, z);
             }
 
-            _heightMap[x + (z * 16)] = blockHeight[x][z]; // max height is 1
+            data->heightMap[x + (z * 16)] = blockHeight[x][z]; // max height is 1
 
             for (int y = 1; y < 128; y++) {
                 // full light for first 2 layers
-                _skyLight[((z * 128) + (x * 128 * 16) + y) / 2] = (lightValue | (lightValue << 4));
+                data->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] = (lightValue | (lightValue << 4));
             }
         }
     }
@@ -315,149 +312,40 @@ cdmg_InitializeData (int chunkX, int chunkZ)
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
             // step 3: replace top with grass
-            int y = _heightMap[x + (z * 16)];
+            int y = data->heightMap[x + (z * 16)];
 
-            while (_blocks[y + (z * 128) + (x * 128 * 16)] == 0 && y > 64) {
+            while (data->blocks[y + (z * 128) + (x * 128 * 16)] == 0 && y > 64) {
                 y--;
             }
 
-            switch (_blocks[(y) + (z * 128) + (x * 128 * 16)]) {
+            switch (data->blocks[(y) + (z * 128) + (x * 128 * 16)]) {
                 case MCAir:
                 case MCSand: {
                     break;
                 }
 
                 default: {
-                    _blocks[(y + 1) + (z * 128) + (x * 128 * 16)] = MCGrass;
+                    data->blocks[(y + 1) + (z * 128) + (x * 128 * 16)] = MCGrass;
                 }
             }
 
             // step 4: flood with water at level 64
             y = 62;
-            while (_blocks[y + (z * 128) + (x * 128 * 16)] == 0) {
-                _blocks[y + (z * 128) + (x * 128 * 16)] = MCStationaryWater;
+            while (data->blocks[y + (z * 128) + (x * 128 * 16)] == 0) {
+                data->blocks[y + (z * 128) + (x * 128 * 16)] = MCStationaryWater;
                 y--;
             }
         }
     }
 }
 
-/**
- * Generate a chunk based on x and z coordinates
- *
- * @remarks this will not return any data, but instead write
- * directly to the disk
- *
- * @param mg the map generator structure where the options are stored
- * @param x the x coordinate of the chunk
- * @param z the z coordinate of the chunk
- */
-static void gen_chunk(struct mapgen* mg, int x, int z)
-{
-    char x_file[8];
-    char z_file[8];
-    char x_dir[8];
-    char z_dir[8];
-    char filename[24]; /* c.<x>.<z>.dat = 24 chars*/
-    char *full_path = calloc(strlen(mg->path)+(8*2)+(8*2)+8, sizeof(char));
-    nbt_file *nbt;
-    nbt_tag *level_tag;
-    nbt_tag *sub_tag;
-    struct stat sbuf;
-
-    itoa(x, x_file, 36);
-    itoa(z, z_file, 36);
-    itoa(Arith_mod(x, 64), x_dir, 36);
-    itoa(Arith_mod(z, 64), z_dir, 36);
-
-    /* test first directory exists or create it */
-    strcat(full_path, mg->path);
-    /* test if x directory exists or create it */
-    strcat(full_path, "/");
-    strcat(full_path, x_dir);
-    mkdir(full_path, 0755);
-    /* test if z directory exists or create it */
-    strcat(full_path, "/");
-    strcat(full_path, z_dir);
-    mkdir(full_path, 0755);
-    /* test if file exists */
-    strcat(full_path, "/");
-    snprintf(filename, 24, "c.%s.%s.dat", x_file, z_file);
-    strcat(full_path, filename);
-    if (stat(full_path, &sbuf) == 0) {
-        printf("File %s already exists\n", full_path);
-        return;
-    }
-
-    /* we use static data here */
-    _init_data(x, z);
-
-    printf("Generating chunk : %s\n", full_path);
-    /* generate the chunk */
-    nbt_init(&nbt);
-
-    // Level {
-    nbt_new_compound(&nbt->root, "");
-    nbt_new_compound(&level_tag, "Level");
-    nbt_add_tag(level_tag, nbt->root);
-    // Blocks
-    nbt_new_byte_array(&sub_tag, "Blocks");
-    nbt_set_byte_array(sub_tag, _blocks, 32768);
-    nbt_add_tag(sub_tag, level_tag);
-    // Data
-    nbt_new_byte_array(&sub_tag, "Data");
-    nbt_set_byte_array(sub_tag, _data, 16384);
-    nbt_add_tag(sub_tag, level_tag);
-    // SkyLight
-    nbt_new_byte_array(&sub_tag, "SkyLight");
-    nbt_set_byte_array(sub_tag, _skylight, 16384);
-    nbt_add_tag(sub_tag, level_tag);
-    // BlockLight
-    nbt_new_byte_array(&sub_tag, "BlockLight");
-    nbt_set_byte_array(sub_tag, _blocklight, 16384);
-    nbt_add_tag(sub_tag, level_tag);
-    // HeigtMap
-    nbt_new_byte_array(&sub_tag, "HeightMap");
-    nbt_set_byte_array(sub_tag, _heightmap, 256);
-    nbt_add_tag(sub_tag, level_tag);
-    // Entities
-    nbt_new_list(&sub_tag, "Entities", TAG_COMPOUND);
-    nbt_add_tag(sub_tag, level_tag);
-    // TileEntities
-    nbt_new_list(&sub_tag, "TileEntities", TAG_COMPOUND);
-    nbt_add_tag(sub_tag, level_tag);
-    // LastUpdate
-    nbt_new_long(&sub_tag, "LastUpdate");
-    nbt_set_long(sub_tag, 0);
-    nbt_add_tag(sub_tag, level_tag);
-    // xPos
-    nbt_new_int(&sub_tag, "xPos");
-    nbt_set_int(sub_tag, x);
-    nbt_add_tag(sub_tag, level_tag);
-    // zPos
-    nbt_new_int(&sub_tag, "zPos");
-    nbt_set_int(sub_tag, z);
-    nbt_add_tag(sub_tag, level_tag);
-    // TerrainPopulated
-    nbt_new_byte(&sub_tag, "TerrainPopulated");
-    nbt_set_byte(sub_tag, 0);
-    nbt_add_tag(sub_tag, level_tag);
-    // }
-
-    /* write the nbt to disk */
-    //nbt_write_compound(nbt, nbt_cast_compound(level_tag));
-    nbt_write(nbt, full_path);
-
-    free(full_path);
-}
-
-
-
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Mapgen.classic");
+
+    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }
@@ -466,6 +354,7 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
+    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
     return true;
 }

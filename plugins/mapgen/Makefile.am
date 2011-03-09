@@ -5,7 +5,7 @@ AM_CPPFLAGS += $(PCRE_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/compat/
 AM_CPPFLAGS += -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(top_srcdir)/include/craftd/jansson # Temprorary for jansson
-pkglib_LTLIBRARIES = libcdmapgen_classic.la
+pkglib_LTLIBRARIES = libcdmapgen.classic.la libcdmapgen.trivial.la
 
 # Static convenience libraries for noise lib
 noinst_LTLIBRARIES = libnoise_cell.la libnoise_std.la libnoise_sd.la libnoise_simplex.la libnoise_srd.la
@@ -19,3 +19,8 @@ libnoise_srd_la_SOURCES = noise/srdnoise23.c noise/srdnoise23.h
 libcdmapgen_classic_la_SOURCES = mapgen.classic.c
 libcdmapgen_classic_la_LIBADD = libnoise_simplex.la
 libcdmapgen_classic_la_LDFLAGS = -version-info 0:0:0
+
+# Classic map generator
+libcdmapgen_trivial_la_SOURCES = mapgen.trivial.c
+libcdmapgen_trivial_la_LIBADD = libnoise_simplex.la
+libcdmapgen_trivial_la_LDFLAGS = -version-info 0:0:0
