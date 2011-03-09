@@ -39,7 +39,7 @@ cdmg_GenerateChunk (int chunkX, int chunkZ, CDMapgenData* data)
     // this should only put 1 layer of bedrock
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
-            data->blocks[(z * 128) + (x * 128 * 16)] = 7; // one layer bedrock
+            data->blocks[(z * 128) + (x * 128 * 16)] = MCBedrock; // one layer bedrock
             data->heightMap[x + (z * 16)] = 1; // max height is 1
 
             for (int y = 1; y < 128; y++) {

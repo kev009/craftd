@@ -27,12 +27,13 @@
 #define CRAFTD_MAPGEN_H
 
 typedef struct _CDMapgenData {
-    unsigned char* seed;
-    unsigned char  blocks[32768];
-    unsigned char  data[16384];
-    unsigned char  skyLight[16384];
-    unsigned char  blockLight[16384];
-    unsigned char  heightMap[256];
+    CDString* seed;
+
+    uint8_t blocks[32768];
+    uint8_t data[16384];
+    uint8_t skyLight[16384];
+    uint8_t blockLight[16384];
+    uint8_t heightMap[256];
 } CDMapgenData;
 
 #endif
