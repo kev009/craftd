@@ -131,7 +131,7 @@ CD_EventRegister (CDServer* self, const char* eventName, CDEventCallbackFunction
         CD_HashPut(self->event.callbacks, eventName, (CDPointer) callbacks);
     }
 
-    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, 0), cd_EventCompare);
+    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, 0), (CDListCompareCallback) cd_EventCompare);
 }
 
 void
@@ -146,7 +146,7 @@ CD_EventRegisterWithPriority (CDServer* self, const char* eventName, int priorit
         CD_HashPut(self->event.callbacks, eventName, (CDPointer) callbacks);
     }
 
-    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, priority), cd_EventCompare);
+    CD_ListSortedPush(callbacks, (CDPointer) CD_CreateEventCallback(callback, priority), (CDListCompareCallback) cd_EventCompare);
 }
 
 CDEventCallback**
