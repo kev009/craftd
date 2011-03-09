@@ -2,6 +2,7 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/common.h \
 		     craftd/config.h \
 		     craftd/Config.h \
+		     craftd/Event.h \
 		     craftd/Hash.h \
 		     craftd/Buffer.h \
 		     craftd/Buffers.h \
