@@ -60,6 +60,10 @@ CD_DestroyHash (CDHash* self)
 {
     assert(self);
 
+    CD_HASH_FOREACH(self, it) {
+        free((void*) CD_HashIteratorKey(it));
+    }
+
     kh_destroy(cdHash, self->raw);
 
     pthread_rwlock_destroy(&self->lock);
@@ -238,7 +242,7 @@ CD_HashPut (CDHash* self, const char* name, CDPointer data)
         old = kh_value(self->raw, it);
     }
     else {
-        it = kh_put(cdHash, self->raw, name, &ret);
+        it = kh_put(cdHash, self->raw, strdup(name), &ret);
     }
 
     kh_value(self->raw, it) = data;
@@ -262,6 +266,8 @@ CD_HashDelete (CDHash* self, const char* name)
     if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
         old = kh_value(self->raw, it);
     }
+
+    free((void*) kh_key(self->raw, it));
 
     kh_del(cdHash, self->raw, it);
     pthread_rwlock_unlock(&self->lock);
@@ -294,6 +300,7 @@ CD_HashClear (CDHash* self)
     pthread_rwlock_wrlock(&self->lock);
     for (it = kh_begin(self->raw); it != kh_end(self->raw); it++) {
         if (kh_exist(self->raw, it)) {
+            free((void*) kh_key(self->raw, it));
             result[i++] = kh_value(self->raw, it);
         }
     }
