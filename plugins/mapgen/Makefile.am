@@ -17,10 +17,10 @@ libnoise_srd_la_SOURCES = noise/srdnoise23.c noise/srdnoise23.h
 
 # Classic map generator
 libcdmapgen_classic_la_SOURCES = mapgen.classic.c
-libcdmapgen_classic_la_LIBADD = libnoise_simplex.la
+libcdmapgen_classic_la_LIBADD = libnoise_simplex.la -lm
 libcdmapgen_classic_la_LDFLAGS = -version-info 0:0:0
 
 # Classic map generator
 libcdmapgen_trivial_la_SOURCES = mapgen.trivial.c
-libcdmapgen_trivial_la_LIBADD = libnoise_simplex.la
+libcdmapgen_trivial_la_LIBADD = libnoise_simplex.la -lm
 libcdmapgen_trivial_la_LDFLAGS = -version-info 0:0:0
