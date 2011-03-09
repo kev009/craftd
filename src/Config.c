@@ -42,6 +42,7 @@ CD_ParseConfig (const char* path)
         ERR("[Config.parse] error on line %d: %s", self->error.line, self->error.text);
 
         CD_DestroyConfig(self);
+
         return NULL;
     }
 

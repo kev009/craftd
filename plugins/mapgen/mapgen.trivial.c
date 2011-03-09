@@ -31,7 +31,7 @@
 
 static
 bool
-cdmg_GenerateChunk (int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
+cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
     int lightValue = CD_Max(0x0F - ABS(chunkX) - ABS(chunkZ), 0);
 

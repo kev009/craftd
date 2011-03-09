@@ -255,7 +255,7 @@ cdmg_BlockType (int chunkX, int chunkZ, int x, int y, int z)
 
 static
 bool
-cdmg_GenerateChunk (int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
+cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
     int lightValue = 0x0F;
     int blockHeight[16][16];
