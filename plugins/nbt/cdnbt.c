@@ -175,7 +175,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
             CD_DestroyString(dir);
         }
 
-        int fd = open(CD_StringContent(chunkPath), O_WRONLY);
+        int fd = open(CD_StringContent(chunkPath), O_CREAT, 0755);
 
         CD_DO {
             struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
@@ -262,6 +262,13 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 
         /* write the nbt to disk */
         nbt_write(nf, CD_StringContent(chunkPath));
+
+        CD_DO {
+            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
+            fcntl(fd, F_SETLKW, &lock);
+
+            close(fd);
+        }
 
         goto done;
     }
