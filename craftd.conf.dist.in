@@ -39,12 +39,15 @@
     "plugin": {
         "paths": [
             "plugins",
-            "@libdir@/craftd/plugins"
+            "plugins/mapgen",
+            "@libdir@/craftd/plugins",
+            "@libdir@/craftd/plugins/mapgen"
         ],
 
         "plugins": [
             { "name": "base" },
             { "name": "nbt" },
+            { "name": "mapgen.classic" },
             { "name": "tests" }
         ]
     }

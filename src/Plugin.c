@@ -24,9 +24,10 @@
  */
 
 #include <craftd/Plugin.h>
+#include <craftd/Server.h>
 
 CDPlugin*
-CD_CreatePlugin (struct _CDServer* server, const char* path)
+CD_CreatePlugin (CDServer* server, const char* path)
 {
     CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
@@ -35,7 +36,11 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     self->server = server;
     self->name   = NULL;
     self->path   = CD_CreateStringFromCString(path);
-    self->handle = lt_dlopenext(path);
+
+
+    self->initialize = NULL;
+    self->finalize   = NULL;
+    self->handle     = lt_dlopenext(path);
 
     if (!self->handle) {
         CDString* tmp = CD_CreateStringFromFormat("libcd%s", path);
@@ -51,6 +56,8 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
 
     if (!self->handle) {
         CD_DestroyPlugin(self);
+
+        SERR(server, "Couldn't load plugin %s", path);
 
         errno = ENOENT;
 
@@ -70,6 +77,8 @@ CD_CreatePlugin (struct _CDServer* server, const char* path)
     if (!self->name) {
         self->name = CD_CloneString(self->path);
     }
+
+    SLOG(server, LOG_NOTICE, "Loaded plugin %s", CD_StringContent(self->name));
 
     return self;
 }

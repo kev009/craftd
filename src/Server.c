@@ -52,8 +52,13 @@ CD_CreateServer (const char* path)
 
     self->name     = NULL;
     self->logger   = CDConsoleLogger;
-    self->timeloop = CD_CreateTimeLoop(self);
     self->config   = CD_ParseConfig(path);
+
+    if (!self->config) {
+        return NULL;
+    }
+
+    self->timeloop = CD_CreateTimeLoop(self);
     self->workers  = CD_CreateWorkers(self);
     self->plugins  = CD_CreatePlugins(self);
 

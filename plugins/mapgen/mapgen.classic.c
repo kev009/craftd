@@ -318,7 +318,7 @@ static void add_minerals(MCChunkData *ch, int chunkX, int chunkZ)
 }
 static
 bool
-cdmg_GenerateChunk (int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
+cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
 {
 	generate_heightmap(data, chunkX, chunkZ);
 	generate_filled_chunk(data, chunkX, chunkZ, MCStone);
