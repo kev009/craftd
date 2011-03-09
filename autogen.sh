@@ -2,4 +2,4 @@
 
 git submodule init
 git submodule update
-autoreconf -i
+autoreconf -im
