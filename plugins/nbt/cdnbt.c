@@ -24,6 +24,7 @@
  */
 
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
@@ -72,12 +73,12 @@ cdnbt_LoadLevelDat (CDPlugin* self)
 
     data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
 
-    nbt_tag* t_gametime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
+    nbt_tag* t_gameTime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
     nbt_tag* t_spawnX   = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
     nbt_tag* t_spawnY   = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
     nbt_tag* t_spawnZ   = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
 
-    CD_ServerSetTime(self->server, *(nbt_cast_long(t_gametime)));
+    CD_ServerSetTime(self->server, *(nbt_cast_long(t_gameTime)));
 
     MCPosition* spawnPosition = CD_malloc(sizeof(MCPosition));
     spawnPosition->x = *(nbt_cast_int(t_spawnX));
@@ -174,6 +175,28 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
             CD_DestroyString(dir);
         }
 
+        int fd = open(CD_StringContent(chunkPath), O_WRONLY);
+
+        CD_DO {
+            struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
+
+            fcntl(fd, F_GETLK, &lock);
+
+            if (lock.l_type == F_UNLCK) {
+                lock.l_type = F_WRLCK;
+
+                fcntl(fd, F_SETLKW, &lock);
+            }
+            else {
+                lock.l_type = F_RDLCK;
+                fcntl(fd, F_SETLKW, &lock);
+
+                close(fd);
+
+                goto load;
+            }
+        }
+
         CD_EventDispatch(server, "Mapgen.generateChunk", x, z, chunkData);
 
     	nbt_tag* t_level;
@@ -243,44 +266,46 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
         goto done;
     }
 
-    int reasonCode;
+    load: {
+        int reasonCode;
 
-    if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {
-        const char* reason;
+        if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {
+            const char* reason;
 
-        switch (reasonCode) {
-            case NBT_EGZ:  reason = strerror(errno);      break;
-            case NBT_EMEM: reason = "out of memory";      break;
-            case NBT_ERR:  reason = "chunk format error"; break;
-            default:       reason = "unknown error";      break;
+            switch (reasonCode) {
+                case NBT_EGZ:  reason = strerror(errno);      break;
+                case NBT_EMEM: reason = "out of memory";      break;
+                case NBT_ERR:  reason = "chunk format error"; break;
+                default:       reason = "unknown error";      break;
+            }
+
+            SERR(server, "cannot parse chunk '%s': %s", CD_StringContent(chunkPath), reason);
+
+            goto error;
         }
 
-        SERR(server, "cannot parse chunk '%s': %s", CD_StringContent(chunkPath), reason);
+        if (cdnbt_ValidChunk(nf->root) == true) {
+            nbt_tag* t_level      = nbt_find_tag_by_name("Level", nbt_cast_compound(nf->root));
+            nbt_tag* t_blocks     = nbt_find_tag_by_name("Blocks", nbt_cast_compound(t_level));
+            nbt_tag* t_data       = nbt_find_tag_by_name("Data", nbt_cast_compound(t_level));
+            nbt_tag* t_skyLight   = nbt_find_tag_by_name("SkyLight", nbt_cast_compound(t_level));
+            nbt_tag* t_blockLight = nbt_find_tag_by_name("BlockLight", nbt_cast_compound(t_level));
 
-        goto error;
-    }
+            nbt_byte_array* blocks     = nbt_cast_byte_array(t_blocks);
+            nbt_byte_array* data       = nbt_cast_byte_array(t_data);
+            nbt_byte_array* skyLight   = nbt_cast_byte_array(t_skyLight);
+            nbt_byte_array* blockLight = nbt_cast_byte_array(t_blockLight);
 
-    if (cdnbt_ValidChunk(nf->root) == true) {
-        nbt_tag* t_level      = nbt_find_tag_by_name("Level", nbt_cast_compound(nf->root));
-        nbt_tag* t_blocks     = nbt_find_tag_by_name("Blocks", nbt_cast_compound(t_level));
-        nbt_tag* t_data       = nbt_find_tag_by_name("Data", nbt_cast_compound(t_level));
-        nbt_tag* t_skyLight   = nbt_find_tag_by_name("SkyLight", nbt_cast_compound(t_level));
-        nbt_tag* t_blockLight = nbt_find_tag_by_name("BlockLight", nbt_cast_compound(t_level));
+            memcpy(chunkData->blocks,     blocks->content,     blocks->length);
+            memcpy(chunkData->data,       data->content,       data->length);
+            memcpy(chunkData->skyLight,   skyLight->content,   skyLight->length);
+            memcpy(chunkData->blockLight, blockLight->content, blockLight->length);
+        }
+        else {
+            SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
 
-        nbt_byte_array* blocks     = nbt_cast_byte_array(t_blocks);
-        nbt_byte_array* data       = nbt_cast_byte_array(t_data);
-        nbt_byte_array* skyLight   = nbt_cast_byte_array(t_skyLight);
-        nbt_byte_array* blockLight = nbt_cast_byte_array(t_blockLight);
-
-        memcpy(chunkData->blocks,     blocks->content,     blocks->length);
-        memcpy(chunkData->data,       data->content,       data->length);
-        memcpy(chunkData->skyLight,   skyLight->content,   skyLight->length);
-        memcpy(chunkData->blockLight, blockLight->content, blockLight->length);
-    }
-    else {
-        SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
-
-        goto error;
+            goto error;
+        }
     }
 
     done: {
