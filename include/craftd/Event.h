@@ -41,7 +41,7 @@ void CD_DestroyEventCallback (CDEventCallback* self);
 
 bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
-bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
+bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrupted, ...);
 
 /**
  * Dispatch an event with the given name and the given parameters.
@@ -56,6 +56,8 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
         assert(self);                                                                               \
         assert(eventName);                                                                          \
                                                                                                     \
+        bool __interrupted__ = false;                                                               \
+                                                                                                    \
         if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__)) {                              \
             break;                                                                                  \
         }                                                                                           \
@@ -68,11 +70,12 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, ...);
             }                                                                                       \
                                                                                                     \
             if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, ##__VA_ARGS__)) {    \
+                __interrupted__ = !CD_ListStopIterating(__callbacks__, false);                      \
                 break;                                                                              \
             }                                                                                       \
         }                                                                                           \
                                                                                                     \
-        cd_EventAfterDispatch(self, eventName, ##__VA_ARGS__);                                      \
+        cd_EventAfterDispatch(self, eventName, __interrupted__, ##__VA_ARGS__);                     \
     }
 
 /**

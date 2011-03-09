@@ -84,7 +84,7 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
         }
 
         if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, eventName, ap)) {
-            result = false;
+            result = CD_ListStopIterating(callbacks, false);
             break;
         }
     }
@@ -95,21 +95,21 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 }
 
 bool
-cd_EventAfterDispatch (CDServer* self, const char* eventName, ...)
+cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrupted, ...)
 {
     CDList* callbacks = (CDList*) CD_HashGet(self->event.callbacks, "Event.dispatch:after");
     bool    result    = true;
     va_list ap;
 
-    va_start(ap, eventName);
+    va_start(ap, interrupted);
 
     CD_LIST_FOREACH(callbacks, it) {
         if (!CD_ListIteratorValue(it)) {
             continue;
         }
 
-        if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, eventName, ap)) {
-            result = false;
+        if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, eventName, interrupted, ap)) {
+            result = CD_ListStopIterating(callbacks, false);
             break;
         }
     }
