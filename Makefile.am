@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = include src plugins htdocs
 
-EXTRA_DIST = compat craftd.conf.dist.in motd.conf.dist
+EXTRA_DIST = craftd.conf.dist.in motd.conf.dist
 
 # Make a correct default config file
 edit = sed \
