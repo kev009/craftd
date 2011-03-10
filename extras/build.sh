@@ -41,7 +41,7 @@ cp src/.libs/*.so* $LIBDIR/ || exit 1
 
 echo "Fetching latest craftd from git repository..."
 cd $SRCDIR
-git clone -q git://github.com/jbergstroem/craftd.git || exit 1
+git clone -q git://github.com/kev009/craftd.git || exit 1
 
 echo "Building craftd..."
 cd $SRCDIR/craftd
