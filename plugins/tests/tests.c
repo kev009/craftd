@@ -30,6 +30,27 @@
 #include "tinytest/tinytest.h"
 #include "tinytest/tinytest_macros.h"
 
+
+void
+cdtest_String_fromBuffer (void* data)
+{
+    const char* test   = "lol wut";
+    CDString*   string = CD_CreateStringFromBuffer(test, 3);
+
+    tt_int_op(CD_StringLength(string), ==, 3);
+
+    end: {
+        CD_DestroyString(string);
+    }
+}
+
+struct testcase_t cd_utils_String_tests[] = {
+    { "fromBuffer", cdtest_String_fromBuffer, },
+
+    END_OF_TESTCASES
+};
+
+
 void
 cdtest_String_UTF8_length (void* data)
 {
@@ -434,6 +455,7 @@ struct testcase_t cd_utils_Regexp_tests[] = {
 };
 
 struct testgroup_t cd_groups[] = {
+    { "utils/String/",           cd_utils_String_tests },
     { "utils/String/UTF8/",      cd_utils_String_UTF8_tests },
     { "utils/String/Minecraft/", cd_utils_String_Minecraft_tests },
     { "utils/Hash/",             cd_utils_Hash_tests },

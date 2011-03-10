@@ -29,6 +29,10 @@
 #include <math.h>
 #include "noise/simplexnoise1234.h"
 
+static struct {
+    CDString* seed;
+} _config;
+
 static
 float
 cdmg_Multifractal2d (float x, float z, float lacunarity, int octaves)
@@ -352,7 +356,7 @@ CD_PluginInitialize (CDPlugin* self)
     self->name = CD_CreateStringFromCString("Mapgen.classic");
 
     CD_DO { // Initiailize config cache
-        _config.seed = "^_^";
+        _config.seed = NULL;
 
         J_DO {
             J_IN(server, self->server->config->data, "server") {
@@ -370,6 +374,10 @@ CD_PluginInitialize (CDPlugin* self)
                     }
                 }
             }
+        }
+
+        if (_config.seed == NULL) {
+            _config.seed = CD_CreateStringFromCString("^_^");
         }
     }
 

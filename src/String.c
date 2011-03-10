@@ -74,6 +74,21 @@ cd_UTF8_strlen (const char* data)
 
 static
 size_t
+cd_UTF8_strnlen (const char* data, size_t limit)
+{
+    size_t result  = 0;
+    size_t i       = 0;
+
+    while (data[i] != '\0' && i < limit) {
+        i += cd_UTF8_nextCharLength(data[i]);
+        result++;
+    }
+
+    return result;
+}
+
+static
+size_t
 cd_UTF8_offset (const char* data, size_t offset)
 {
     size_t result = 0;
@@ -91,7 +106,7 @@ cd_UpdateLength (CDString* self)
 {
     assert(self);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    self->length = cd_UTF8_strnlen(CD_StringContent(self), self->raw->slen);
 }
 
 CDString*
