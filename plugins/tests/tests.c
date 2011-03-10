@@ -400,7 +400,7 @@ struct testcase_t cd_utils_Set_tests[] = {
 void
 cdtest_Regexp_match (void* data)
 {
-    CDRegexpMatches* matches = CD_MatchRegexpCString("(\\w+) (\\d+) (\\w+)", 0, "lol 23 omg");
+    CDRegexpMatches* matches = CD_RegexpMatchCString("(\\w+) (\\d+) (\\w+)", 0, "lol 23 omg");
 
     tt_int_op(matches->length, ==, 4);
 
@@ -419,7 +419,7 @@ cdtest_Regexp_test (void* data)
     CDRegexp* regexp = CD_CreateRegexp("^\\d+$", 0);
     CDString* string = CD_CreateStringFromCString("23");
 
-    tt_assert(CD_TestRegexp(regexp, string));
+    tt_assert(CD_RegexpTest(regexp, string));
 
     end: {
         CD_DestroyRegexpKeepString(regexp);

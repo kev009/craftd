@@ -58,12 +58,12 @@ CDRegexpMatches* CD_CreateRegexpMatches (size_t length);
 
 void CD_DestroyRegexpMatches (CDRegexpMatches* self);
 
-CDRegexpMatches* CD_MatchRegexp (CDRegexp* self, CDString* string);
+CDRegexpMatches* CD_RegexpMatch (CDRegexp* self, CDString* string);
 
-CDRegexpMatches* CD_MatchRegexpString (char* regexp, int options, CDString* string);
+CDRegexpMatches* CD_RegexpMatchString (char* regexp, int options, CDString* string);
 
-CDRegexpMatches* CD_MatchRegexpCString (char* regexp, int options, char* string);
+CDRegexpMatches* CD_RegexpMatchCString (char* regexp, int options, char* string);
 
-bool CD_TestRegexp (CDRegexp* self, CDString* string);
+bool CD_RegexpTest (CDRegexp* self, CDString* string);
 
 #endif
