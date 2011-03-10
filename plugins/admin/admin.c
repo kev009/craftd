@@ -35,9 +35,23 @@ typedef enum _CDAuthLevel {
 
 static
 bool
-cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command, CDString* parameters)
+cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 {
-    return true;
+    CDRegexpMatches* matches = CD_RegexpMatchString("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone, command);
+
+    if (!matches) {
+        return true;
+    }
+
+    SDEBUG(server, "Command> %s: %s\n", CD_StringContent(matches->item[1]), CD_StringContent(matches->item[2]));
+
+    if (CD_StringIsEqual(matches->item[1], "auth")) {
+        if (!matches->item[2]) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static
