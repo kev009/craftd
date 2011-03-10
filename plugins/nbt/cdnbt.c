@@ -284,6 +284,14 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
     }
 
     load: {
+        CD_DO {
+            int fd = open(CD_StringContent(chunkPath), O_RDONLY);
+
+            struct flock lock = { F_RDLCK, SEEK_SET, 0, 0, 0 };
+
+            fcntl(fd, F_SETLKW, &lock);
+        }
+
         int reasonCode;
 
         if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {

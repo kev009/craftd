@@ -34,6 +34,10 @@ static struct {
     pthread_mutex_t login;
 } _lock;
 
+static struct {
+    char* commandChar;
+} _config;
+
 static
 bool
 cdbase_CompareMCPosition (CDSet* self, MCPosition* a, MCPosition* b)
@@ -382,7 +386,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 break;
             }
 
-            if (CD_StringStartWith(data->request.message, "/")) {
+            if (CD_StringStartWith(data->request.message, _config.commandChar)) {
                 CD_EventDispatch(server, "Player.command", player, data->request.message);
             }
             else {
