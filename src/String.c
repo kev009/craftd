@@ -30,7 +30,7 @@
 #include <craftd/common.h>
 
 const char* MCCharset =
-    " #$%&\"()*+,-./:;<=>?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
+    " #$%&\"()*+,-./:;<=>!?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
     "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
