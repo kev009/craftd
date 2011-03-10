@@ -237,6 +237,10 @@ bool CD_StringStartWith (CDString* self, const char* check);
  */
 bool CD_StringEndWith (CDString* self, const char* check);
 
+bool CD_StringIsEqual (CDString* a, const char* b);
+
+bool CD_CStringIsEqual (const char* a, const char* b);
+
 CDString* CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b);
 
 CDString* CD_StringColor (CDString* self, CDStringColor color);
