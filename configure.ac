@@ -52,9 +52,6 @@ CFLAGS="$CFLAGS -Wno-switch-enum -Wno-unused-function -Wno-unused-label"
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
                   sys/socket.h unistd.h endian.h sys/endian.h ltdl.h])
 
-# Check for libraries
-AC_SEARCH_LIBS([lt_dlopen], [ltdl])
-
 # Define libjansson stuff
 AC_TYPE_LONG_LONG_INT
 case $ac_cv_type_long_long_int in
