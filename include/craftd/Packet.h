@@ -720,7 +720,4 @@ CDPointer CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input);
  */
 CDBuffer* CD_PacketToBuffer (CDPacket* self);
 
-#define CD_PACKET_DO \
-    for (void* __check__ = NULL; __check__ == NULL; __check__++)
-
 #endif

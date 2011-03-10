@@ -59,7 +59,7 @@ static
 bool
 cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 {
-    CD_PACKET_DO {
+    CD_DO {
         CDPacketPreChunk pkt = {
             .response = {
                 .x = coord->x,
@@ -73,7 +73,7 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
         CD_PlayerSendPacketAndCleanData(player, &response);
     }
 
-    CD_PACKET_DO {
+    CD_DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
         MCChunkData* data = CD_malloc(sizeof(MCChunkData));
@@ -127,7 +127,7 @@ static
 void
 cdbase_ChunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 {
-    CD_PACKET_DO {
+    CD_DO {
         CDPacketPreChunk pkt = {
             .response = {
                 .x    = coord->x,
@@ -221,7 +221,7 @@ static
 void
 cdbase_TimeUpdate (void* _, void* __, CDServer* self)
 {
-    CD_PACKET_DO {
+    CD_DO {
         CDPacketTimeUpdate pkt = {
             .response = {
                 .time = CD_ServerGetTime(self)
@@ -240,7 +240,7 @@ static
 void
 cdbase_KeepAlive (void* _, void* __, CDServer* self)
 {
-    CD_PACKET_DO {
+    CD_DO {
         CDPacket packet = { CDResponse, CDKeepAlive, };
 
         CD_HASH_FOREACH(self->players, it) {
@@ -284,7 +284,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             pthread_mutex_unlock(&_lock.login);
 
-            CD_PACKET_DO {
+            CD_DO {
                 CDPacketLogin pkt = {
                     .response = {
                         .id         = player->entity.id,
@@ -324,7 +324,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             /* Send Spawn Position to initialize compass */
-            CD_PACKET_DO {
+            CD_DO {
                 CDPacketSpawnPosition pkt = {
                     .response = {
                         .position = *spawnPosition
@@ -336,7 +336,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            CD_PACKET_DO {
+            CD_DO {
                 CDPacketPlayerMoveLook pkt = {
                     .response = {
                         .position = {

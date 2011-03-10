@@ -81,6 +81,22 @@ CD_DestroyPlayer (CDPlayer* self)
 }
 
 void
+CD_PlayerSendMessage (CDPlayer* self, CDString* message)
+{
+    CD_DO {
+        CDPacketChat pkt = {
+            .response = {
+                .message = message
+            }
+        };
+
+        CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+
+        CD_PlayerSendPacketAndCleanData(self, &response);
+    }
+}
+
+void
 CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 {
     if (!self->buffers) {

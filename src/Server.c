@@ -464,7 +464,7 @@ CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason)
 
     player->status = CDPlayerDisconnect;
 
-    CD_PACKET_DO {
+    CD_DO {
         CDPacketDisconnect pkt = {
             .response = {
                 .reason = reason
@@ -484,7 +484,7 @@ CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason)
 void
 CD_ServerBroadcast (CDServer* self, CDString* message)
 {
-    CD_PACKET_DO {
+    CD_DO {
         CDPacketChat pkt = {
             .response = {
                 .message = message

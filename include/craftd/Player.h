@@ -79,6 +79,13 @@ CDPlayer* CD_CreatePlayer (struct _CDServer* server);
 void CD_DestroyPlayer (CDPlayer* self);
 
 /**
+ * Send a chat message to a player
+ *
+ * @param message The message to send
+ */
+void CD_PlayerSendMessage (CDPlayer* self, CDString* message);
+
+/**
  * Send a Packet to a Player
  *
  * @param packet The Packet object to send
