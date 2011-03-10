@@ -72,10 +72,10 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
     CD_PACKET_DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
-        MCChunkData data;
-        bool        interrupted;
+        MCChunkData* data = CD_malloc(sizeof(MCChunkData));
+        bool         interrupted;
 
-        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, &data);
+        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, data);
 
         if (interrupted) {
             return false;
@@ -83,11 +83,13 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 
         uLongf written = compressBound(81920);
         Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
-        if (compress(buffer, &written, (Bytef*) &data, 81920) != Z_OK) {
+        if (compress(buffer, &written, (Bytef*) data, 81920) != Z_OK) {
             SERR(server, "zlib compress failure");
+            CD_free(data);
             return false;
         }
         SDEBUG(server, "compressed %ld bytes", written);
+        CD_free(data);
 
         CDPacketMapChunk pkt = {
             .response = {
@@ -473,8 +475,8 @@ static
 bool
 cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 {
-    CD_ServerBroadcast(server, CD_CreateStringFromFormat("%s has left the game",
-        CD_StringContent(player->username)));
+    CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("%s has left the game",
+        CD_StringContent(player->username)), CDColorYellow));
 
     return true;
 }

@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <craftd/Server.h>
 #include <craftd/Logger.h>
 #include <craftd/version.h>

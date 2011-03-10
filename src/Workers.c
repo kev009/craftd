@@ -40,8 +40,9 @@ CD_CreateWorkers (CDServer* server)
 
     self->jobs = CD_CreateList();
 
-    pthread_attr_init(&self->attributes);
-    pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
+    assert(pthread_attr_init(&self->attributes) == 0);
+    assert(pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED) == 0);
+    assert(pthread_attr_setstacksize(&self->attributes, CD_THREAD_STACK) == 0);
 
     assert(pthread_mutex_init(&self->lock.mutex, NULL) == 0);
     assert(pthread_cond_init(&self->lock.condition, NULL) == 0);

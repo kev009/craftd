@@ -65,25 +65,35 @@ cdnbt_LoadLevelDat (CDPlugin* self)
 
     leveldatPath = CD_CreateStringFromFormat("%s/level.dat", self->server->config->cache.files.world);
 
-    if (nbt_parse(nf, CD_StringContent(leveldatPath)) != NBT_OK) {
-        SERR(self->server, "cannot parse level.dat (%s).", CD_StringContent(leveldatPath));
-
-        return false;
-    }
-
-    data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
-
-    nbt_tag* t_gameTime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
-    nbt_tag* t_spawnX   = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
-    nbt_tag* t_spawnY   = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
-    nbt_tag* t_spawnZ   = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
-
-    CD_ServerSetTime(self->server, *(nbt_cast_long(t_gameTime)));
-
     MCPosition* spawnPosition = CD_malloc(sizeof(MCPosition));
-    spawnPosition->x = *(nbt_cast_int(t_spawnX));
-    spawnPosition->y = *(nbt_cast_int(t_spawnY));
-    spawnPosition->z = *(nbt_cast_int(t_spawnZ));
+
+    if (access(CD_StringContent(leveldatPath), R_OK) < 0) {
+        spawnPosition->x = 0;
+        spawnPosition->y = 120;
+        spawnPosition->z = 0;
+    }
+    else {
+        if (nbt_parse(nf, CD_StringContent(leveldatPath)) != NBT_OK) {
+            SERR(self->server, "cannot parse level.dat (%s).", CD_StringContent(leveldatPath));
+
+            CD_free(spawnPosition);
+
+            return false;
+        }
+
+        data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
+
+        nbt_tag* t_gameTime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
+        nbt_tag* t_spawnX   = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
+        nbt_tag* t_spawnY   = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
+        nbt_tag* t_spawnZ   = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
+
+        CD_ServerSetTime(self->server, *(nbt_cast_long(t_gameTime)));
+
+        spawnPosition->x = *(nbt_cast_int(t_spawnX));
+        spawnPosition->y = *(nbt_cast_int(t_spawnY));
+        spawnPosition->z = *(nbt_cast_int(t_spawnZ));
+    }
 
     DEBUG("spawn position: (%d, %d, %d)", spawnPosition->x, spawnPosition->y, spawnPosition->z);
 
