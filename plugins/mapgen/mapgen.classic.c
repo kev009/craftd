@@ -328,6 +328,10 @@ cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data,
 {
     memset(data, 0, sizeof(MCChunkData));
 
+    if (seed == NULL) {
+        seed = _config.seed;
+    }
+
     cdmg_GenerateHeightMap(data, chunkX, chunkZ);
     cdmg_GenerateFilledChunk(data, chunkX, chunkZ, MCStone);
     cdmg_DigCaves(data, chunkX, chunkZ);
@@ -346,6 +350,29 @@ bool
 CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Mapgen.classic");
+
+    CD_DO { // Initiailize config cache
+        _config.seed = "^_^";
+
+        J_DO {
+            J_IN(server, self->server->config->data, "server") {
+                J_IN(plugin, server, "plugin") {
+                    J_FOREACH(plugin, plugin, "plugins") {
+                        J_IF_STRING(plugin, "name") {
+                            if (CD_CStringIsEqual(J_STRING_VALUE, "mapgen.classic")) {
+                                J_IF_STRING(plugin, "seed") {
+                                    _config.seed = CD_CreateStringFromCString(J_STRING_VALUE);
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 
