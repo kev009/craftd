@@ -45,9 +45,19 @@
         ],
 
         "plugins": [
-            { "name": "base" },
+            { "name": "base",
+                "commandChar": "/"
+            },
+
             { "name": "nbt" },
             { "name": "mapgen.classic" },
+
+            { "name": "admin",
+                "authorizations": [
+                    { "name": "Notch", "password": "faggotree", "level": "admin" }
+                ]
+            },
+
             { "name": "tests" }
         ]
     }

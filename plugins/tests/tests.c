@@ -387,24 +387,61 @@ cdtest_Set_length (void* data)
     end: {
         CD_DestroySet(set);
     }
-
 }
 
 struct testcase_t cd_utils_Set_tests[] = {
-    { "put", cdtest_Set_put, },
+    { "put",    cdtest_Set_put, },
     { "delete", cdtest_Set_delete, },
     { "length", cdtest_Set_length, },
 
     END_OF_TESTCASES
 };
 
+void
+cdtest_Regexp_match (void* data)
+{
+    CDRegexpMatches* matches = CD_MatchRegexpCString("(\\w+) (\\d+) (\\w+)", 0, "lol 23 omg");
+
+    tt_int_op(matches->length, ==, 4);
+
+    tt_int_op(strcmp(CD_StringContent(matches->item[1]), "lol"), ==, 0);
+    tt_int_op(strcmp(CD_StringContent(matches->item[2]), "23"),  ==, 0);
+    tt_int_op(strcmp(CD_StringContent(matches->item[3]), "omg"), ==, 0);
+
+    end: {
+        CD_DestroyRegexpMatches(matches);
+    }
+}
+
+void
+cdtest_Regexp_test (void* data)
+{
+    CDRegexp* regexp = CD_CreateRegexp("^\\d+$", 0);
+    CDString* string = CD_CreateStringFromCString("23");
+
+    tt_assert(CD_TestRegexp(regexp, string));
+
+    end: {
+        CD_DestroyRegexpKeepString(regexp);
+        CD_DestroyString(string);
+    }
+}
+
+struct testcase_t cd_utils_Regexp_tests[] = {
+    { "match", cdtest_Regexp_match, },
+    { "test",  cdtest_Regexp_test, },
+
+    END_OF_TESTCASES
+};
+
 struct testgroup_t cd_groups[] = {
-    { "utils/String/UTF8/",         cd_utils_String_UTF8_tests },
-    { "utils/String/Minecraft/",    cd_utils_String_Minecraft_tests },
-    { "utils/Hash/",                cd_utils_Hash_tests },
-    { "utils/Map/",                 cd_utils_Map_tests },
-    { "utils/List/",                cd_utils_List_tests },
-    { "utils/Set/",                 cd_utils_Set_tests },
+    { "utils/String/UTF8/",      cd_utils_String_UTF8_tests },
+    { "utils/String/Minecraft/", cd_utils_String_Minecraft_tests },
+    { "utils/Hash/",             cd_utils_Hash_tests },
+    { "utils/Map/",              cd_utils_Map_tests },
+    { "utils/List/",             cd_utils_List_tests },
+    { "utils/Set/",              cd_utils_Set_tests },
+    { "utils/Regexp/",           cd_utils_Regexp_tests },
 
     END_OF_GROUPS
 };

@@ -60,6 +60,8 @@ CD_DestroyJobData (CDJob* self)
             CD_DestroyPacket(((CDPlayerProcessJobData*) self->data)->packet);
             CD_free((void*) self->data);
         } break;
+
+        default: break;
     }
 }
 

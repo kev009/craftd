@@ -132,16 +132,17 @@ static
 bool
 cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 {
-    const char bufferSize = 8; // Big enough for all base36 int values and -,nul
+    const char   bufferSize = 8; // Big enough for all base36 int values and -,nul
+    int          fd;
 
-    /* Chunk directory and subdir location */
+    // Chunk directory and subdir location
     char directory1[bufferSize];
     char directory2[bufferSize];
 
     itoa((x & 63), directory1, WORLD_BASE);
     itoa((z & 63), directory2, WORLD_BASE);
 
-    /* Chunk file name */
+    // Chunk file name
     char chunkName1[bufferSize];
     char chunkName2[bufferSize];
 
@@ -185,24 +186,18 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
             CD_DestroyString(dir);
         }
 
-        int fd = open(CD_StringContent(chunkPath), O_CREAT, 0755);
-
         CD_DO {
             struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
+                         fd   = open(CD_StringContent(chunkPath), O_CREAT, 0755);
 
             fcntl(fd, F_GETLK, &lock);
 
             if (lock.l_type == F_UNLCK) {
                 lock.l_type = F_WRLCK;
-
                 fcntl(fd, F_SETLKW, &lock);
             }
             else {
-                lock.l_type = F_RDLCK;
-                fcntl(fd, F_SETLKW, &lock);
-
                 close(fd);
-
                 goto load;
             }
         }
@@ -273,17 +268,17 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
         /* write the nbt to disk */
         nbt_write(nf, CD_StringContent(chunkPath));
 
-        CD_DO {
-            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
-            fcntl(fd, F_SETLKW, &lock);
-
-            close(fd);
-        }
-
         goto done;
     }
 
     load: {
+        CD_DO {
+            struct flock lock = { F_RDLCK, SEEK_SET, 0, 0, 0 };
+                         fd   = open(CD_StringContent(chunkPath), O_RDONLY);
+
+            fcntl(fd, F_SETLKW, &lock);
+        }
+
         int reasonCode;
 
         if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {
@@ -317,6 +312,13 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
             memcpy(chunkData->data,       data->content,       data->length);
             memcpy(chunkData->skyLight,   skyLight->content,   skyLight->length);
             memcpy(chunkData->blockLight, blockLight->content, blockLight->length);
+
+            CD_DO {
+                struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
+                fcntl(fd, F_SETLKW, &lock);
+
+                close(fd);
+            }
         }
         else {
             SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
@@ -332,6 +334,13 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 
         CD_DestroyString(chunkPath);
 
+        CD_DO {
+            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
+            fcntl(fd, F_SETLKW, &lock);
+
+            close(fd);
+        }
+
         return true;
     }
 
@@ -341,6 +350,13 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
         }
 
         CD_DestroyString(chunkPath);
+
+        CD_DO {
+            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
+            fcntl(fd, F_SETLKW, &lock);
+
+            close(fd);
+        }
 
         return false;
     }

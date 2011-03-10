@@ -23,15 +23,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CDAFTD_REGEXP_H
-#define CDAFTD_REGEXP_H
+#ifndef CRAFTD_REGEXP_H
+#define CRAFTD_REGEXP_H
 
 #include <pcre.h>
 
-#define REGEXP_I PCRE_CASELESS
-#define REGEXP_X PCRE_EXTENDED
-#define REGEXP_M PCRE_MULTILINE
-#define REGEXP_S PCRE_DOTALL
+#define CD_REGEXP_I PCRE_CASELESS
+#define CD_REGEXP_X PCRE_EXTENDED
+#define CD_REGEXP_M PCRE_MULTILINE
+#define CD_REGEXP_S PCRE_DOTALL
+
+#include <craftd/String.h>
 
 typedef struct _CDRegexp {
     char* string;
@@ -48,20 +50,20 @@ typedef struct _CDRegexpMatches {
 
 CDRegexp* CD_CreateRegexp (char* regexp, int options);
 
-void CD_DestroyRegexp (CDRegexp* regexp);
+void CD_DestroyRegexp (CDRegexp* self);
 
-void CD_DestroyRegexpKeepString (CDRegexp* regexp);
+void CD_DestroyRegexpKeepString (CDRegexp* self);
 
 CDRegexpMatches* CD_CreateRegexpMatches (size_t length);
 
-void CD_DestroyRegexpMatches (CDRegexpMatches* object);
+void CD_DestroyRegexpMatches (CDRegexpMatches* self);
 
-CDRegexpMatches* CD_MatchRegexp (CDRegexp* regexp, CDString* string);
+CDRegexpMatches* CD_MatchRegexp (CDRegexp* self, CDString* string);
 
 CDRegexpMatches* CD_MatchRegexpString (char* regexp, int options, CDString* string);
 
-CDRegexpMatches* CD_MatchRegexpString2 (char* regexp, int options, char* string);
+CDRegexpMatches* CD_MatchRegexpCString (char* regexp, int options, char* string);
 
-bool CD_TestRegexp (CDRegexp* regexp, CDString* string);
+bool CD_TestRegexp (CDRegexp* self, CDString* string);
 
 #endif
