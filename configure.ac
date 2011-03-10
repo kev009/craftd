@@ -24,7 +24,7 @@ LT_INIT([dlopen])
 AC_CONFIG_HEADERS([include/craftd/config.h])
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile \
                  plugins/Makefile plugins/mapgen/Makefile \
-                 htdocs/Makefile third-party/jansson/src/jansson_config.h])
+                 htdocs/Makefile])
 AC_CONFIG_SRCDIR([src/craftd.c])
 
 # Checks for libraries.
@@ -37,6 +37,11 @@ AX_PATH_LIB_PCRE
 PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.9],
 , ,
 AC_MSG_ERROR([System libevent2_pthreads not found.  Install it and specify the PKG_CONFIG_PATH. ]))
+
+PKG_CHECK_MODULES([jansson], [jansson >= 2.0],
+, ,
+AC_MSG_ERROR([System jansson not found. Install it and specify the PKG_CONFIG_PATH. ]))
+
 
 # Establish default CFLAGS and pthread portability
 AX_CFLAGS_WARN_ALL
