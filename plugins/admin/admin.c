@@ -34,6 +34,49 @@ typedef enum _CDAuthLevel {
 } CDAuthLevel;
 
 static
+void
+cdadmin_SendUsage (CDPlayer* player, const char* usage)
+{
+    const char*  current = usage;
+          size_t offset  = 0;
+
+    while (*current != '\0') {
+        offset++;
+        current++;
+
+        if (*current == '\n' || *current == '\0') {
+            CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromBufferCopy(usage, offset), CDColorGray));
+
+            offset = 0;
+            usage = current + 1;
+        }
+    }
+}
+
+static
+void
+cdadmin_SetPlayerAuthLevel (CDPlayer* player, const char* level)
+{
+    CDAuthLevel apply = CDLevelUser;
+
+    if (CD_CStringIsEqual(level, "admin")) {
+        apply = CDLevelAdmin;
+    }
+    else if (CD_CStringIsEqual(level, "moderator")) {
+        apply = CDLevelModerator;
+    }
+
+    CD_HashPut(PRIVATE(player), "Authorization.level", apply);
+}
+
+static
+CDAuthLevel
+cdadmin_GetPlayerAuthLevel (CDPlayer* player)
+{
+    return CD_HashGet(PRIVATE(player), "Authorization.level");
+}
+
+static
 bool
 cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 {
@@ -47,7 +90,70 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 
     if (CD_StringIsEqual(matches->item[1], "auth")) {
         if (!matches->item[2]) {
+            cdadmin_SendUsage(player,
+                "Usage: /auth [name] <password>\n" \
+                "   name          If omitted Player's username is used\n" \
+                "   password    Password to login");
+
             return true;
+        }
+
+        CDRegexpMatches* args = CD_RegexpMatchString("^(.+?)(?:\\s+(.*?))?$", CDRegexpNone, matches->item[2]);
+
+        CD_DO {
+            const char* currentName;
+            const char* currentPassword;
+            const char* name;
+            const char* password;
+            const char* level;
+            bool        authorized = false;
+
+            if (args->item[2]) {
+                currentName     = CD_StringContent(args->item[1]);
+                currentPassword = CD_StringContent(args->item[2]);
+            }
+            else {
+                currentName     = CD_StringContent(player->username);
+                currentPassword = CD_StringContent(args->item[1]);
+            }
+
+            J_DO {
+                J_IN(server, player->server->config->data, "server") {
+                    J_IN(plugin, server, "plugin") {
+                        J_FOREACH(plugin, plugin, "plugins") {
+                            J_IF_STRING(plugin, "name") {
+                                if (CD_CStringIsEqual(J_STRING_VALUE, "admin")) {
+                                    J_FOREACH(auth, plugin, "authorizations") {
+                                        J_STRING(auth, "name", name);
+                                        J_STRING(auth, "password", password);
+                                        J_STRING(auth, "level", level);
+
+                                        if (CD_CStringIsEqual(currentName, name) && CD_CStringIsEqual(currentPassword, password)) {
+                                            cdadmin_SetPlayerAuthLevel(player, level);
+
+                                            CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromFormat(
+                                                "Authorized as %s with level %s", name, level
+                                            ), CDColorDarkGreen));
+
+                                            authorized = true;
+
+                                            break;
+                                        }
+                                    }
+
+                                    if (!authorized) {
+                                        CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromFormat(
+                                            "Failed to authorize as %s", currentName), CDColorRed));
+
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -64,7 +170,7 @@ cdadmin_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
 
     CDString* name;
 
-    switch ((CDAuthLevel) CD_HashGet(PRIVATE(player), "Admin.level")) {
+    switch ((CDAuthLevel) CD_HashGet(PRIVATE(player), "Authorization.level")) {
         case CDLevelAdmin: {
             name = CD_StringColor(CD_CloneString(player->username), CDColorRed);
         } break;
