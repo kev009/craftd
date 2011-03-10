@@ -28,6 +28,7 @@ AC_CONFIG_FILES([Makefile src/Makefile include/Makefile \
 AC_CONFIG_SRCDIR([src/craftd.c])
 
 # Checks for libraries.
+AC_CHECK_LIB([ltdl], [lt_dlopen])
 AX_LIB_SOCKET_NSL
 AX_CHECK_ZLIB
 AX_PTHREAD([], AC_MSG_ERROR([pthreads is required]))
@@ -50,9 +51,6 @@ CFLAGS="$CFLAGS -Wno-unused-label"
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h \
                   sys/socket.h unistd.h endian.h sys/endian.h ltdl.h])
-
-# Check for libraries
-AC_SEARCH_LIBS([lt_dlopen], [ltdl])
 
 # Define libjansson stuff
 AC_TYPE_LONG_LONG_INT
