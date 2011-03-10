@@ -128,7 +128,7 @@ CD_CreateStringFromCString (const char* string)
         self->raw->data = (unsigned char*) string;
     }
 
-    self->raw->slen = strlen(string);
+    self->raw->slen = strlen(self->raw->data);
     self->raw->mlen = self->raw->slen;
 
     self->external = true;

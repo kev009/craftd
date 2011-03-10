@@ -73,7 +73,7 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
         MCChunkData* data = CD_malloc(sizeof(MCChunkData));
-        bool        interrupted;
+        bool         interrupted;
 
         CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, data);
 
