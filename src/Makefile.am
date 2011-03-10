@@ -1,34 +1,10 @@
-AM_LIBS = $(libevent2_pthreads_LIBS) $(PCRE_LIBS) $(PTHREAD_LIBS) $(LIBS)
+AM_LIBS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) $(PCRE_LIBS) $(PTHREAD_LIBS) $(LIBS)
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS)
 AM_CPPFLAGS += $(PCRE_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -I$(top_srcdir)/third-party/jansson/src
 #AM_CPPFLAGS += -I$(top_srcdir)/third-party/bstring
 #AM_CPPFLAGS += -I$(top_srcdir)/third-party/klib
-
-# Custom build shim for jansson
-jsondir = $(top_srcdir)/third-party/jansson/src
-noinst_LTLIBRARIES = libjansson.la
-libjansson_la_includedir = $(jsondir)/
-libjansson_la_SOURCES = \
-        $(jsondir)/dump.c \
-        $(jsondir)/error.c \
-        $(jsondir)/hashtable.c \
-        $(jsondir)/hashtable.h \
-        $(jsondir)/jansson_private.h \
-	$(jsondir)/jansson_config.h \
-        $(jsondir)/jansson.h \
-        $(jsondir)/load.c \
-        $(jsondir)/memory.c \
-        $(jsondir)/pack_unpack.c \
-        $(jsondir)/strbuffer.c \
-        $(jsondir)/strbuffer.h \
-        $(jsondir)/utf.c \
-        $(jsondir)/utf.h \
-        $(jsondir)/value.c
-libjansson_la_LDFLAGS = \
-        -export-symbols-regex '^json_'
 
 bstringdir = $(top_srcdir)/third-party/bstring
 
@@ -46,12 +22,12 @@ plugindir = $(top_srcdir)/plugins
 craftd_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
 craftd_SOURCES += craftd.c Buffer.c Buffers.c Config.c ConsoleLogger.c Event.c Hash.c Job.c List.c Logger.c Map.c Packet.c PacketLength.c Player.c Plugins.c Plugin.c Regexp.c Set.c Server.c SystemLogger.c String.c TimeLoop.c Worker.c Workers.c minecraft.c _memory.c
-craftd_LDFLAGS = $(libevent2_pthreads_LIBS) -export-dynamic
-craftd_LDADD = $(PTHREAD_LIBS) libjansson.la 
+craftd_LDFLAGS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) -export-dynamic
+craftd_LDADD = $(PTHREAD_LIBS) 
 #-dlopen $(plugindir)/libcdbase.la
 
 #craftd_proxy_SOURCES = $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
 #craftd_proxy_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
 #craftd_proxy_SOURCES += craftd-proxy.c
 #craftd_proxy_LDFLAGS = $(libevent2_pthreads_LIBS)
-#craftd_proxy_LDADD = $(PTHREAD_LIBS) libjansson.la
+#craftd_proxy_LDADD = $(PTHREAD_LIBS)
