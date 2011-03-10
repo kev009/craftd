@@ -29,6 +29,8 @@
 #include <craftd/common.h>
 #include <craftd/Worker.h>
 
+#define CD_THREAD_STACK 8388608
+
 struct _CDServer;
 
 typedef struct _CDWorkers {
