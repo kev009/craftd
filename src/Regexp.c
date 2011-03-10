@@ -87,7 +87,7 @@ CD_CreateRegexpMatches (size_t length)
     assert(self);
 
     self->length = length;
-    self->item   = CD_malloc(length * sizeof(CDString*));
+    self->item   = CD_calloc(length, sizeof(CDString*));
 
     return self;
 }
