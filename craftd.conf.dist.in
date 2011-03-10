@@ -50,7 +50,10 @@
             },
 
             { "name": "nbt" },
-            { "name": "mapgen.classic" },
+
+            { "name": "mapgen.classic",
+                "seed": "trolololol"
+            },
 
             { "name": "admin",
                 "authorizations": [

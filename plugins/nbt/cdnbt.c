@@ -202,7 +202,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
             }
         }
 
-        CD_EventDispatch(server, "Mapgen.generateChunk", x, z, chunkData);
+        CD_EventDispatch(server, "Mapgen.generateChunk", x, z, chunkData, NULL);
 
     	nbt_tag* t_level;
 	    nbt_tag* t_sub;
