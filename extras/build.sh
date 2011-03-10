@@ -11,43 +11,47 @@ JANSSONVER=jansson-2.0
 JANSSONDIR=$SRCDIR/$JANSSONVER
 
 echo "Creating directories..."
-mkdir -p $SRCDIR $LIBDIR $DATADIR $EXAMPLESDIR|| exit 1
+mkdir -p $SRCDIR $LIBDIR $DATADIR $EXAMPLESDIR || exit 1
 
 echo "Downloading $LIBEVENT2VER..."
 cd $SRCDIR
-wget http://monkey.org/~provos/$LIBEVENT2VER.tar.gz || exit 1
-tar xvzf $LIBEVENT2VER.tar.gz || exit 1
+wget -q http://monkey.org/~provos/$LIBEVENT2VER.tar.gz || exit 1
+tar xzf $LIBEVENT2VER.tar.gz || exit 1
+
+echo "Preparing $LIBEVENT2VER..."
+cd $LIBEVENT2DIR
+./configure -q || exit 1
 
 echo "Building $LIBEVENT2VER..."
-cd $LIBEVENT2DIR
-./configure || exit 1
-make || exit 1
+make >/dev/null 2>&1 || exit 1
 cp .libs/*.so* $LIBDIR/ || exit 1
 
 cd $SRCDIR
 echo "Downloading $JANSSONVER..."
-wget http://www.digip.org/jansson/releases/$JANSSONVER.tar.gz || exit 1
-tar zxvf $JANSSONVER.tar.gz || exit 1
+wget -q http://www.digip.org/jansson/releases/$JANSSONVER.tar.gz || exit 1
+tar zxf $JANSSONVER.tar.gz || exit 1
+
+echo "Preparing $JANSSONVER..."
+cd $JANSSONVER
+./configure -q || exit 1
 
 echo "Building $JANSSONVER..."
-cd $JANSSONVER
-./configure || exit 1
-make || exit 1
+make >/dev/null 2>&1 || exit 1
 cp src/.libs/*.so* $LIBDIR/ || exit 1
 
-echo "Cloning craftd Git repository..."
+echo "Fetching latest craftd from git repository..."
 cd $SRCDIR
-git clone git://github.com/jbergstroem/craftd.git || exit 1
+git clone -q git://github.com/jbergstroem/craftd.git || exit 1
 
 echo "Building craftd..."
 cd craftd
-autoreconf -i || exit 1
+autoreconf -i >/dev/null 2>&1 || exit 1
 export libevent2_pthreads_LIBS="-levent -levent_pthreads -L$LIBDIR"
 export libevent2_pthreads_CFLAGS="-I$LIBEVENT2DIR/include"
 export jansson_LIBS="-ljansson -L$LIBDIR"
 export jansson_CFLAGS="-I$JANSSONDIR/include"
 
-./configure --prefix=$CRAFTDDIR --bindir=$CRAFTDDIR --sysconfdir=$EXAMPLESDIR --datarootdir=$DATADIR || exit 1
+./configure -q --prefix=$CRAFTDDIR --bindir=$CRAFTDDIR --sysconfdir=$EXAMPLESDIR --datarootdir=$DATADIR || exit 1
 make || exit 1
 make install || exit 1
 
