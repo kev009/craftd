@@ -49,7 +49,7 @@ cdtest_String_UTF8_charAt (void* data)
     CDString* test = CD_CreateStringFromCString("Æ§Ð");
     CDString* ch   = CD_CharAt(test, 1);
 
-    tt_int_op(strcmp(CD_StringContent(ch), "§"), ==, 0);
+    tt_assert(CD_StringIsEqual(ch, "§"));
 
     end: {
         CD_DestroyString(test);
@@ -70,8 +70,7 @@ cdtest_String_Minecraft_sanitize (void* data)
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* sanitized = CD_StringSanitizeForMinecraft(string);
 
-    tt_int_op(strcmp(CD_StringContent(sanitized),
-        "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?"), ==, 0);
+    tt_assert(CD_StringIsEqual(sanitized, "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?"));
 
     end: {
         CD_DestroyString(string);
@@ -126,16 +125,16 @@ cdtest_Hash_foreach (void* data)
     CD_HashPut(hash, "win", 4);
 
     CD_HASH_FOREACH(hash, it) {
-        if (strcmp("lol", CD_HashIteratorKey(it)) == 0) {
+        if (CD_CStringIsEqual("lol", CD_HashIteratorKey(it))) {
             tt_int_op((int) CD_HashIteratorValue(it), ==, 1);
         }
-        else if (strcmp("omg", CD_HashIteratorKey(it)) == 0) {
+        else if (CD_CStringIsEqual("omg", CD_HashIteratorKey(it))) {
             tt_int_op((int) CD_HashIteratorValue(it), ==, 2);
         }
-        else if (strcmp("wat", CD_HashIteratorKey(it)) == 0) {
+        else if (CD_CStringIsEqual("wat", CD_HashIteratorKey(it))) {
             tt_int_op((int) CD_HashIteratorValue(it), ==, 3);
         }
-        else if (strcmp("win", CD_HashIteratorKey(it)) == 0) {
+        else if (CD_CStringIsEqual("win", CD_HashIteratorKey(it))) {
             tt_int_op((int) CD_HashIteratorValue(it), ==, 4);
         }
         else {
@@ -404,9 +403,9 @@ cdtest_Regexp_match (void* data)
 
     tt_int_op(matches->length, ==, 4);
 
-    tt_int_op(strcmp(CD_StringContent(matches->item[1]), "lol"), ==, 0);
-    tt_int_op(strcmp(CD_StringContent(matches->item[2]), "23"),  ==, 0);
-    tt_int_op(strcmp(CD_StringContent(matches->item[3]), "omg"), ==, 0);
+    tt_assert(CD_StringIsEqual(matches->item[1], "lol"));
+    tt_assert(CD_StringIsEqual(matches->item[2], "23"));
+    tt_assert(CD_StringIsEqual(matches->item[3], "omg"));
 
     end: {
         CD_DestroyRegexpMatches(matches);

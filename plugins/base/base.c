@@ -525,7 +525,7 @@ CD_PluginInitialize (CDPlugin* self)
                 J_IN(plugin, server, "plugin") {
                     J_FOREACH(plugin, plugin, "plugins") {
                         J_IF_STRING(plugin, "name") {
-                            if (strcmp(J_STRING_VALUE, "admin") == 0) {
+                            if (CD_CStringIsEqual(J_STRING_VALUE, "admin")) {
                                 J_STRING(plugin, "commandChar", _config.commandChar);
 
                                 break;

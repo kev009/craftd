@@ -505,6 +505,18 @@ CD_StringEndWith (CDString* self, const char* check)
     return strncmp(CD_StringContent(self) + strlen(check), check, strlen(check));
 }
 
+bool
+CD_StringIsEqual (CDString* a, const char* b)
+{
+    return strcmp(CD_StringContent(a), b) == 0;
+}
+
+bool
+CD_CStringIsEqual (const char* a, const char* b)
+{
+    return strcmp(a, b) == 0;
+}
+
 CDString*
 CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
 {
