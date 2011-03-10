@@ -416,7 +416,7 @@ cdtest_Regexp_match (void* data)
 void
 cdtest_Regexp_test (void* data)
 {
-    CDRegexp* regexp = CD_CreateRegexp("^\\d+$", 0);
+    CDRegexp* regexp = CD_CreateRegexp("^\\d+$", CDRegexpNone);
     CDString* string = CD_CreateStringFromCString("23");
 
     tt_assert(CD_RegexpTest(regexp, string));

@@ -28,6 +28,14 @@
 
 #include <pcre.h>
 
+typedef enum _CDRegexpOption {
+    CDRegexpNone            = 0,
+    CDRegexpCaseInsensitive = PCRE_CASELESS,
+    CDRegexpExtended        = PCRE_EXTENDED,
+    CDRegexpMultiline       = PCRE_MULTILINE,
+    CDRegexpDotAll          = PCRE_DOTALL
+} CDRegexpOption;
+
 #define CD_REGEXP_I PCRE_CASELESS
 #define CD_REGEXP_X PCRE_EXTENDED
 #define CD_REGEXP_M PCRE_MULTILINE
