@@ -13,23 +13,23 @@ JANSSONDIR=$SRCDIR/$JANSSONVER
 echo "Creating directories..."
 mkdir -p $SRCDIR $LIBDIR $DATADIR $EXAMPLESDIR|| exit 1
 
-echo "Downloading libevent2..."
+echo "Downloading $LIBEVENT2VER..."
 cd $SRCDIR
 wget http://monkey.org/~provos/$LIBEVENT2VER.tar.gz || exit 1
 tar xvzf $LIBEVENT2VER.tar.gz || exit 1
 
-echo "Building libevent2..."
+echo "Building $LIBEVENT2VER..."
 cd $LIBEVENT2DIR
 ./configure || exit 1
 make || exit 1
 cp .libs/*.so* $LIBDIR/ || exit 1
 
 cd $SRCDIR
-echo "Downloading jansson..."
+echo "Downloading $JANSSONVER..."
 wget http://www.digip.org/jansson/releases/$JANSSONVER.tar.gz || exit 1
 tar zxvf $JANSSONVER.tar.gz || exit 1
 
-echo "Building jansson..."
+echo "Building $JANSSONVER..."
 cd $JANSSONVER
 ./configure || exit 1
 make || exit 1
