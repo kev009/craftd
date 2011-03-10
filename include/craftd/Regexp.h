@@ -28,6 +28,14 @@
 
 #include <pcre.h>
 
+typedef enum _CDRegexpOption {
+    CDRegexpNone            = 0,
+    CDRegexpCaseInsensitive = PCRE_CASELESS,
+    CDRegexpExtended        = PCRE_EXTENDED,
+    CDRegexpMultiline       = PCRE_MULTILINE,
+    CDRegexpDotAll          = PCRE_DOTALL
+} CDRegexpOption;
+
 #define CD_REGEXP_I PCRE_CASELESS
 #define CD_REGEXP_X PCRE_EXTENDED
 #define CD_REGEXP_M PCRE_MULTILINE
@@ -58,12 +66,12 @@ CDRegexpMatches* CD_CreateRegexpMatches (size_t length);
 
 void CD_DestroyRegexpMatches (CDRegexpMatches* self);
 
-CDRegexpMatches* CD_MatchRegexp (CDRegexp* self, CDString* string);
+CDRegexpMatches* CD_RegexpMatch (CDRegexp* self, CDString* string);
 
-CDRegexpMatches* CD_MatchRegexpString (char* regexp, int options, CDString* string);
+CDRegexpMatches* CD_RegexpMatchString (char* regexp, int options, CDString* string);
 
-CDRegexpMatches* CD_MatchRegexpCString (char* regexp, int options, char* string);
+CDRegexpMatches* CD_RegexpMatchCString (char* regexp, int options, char* string);
 
-bool CD_TestRegexp (CDRegexp* self, CDString* string);
+bool CD_RegexpTest (CDRegexp* self, CDString* string);
 
 #endif

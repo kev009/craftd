@@ -103,7 +103,7 @@ CD_DestroyRegexpMatches (CDRegexpMatches* self)
 }
 
 CDRegexpMatches*
-CD_MatchRegexp (CDRegexp* self, CDString* string)
+CD_RegexpMatch (CDRegexp* self, CDString* string)
 {
     CDRegexpMatches* matches;
 
@@ -139,7 +139,7 @@ CD_MatchRegexp (CDRegexp* self, CDString* string)
 }
 
 CDRegexpMatches*
-CD_MatchRegexpString (char* regexp, int options, CDString* string)
+CD_RegexpMatchString (char* regexp, int options, CDString* string)
 {
     CDRegexp* self = CD_CreateRegexp(regexp, options);
 
@@ -147,7 +147,7 @@ CD_MatchRegexpString (char* regexp, int options, CDString* string)
         return NULL;
     }
 
-    CDRegexpMatches* result = CD_MatchRegexp(self, string);
+    CDRegexpMatches* result = CD_RegexpMatch(self, string);
 
     CD_DestroyRegexpKeepString(self);
 
@@ -155,7 +155,7 @@ CD_MatchRegexpString (char* regexp, int options, CDString* string)
 }
 
 CDRegexpMatches*
-CD_MatchRegexpCString (char* regexp, int options, char* string)
+CD_RegexpMatchCString (char* regexp, int options, char* string)
 {
     CDRegexp* self = CD_CreateRegexp(regexp, options);
 
@@ -164,7 +164,7 @@ CD_MatchRegexpCString (char* regexp, int options, char* string)
     }
 
     CDString*        str     = CD_CreateStringFromCString(string);
-    CDRegexpMatches* matches = CD_MatchRegexp(self, str);
+    CDRegexpMatches* matches = CD_RegexpMatch(self, str);
 
     CD_DestroyRegexpKeepString(self);
     CD_DestroyString(str);
@@ -173,7 +173,7 @@ CD_MatchRegexpCString (char* regexp, int options, char* string)
 }
 
 bool
-CD_TestRegexp (CDRegexp* self, CDString* string)
+CD_RegexpTest (CDRegexp* self, CDString* string)
 {
     size_t length = 0;
     int*   substrings;
