@@ -44,19 +44,20 @@ cd $SRCDIR
 git clone -q git://github.com/jbergstroem/craftd.git || exit 1
 
 echo "Building craftd..."
-cd craftd
-autoreconf -i >/dev/null 2>&1 || exit 1
+cd $SRCDIR/craftd
+./autogen.sh >/dev/null 2>&1 || exit 1
 export libevent2_pthreads_LIBS="-levent -levent_pthreads -L$LIBDIR"
 export libevent2_pthreads_CFLAGS="-I$LIBEVENT2DIR/include"
 export jansson_LIBS="-ljansson -L$LIBDIR"
-export jansson_CFLAGS="-I$JANSSONDIR/include"
+export jansson_CFLAGS="-I$JANSSONDIR/src"
 
 ./configure -q --prefix=$CRAFTDDIR --bindir=$CRAFTDDIR --sysconfdir=$EXAMPLESDIR --datarootdir=$DATADIR || exit 1
-make || exit 1
-make install || exit 1
+make >/dev/null 2>&1 || exit 1
+make install >/dev/null 2>&1 || exit 1
 
 echo "Creating config..."
 cp $EXAMPLESDIR/craftd/craftd.conf.dist $CRAFTDDIR/craftd.conf
+cd $CRAFTDDIR
 
 echo "Done"
 echo
