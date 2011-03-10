@@ -35,7 +35,7 @@ static struct {
 } _lock;
 
 static struct {
-    char* commandChar;
+    const char* commandChar;
 } _config;
 
 static
@@ -387,7 +387,9 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             if (CD_StringStartWith(data->request.message, _config.commandChar)) {
-                CD_EventDispatch(server, "Player.command", player, data->request.message);
+                CDString* commandString = CD_CreateStringFromOffset(data->request.message, 1, 0);
+                CD_EventDispatch(server, "Player.command", player, commandString);
+                CD_DestroyString(commandString);
             }
             else {
                 CD_EventDispatch(server, "Player.chat", player, data->request.message);
@@ -487,7 +489,7 @@ cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 
 static
 bool
-cdbase_HandleCommand (CDServer* server, CDPlayer* player, CDString* command, CDString* parameters)
+cdbase_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 {
     return true;
 }
@@ -513,6 +515,28 @@ CD_PluginInitialize (CDPlugin* self)
     self->name = CD_CreateStringFromCString("Base");
 
     pthread_mutex_init(&_lock.login, NULL);
+
+
+    CD_DO { // Initiailize config cache
+        _config.commandChar = "/";
+
+        J_DO {
+            J_IN(server, self->server->config->data, "server") {
+                J_IN(plugin, server, "plugin") {
+                    J_FOREACH(plugin, plugin, "plugins") {
+                        J_IF_STRING(plugin, "name") {
+                            if (strcmp(J_STRING_VALUE, "admin") == 0) {
+                                J_STRING(plugin, "commandChar", _config.commandChar);
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbase_TimeIncrease));
     CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbase_TimeUpdate));

@@ -33,10 +33,10 @@ CD_CreatePlugin (CDServer* server, const char* path)
 
     assert(self);
 
-    self->server = server;
-    self->name   = NULL;
-    self->path   = CD_CreateStringFromCString(path);
-
+    self->server  = server;
+    self->name    = NULL;
+    self->path    = CD_CreateStringFromCString(path);
+    PRIVATE(self) = NULL;
 
     self->initialize = NULL;
     self->finalize   = NULL;

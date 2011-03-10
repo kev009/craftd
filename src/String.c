@@ -221,28 +221,26 @@ CD_CreateStringFromFormatList (const char* format, va_list ap)
 }
 
 CDString*
-CD_CreateStringFromOffset (CDString* self, int offset, int limit)
+CD_CreateStringFromOffset (CDString* string, size_t offset, size_t limit)
 {
-    unsigned char* data;
+    const char* data;
 
-    assert(self);
+    assert(string);
 
-    if (offset >= 0 && ((unsigned) offset) > self->length) {
+    if (offset > CD_StringLength(string)) {
         return NULL;
     }
 
-    data = self->raw->data;
+    data = CD_StringContent(string) + cd_UTF8_offset(CD_StringContent(string), offset);
 
-    if (offset >= 0) {
-        data += cd_UTF8_offset((const char*) self->raw->data, offset);
+    if (limit == 0) {
+        limit = strlen(data);
+    }
+    else {
+        limit = cd_UTF8_offset(data, limit);
     }
 
-    self           = CD_CreateStringFromCString(strndup((const char*) data, cd_UTF8_offset((const char*) data, limit)));
-    self->external = false;
-
-    cd_UpdateLength(self);
-
-    return self;
+    return CD_CreateStringFromBufferCopy(data, limit);
 }
 
 CDString*

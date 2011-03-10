@@ -110,6 +110,8 @@ CD_DestroyPacketData (CDPacket* self)
 
                     MC_DestroyString(packet->request.reason);
                 }
+
+                default: break;
             }
         } break;
 
@@ -195,6 +197,8 @@ CD_DestroyPacketData (CDPacket* self)
 
                     MC_DestroyString(packet->response.reason);
                 } break;
+
+                default: break;
             }
         } break;
     }
@@ -468,6 +472,7 @@ CD_PacketToBuffer (CDPacket* self)
     switch (self->chain) {
         case CDRequest: {
             switch (self->type) {
+                default: break;
             }
         } break;
 
@@ -921,6 +926,8 @@ CD_PacketToBuffer (CDPacket* self)
 
                     CD_BufferAddString(data, packet->response.reason);
                 } break;
+
+                default: break;
             }
         } break;
     }

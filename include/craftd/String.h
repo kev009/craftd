@@ -141,7 +141,7 @@ CDString* CD_CreateStringFromFormatList (const char* format, va_list ap);
  *
  * @return The instantiated String object
  */
-CDString* CD_CreateStringFromOffset (CDString* self, int offset, int limit);
+CDString* CD_CreateStringFromOffset (CDString* self, size_t offset, size_t limit);
 
 /**
  * Clone a String object.
