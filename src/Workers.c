@@ -103,34 +103,58 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
 void
 CD_KillWorkers (CDWorkers* self, size_t number)
 {
+    assert(self);
+
     if (number >= self->length) {
         number = self->length - 1;
     }
 
-    size_t killed = 0;
-
-    while (killed < number) {
-        for (size_t i = 0; i < number; i++) {
-            if (!self->item[i]->working) {
-                CD_DestroyWorker(self->item[i]);
-                self->item[i] = NULL;
-                killed++;
-            }
-        }
+    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+        CD_StopWorker(self->item[i]);
     }
 
-    CDWorker** item = CD_malloc(self->length - killed);
+    pthread_mutex_lock(&self->lock.mutex);
+    pthread_cond_broadcast(&self->lock.condition);
+    pthread_mutex_unlock(&self->lock.mutex);
 
-    for (size_t i = 0, current = 0; i < self->length; i++) {
-        if (self->item[i]) {
-            item[current] = self->item[i];
-            current++;
-        }
+    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+        CD_DestroyWorker(self->item[i]);
     }
 
-    CD_free(self->item);
+    self->length -= number;
+    self->item    = CD_realloc(self->item, self->length * sizeof(CDWorker*));
+}
 
-    self->item = item;
+void
+CD_KillWorkersAvoid (CDWorkers* self, size_t number, CDWorker* worker)
+{
+    assert(self);
+    assert(worker);
+
+    if (number >= self->length) {
+        number = self->length - 1;
+    }
+
+    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+        if (self->item[i] == worker) {
+            worker = self->item[0];
+            self->item[0] = self->item[i];
+            self->item[i] = worker;
+        }
+
+        CD_StopWorker(self->item[i]);
+    }
+
+    pthread_mutex_lock(&self->lock.mutex);
+    pthread_cond_broadcast(&self->lock.condition);
+    pthread_mutex_unlock(&self->lock.mutex);
+
+    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+        CD_DestroyWorker(self->item[i]);
+    }
+
+    self->length -= number;
+    self->item    = CD_realloc(self->item, self->length * sizeof(CDWorker*));
 }
 
 CDWorkers*
