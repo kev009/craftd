@@ -50,9 +50,10 @@ unsigned int
 cdbase_HashMCPosition (CDSet* self, MCPosition* position)
 {
     const int HASHMULTIPLIER = 31;
+    const int CHUNKBUCKETS = 401; // Max chunks to the nearest prime
 
-    // TODO: find a good 3D hash function
-    return position->x * HASHMULTIPLIER * position->z + position->y;
+    return ((((position->x * HASHMULTIPLIER) + position->y) * HASHMULTIPLIER + position->z)
+            * HASHMULTIPLIER) % CHUNKBUCKETS;
 }
 
 static
