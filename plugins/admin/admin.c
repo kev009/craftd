@@ -146,7 +146,7 @@ cdadmin_ColoredNick (CDPlayer* player) {
         } break;
 
         default: {
-            return player->username;
+            return CD_CloneString(player->username);
         }
     }
 }

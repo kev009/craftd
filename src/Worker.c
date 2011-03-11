@@ -189,6 +189,8 @@ CD_RunWorker (CDWorker* self)
                 CD_DestroyJob(self->job);
             }
         }
+
+        self->job = NULL;
     }
 
     return true;
