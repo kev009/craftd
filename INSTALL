@@ -15,6 +15,9 @@ ldconfig
 Note that users of sudo will probably need to wrap the last two commands with
 sudo.
 
+Second, do a similar routine with jansson, found at http://www.digip.org/jansson/.
+You can omit the ldconfig part.
+
 Next, change to your craftd directory. If you obtained the code from our git repo
 and you have not done so, run autoreconf -i. This will create a configure script
 for you.
