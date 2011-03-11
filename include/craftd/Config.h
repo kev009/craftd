@@ -27,7 +27,7 @@
 #define CRAFTD_CONFIG_H
 
 #include <craftd/common.h>
-#include <craftd/jansson/jansson.h>
+#include <jansson.h>
 
 typedef struct _CDConfig {
     json_t*      data;
