@@ -28,10 +28,6 @@ bstrdir = third-party/bstring
 EXTRA_DIST += $(bstrdir)/license.txt $(bstrdir)/security.txt \
 	      $(bstrdir)/bstrlib.txt $(bstrdir)/porting.txt
 
-# Jansson extras
-jsondir = third-party/jansson
-EXTRA_DIST += $(jsondir)/LICENSE $(jsondir)/README.rst
-
 # klib extras
 klibdir = third-party/klib
 EXTRA_DIST += $(klibdir)
