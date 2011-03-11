@@ -491,7 +491,14 @@ static
 bool
 cdbase_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 {
-    return true;
+    CDRegexpMatches* matches = CD_RegexpMatchString("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone, command);
+
+    if (matches) {
+        CD_PlayerSendMessage(player, MC_StringColor(CD_CreateStringFromFormat("%s: unknown command",
+            CD_StringContent(matches->item[1])), MCColorRed));
+    }
+
+    return false;
 }
 
 static

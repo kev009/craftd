@@ -128,7 +128,7 @@ CD_RegexpMatch (CDRegexp* self, CDString* string)
     matches          = CD_CreateRegexpMatches(length + 1);
     matches->matched = matched;
 
-    for (size_t i = 0; i < matches->length; i++) {
+    for (size_t i = 0; i < matches->matched + 1; i++) {
         const char* substrStart  = CD_StringContent(string) + substrings[2 * i];
         int         substrLength = substrings[2 * i + 1] - substrings[2 * i];
 

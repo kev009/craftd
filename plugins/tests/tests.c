@@ -420,10 +420,11 @@ struct testcase_t cd_utils_Set_tests[] = {
 void
 cdtest_Regexp_match (void* data)
 {
-    CDRegexpMatches* matches = CD_RegexpMatchCString("(\\w+) (\\d+) (\\w+)", 0, "lol 23 omg");
+    CDRegexpMatches* matches = CD_RegexpMatchCString("(\\w+) (\\d+) (\\w+)(?: (.+?))?$", 0, "lol 23 omg");
 
-    tt_int_op(matches->length, ==, 4);
+    tt_int_op(matches->length, ==, 5);
     tt_int_op(matches->matched, ==, 3);
+    tt_int_op(matches->item[4], ==, NULL);
 
     tt_assert(CD_StringIsEqual(matches->item[1], "lol"));
     tt_assert(CD_StringIsEqual(matches->item[2], "23"));

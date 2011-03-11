@@ -158,7 +158,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
     CDRegexpMatches* matches = CD_RegexpMatchString("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone, command);
 
     if (!matches) {
-        return true;
+        goto error;
     }
 
     SDEBUG(server, "Command> %s: %s\n", CD_StringContent(matches->item[1]), CD_StringContent(matches->item[2]));
@@ -167,7 +167,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         if (!matches->item[2]) {
             cdadmin_SendUsage(player, CD_ADMIN_AUTH_USAGE);
 
-            goto error;
+            goto done;
         }
 
         CDRegexpMatches* args = CD_RegexpMatchString("^(.+?)(?:\\s+(.*?))?$", CDRegexpNone, matches->item[2]);
@@ -270,7 +270,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         if (!matches->item[2]) {
             cdadmin_SendUsage(player, CD_ADMIN_PLAYER_USAGE);
 
-            goto error;
+            goto done;
         }
 
         if (!cdadmin_AuthLevelIsEnough(player, CDLevelRegisteredUser)) {
@@ -309,19 +309,23 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         }
 
         cdadmin_SendUsage(player, CD_ADMIN_PLAYER_USAGE);
-        goto error;
-    }
-
-    done: {
-        CD_DestroyRegexpMatches(matches);
-
-        return false;
+        goto done;
     }
 
     error: {
-        CD_DestroyRegexpMatches(matches);
+        if (matches) {
+            CD_DestroyRegexpMatches(matches);
+        }
 
         return true;
+    }
+
+    done: {
+        if (matches) {
+            CD_DestroyRegexpMatches(matches);
+        }
+
+        return false;
     }
 }
 
