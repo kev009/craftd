@@ -213,7 +213,16 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                     CD_free(CD_SpawnWorkers(server->workers, workers - server->workers->length));
                 }
                 else if (workers < server->workers->length) {
-                    CD_KillWorkers(server->workers, server->workers->length - workers);
+                    for (size_t i = 0; i < server->workers->length; i++) {
+                        if (!server->workers->item[i]->job || server->workers->item[i]->job->type != CDPlayerProcessJob) {
+                            continue;
+                        }
+
+                        if (((CDPlayerProcessJobData*) server->workers->item[i]->job->data)->player == player) {
+                            CD_KillWorkersAvoid(server->workers, server->workers->length - workers, server->workers->item[i]);
+                            break;
+                        }
+                    }
                 }
             }
         }
