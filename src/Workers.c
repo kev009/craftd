@@ -100,6 +100,39 @@ CD_SpawnWorkers (CDWorkers* self, size_t number)
     return result;
 }
 
+void
+CD_KillWorkers (CDWorkers* self, size_t number)
+{
+    if (number >= self->length) {
+        number = self->length - 1;
+    }
+
+    size_t killed = 0;
+
+    while (killed < number) {
+        for (size_t i = 0; i < number; i++) {
+            if (!self->item[i]->working) {
+                CD_DestroyWorker(self->item[i]);
+                self->item[i] = NULL;
+                killed++;
+            }
+        }
+    }
+
+    CDWorker** item = CD_malloc(self->length - killed);
+
+    for (size_t i = 0, current = 0; i < self->length; i++) {
+        if (self->item[i]) {
+            item[current] = self->item[i];
+            current++;
+        }
+    }
+
+    CD_free(self->item);
+
+    self->item = item;
+}
+
 CDWorkers*
 CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t length)
 {
