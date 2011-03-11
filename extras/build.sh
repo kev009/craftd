@@ -65,5 +65,5 @@ cd $CRAFTDDIR
 echo "Done"
 echo
 echo "--------------------------------------------------"
-echo "Start craftd with: ./craftd"
+echo "Start craftd with: ./craftd -c craftd.conf"
 echo "--------------------------------------------------"
