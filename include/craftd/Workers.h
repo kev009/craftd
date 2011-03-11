@@ -57,6 +57,8 @@ void CD_DestroyWorkers (CDWorkers* self);
 
 CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
 
+void CD_KillWorkers (CDWorkers* self, size_t number);
+
 CDWorkers* CD_ConcatWorkers (CDWorkers* self, CDWorker** workers, size_t number);
 
 CDWorkers* CD_AppendWorker (CDWorkers* self, CDWorker* worker);
