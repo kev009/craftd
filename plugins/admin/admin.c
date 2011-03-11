@@ -85,7 +85,7 @@ cdadmin_SendUsage (CDPlayer* player, const char* usage)
                 offset--;
             }
 
-            cdadmin_SendResponse(player, CD_CreateStringFromBufferCopy(usage, offset));
+            cdadmin_SendResponse(player, CD_CreateStringFromBuffer(usage, offset));
 
             offset = 0;
             usage  = current + 1;
@@ -124,7 +124,7 @@ bool
 cdadmin_AuthLevelIsEnough (CDPlayer* player, CDAuthLevel level)
 {
     if (cdadmin_GetPlayerAuthLevel(player) < level) {
-        cdadmin_SendFailure(player, CD_CreateStringFromCStringCopy(
+        cdadmin_SendFailure(player, CD_CreateStringFromCString(
             "Authorization level not enough"));
 
         return false;
@@ -173,12 +173,12 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         CDRegexpMatches* args = CD_RegexpMatchString("^(.+?)(?:\\s+(.*?))?$", CDRegexpNone, matches->item[2]);
 
         CD_DO {
-            const char* currentName;
-            const char* currentPassword;
-            const char* name;
-            const char* password;
-            const char* level;
-            bool        authorized = false;
+            const char* currentName     = NULL;
+            const char* currentPassword = NULL;
+            const char* name            = NULL;
+            const char* password        = NULL;
+            const char* level           = NULL;
+                  bool  authorized      = false;
 
             if (args->item[2]) {
                 currentName     = CD_StringContent(args->item[1]);
@@ -245,7 +245,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             int workers = atoi(CD_StringContent(matches->item[2]));
 
             if (workers <= 0) {
-                cdadmin_SendFailure(player, CD_CreateStringFromCStringCopy("You can have 1 worker at minimum"));
+                cdadmin_SendFailure(player, CD_CreateStringFromCString("You can have 1 worker at minimum"));
                 goto done;
             }
 
@@ -298,7 +298,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         }
 
         if (CD_StringIsEqual(matches->item[2], "list")) {
-            cdadmin_SendResponse(player, CD_CreateStringFromCStringCopy("Players:"));
+            cdadmin_SendResponse(player, CD_CreateStringFromCString("Players:"));
 
             CD_HASH_FOREACH(server->players, it) {
                 CDPlayer* current = (CDPlayer*) CD_HashIteratorValue(it);

@@ -149,12 +149,12 @@ void CD_DestroyConfig (CDConfig* self);
     if ((__tmp__ = json_object_get(parent, key)) && json_is_integer(__tmp__))
 
 #define J_BOOL(parent, key, into) \
-    J_IF_BOOL(parent, key) { into = J_BOOL_VALUE; }
+    J_IF_BOOL(parent, key) { into = J_BOOL_VALUE; } else { into = false; }
 
 #define J_STRING(parent, key, into) \
-    J_IF_STRING(parent, key) { into = J_STRING_VALUE; }
+    J_IF_STRING(parent, key) { into = J_STRING_VALUE; } else { into = NULL; }
 
 #define J_INT(parent, key, into) \
-    J_IF_INT(parent, key) { into = J_INT_VALUE; }
+    J_IF_INT(parent, key) { into = J_INT_VALUE; } else { into = 0; }
 
 #endif
