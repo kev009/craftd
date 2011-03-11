@@ -1,7 +1,7 @@
 Welcome to craftd!  Up to date documentation lives at:
 http://mc.kev009.com/craftd/
 
-Need help?  Want to help?  Come talk!  irc.freenode.net #craftd.
+Need help? Want to help? Come talk! irc.freenode.net #craftd.
 
 This is early, pre-alpha software.  If you aren't familiar with autotools, 
 please wait until binary packages are available.
@@ -9,6 +9,7 @@ please wait until binary packages are available.
 Dependencies:
 libevent 2.0.9+ - http://monkey.org/~provos/libevent/
 zlib 1.2.3+ - http://zlib.net/
+jansson 2.0+ - http://www.digip.org/jansson/
 pthreads
 
 Successfully built on:
@@ -21,13 +22,13 @@ Windows - Cygwin (works great without modification)
 
 == Users ==
 Ubuntu users can try to compile from the latest source tarball available from this
-server: http://bb.tkte.ch/job/craftd-ubuntu/
+server: http://bb.tkte.ch/job/craftd-ubuntu/ or use git to download from
+git://github.com/kev009/craftd.git.
 
-Keep in mind that this tarball is generated from the latest source code and it may
-not always be stable or usable.
+Keep in mind that this is bleeding edge and may not always be stable or usable.
 
-If you need to compile from the git repo, you must run autoreconf -i upon the initial
-clone operation or you will not be able to run ./configure.
+If you need to compile from the git repo, don't forget to run ./autogen.sh
+before heading into ./configure.
 
 Once you have the source prepared you can run ./configure, make, and make install.
 By default, the server binary is located at /usr/local/bin/craftd.
@@ -38,10 +39,11 @@ provide world data from another server to start.
 == Developers ==
 Please contact me and let me know what parts you intend to work on first.
 
-NOTE: You must run autoreconf -i after checking out the git repo to generate a
-configure script.
+NOTE: You must run ./autogen.sh after checking out the git repo to generate a
+configure script and pull the submodules.
 
-NOTE: You must pull the submodules with: git submodule init && git submodule update
+Use `git pull` for being up to date. Should you run into build issues, try running
+`make distclean` and see if it helps.
 
 Developer Documentation:
 Coding style and architecture notes are on the wiki - 
@@ -52,9 +54,8 @@ http://www.wangafu.net/~nickm/libevent-book/
 http://mc.kev009.com/libevent - Up to date doxygen
 
 Bundled Libs:
-JSON API (used for web GUI and config): 
-Jansson (Git head) - http://github.com/akheron/jansson
 bstring - Safer C strings - http://bstring.sourceforge.net/
+klib - a standalone and lightweight C library
 
 Protocol reference:
 http://mc.kev009.com/wiki/
