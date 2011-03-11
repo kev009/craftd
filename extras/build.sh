@@ -58,6 +58,9 @@ export LDFLAGS="$LDFLAGS -Wl,-rpath,\$$ORIGIN/lib"
 make >/dev/null 2>&1 || exit 1
 make install >/dev/null 2>&1 || exit 1
 
+echo "Creating empty world directory..."
+mkdir -p $DATADIR/craftd/world
+
 echo "Creating config..."
 cp $EXAMPLESDIR/craftd/craftd.conf.dist $CRAFTDDIR/craftd.conf
 cd $CRAFTDDIR
