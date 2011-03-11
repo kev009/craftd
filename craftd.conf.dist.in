@@ -39,9 +39,8 @@
     "plugin": {
         "paths": [
             "plugins",
-            "plugins/mapgen",
-            "@libdir@/craftd/plugins",
-            "@libdir@/craftd/plugins/mapgen"
+            "@libdir@/craftd/",
+            "@libdir@/craftd/plugins"
         ],
 
         "plugins": [
