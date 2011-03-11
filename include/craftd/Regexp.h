@@ -52,6 +52,8 @@ typedef struct _CDRegexp {
 } CDRegexp;
 
 typedef struct _CDRegexpMatches {
+    size_t matched;
+
     size_t     length;
     CDString** item;
 } CDRegexpMatches;

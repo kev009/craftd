@@ -107,24 +107,26 @@ CD_RegexpMatch (CDRegexp* self, CDString* string)
 {
     CDRegexpMatches* matches;
 
-    int  length = 0;
+    int  length  = 0;
+    int  matched = 0;
     int* substrings;
 
     assert(self);
     assert(string);
 
     pcre_fullinfo(self->pattern, self->study, PCRE_INFO_CAPTURECOUNT, &length);
-    substrings = CD_malloc((length = (3 * (length + 1))) * sizeof(int));
+    substrings = CD_calloc((3 * (length + 1)), sizeof(int));
 
-    length = pcre_exec(self->pattern, self->study, CD_StringContent(string), CD_StringSize(string), 0, 0, substrings, length);
+    matched = pcre_exec(self->pattern, self->study, CD_StringContent(string), CD_StringSize(string), 0, 0, substrings, (3 * (length + 1))) - 1;
 
-    if (length < 0) {
+    if (matched < 0) {
         CD_free(substrings);
 
         return NULL;
     }
 
-    matches = CD_CreateRegexpMatches(length);
+    matches          = CD_CreateRegexpMatches(length + 1);
+    matches->matched = matched;
 
     for (size_t i = 0; i < matches->length; i++) {
         const char* substrStart  = CD_StringContent(string) + substrings[2 * i];
