@@ -31,6 +31,23 @@
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 
+#define CD_COLOR_BLACK      "§0"
+#define CD_COLOR_DARKBLUE   "§1"
+#define CD_COLOR_DARKGREEN  "§2"
+#define CD_COLOR_DARKCYAN   "§3"
+#define CD_COLOR_DARKRED    "§4"
+#define CD_COLOR_PURPLE     "§5"
+#define CD_COLOR_GOLD       "§6"
+#define CD_COLOR_GRAY       "§7"
+#define CD_COLOR_DARKGRAY   "§8"
+#define CD_COLOR_BLUE       "§9"
+#define CD_COLOR_LIGHTGREEN "§a"
+#define CD_COLOR_CYAN       "§b"
+#define CD_COLOR_RED        "§c"
+#define CD_COLOR_PINK       "§d"
+#define CD_COLOR_YELLOW     "§e"
+#define CD_COLOR_WHITE      "§f"
+
 typedef enum _CDStringColor {
     CDColorBlack,
     CDColorDarkBlue,
