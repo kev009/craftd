@@ -560,5 +560,10 @@ CD_StringColor (CDString* self, CDStringColor color)
 {
     assert(self);
 
-    return CD_StringColorRange(self, color, 0, CD_StringLength(self));
+    if (CD_StringLength(self) > 0) {
+        return CD_StringColorRange(self, color, 0, CD_StringLength(self));
+    }
+    else {
+        return self;
+    }
 }
