@@ -109,7 +109,7 @@ CD_KillWorkers (CDWorkers* self, size_t number)
         number = self->length - 1;
     }
 
-    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+    for (size_t i = self->length - 1; (self->length - i) < self->length; i--) {
         CD_StopWorker(self->item[i]);
     }
 
@@ -117,7 +117,7 @@ CD_KillWorkers (CDWorkers* self, size_t number)
     pthread_cond_broadcast(&self->lock.condition);
     pthread_mutex_unlock(&self->lock.mutex);
 
-    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+    for (size_t i = self->length - 1; (self->length - i) < self->length; i--) {
         CD_DestroyWorker(self->item[i]);
     }
 
@@ -135,7 +135,7 @@ CD_KillWorkersAvoid (CDWorkers* self, size_t number, CDWorker* worker)
         number = self->length - 1;
     }
 
-    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+    for (size_t i = self->length - 1; (self->length - i) < self->length; i--) {
         if (self->item[i] == worker) {
             worker = self->item[0];
             self->item[0] = self->item[i];
@@ -149,7 +149,7 @@ CD_KillWorkersAvoid (CDWorkers* self, size_t number, CDWorker* worker)
     pthread_cond_broadcast(&self->lock.condition);
     pthread_mutex_unlock(&self->lock.mutex);
 
-    for (size_t i = self->length - 1; (self->length - i + 1) < self->length; i--) {
+    for (size_t i = self->length - 1; (self->length - i) < self->length; i--) {
         CD_DestroyWorker(self->item[i]);
     }
 

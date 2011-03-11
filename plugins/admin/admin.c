@@ -244,20 +244,23 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         else {
             int workers = atoi(CD_StringContent(matches->item[2]));
 
-            if (workers >= 1) {
-                if (workers > server->workers->length) {
-                    CD_free(CD_SpawnWorkers(server->workers, workers - server->workers->length));
-                }
-                else if (workers < server->workers->length) {
-                    for (size_t i = 0; i < server->workers->length; i++) {
-                        if (!server->workers->item[i]->job || server->workers->item[i]->job->type != CDPlayerProcessJob) {
-                            continue;
-                        }
+            if (workers <= 0) {
+                cdadmin_SendFailure(player, CD_CreateStringFromCStringCopy("You can have 1 worker at minimum"));
+                goto done;
+            }
 
-                        if (((CDPlayerProcessJobData*) server->workers->item[i]->job->data)->player == player) {
-                            CD_KillWorkersAvoid(server->workers, server->workers->length - workers, server->workers->item[i]);
-                            break;
-                        }
+            if (workers > server->workers->length) {
+                CD_free(CD_SpawnWorkers(server->workers, workers - server->workers->length));
+            }
+            else if (workers < server->workers->length) {
+                for (size_t i = 0; i < server->workers->length; i++) {
+                    if (!server->workers->item[i]->job || server->workers->item[i]->job->type != CDPlayerProcessJob) {
+                        continue;
+                    }
+
+                    if (((CDPlayerProcessJobData*) server->workers->item[i]->job->data)->player == player) {
+                        CD_KillWorkersAvoid(server->workers, server->workers->length - workers, server->workers->item[i]);
+                        break;
                     }
                 }
             }
