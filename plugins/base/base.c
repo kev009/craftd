@@ -403,10 +403,28 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
         case CDPlayerPosition: {
             // Stub.  Do dead reckoning or some other sanity check for data
             // and send CD_SetDifference of chunks on boundary change.
+
+            CDPacketPlayerPosition* data = (CDPacketPlayerPosition*) packet->data;
+
+            int newX = CD_Div(data->request.position.x, 16);
+            int newZ = CD_Div(data->request.position.z, 16);
+
+            MCPosition area = { newX, 0, newZ };
+
+            if (newX != CD_Div(player->entity.position.x, 16) || newZ != CD_Div(player->entity.position.z, 16)) {
+                cdbase_SendChunkRadius(player, &area, 10);
+            }
+
+            player->entity.position = data->request.position;
         } break;
 
         case CDPlayerLook: {
-            // Stub
+            // Stub.  Add input validation and sanity checks.
+
+            CDPacketPlayerLook* data = (CDPacketPlayerLook*) packet->data;
+
+            player->yaw   = data->request.yaw;
+            player->pitch = data->request.pitch;
         } break;
 
         case CDPlayerMoveLook: {
@@ -425,6 +443,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             player->entity.position = data->request.position;
+            player->yaw             = data->request.yaw;
+            player->pitch           = data->request.pitch;
         } break;
 
         case CDDisconnect: {

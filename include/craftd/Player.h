@@ -43,6 +43,8 @@ typedef enum _CDPlayerStatus {
  */
 typedef struct _CDPlayer {
     MCEntity entity;
+    MCFloat yaw;
+    MCFloat pitch;
 
     struct _CDServer* server;
 
