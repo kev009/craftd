@@ -29,9 +29,31 @@
 
 typedef enum _CDAuthLevel {
     CDLevelUser,
+    CDLevelRegisteredUser,
     CDLevelModerator,
     CDLevelAdmin
 } CDAuthLevel;
+
+static
+void
+cdadmin_SendResponse (CDPlayer* player, CDString* message)
+{
+    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorGray));
+}
+
+static
+void
+cdadmin_SendSuccessful (CDPlayer* player, CDString* message)
+{
+    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorDarkGreen));
+}
+
+static
+void
+cdadmin_SendFailure (CDPlayer* player, CDString* message)
+{
+    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorDarkRed));
+}
 
 static
 void
@@ -45,7 +67,7 @@ cdadmin_SendUsage (CDPlayer* player, const char* usage)
         current++;
 
         if (*current == '\n' || *current == '\0') {
-            CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromBufferCopy(usage, offset), CDColorGray));
+            cdadmin_SendResponse(player, CD_CreateStringFromBufferCopy(usage, offset));
 
             offset = 0;
             usage = current + 1;
@@ -65,6 +87,9 @@ cdadmin_SetPlayerAuthLevel (CDPlayer* player, const char* level)
     else if (CD_CStringIsEqual(level, "moderator")) {
         apply = CDLevelModerator;
     }
+    else if (CD_CStringIsEqual(level, "registered")) {
+        apply = CDLevelRegisteredUser;
+    }
 
     CD_HashPut(PRIVATE(player), "Authorization.level", apply);
 }
@@ -74,6 +99,20 @@ CDAuthLevel
 cdadmin_GetPlayerAuthLevel (CDPlayer* player)
 {
     return CD_HashGet(PRIVATE(player), "Authorization.level");
+}
+
+static
+bool
+cdadmin_AuthLevelIsEnough (CDPlayer* player, CDAuthLevel level)
+{
+    if (cdadmin_GetPlayerAuthLevel(player) < level) {
+        cdadmin_SendFailure(player, CD_CreateStringFromCStringCopy(
+            "Authorization level not enough"));
+
+        return false;
+    }
+
+    return true;
 }
 
 static
@@ -95,7 +134,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 "   name          If omitted Player's username is used\n" \
                 "   password    Password to login");
 
-            return true;
+            goto error;
         }
 
         CDRegexpMatches* args = CD_RegexpMatchString("^(.+?)(?:\\s+(.*?))?$", CDRegexpNone, matches->item[2]);
@@ -131,9 +170,9 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                                         if (CD_CStringIsEqual(currentName, name) && CD_CStringIsEqual(currentPassword, password)) {
                                             cdadmin_SetPlayerAuthLevel(player, level);
 
-                                            CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromFormat(
+                                            cdadmin_SendSuccessful(player, CD_CreateStringFromFormat(
                                                 "Authorized as %s with level %s", name, level
-                                            ), CDColorDarkGreen));
+                                            ));
 
                                             authorized = true;
 
@@ -142,9 +181,8 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                                     }
 
                                     if (!authorized) {
-                                        CD_PlayerSendMessage(player, CD_StringColor(CD_CreateStringFromFormat(
-                                            "Failed to authorize as %s", currentName), CDColorRed));
-
+                                        cdadmin_SendFailure(player, CD_CreateStringFromFormat(
+                                            "Failed to authorize as %s", currentName));
                                     }
 
                                     break;
@@ -155,9 +193,43 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 }
             }
         }
+
+        CD_DestroyRegexpMatches(args);
+    }
+    else if (CD_StringIsEqual(matches->item[1], "workers")) {
+        if (!cdadmin_AuthLevelIsEnough(player, CDLevelAdmin)) {
+            goto done;
+        }
+
+        if (!matches->item[2]) {
+            cdadmin_SendResponse(player, CD_CreateStringFromFormat("There are %d workers running.",
+                server->workers->length));
+        }
+        else {
+            int workers = atoi(CD_StringContent(matches->item[2]));
+
+            if (workers >= 1) {
+                if (workers > server->workers->length) {
+                    CD_free(CD_SpawnWorkers(server->workers, workers - server->workers->length));
+                }
+                else if (workers < server->workers->length) {
+                    CD_KillWorkers(server->workers, server->workers->length - workers);
+                }
+            }
+        }
     }
 
-    return false;
+    done: {
+        CD_DestroyRegexpMatches(matches);
+
+        return false;
+    }
+
+    error: {
+        CD_DestroyRegexpMatches(matches);
+
+        return true;
+    }
 }
 
 static
@@ -173,6 +245,10 @@ cdadmin_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
     switch ((CDAuthLevel) CD_HashGet(PRIVATE(player), "Authorization.level")) {
         case CDLevelAdmin: {
             name = CD_StringColor(CD_CloneString(player->username), CDColorRed);
+        } break;
+
+        case CDLevelModerator: {
+            name = CD_StringColor(CD_CloneString(player->username), CDColorBlue);
         } break;
 
         default: {
