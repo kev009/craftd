@@ -60,17 +60,21 @@ void
 cdadmin_SendUsage (CDPlayer* player, const char* usage)
 {
     const char*  current = usage;
-          size_t offset  = 0;
+          size_t offset  = 1;
 
     while (*current != '\0') {
         offset++;
         current++;
 
         if (*current == '\n' || *current == '\0') {
+            if (*current == '\n') {
+                offset--;
+            }
+
             cdadmin_SendResponse(player, CD_CreateStringFromBufferCopy(usage, offset));
 
             offset = 0;
-            usage = current + 1;
+            usage  = current + 1;
         }
     }
 }
@@ -113,6 +117,24 @@ cdadmin_AuthLevelIsEnough (CDPlayer* player, CDAuthLevel level)
     }
 
     return true;
+}
+
+static
+CDString*
+cdadmin_ColoredNick (CDPlayer* player) {
+    switch (cdadmin_GetPlayerAuthLevel(player)) {
+        case CDLevelAdmin: {
+            return CD_StringColor(CD_CloneString(player->username), CDColorRed);
+        } break;
+
+        case CDLevelModerator: {
+            return CD_StringColor(CD_CloneString(player->username), CDColorBlue);
+        } break;
+
+        default: {
+            return player->username;
+        }
+    }
 }
 
 static
@@ -195,8 +217,11 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         }
 
         CD_DestroyRegexpMatches(args);
+
+        goto done;
     }
-    else if (CD_StringIsEqual(matches->item[1], "workers")) {
+
+    if (CD_StringIsEqual(matches->item[1], "workers")) {
         if (!cdadmin_AuthLevelIsEnough(player, CDLevelAdmin)) {
             goto done;
         }
@@ -226,6 +251,56 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 }
             }
         }
+
+        goto done;
+    }
+
+    if (CD_StringIsEqual(matches->item[1], "player")) {
+        if (!matches->item[2]) {
+            cdadmin_SendUsage(player,
+                "Usage: /player <command> [options]\n" \
+                "   Level:\n" \
+                "       Registered Users:\n" \
+                "           number    Get the number of connected players\n" \
+                "\n" \
+                "       Moderator:\n" \
+                "           list    Get a list of connected players");
+
+            goto error;
+        }
+
+        if (!cdadmin_AuthLevelIsEnough(player, CDLevelRegisteredUser)) {
+            goto done;
+        }
+
+        if (CD_StringIsEqual(matches->item[2], "number")) {
+            size_t connected = CD_HashLength(server->players);
+
+            if (connected > 1) {
+                cdadmin_SendResponse(player, CD_CreateStringFromFormat("There are %d connected players", connected));
+            }
+            else {
+                cdadmin_SendResponse(player, CD_CreateStringFromFormat("There is %d connected player", connected));
+            }
+
+            goto done;
+        }
+
+        if (!cdadmin_AuthLevelIsEnough(player, CDLevelModerator)) {
+            goto done;
+        }
+
+        if (CD_StringIsEqual(matches->item[2], "list")) {
+            cdadmin_SendResponse(player, CD_CreateStringFromCStringCopy("Players:"));
+
+            CD_HASH_FOREACH(server->players, it) {
+                CDPlayer* current = (CDPlayer*) CD_HashIteratorValue(it);
+                CDString* name    = cdadmin_ColoredNick(current);
+
+                cdadmin_SendResponse(player, CD_CreateStringFromFormat("%s" CD_COLOR_GRAY " > x: %lf; y:%lf; z:%lf", CD_StringContent(name),
+                    current->entity.position.x, current->entity.position.y, current->entity.position.z));
+            }
+        }
     }
 
     done: {
@@ -249,21 +324,7 @@ cdadmin_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
         return false;
     }
 
-    CDString* name;
-
-    switch ((CDAuthLevel) CD_HashGet(PRIVATE(player), "Authorization.level")) {
-        case CDLevelAdmin: {
-            name = CD_StringColor(CD_CloneString(player->username), CDColorRed);
-        } break;
-
-        case CDLevelModerator: {
-            name = CD_StringColor(CD_CloneString(player->username), CDColorBlue);
-        } break;
-
-        default: {
-            return true;
-        }
-    }
+    CDString* name = cdadmin_ColoredNick(player);
 
     SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
             CD_StringContent(message));
