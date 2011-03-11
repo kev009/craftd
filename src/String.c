@@ -36,7 +36,6 @@ const char* MCCharset =
     "abcdefghijklmnopqrstuvwxyz"
     "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
 
-static inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {
@@ -57,7 +56,6 @@ cd_UTF8_nextCharLength (char data)
     }
 }
 
-static
 size_t
 cd_UTF8_strlen (const char* data)
 {
@@ -72,7 +70,6 @@ cd_UTF8_strlen (const char* data)
     return result;
 }
 
-static
 size_t
 cd_UTF8_strnlen (const char* data, size_t limit)
 {
@@ -87,7 +84,6 @@ cd_UTF8_strnlen (const char* data, size_t limit)
     return result;
 }
 
-static
 size_t
 cd_UTF8_offset (const char* data, size_t offset)
 {
@@ -100,7 +96,6 @@ cd_UTF8_offset (const char* data, size_t offset)
     return result;
 }
 
-static
 void
 cd_UpdateLength (CDString* self)
 {
@@ -298,75 +293,6 @@ CD_DestroyStringKeepData (CDString* self)
     return result;
 }
 
-bool
-CD_StringIsValidForMinecraft (CDString* self)
-{
-    assert(self);
-
-    for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
-        bool      has = false;
-        CDString* ch  = CD_CharAt(self, i);
-
-        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
-
-            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
-                has = true;
-                break;
-            }
-        }
-
-        if (!has && !(strncmp(CD_StringContent(ch), "§", 2) == 0 && i < ie - 2)) {
-            CD_DestroyString(ch);
-            return false;
-        }
-
-        CD_DestroyString(ch);
-    }
-
-    return true;
-}
-
-CDString*
-CD_StringSanitizeForMinecraft (CDString* self)
-{
-    CDString* result = CD_CreateString();
-
-    assert(self);
-
-    for (size_t i = 0, ie = CD_StringLength(self); i < ie; i++) {
-        bool      has = false;
-        CDString* ch  = CD_CharAt(self, i);
-
-        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
-
-            if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
-                has = true;
-                break;
-            }
-        }
-
-        if (i == ie - 2 && strncmp(CD_StringContent(ch), "§", 2) == 0){
-            CD_DestroyString(ch);
-            break;
-        }
-
-        if (has || strncmp(CD_StringContent(ch), "§", 2) == 0) {
-            CD_AppendString(result, ch);
-        }
-        else {
-            CD_AppendCString(result, "?");
-        }
-
-        CD_DestroyString(ch);
-    }
-
-    cd_UpdateLength(self);
-
-    return result;
-}
-
 CDString*
 CD_CharAt (CDString* self, size_t index)
 {
@@ -530,40 +456,4 @@ bool
 CD_CStringIsEqual (const char* a, const char* b)
 {
     return strcmp(a, b) == 0;
-}
-
-CDString*
-CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b)
-{
-    if (self->external) {
-        return NULL;
-    }
-
-    CDString* start = CD_CreateStringFromFormat("§%x", color);
-    CDString* end   = CD_CreateStringFromFormat("§%x", CDColorWhite);
-
-    assert(self);
-    assert(a < b);
-    assert(a >= 0 && b <= CD_StringLength(self));
-
-    CD_InsertString(self, end, b);
-    CD_InsertString(self, start, a);
-
-    CD_DestroyString(start);
-    CD_DestroyString(end);
-
-    return self;
-}
-
-CDString*
-CD_StringColor (CDString* self, CDStringColor color)
-{
-    assert(self);
-
-    if (CD_StringLength(self) > 0) {
-        return CD_StringColorRange(self, color, 0, CD_StringLength(self));
-    }
-    else {
-        return self;
-    }
 }

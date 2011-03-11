@@ -27,6 +27,20 @@
 #include <craftd/Plugin.h>
 #include <craftd/Player.h>
 
+#define CD_ADMIN_AUTH_USAGE \
+    "Usage: /auth [name] <password>\n" \
+    "   name          If omitted Player's username is used\n" \
+    "   password    Password to login"
+
+#define CD_ADMIN_PLAYER_USAGE \
+    "Usage: /player <command> [options]\n" \
+    "   Level:\n" \
+    "       Registered Users:\n" \
+    "           number    Get the number of connected players\n" \
+    "\n" \
+    "       Moderator:\n" \
+    "           list    Get a list of connected players"
+
 typedef enum _CDAuthLevel {
     CDLevelUser,
     CDLevelRegisteredUser,
@@ -38,21 +52,21 @@ static
 void
 cdadmin_SendResponse (CDPlayer* player, CDString* message)
 {
-    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorGray));
+    CD_PlayerSendMessage(player, MC_StringColor(message, MCColorGray));
 }
 
 static
 void
 cdadmin_SendSuccessful (CDPlayer* player, CDString* message)
 {
-    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorDarkGreen));
+    CD_PlayerSendMessage(player, MC_StringColor(message, MCColorDarkGreen));
 }
 
 static
 void
 cdadmin_SendFailure (CDPlayer* player, CDString* message)
 {
-    CD_PlayerSendMessage(player, CD_StringColor(message, CDColorDarkRed));
+    CD_PlayerSendMessage(player, MC_StringColor(message, MCColorDarkRed));
 }
 
 static
@@ -124,11 +138,11 @@ CDString*
 cdadmin_ColoredNick (CDPlayer* player) {
     switch (cdadmin_GetPlayerAuthLevel(player)) {
         case CDLevelAdmin: {
-            return CD_StringColor(CD_CloneString(player->username), CDColorRed);
+            return MC_StringColor(CD_CloneString(player->username), MCColorRed);
         } break;
 
         case CDLevelModerator: {
-            return CD_StringColor(CD_CloneString(player->username), CDColorBlue);
+            return MC_StringColor(CD_CloneString(player->username), MCColorBlue);
         } break;
 
         default: {
@@ -151,10 +165,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 
     if (CD_StringIsEqual(matches->item[1], "auth")) {
         if (!matches->item[2]) {
-            cdadmin_SendUsage(player,
-                "Usage: /auth [name] <password>\n" \
-                "   name          If omitted Player's username is used\n" \
-                "   password    Password to login");
+            cdadmin_SendUsage(player, CD_ADMIN_AUTH_USAGE);
 
             goto error;
         }
@@ -257,14 +268,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 
     if (CD_StringIsEqual(matches->item[1], "player")) {
         if (!matches->item[2]) {
-            cdadmin_SendUsage(player,
-                "Usage: /player <command> [options]\n" \
-                "   Level:\n" \
-                "       Registered Users:\n" \
-                "           number    Get the number of connected players\n" \
-                "\n" \
-                "       Moderator:\n" \
-                "           list    Get a list of connected players");
+            cdadmin_SendUsage(player, CD_ADMIN_PLAYER_USAGE);
 
             goto error;
         }
@@ -297,10 +301,15 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 CDPlayer* current = (CDPlayer*) CD_HashIteratorValue(it);
                 CDString* name    = cdadmin_ColoredNick(current);
 
-                cdadmin_SendResponse(player, CD_CreateStringFromFormat("%s" CD_COLOR_GRAY " > x: %lf; y:%lf; z:%lf", CD_StringContent(name),
+                cdadmin_SendResponse(player, CD_CreateStringFromFormat("%s" MC_COLOR_GRAY " > x: %lf; y:%lf; z:%lf", CD_StringContent(name),
                     current->entity.position.x, current->entity.position.y, current->entity.position.z));
             }
+
+            goto done;
         }
+
+        cdadmin_SendUsage(player, CD_ADMIN_PLAYER_USAGE);
+        goto error;
     }
 
     done: {

@@ -89,7 +89,7 @@ void
 cdtest_String_Minecraft_sanitize (void* data)
 {
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
-    CDString* sanitized = CD_StringSanitizeForMinecraft(string);
+    CDString* sanitized = MC_StringSanitize(string);
 
     tt_assert(CD_StringIsEqual(sanitized, "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?"));
 
@@ -105,8 +105,8 @@ cdtest_String_Minecraft_valid (void* data)
     CDString* invalid = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* valid   = CD_CreateStringFromCString("æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?");
 
-    tt_assert(CD_StringIsValidForMinecraft(invalid) == false);
-    tt_assert(CD_StringIsValidForMinecraft(valid) == true);
+    tt_assert(MC_StringIsValid(invalid) == false);
+    tt_assert(MC_StringIsValid(valid) == true);
 
     end: {
         CD_DestroyString(invalid);

@@ -31,42 +31,6 @@
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 
-#define CD_COLOR_BLACK      "§0"
-#define CD_COLOR_DARKBLUE   "§1"
-#define CD_COLOR_DARKGREEN  "§2"
-#define CD_COLOR_DARKCYAN   "§3"
-#define CD_COLOR_DARKRED    "§4"
-#define CD_COLOR_PURPLE     "§5"
-#define CD_COLOR_GOLD       "§6"
-#define CD_COLOR_GRAY       "§7"
-#define CD_COLOR_DARKGRAY   "§8"
-#define CD_COLOR_BLUE       "§9"
-#define CD_COLOR_LIGHTGREEN "§a"
-#define CD_COLOR_CYAN       "§b"
-#define CD_COLOR_RED        "§c"
-#define CD_COLOR_PINK       "§d"
-#define CD_COLOR_YELLOW     "§e"
-#define CD_COLOR_WHITE      "§f"
-
-typedef enum _CDStringColor {
-    CDColorBlack,
-    CDColorDarkBlue,
-    CDColorDarkGreen,
-    CDColorDarkCyan,
-    CDColorDarkRed,
-    CDColorPurple,
-    CDColorGold,
-    CDColorGray,
-    CDColorDarkGray,
-    CDColorBlue,
-    CDColorLightGreen,
-    CDColorCyan,
-    CDColorRed,
-    CDColorPink,
-    CDColorYellow,
-    CDColorWhite
-} CDStringColor;
-
 #ifndef CRAFTD_STRING_IGNORE_EXTERN
 extern const char* MCCharset;
 #endif
@@ -184,21 +148,6 @@ CDString* CD_AppendString (CDString* self, CDString* append);
 CDString* CD_AppendCString (CDString* self, const char* append);
 
 /**
- * Check if a String is valid for Minecraft
- *
- * @return true if valid, false otherwise
- */
-bool CD_StringIsValidForMinecraft (CDString* self);
-
-/**
- * Get a sanitized String to send to Minecraft clients, replaces unknown characters
- * with ?.
- *
- * @return The sanitized String
- */
-CDString* CD_StringSanitizeForMinecraft (CDString* self);
-
-/**
  * Get the char at the given index
  *
  * @param index The position of the char you want to get
@@ -206,6 +155,8 @@ CDString* CD_StringSanitizeForMinecraft (CDString* self);
  * @return A String with the wanted char (unicode char)
  */
 CDString* CD_CharAt (CDString* self, size_t index);
+
+CDString* CD_InsertString (CDString* self, CDString* insert, size_t position);
 
 /**
  * Get the String content as a C string
@@ -257,9 +208,5 @@ bool CD_StringEndWith (CDString* self, const char* check);
 bool CD_StringIsEqual (CDString* a, const char* b);
 
 bool CD_CStringIsEqual (const char* a, const char* b);
-
-CDString* CD_StringColorRange (CDString* self, CDStringColor color, size_t a, size_t b);
-
-CDString* CD_StringColor (CDString* self, CDStringColor color);
 
 #endif

@@ -48,6 +48,61 @@ typedef CDString* MCString;
 
 void MC_DestroyString (MCString self);
 
+#define MC_COLOR_BLACK      "§0"
+#define MC_COLOR_DARKBLUE   "§1"
+#define MC_COLOR_DARKGREEN  "§2"
+#define MC_COLOR_DARKCYAN   "§3"
+#define MC_COLOR_DARKRED    "§4"
+#define MC_COLOR_PURPLE     "§5"
+#define MC_COLOR_GOLD       "§6"
+#define MC_COLOR_GRAY       "§7"
+#define MC_COLOR_DARKGRAY   "§8"
+#define MC_COLOR_BLUE       "§9"
+#define MC_COLOR_LIGHTGREEN "§a"
+#define MC_COLOR_CYAN       "§b"
+#define MC_COLOR_RED        "§c"
+#define MC_COLOR_PINK       "§d"
+#define MC_COLOR_YELLOW     "§e"
+#define MC_COLOR_WHITE      "§f"
+
+typedef enum _MCStringColor {
+    MCColorBlack,
+    MCColorDarkBlue,
+    MCColorDarkGreen,
+    MCColorDarkCyan,
+    MCColorDarkRed,
+    MCColorPurple,
+    MCColorGold,
+    MCColorGray,
+    MCColorDarkGray,
+    MCColorBlue,
+    MCColorLightGreen,
+    MCColorCyan,
+    MCColorRed,
+    MCColorPink,
+    MCColorYellow,
+    MCColorWhite
+} MCStringColor;
+
+/**
+ * Check if a String is valid for Minecraft
+ *
+ * @return true if valid, false otherwise
+ */
+bool MC_StringIsValid (CDString* self);
+
+/**
+ * Get a sanitized String to send to Minecraft clients, replaces unknown characters
+ * with ?.
+ *
+ * @return The sanitized String
+ */
+MCString MC_StringSanitize (MCString self);
+
+MCString MC_StringColorRange (CDString* self, MCStringColor color, size_t a, size_t b);
+
+MCString MC_StringColor (CDString* self, MCStringColor color);
+
 static const char MCBooleanSize = 1;
 static const char MCByteSize    = 1;
 static const char MCShortSize   = 2;

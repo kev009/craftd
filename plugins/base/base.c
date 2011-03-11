@@ -468,8 +468,8 @@ cdbase_HandleLogin (CDServer* server, CDPlayer* player, int status)
 
     cdbase_TimeUpdate(NULL, NULL, server);
 
-    CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("%s has joined the game",
-                CD_StringContent(player->username)), CDColorYellow));
+    CD_ServerBroadcast(server, MC_StringColor(CD_CreateStringFromFormat("%s has joined the game",
+                CD_StringContent(player->username)), MCColorYellow));
 
     CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) CD_CreateSet (400,
                 (CDSetCompare) cdbase_CompareMCPosition, (CDSetHash) cdbase_HashMCPosition));
@@ -481,8 +481,8 @@ static
 bool
 cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 {
-    CD_ServerBroadcast(server, CD_StringColor(CD_CreateStringFromFormat("%s has left the game",
-        CD_StringContent(player->username)), CDColorYellow));
+    CD_ServerBroadcast(server, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
+        CD_StringContent(player->username)), MCColorYellow));
 
     return true;
 }
