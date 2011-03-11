@@ -70,6 +70,8 @@ CD_RunWorker (CDWorker* self)
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
+        self->job = NULL;
+
         if (!CD_HasJobs(self->workers)) {
             pthread_mutex_lock(&self->workers->lock.mutex);
 
@@ -187,8 +189,6 @@ CD_RunWorker (CDWorker* self)
                 CD_DestroyJob(self->job);
             }
         }
-
-        self->job = NULL;
     }
 
     return true;
