@@ -205,6 +205,18 @@ CD_HashIteratorValid (CDHashIterator it)
     return result;
 }
 
+bool
+CD_HashHas (CDHash* self, const char* name)
+{
+    bool result = false;
+
+    pthread_rwlock_rdlock(&self->lock);
+    result = kh_exist(self->raw, kh_get(cdHash, self->raw, name));
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
 CDPointer
 CD_HashGet (CDHash* self, const char* name)
 {

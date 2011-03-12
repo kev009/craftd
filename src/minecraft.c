@@ -180,7 +180,9 @@ MCString
 MC_StringColorRange (MCString self, MCStringColor color, size_t a, size_t b)
 {
     if (self->external) {
-        return NULL;
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
     }
 
     CDString* start = CD_CreateStringFromFormat("§%x", color);

@@ -459,6 +459,10 @@ CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason)
 
     pthread_rwlock_wrlock(&player->lock.status);
 
+    if (reason == NULL) {
+        reason = CD_CreateStringFromCString("No reason");
+    }
+
     SLOG(self, LOG_NOTICE, "%s (%s) kicked: %s", CD_StringContent(player->username),
         player->ip, CD_StringContent(reason));
 

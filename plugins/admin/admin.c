@@ -39,7 +39,13 @@
     "           number    Get the number of connected players\n" \
     "\n" \
     "       Moderator:\n" \
-    "           list    Get a list of connected players"
+    "           list     Get a list of connected players\n" \
+    "           kick    Kick a player"
+
+#define CD_ADMIN_PLAYER_KICK_USAGE \
+    "Usage: /player kick <name> [reason]\n" \
+    "    name        The name of the player to kick\n" \
+    "    reason    The reason for the kick"
 
 typedef enum _CDAuthLevel {
     CDLevelUser,
@@ -155,7 +161,8 @@ static
 bool
 cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 {
-    CDRegexpMatches* matches = CD_RegexpMatchString("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone, command);
+    CDRegexp*        regexp  = CD_CreateRegexp("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone);
+    CDRegexpMatches* matches = CD_RegexpMatch(regexp, command);
 
     if (!matches) {
         goto error;
@@ -170,7 +177,11 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
-        CDRegexpMatches* args = CD_RegexpMatchString("^(.+?)(?:\\s+(.*?))?$", CDRegexpNone, matches->item[2]);
+        CD_DO {
+            CDRegexpMatches* old = matches;
+            matches = CD_RegexpMatch(regexp, old->item[2]);
+            CD_DestroyRegexpMatches(old);
+        }
 
         CD_DO {
             const char* currentName     = NULL;
@@ -180,13 +191,13 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             const char* level           = NULL;
                   bool  authorized      = false;
 
-            if (args->item[2]) {
-                currentName     = CD_StringContent(args->item[1]);
-                currentPassword = CD_StringContent(args->item[2]);
+            if (matches->item[2]) {
+                currentName     = CD_StringContent(matches->item[1]);
+                currentPassword = CD_StringContent(matches->item[2]);
             }
             else {
                 currentName     = CD_StringContent(player->username);
-                currentPassword = CD_StringContent(args->item[1]);
+                currentPassword = CD_StringContent(matches->item[1]);
             }
 
             J_DO {
@@ -226,8 +237,6 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 }
             }
         }
-
-        CD_DestroyRegexpMatches(args);
 
         goto done;
     }
@@ -280,7 +289,13 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
-        if (CD_StringIsEqual(matches->item[2], "number")) {
+        CD_DO {
+            CDRegexpMatches* old = matches;
+            matches = CD_RegexpMatch(regexp, old->item[2]);
+            CD_DestroyRegexpMatches(old);
+        }
+
+        if (CD_StringIsEqual(matches->item[1], "number")) {
             size_t connected = CD_HashLength(server->players);
 
             if (connected > 1) {
@@ -297,7 +312,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
-        if (CD_StringIsEqual(matches->item[2], "list")) {
+        if (CD_StringIsEqual(matches->item[1], "list")) {
             cdadmin_SendResponse(player, CD_CreateStringFromCString("Players:"));
 
             CD_HASH_FOREACH(server->players, it) {
@@ -311,11 +326,35 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
+        if (CD_StringIsEqual(matches->item[1], "kick")) {
+            if (!matches->item[2]) {
+                cdadmin_SendUsage(player, CD_ADMIN_PLAYER_KICK_USAGE);
+                goto done;
+            }
+
+            CD_DO {
+                CDRegexpMatches* old = matches;
+                matches = CD_RegexpMatch(regexp, old->item[2]);
+                CD_DestroyRegexpMatches(old);
+            }
+
+            if (CD_HashHas(server->players, CD_StringContent(matches->item[1]))) {
+                CD_ServerKick(server, (CDPlayer*) CD_HashGet(server->players, CD_StringContent(matches->item[1])), CD_CloneString(matches->item[2]));
+            }
+            else {
+                cdadmin_SendFailure(player, CD_CreateStringFromFormat("Player %s not found.", CD_StringContent(matches->item[1])));
+            }
+
+            goto done;
+        }
+
         cdadmin_SendUsage(player, CD_ADMIN_PLAYER_USAGE);
         goto done;
     }
 
     error: {
+        CD_DestroyRegexpKeepString(regexp);
+
         if (matches) {
             CD_DestroyRegexpMatches(matches);
         }
@@ -324,6 +363,8 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
     }
 
     done: {
+        CD_DestroyRegexpKeepString(regexp);
+
         if (matches) {
             CD_DestroyRegexpMatches(matches);
         }

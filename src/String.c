@@ -307,7 +307,9 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
     assert(self);
 
     if (self->external) {
-        return NULL;
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
     }
 
     size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
@@ -329,7 +331,9 @@ CD_InsertString (CDString* self, CDString* insert, size_t position)
     assert(insert);
 
     if (self->external) {
-        return NULL;
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
     }
 
     if (binsert(self->raw, cd_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
@@ -349,7 +353,9 @@ CD_AppendString (CDString* self, CDString* append)
     assert(append);
 
     if (self->external) {
-        return NULL;
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
     }
 
     if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
@@ -369,7 +375,9 @@ CD_AppendCString (CDString* self, const char* append)
     assert(append);
 
     if (self->external) {
-        return NULL;
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
     }
 
     CDString* tmp = CD_CreateStringFromCString(append);

@@ -148,6 +148,8 @@ CDPointer CD_HashIteratorValue (CDHashIterator iterator);
  */
 bool CD_HashIteratorValid (CDHashIterator iterator);
 
+bool CD_HashHas (CDHash* self, const char* name);
+
 /**
  * Get the value of the element with the given name.
  *
