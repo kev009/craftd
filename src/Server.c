@@ -273,14 +273,6 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
         return;
     }
 
-    if (self->config->cache.game.players.max > 0) {
-        if (CD_HashLength(self->players) >= self->config->cache.game.players.max) {
-            close(fd);
-            SERR(self, "too many clients");
-            return;
-        }
-    }
-
     if (getpeername(fd, (struct sockaddr*) &storage, &length) < 0) {
         SERR(self, "could not get peer IP");
         close(fd);
@@ -299,6 +291,44 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
         SERR(self, "weird address family");
         close(fd);
         CD_DestroyPlayer(player);
+    }
+
+    if (self->config->cache.game.players.max > 0) {
+        if (CD_HashLength(self->players) >= self->config->cache.game.players.max) {
+            SERR(self, "too many clients");
+            close(fd);
+            CD_DestroyPlayer(player);
+            return;
+        }
+    }
+
+    if (self->config->cache.connection.simultaneous > 0) {
+        size_t same = 0;
+
+        CD_MAP_FOREACH(self->entities, it) {
+            MCEntity* entity = (MCEntity*) CD_MapIteratorValue(it);
+
+            if (entity->type != MCEntityPlayer) {
+                continue;
+            }
+
+            CDPlayer* tmp = (CDPlayer*) entity;
+
+            if (CD_CStringIsEqual(tmp->ip, player->ip)) {
+                same++;
+            }
+
+            if (same >= self->config->cache.connection.simultaneous) {
+                CD_MAP_BREAK(self->entities);
+            }
+        }
+
+        if (same >= self->config->cache.connection.simultaneous) {
+            SERR(self, "too many connections from %s", player->ip);
+            close(fd);
+            CD_DestroyPlayer(player);
+            return;
+        }
     }
 
     player->socket = fd;

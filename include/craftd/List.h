@@ -231,4 +231,7 @@ bool CD_ListStopIterating (CDList* self, bool stop);
                                                                                     \
         it = CD_ListNext(it))
 
+#define CD_LIST_BREAK(self) \
+    CD_ListStopIterating(self, false); break
+
 #endif

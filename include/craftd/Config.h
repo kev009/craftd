@@ -44,6 +44,7 @@ typedef struct _CDConfig {
 
             uint16_t port;
             int      backlog;
+            uint8_t  simultaneous;
         } connection;
 
         struct {

@@ -216,4 +216,7 @@ bool CD_HashStopIterating (CDHash* self, bool stop);
                                                                                     \
         it = CD_HashNext(it))
 
+#define CD_HASH_BREAK(self) \
+    CD_HashStopIterating(self, false); break
+
 #endif

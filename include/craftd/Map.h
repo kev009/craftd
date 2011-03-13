@@ -214,4 +214,7 @@ bool CD_MapStopIterating (CDMap* self, bool stop);
                                                                                 \
         it = CD_MapNext(it))
 
+#define CD_MAP_BREAK(self) \
+    CD_MapStopIterating(self, false); break
+
 #endif
