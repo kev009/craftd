@@ -59,7 +59,11 @@
             { "name": "admin",
                 "authorizations": [
                     { "name": "Notch", "password": "faggotree", "level": "admin" }
-                ]
+                ],
+
+                "ticket": {
+                    "max": 50
+                }
             },
 
             { "name": "tests" }

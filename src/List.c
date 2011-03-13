@@ -264,11 +264,12 @@ CD_ListNext (CDListIterator it)
 }
 
 CDListIterator
-CD_ListPrev (CDListIterator it)
+CD_ListPrevious (CDListIterator it)
 {
     if (it.raw != NULL) {
         it.raw = it.raw->prev;
     }
+
     return it;
 }
 

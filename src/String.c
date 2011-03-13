@@ -23,18 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CRAFTD_STRING_IGNORE_EXTERN
-#include <craftd/String.h>
-#undef CRAFTD_STRING_IGNORE_EXTERN
-
 #include <craftd/common.h>
-
-const char* MCCharset =
-    " #$%&\"()*+,-./:;<=>!?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
-    "0123456789"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz"
-    "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
 
 size_t
 cd_UTF8_nextCharLength (char data)

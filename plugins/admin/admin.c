@@ -47,6 +47,76 @@
     "    name        The name of the player to kick\n" \
     "    reason    The reason for the kick"
 
+#define CD_ADMIN_TICKET_MODERATOR_USAGE \
+    "Usage: /ticket <command> [options]\n" \
+    "    list       List the tickets\n" \
+    "    assign     Set a ticket as in resolution\n" \
+    "    close      Close a ticket"
+
+#define CD_ADMIN_TICKET_MODERATOR_LIST_USAGE \
+    "Usage: /ticket list <status>\n" \
+    "   status    [all, open, assigned, mine]"
+
+#define CD_ADMIN_TICKET_MODERATOR_ASSIGN_USAGE \
+    "Usage: /ticket assign <id> <name>\n" \
+    "    id      ID of the ticket\n" \
+    "    name    Name of the moderator to assign the ticket"
+
+#define CD_ADMIN_TICKET_MODERATOR_CLOSE_USAGE \
+    "Usage: /ticket close <id>\n" \
+    "    id    ID of the ticket"
+
+#define CD_ADMIN_TICKET_PLAYER_USAGE \
+    "Usage: /ticket <command> [options]\n" \
+    "    create    Create a ticket\n" \
+    "    status    Check the status of a ticket"
+
+#define CD_ADMIN_TICKET_PLAYER_CREATE_USAGE \
+    "Usage: /ticket create <text>"
+
+static struct {
+    struct {
+        int max;
+    } ticket;
+} _config;
+
+typedef struct _CDATicket {
+    CDPlayer* requester;
+    CDPlayer* assignee;
+
+    enum {
+        CDTicketOpen,
+        CDTicketAssigned
+    } status;
+
+    CDString* content;
+} CDATicket;
+
+CDATicket*
+cdadmin_CreateTicket (CDPlayer* requester, CDString* content)
+{
+    CDATicket* self = CD_malloc(sizeof(CDATicket));
+
+    assert(self);
+
+    self->requester = requester;
+    self->assignee  = NULL;
+    self->status    = CDTicketOpen;
+    self->content   = content;
+
+    return self;
+}
+
+void
+cdadmin_DestroyTicket (CDATicket* self)
+{
+    CD_DestroyString(self->content);
+
+    CD_free(self);
+}
+
+static CDList* _tickets;
+
 typedef enum _CDAuthLevel {
     CDLevelUser,
     CDLevelRegisteredUser,
@@ -63,7 +133,7 @@ cdadmin_SendResponse (CDPlayer* player, CDString* message)
 
 static
 void
-cdadmin_SendSuccessful (CDPlayer* player, CDString* message)
+cdadmin_SendSuccess (CDPlayer* player, CDString* message)
 {
     CD_PlayerSendMessage(player, MC_StringColor(message, MCColorDarkGreen));
 }
@@ -129,7 +199,14 @@ static
 bool
 cdadmin_AuthLevelIsEnough (CDPlayer* player, CDAuthLevel level)
 {
-    if (cdadmin_GetPlayerAuthLevel(player) < level) {
+    return !(cdadmin_GetPlayerAuthLevel(player) < level);
+}
+
+static
+bool
+cdadmin_AuthLevelIsEnoughWithMessage (CDPlayer* player, CDAuthLevel level)
+{
+    if (!cdadmin_AuthLevelIsEnough(player, level)) {
         cdadmin_SendFailure(player, CD_CreateStringFromCString(
             "Authorization level not enough"));
 
@@ -214,7 +291,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                                         if (CD_CStringIsEqual(currentName, name) && CD_CStringIsEqual(currentPassword, password)) {
                                             cdadmin_SetPlayerAuthLevel(player, level);
 
-                                            cdadmin_SendSuccessful(player, CD_CreateStringFromFormat(
+                                            cdadmin_SendSuccess(player, CD_CreateStringFromFormat(
                                                 "Authorized as %s with level %s", name, level
                                             ));
 
@@ -242,7 +319,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
     }
 
     if (CD_StringIsEqual(matches->item[1], "workers")) {
-        if (!cdadmin_AuthLevelIsEnough(player, CDLevelAdmin)) {
+        if (!cdadmin_AuthLevelIsEnoughWithMessage(player, CDLevelAdmin)) {
             goto done;
         }
 
@@ -285,7 +362,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
-        if (!cdadmin_AuthLevelIsEnough(player, CDLevelRegisteredUser)) {
+        if (!cdadmin_AuthLevelIsEnoughWithMessage(player, CDLevelRegisteredUser)) {
             goto done;
         }
 
@@ -308,7 +385,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
             goto done;
         }
 
-        if (!cdadmin_AuthLevelIsEnough(player, CDLevelModerator)) {
+        if (!cdadmin_AuthLevelIsEnoughWithMessage(player, CDLevelModerator)) {
             goto done;
         }
 
@@ -352,6 +429,148 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
         goto done;
     }
 
+    if (CD_StringIsEqual(matches->item[1], "ticket")) {
+        if (cdadmin_AuthLevelIsEnough(player, CDLevelModerator)) {
+            if (!matches->item[2]) {
+                cdadmin_SendUsage(player, CD_ADMIN_TICKET_MODERATOR_USAGE);
+                goto done;
+            }
+
+            CD_DO {
+                CDRegexpMatches* old = matches;
+                matches = CD_RegexpMatch(regexp, old->item[2]);
+                CD_DestroyRegexpMatches(old);
+            }
+
+            if (CD_StringIsEqual(matches->item[1], "list")) {
+                if (!matches->item[2]) {
+                    cdadmin_SendUsage(player, CD_ADMIN_TICKET_MODERATOR_LIST_USAGE);
+                    goto done;
+                }
+
+                size_t i = 0;
+
+                CD_LIST_FOREACH(_tickets, it) {
+                    CDATicket* ticket = (CDATicket*) CD_ListIteratorValue(it);
+                    bool       show   = false;
+
+                    if (CD_StringIsEqual(matches->item[2], "all")) {
+                        show = true;
+                    }
+                    else if (CD_StringIsEqual(matches->item[2], "open")) {
+                        if (ticket->status == CDTicketOpen) {
+                            show = true;
+                        }
+                    }
+                    else if (CD_StringIsEqual(matches->item[2], "assigned")) {
+                        if (ticket->status == CDTicketAssigned) {
+                            show = true;
+                        }
+                    }
+                    else if (CD_StringIsEqual(matches->item[2], "mine")) {
+                        if (ticket->assignee == player) {
+                            show = true;
+                        }
+                    }
+
+                    if (!show) {
+                        continue;
+                    }
+
+                    cdadmin_SendResponse(player, CD_CreateStringFromFormat(
+                        MC_COLOR_DARKRED "%d: " MC_COLOR_WHITE "%s[%s]" MC_COLOR_GRAY ">" MC_COLOR_WHITE "%s",
+                        i++, CD_StringContent(ticket->requester->username),
+                        CD_StringContent(ticket->assignee->username), CD_StringContent(ticket->content)));
+                }
+
+                goto done;
+            }
+
+            if (CD_StringIsEqual(matches->item[1], "assign")) {
+                if (!matches->item[2]) {
+                    cdadmin_SendUsage(player, CD_ADMIN_TICKET_MODERATOR_ASSIGN_USAGE);
+                    goto done;
+                }
+
+                goto done;
+            }
+
+            if (CD_StringIsEqual(matches->item[1], "close")) {
+                if (!matches->item[2]) {
+                    cdadmin_SendUsage(player, CD_ADMIN_TICKET_MODERATOR_CLOSE_USAGE);
+                    goto done;
+                }
+
+                goto done;
+            }
+        }
+        else {
+            if (!matches->item[2]) {
+                cdadmin_SendUsage(player, CD_ADMIN_TICKET_PLAYER_USAGE);
+                goto done;
+            }
+
+            CD_DO {
+                CDRegexpMatches* old = matches;
+                matches = CD_RegexpMatch(regexp, old->item[2]);
+                CD_DestroyRegexpMatches(old);
+            }
+
+            if (CD_StringIsEqual(matches->item[1], "create")) {
+                if (!matches->item[2]) {
+                    cdadmin_SendUsage(player, CD_ADMIN_TICKET_PLAYER_CREATE_USAGE);
+                    goto done;
+                }
+
+                if (CD_ListLength(_tickets) > _config.ticket.max) {
+                    cdadmin_SendFailure(player, CD_CreateStringFromCString(
+                        "There can't be more tickets at this moment, try again later"));
+
+                    goto done;
+                }
+
+                CD_LIST_FOREACH(_tickets, it) {
+                    if (((CDATicket*) CD_ListIteratorValue(it))->requester == player) {
+                        cdadmin_SendFailure(player, CD_CreateStringFromCString(
+                            "You can't have more than one ticket open at the same time"));
+
+                        goto done;
+                    }
+                }
+
+                CD_ListPush(_tickets, (CDPointer) cdadmin_CreateTicket(player, CD_CloneString(matches->item[2])));
+
+                cdadmin_SendSuccess(player, CD_CreateStringFromCString(
+                    "The ticket has been added, it will be taken care of as soon as possible."));
+
+                goto done;
+            }
+
+            if (CD_StringIsEqual(matches->item[1], "status")) {
+                CD_LIST_FOREACH(_tickets, it) {
+                    CDATicket* ticket = (CDATicket*) CD_ListIteratorValue(it);
+
+                    if (ticket->requester == player) {
+                        if (ticket->assignee) {
+                            cdadmin_SendResponse(player, CD_CreateStringFromFormat(
+                                "Assigned to %s", CD_StringContent(ticket->assignee->username)));
+                        }
+                        else {
+                            cdadmin_SendResponse(player, CD_CreateStringFromCString(
+                                "Nobody is taking care of your ticket at the moment, please be patient"));
+                        }
+
+                        goto done;
+                    }
+                }
+
+                cdadmin_SendFailure(player, CD_CreateStringFromCString("There are no tickets related to you"));
+
+                goto done;
+            }
+        }
+    }
+
     error: {
         CD_DestroyRegexpKeepString(regexp);
 
@@ -390,9 +609,27 @@ cdadmin_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
         CD_StringContent(name),
         CD_StringContent(message)));
 
+    CD_ServerBroadcast(server, CD_CreateStringFromCString(MCCharset));
+
     CD_DestroyString(name);
 
     return false;
+}
+
+static
+int8_t
+cdadmin_CompareTicket (CDPlayer* player, CDATicket* ticket)
+{
+    return (ticket->requester == player) ? 0 : 1;
+}
+
+static
+bool
+cdadmin_PlayerLogout (CDServer* server, CDPlayer* player, bool status)
+{
+    CD_ListDeleteIf(_tickets, (CDPointer) player, (CDListCompareCallback) cdadmin_CompareTicket);
+
+    return true;
 }
 
 extern
@@ -401,8 +638,36 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->name = CD_CreateStringFromCString("Admin");
 
+    CD_DO { // Initiailize config cache
+        _config.ticket.max = 20;
+
+        J_DO {
+            J_IN(server, self->server->config->data, "server") {
+                J_IN(plugin, server, "plugin") {
+                    J_FOREACH(plugin, plugin, "plugins") {
+                        J_IF_STRING(plugin, "name") {
+                            if (CD_CStringIsEqual(J_STRING_VALUE, "admin")) {
+                                J_IN(ticket, plugin, "ticket") {
+                                    J_INT(ticket, "max", _config.ticket.max);
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    _tickets = CD_CreateList();
+
+    CD_HashPut(PRIVATE(self->server), "Admin.tickets", (CDPointer) _tickets);
+
     CD_EventRegisterWithPriority(self->server, "Player.command", -10, cdadmin_HandleCommand);
     CD_EventRegisterWithPriority(self->server, "Player.chat", -10, cdadmin_HandleChat);
+
+    CD_EventRegister(self->server, "Player.logout", (CDEventCallbackFunction) cdadmin_PlayerLogout);
 
     return true;
 }
@@ -413,6 +678,10 @@ CD_PluginFinalize (CDPlugin* self)
 {
     CD_EventUnregister(self->server, "Player.command", cdadmin_HandleCommand);
     CD_EventUnregister(self->server, "Player.chat", cdadmin_HandleChat);
+
+    CD_EventUnregister(self->server, "Player.logout", (CDEventCallbackFunction) cdadmin_PlayerLogout);
+
+    CD_DestroyList((CDList*) CD_HashDelete(PRIVATE(self->server), "Admin.tickets"));
 
     return true;
 }

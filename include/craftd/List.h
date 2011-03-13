@@ -114,7 +114,7 @@ CDListIterator CD_ListNext (CDListIterator it);
  *
  * @return The iterator to the prev element
  */
-CDListIterator CD_ListPrev (CDListIterator it);
+CDListIterator CD_ListPrevious (CDListIterator it);
 
 /**
  * Get the number of elements in the List
