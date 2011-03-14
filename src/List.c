@@ -556,3 +556,27 @@ CD_ListStopIterating (CDList* self, bool stop)
 
     return stop;
 }
+
+bool
+CD_ListContains(CDList *self, CDPointer item)
+{
+    assert(self);
+    bool result = false;
+
+    pthread_rwlock_rdlock(&self->lock);
+
+    CDListItem *listItem = self->head;
+
+    while (listItem)
+    {
+      if (listItem->value == item)
+      {
+        result = true;
+        break;
+      }
+    }
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
