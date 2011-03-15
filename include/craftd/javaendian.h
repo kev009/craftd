@@ -34,7 +34,7 @@
  * Also define 64-bit integer routines since they don't always exist
  */
 
-#include <config.h>
+#include <craftd/config.h>
 
 #include <string.h>
 
