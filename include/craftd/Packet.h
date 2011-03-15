@@ -159,7 +159,7 @@ typedef union _CDPacketEntityEquipment {
 
 typedef union _CDPacketSpawnPosition {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
     } response;
 } CDPacketSpawnPosition;
 
@@ -246,7 +246,7 @@ typedef union _CDPacketPlayerDigging {
             CDDropItem
         } status;
 
-        MCPosition position;
+        MCBlockPosition position;
 
         enum {
             CDFaceNegativeY,
@@ -261,7 +261,7 @@ typedef union _CDPacketPlayerDigging {
 
 typedef union _CDPacketPlayerBlockPlacement {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
 
         MCByte  direction;
         MCItem  item;
@@ -282,7 +282,7 @@ typedef union _CDPacketUseBed {
 
         MCByte inBed;
 
-        MCPosition position;
+        MCBlockPosition position;
     } response;
 } CDPacketUseBed;
 
@@ -326,7 +326,7 @@ typedef union _CDPacketNamedEntitySpawn {
         MCEntity entity;
         MCString name;
 
-        MCPosition position;
+        MCAbsolutePosition position;
 
         MCByte rotation;
         MCByte pitch;
@@ -339,7 +339,7 @@ typedef union _CDPacketPickupSpawn {
     struct {
         MCEntity   entity;
         MCItem     item;
-        MCPosition position;
+        MCAbsolutePosition position;
 
         MCByte rotation;
         MCByte pitch;
@@ -377,7 +377,7 @@ typedef union _CDPacketSpawnObject {
             CDFishingFloat = 90
         } type;
 
-        MCPosition position;
+        MCAbsolutePosition position;
     } response;
 } CDPacketSpawnObject;
 
@@ -402,7 +402,7 @@ typedef union _CDPacketSpawnMob {
             CDSquid
         } type;
 
-        MCPosition position;
+        MCAbsolutePosition position;
 
         MCByte yaw;
         MCByte pitch;
@@ -416,7 +416,7 @@ typedef union _CDPacketPainting { // Verify type and coordiates
         MCEntity entity;
         MCString title;
 
-        MCPosition position;
+        MCBlockPosition position;
 
         MCInteger type;
     } response;
@@ -472,7 +472,7 @@ typedef union _CDPacketEntityLookMove {
 typedef union _CDPacketEntityTeleport {
     struct {
         MCEntity   entity;
-        MCPosition position;
+        MCAbsolutePosition position;
 
         MCByte rotation;
         MCByte pitch;
@@ -511,8 +511,7 @@ typedef union _CDPacketEntityMetadata {
 
 typedef union _CDPacketPreChunk {
     struct {
-        MCInteger x;
-        MCInteger z;
+        MCChunkPosition position;
 
         MCBoolean mode;
     } response;
@@ -520,7 +519,7 @@ typedef union _CDPacketPreChunk {
 
 typedef union _CDPacketMapChunk {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
         MCSize     size;
 
         MCInteger length;
@@ -530,8 +529,7 @@ typedef union _CDPacketMapChunk {
 
 typedef union _CDPacketMultiBlockChange {
     struct {
-        MCInteger x;
-        MCInteger z;
+        MCChunkPosition position;
 
         MCShort length;
 
@@ -543,7 +541,7 @@ typedef union _CDPacketMultiBlockChange {
 
 typedef union _CDPacketBlockChange {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
 
         MCByte type;
         MCByte metadata;
@@ -552,7 +550,7 @@ typedef union _CDPacketBlockChange {
 
 typedef union _CDPacketPlayNoteBlock {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
 
         enum {
             CDHarp,
@@ -657,7 +655,7 @@ typedef union _CDPacketTransaction {
 
 typedef union _CDPacketUpdateSign {
     struct {
-        MCPosition position;
+        MCBlockPosition position;
 
         MCString first;
         MCString second;
@@ -666,7 +664,7 @@ typedef union _CDPacketUpdateSign {
     } request;
 
     struct {
-        MCPosition position;
+        MCBlockPosition position;
 
         MCString first;
         MCString second;

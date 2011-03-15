@@ -136,23 +136,34 @@ typedef struct _MCVelocity {
     MCShort z;
 } MCVelocity;
 
-typedef struct _MCPosition {
+typedef struct _MCChunkPosition {
+    MCInteger x;
+    MCInteger z;
+} MCChunkPosition;
+
+typedef struct _MCBlockPosition {
     MCInteger x;
     MCInteger y;
     MCInteger z;
-} MCPosition;
+} MCBlockPosition;
 
-typedef struct _MCRelativePosition {
-    MCByte x;
-    MCByte y;
-    MCByte z;
-} MCRelativePosition;
+typedef struct _MCAbsolutePosition {
+    MCInteger x;
+    MCInteger y;
+    MCInteger z;
+} MCAbsolutePosition;
 
 typedef struct _MCPrecisePosition {
     MCDouble x;
     MCDouble y;
     MCDouble z;
 } MCPrecisePosition;
+
+typedef struct _MCRelativePosition {
+    MCByte x;
+    MCByte y;
+    MCByte z;
+} MCRelativePosition;
 
 typedef enum _MCItemType {
     MCIronShovel          = 0x100,
@@ -435,5 +446,139 @@ MCMetadata* MC_ConcatDatas (MCMetadata* metadata, MCData** data, size_t length);
 MCMetadata* MC_AppendData (MCMetadata* metadata, MCData* data);
 
 MCMetadata* MC_MetadataFromEvent (struct bufferevent* event);
+
+inline
+MCBlockPosition
+MC_ChunkPositionToBlockPosition (MCChunkPosition position)
+{
+    MCBlockPosition c;
+    c.x = position.x << 4;
+    c.y = 0;
+    c.z = position.z << 4;
+    return c;
+}
+
+inline
+MCAbsolutePosition
+MC_ChunkPositionToAbsolutePosition (MCChunkPosition position)
+{
+    MCAbsolutePosition c;
+    c.x = (position.x << 9);
+    c.y = 0;
+    c.z = (position.z << 9);
+    return c;
+}
+
+inline
+MCPrecisePosition
+MC_ChunkPositionToPrecisePosition (MCChunkPosition position)
+{
+    MCPrecisePosition c;
+    c.x = position.x << 4;
+    c.y = 0;
+    c.z = position.z << 4;
+    return c;
+}
+
+inline
+MCChunkPosition
+MC_BlockPositionToChunkPosition (MCBlockPosition position)
+{
+  MCChunkPosition c;
+  c.x = position.x >> 4;
+  c.z = position.z >> 4;
+  return c;
+}
+
+inline
+MCAbsolutePosition
+MC_BlockPositionToAbsolutePosition (MCBlockPosition position)
+{
+  MCAbsolutePosition c;
+  c.x = position.x << 5;
+  c.y = position.y << 5;
+  c.z = position.z << 5;
+  return c;
+}
+
+inline
+MCPrecisePosition
+MC_BlockPositionToPrecisePosition (MCBlockPosition position)
+{
+  MCPrecisePosition c;
+  c.x = position.x;
+  c.y = position.y;
+  c.z = position.z;
+  return c;
+}
+
+inline
+MCChunkPosition
+MC_AbsolutePositionToChunkPosition (MCAbsolutePosition position)
+{
+  MCChunkPosition c;
+  c.x = position.x >> 9;
+  c.z = position.z >> 9;
+  return c;
+}
+
+inline
+MCBlockPosition
+MC_AbsolutePositionToBlockPosition (MCAbsolutePosition position)
+{
+  MCBlockPosition c;
+  c.x = position.x >> 5;
+  c.y = position.y >> 5;
+  c.z = position.z >> 5;
+  return c;
+}
+
+inline
+MCPrecisePosition
+MC_AbsolutePositionToPrecisePosition (MCAbsolutePosition position)
+{
+  MCPrecisePosition c;
+  c.x = position.x / 32.0;
+  c.y = position.y / 32.0;
+  c.z = position.z / 32.0;
+  return c;
+}
+
+inline
+MCChunkPosition
+MC_PrecisePositionToChunkPosition (MCPrecisePosition position)
+{
+  MCChunkPosition  c;
+  c.x = ((MCInteger) position.x) >> 4;
+  c.z = ((MCInteger) position.z) >> 4;
+  return c;
+}
+
+inline
+MCBlockPosition
+MC_PrecisePositionToBlockPosition (MCPrecisePosition position)
+{
+  MCBlockPosition c;
+  c.x = ((MCInteger) position.x);
+  c.y = ((MCInteger) position.y);
+  c.z = ((MCInteger) position.z);
+  return c;
+}
+
+inline
+MCAbsolutePosition
+MC_PrecisePositionToAbsolutePosition(MCPrecisePosition position)
+{
+  MCAbsolutePosition c;
+  c.x = ((MCInteger) (position.x * 32.0));
+  c.y = ((MCInteger) (position.y * 32.0));
+  c.z = ((MCInteger) (position.z * 32.0));
+  return c;
+}
+
+#define MC_ChunkPositionEqual(c1,c2)      ((c1.x == c2.x) && (c1.z == c2.z))
+#define MC_BlockPositionEqual(c1,c2)      ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
+#define MC_AbsolutePositionEqueal(c1,c2)  ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
+#define MC_PrecisePositionEqual(c1,c2)    ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
 
 #endif

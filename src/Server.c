@@ -475,7 +475,7 @@ CD_ServerGenerateEntityId (CDServer* self)
         result = ((MCEntity*) CD_MapLast(self->entities))->id + 1;
     }
     else {
-        result = INT_MIN;
+        result = 10;
     }
 
     return result;

@@ -678,6 +678,7 @@ CD_PacketToBuffer (CDPacket* self)
                     CDPacketEntityRelativeMove* packet = (CDPacketEntityRelativeMove*) self->data;
 
                     CD_BufferAddFormat(data, "ibbb",
+                        packet->response.entity.id,
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z
@@ -751,8 +752,8 @@ CD_PacketToBuffer (CDPacket* self)
                     CDPacketPreChunk* packet = (CDPacketPreChunk*) self->data;
 
                     CD_BufferAddFormat(data, "iiB",
-                        packet->response.x,
-                        packet->response.z,
+                        packet->response.position.x,
+                        packet->response.position.z,
                         packet->response.mode
                     );
                 } break;
@@ -779,8 +780,8 @@ CD_PacketToBuffer (CDPacket* self)
                     CDPacketMultiBlockChange* packet = (CDPacketMultiBlockChange*) self->data;
 
                     CD_BufferAddFormat(data, "ii",
-                        packet->response.x,
-                        packet->response.z
+                        packet->response.position.x,
+                        packet->response.position.z
                     );
 
                     CD_BufferAddShort(data, packet->response.length);
