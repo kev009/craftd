@@ -20,8 +20,8 @@ craftd.conf.dist: $(srcdir)/craftd.conf.dist.in
 
 DISTCLEANFILES = craftd.conf.dist
 
-crafdconfdir = ${sysconfdir}/craftd/
-crafdconf_DATA = craftd.conf.dist motd.conf.dist
+craftdconfdir = ${sysconfdir}/craftd/
+craftdconf_DATA = craftd.conf.dist motd.conf.dist
 
 # bstring extas
 bstrdir = third-party/bstring
