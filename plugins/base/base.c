@@ -214,9 +214,7 @@ cdbase_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
     pkt.response.pitch = other->pitch;
     pkt.response.rotation = other->yaw;
     pkt.response.item.id = 0;
-    pkt.response.position.x = other->entity.position.x * 32;
-    pkt.response.position.y = other->entity.position.y * 32;
-    pkt.response.position.z = other->entity.position.z * 32;
+    pkt.response.position = MC_PrecisePositionToAbsolutePosition(other->entity.position);
 
     CDPacket response = { CDResponse, CDNamedEntitySpawn, (CDPointer) &pkt };
 
@@ -269,10 +267,7 @@ cdbase_CheckPlayersInRegion(CDServer* server, CDPlayer* player, MCChunkPosition 
         if (otherPlayer == player)
             continue;
 
-        int chunkX = CD_Div(otherPlayer->entity.position.x, 16);
-        int chunkZ = CD_Div(otherPlayer->entity.position.z, 16);
-
-        MCChunkPosition chunkPos = { chunkX, chunkZ };
+        MCChunkPosition chunkPos = MC_PrecisePositionToChunkPosition(otherPlayer->entity.position);
 
         CERR("So we have posses (%d,0,%d), (%d, 0, %d)", chunkPos.x, chunkPos.z, coord->x, coord->z);
         if (cdbase_CoordInRadius(&chunkPos, coord, radius))
@@ -319,7 +314,10 @@ cdbase_SendPacketToAllInRegion(CDPlayer *player, CDPacket *pkt)
 
   CD_LIST_FOREACH(seenPlayerList, it)
   {
-    CD_PlayerSendPacket( (CDPlayer *) CD_ListIteratorValue(it), pkt );
+    if ( player != (CDPlayer *) CD_ListIteratorValue(it) )
+      CD_PlayerSendPacket( (CDPlayer *) CD_ListIteratorValue(it), pkt );
+    else
+      CERR("We have a player with himself in the List????");
   }
 }
 
@@ -413,17 +411,21 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             if (CD_HashGet(server->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(data->request.username));
 
-                if (server->config->cache.game.standard) {
-                    CD_ServerKick(server, player, CD_CreateStringFromFormat("%s nick already exists",
-                        CD_StringContent(data->request.username)));
+//                if (server->config->cache.game.standard) {
+//                    CD_ServerKick(server, player, CD_CreateStringFromFormat("%s nick already exists",
+//                        CD_StringContent(data->request.username)));
 
-                    CD_EventDispatch(server, "Player.login", player, false);
+//                    CD_EventDispatch(server, "Player.login", player, false);
 
-                    return false;
-                }
+//                    return false;
+//                }
+
+              player->username = CD_CreateStringFromFormat("unknown_%d", player->entity.id);
             }
-
-            player->username = CD_CloneString(data->request.username);
+            else
+            {
+              player->username = CD_CloneString(data->request.username);
+            }
 
             CD_HashPut(server->players, CD_StringContent(player->username), (CDPointer) player);
 
@@ -453,12 +455,13 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 return false;
             }
 
+            MCChunkPosition spawnChunk = MC_BlockPositionToChunkPosition(*spawnPosition);
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
                     MCChunkPosition coords = {
-                        .x = CD_Div(spawnPosition->x, 16) + i,
-                        .z = CD_Div(spawnPosition->z, 16) + j
+                        .x = spawnChunk.x + i,
+                        .z = spawnChunk.z + j
                     };
 
                     if (!cdbase_SendChunk(server, player, &coords)) {
@@ -481,15 +484,16 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             }
 
             CD_DO {
+                MCPrecisePosition pos = MC_BlockPositionToPrecisePosition(*spawnPosition);
                 CDPacketPlayerMoveLook pkt = {
                     .response = {
                         .position = {
-                            .x = spawnPosition->x,
-                            .y = spawnPosition->y + 6,
-                            .z = spawnPosition->z
+                            .x = pos.x,
+                            .y = pos.y + 6,
+                            .z = pos.z
                         },
 
-                        .stance = spawnPosition->y + 6.1,
+                        .stance = pos.y + 6.1,
                         .yaw    = 0,
                         .pitch  = 0,
 
@@ -674,6 +678,9 @@ cdbase_HandleLogin (CDServer* server, CDPlayer* player, int status)
     CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) CD_CreateSet (400,
                 (CDSetCompare) cdbase_CompareMCChunkPosition, (CDSetHash) cdbase_HashMCPosition));
     CD_HashPut(PRIVATE(player), "Player.seenPlayers", (CDPointer) CD_CreateList());
+
+    MCChunkPosition playerChunk = MC_PrecisePositionToChunkPosition( player->entity.position );
+    cdbase_CheckPlayersInRegion(server, player, &playerChunk, 10);
 
     return true;
 }

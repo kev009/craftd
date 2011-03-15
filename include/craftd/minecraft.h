@@ -530,7 +530,7 @@ MC_AbsolutePositionToBlockPosition (MCAbsolutePosition position)
 
 inline
 MCPrecisePosition
-MC_AbsolutePositionToAbsPrecisePosition (MCAbsolutePosition position)
+MC_AbsolutePositionToPrecisePosition (MCAbsolutePosition position)
 {
   MCPrecisePosition c;
   c.x = position.x / 32.0;
