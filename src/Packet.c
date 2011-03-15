@@ -678,6 +678,7 @@ CD_PacketToBuffer (CDPacket* self)
                     CDPacketEntityRelativeMove* packet = (CDPacketEntityRelativeMove*) self->data;
 
                     CD_BufferAddFormat(data, "ibbb",
+                        packet->response.entity.id,
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z
