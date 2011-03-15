@@ -6,7 +6,8 @@ EXTRA_DIST = craftd.conf.dist.in motd.conf.dist
 
 # Make a correct default config file
 edit = sed \
-       -e 's|@datadir[@]|$(datadir)|g' \
+       -e 's|@localstatedir[@]|$(localstatedir)|g' \
+       -e 's|@datdadir[@]|$(datadir)|g' \
        -e 's|@sysconfdir[@]|$(sysconfdir)|g' \
        -e 's|@libdir[@]|$(libdir)|g'
 craftd.conf.dist: Makefile
@@ -31,3 +32,6 @@ EXTRA_DIST += $(bstrdir)/license.txt $(bstrdir)/security.txt \
 # klib extras
 klibdir = third-party/klib
 EXTRA_DIST += $(klibdir)
+
+install-data-local:
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/craftd/world
