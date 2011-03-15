@@ -26,6 +26,7 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 #include <craftd/Player.h>
+#include <craftd/minecraft.h>
 
 // TODO Remove HAX
 #include <zlib.h>
@@ -40,31 +41,29 @@ static struct {
 
 static
 bool
-cdbase_CompareMCPosition (CDSet* self, MCPosition* a, MCPosition* b)
+cdbase_CompareMCChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
 {
-    return (a->x == b->x && a->y == b->y && a->z == b->z);
+    return (a->x == b->x && a->z == b->z);
 }
 
 static
 unsigned int
-cdbase_HashMCPosition (CDSet* self, MCPosition* position)
+cdbase_HashMCPosition (CDSet* self, MCChunkPosition* position)
 {
     const int HASHMULTIPLIER = 31;
     const int CHUNKBUCKETS = 401; // Max chunks to the nearest prime
 
-    return ((((position->x * HASHMULTIPLIER) + position->y) * HASHMULTIPLIER + position->z)
-            * HASHMULTIPLIER) % CHUNKBUCKETS;
+    return ((((position->x * HASHMULTIPLIER)) * HASHMULTIPLIER + position->z) * HASHMULTIPLIER) % CHUNKBUCKETS;
 }
 
 static
 bool
-cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
+cdbase_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
 {
     CD_DO {
         CDPacketPreChunk pkt = {
             .response = {
-                .x = coord->x,
-                .z = coord->z,
+                .position = *coord,
                 .mode = true
             }
         };
@@ -98,11 +97,7 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 
         CDPacketMapChunk pkt = {
             .response = {
-                .position = {
-                    .x = CD_WORLD_COORD(coord->x),
-                    .y = 0,
-                    .z = CD_WORLD_COORD(coord->z)
-                },
+                .position = MC_ChunkPositionToBlockPosition(*coord),
 
                 .size = {
                     .x = 16,
@@ -126,13 +121,12 @@ cdbase_SendChunk (CDServer* server, CDPlayer* player, MCPosition* coord)
 
 static
 void
-cdbase_ChunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
+cdbase_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 {
     CD_DO {
         CDPacketPreChunk pkt = {
             .response = {
-                .x    = coord->x,
-                .z    = coord->z,
+                .position = *coord,
                 .mode = false
             }
         };
@@ -147,33 +141,32 @@ cdbase_ChunkRadiusUnload (CDSet* self, MCPosition* coord, CDPlayer* player)
 
 static
 void
-cdbase_ChunkMemberFree (CDSet* self, MCPosition* coord, CDPointer unused)
+cdbase_ChunkMemberFree (CDSet* self, MCChunkPosition* coord, CDPointer unused)
 {
     CD_free(coord);
 }
 
 static
 void
-cdbase_ChunkRadiusLoad (CDSet* self, MCPosition* coord, CDPlayer* player)
+cdbase_ChunkRadiusLoad (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 {
     cdbase_SendChunk(player->server, player, coord);
 }
 
 static
 void
-cdbase_SendChunkRadius (CDPlayer* player, MCPosition* area, int radius)
+cdbase_SendChunkRadius (CDPlayer* player, MCChunkPosition* area, int radius)
 {
     CDSet* loadedChunks = (CDSet*) CD_HashGet(PRIVATE(player), "Player.loadedChunks");
     CDSet* oldChunks    = loadedChunks;
-    CDSet* newChunks    = (CDSet*) CD_CreateSet(400, (CDSetCompare) cdbase_CompareMCPosition,
+    CDSet* newChunks    = (CDSet*) CD_CreateSet(400, (CDSetCompare) cdbase_CompareMCChunkPosition,
         (CDSetHash) cdbase_HashMCPosition);
 
     for (int x = -radius; x < radius; x++) {
         for (int z = -radius; z < radius; z++) {
             if ((x * x + z * z) <= (radius * radius)) {
-                MCPosition* coord = CD_malloc(sizeof(MCPosition));
+                MCChunkPosition* coord = CD_malloc(sizeof(MCChunkPosition));
                 coord->x          = x + area->x;
-                coord->y          = 0;
                 coord->z          = z + area->z;
 
                 CD_SetPut(newChunks, (CDPointer) coord);
@@ -192,6 +185,157 @@ cdbase_SendChunkRadius (CDPlayer* player, MCPosition* area, int radius)
     CD_DestroySet(oldChunks);
 
     CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) newChunks);
+}
+
+static
+bool
+cdbase_CoordInRadius(MCChunkPosition *coord, MCChunkPosition *centerCoord, int radius)
+{
+    if (coord->x >= centerCoord->x - radius &&
+        coord->x <= centerCoord->x + radius &&
+        coord->z >= centerCoord->z - radius &&
+        coord->z <= centerCoord->z + radius)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+static
+void
+cdbase_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
+{
+  CD_DO {
+    CDPacketNamedEntitySpawn pkt;
+
+    pkt.response.entity = other->entity;
+    pkt.response.name = other->username;
+    pkt.response.pitch = other->pitch;
+    pkt.response.rotation = other->yaw;
+    pkt.response.item.id = 0;
+    pkt.response.position.x = other->entity.position.x * 32;
+    pkt.response.position.y = other->entity.position.y * 32;
+    pkt.response.position.z = other->entity.position.z * 32;
+
+    CDPacket response = { CDResponse, CDNamedEntitySpawn, (CDPointer) &pkt };
+
+    CD_PlayerSendPacket(player, &response);
+  }
+
+  for (int i = 0; i < 5; i++)
+  {
+     CD_DO {
+       CDPacketEntityEquipment pkt;
+       pkt.response.entity = other->entity;
+       pkt.response.item = -1;
+       pkt.response.damage = 0;
+       pkt.response.slot = i;
+
+       CDPacket response = { CDResponse, CDEntityEquipment, (CDPointer) &pkt };
+
+       CD_PlayerSendPacket(player, &response);
+     }
+  }
+}
+
+static
+void
+cdbase_SendDestroyEntity(CDPlayer *player, MCEntity *entity)
+{
+  CD_DO {
+    CDPacketEntityDestroy pkt;
+    pkt.response.entity = *entity;
+
+    CDPacket response = { CDResponse, CDEntityDestroy, (CDPointer) &pkt };
+
+    CD_PlayerSendPacket(player, &response);
+  }
+}
+
+static
+void
+cdbase_CheckPlayersInRegion(CDServer* server, CDPlayer* player, MCChunkPosition *coord, int radius )
+{
+    CERR("We are at the check...");
+
+    CDList *seenPlayerList = (CDList *) CD_HashGet(PRIVATE(player), "Player.seenPlayers");
+
+    CD_HASH_FOREACH(server->players, it)
+    {
+        CDPlayer *otherPlayer = (CDPlayer *) CD_HashIteratorValue(it);
+
+        // If we are the player to check just skip
+        if (otherPlayer == player)
+            continue;
+
+        int chunkX = CD_Div(otherPlayer->entity.position.x, 16);
+        int chunkZ = CD_Div(otherPlayer->entity.position.z, 16);
+
+        MCChunkPosition chunkPos = { chunkX, chunkZ };
+
+        CERR("So we have posses (%d,0,%d), (%d, 0, %d)", chunkPos.x, chunkPos.z, coord->x, coord->z);
+        if (cdbase_CoordInRadius(&chunkPos, coord, radius))
+        {
+            CERR("Player %s is in range....", CD_StringContent(otherPlayer->username));
+
+            /* If the player is in range, but not in the list. */
+            if (!CD_ListContains(seenPlayerList, (CDPointer) otherPlayer))
+            {
+                CDList *otherSeenPlayerList = (CDList *) CD_HashGet(PRIVATE(otherPlayer), "Player.seenPlayers");
+
+                CD_ListPush(seenPlayerList, (CDPointer) otherPlayer);
+                CD_ListPush(otherSeenPlayerList, (CDPointer) player);
+
+                /* Should send both players an update. */
+                CERR("Sending the named player spawns...");
+                cdbase_SendNamedPlayerSpawn(player, otherPlayer);
+                cdbase_SendNamedPlayerSpawn(otherPlayer, player);
+            }
+        }
+        else
+        {
+            /* If the player is out of range but int he list */
+            if (CD_ListContains(seenPlayerList, (CDPointer) otherPlayer))
+            {
+                CDList *otherSeenPlayerList = (CDList *) CD_HashGet(PRIVATE(otherPlayer), "Player.seenPlayers");
+
+                CD_ListDeleteAll(seenPlayerList, (CDPointer) otherPlayer);
+                CD_ListDeleteAll(otherSeenPlayerList, (CDPointer) player);
+
+                /* Should send both players an update. */
+                cdbase_SendDestroyEntity(player, &otherPlayer->entity);
+                cdbase_SendDestroyEntity(otherPlayer, &player->entity);
+            }
+        }
+    }
+}
+
+static
+void
+cdbase_SendPacketToAllInRegion(CDPlayer *player, CDPacket *pkt)
+{
+  CDList *seenPlayerList = (CDList *) CD_HashGet(PRIVATE(player), "Player.seenPlayers");
+
+  CD_LIST_FOREACH(seenPlayerList, it)
+  {
+    CD_PlayerSendPacket( (CDPlayer *) CD_ListIteratorValue(it), pkt );
+  }
+}
+
+static
+MCRelativePosition
+cdbase_relativeMove(MCPrecisePosition *pos1, MCPrecisePosition *pos2)
+{
+  MCAbsolutePosition absPos1 = MC_PrecisePositionToAbsolutePosition(*pos1);
+  MCAbsolutePosition absPos2 = MC_PrecisePositionToAbsolutePosition(*pos2);
+  MCRelativePosition relPos;
+
+  relPos.x = absPos2.x - absPos1.x;
+  relPos.y = absPos2.y - absPos1.y;
+  relPos.z = absPos2.z - absPos1.z;
+
+  return relPos;
 }
 
 static
@@ -301,7 +445,7 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
                 CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            MCPosition* spawnPosition = (MCPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition");
+            MCBlockPosition* spawnPosition = (MCBlockPosition*) CD_HashGet(PRIVATE(server), "World.spawnPosition");
 
             if (!spawnPosition) {
                 SERR(server, "unknown spawn position, can't finish login procedure");
@@ -312,9 +456,8 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
-                    MCPosition coords = {
+                    MCChunkPosition coords = {
                         .x = CD_Div(spawnPosition->x, 16) + i,
-                        .y = 0,
                         .z = CD_Div(spawnPosition->z, 16) + j
                     };
 
@@ -407,13 +550,24 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             CDPacketPlayerPosition* data = (CDPacketPlayerPosition*) packet->data;
 
-            int newX = CD_Div(data->request.position.x, 16);
-            int newZ = CD_Div(data->request.position.z, 16);
+            MCChunkPosition newChunk = MC_PrecisePositionToChunkPosition(data->request.position);
+            MCChunkPosition curChunk = MC_PrecisePositionToChunkPosition(player->entity.position);
 
-            MCPosition area = { newX, 0, newZ };
+            if (!MC_ChunkPositionEqual(newChunk, curChunk)) {
+                cdbase_SendChunkRadius(player, &newChunk, 10);
 
-            if (newX != CD_Div(player->entity.position.x, 16) || newZ != CD_Div(player->entity.position.z, 16)) {
-                cdbase_SendChunkRadius(player, &area, 10);
+                cdbase_CheckPlayersInRegion(server, player, &newChunk, 10);
+            }
+
+            CD_DO {
+              CDPacketEntityRelativeMove pkt;
+
+              pkt.response.entity = player->entity;
+              pkt.response.position = cdbase_relativeMove(&player->entity.position, &data->request.position);
+
+              CDPacket response = { CDResponse, CDEntityRelativeMove,(CDPointer)  &pkt };
+
+              cdbase_SendPacketToAllInRegion(player, &response );
             }
 
             player->entity.position = data->request.position;
@@ -426,6 +580,18 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             player->yaw   = data->request.yaw;
             player->pitch = data->request.pitch;
+
+            CD_DO {
+              CDPacketEntityLook pkt;
+
+              pkt.response.entity = player->entity;
+              pkt.response.pitch = player->pitch;
+              pkt.response.yaw = player->yaw;
+
+              CDPacket response = { CDResponse, CDEntityLook, (CDPointer) &pkt };
+
+              cdbase_SendPacketToAllInRegion(player, &response);
+            }
         } break;
 
         case CDPlayerMoveLook: {
@@ -434,13 +600,26 @@ cdbase_PlayerProcess (CDServer* server, CDPlayer* player, CDPacket* packet)
 
             CDPacketPlayerMoveLook* data = (CDPacketPlayerMoveLook*) packet->data;
 
-            int newX = CD_Div(data->request.position.x, 16);
-            int newZ = CD_Div(data->request.position.z, 16);
+            MCChunkPosition oldChunk = MC_PrecisePositionToChunkPosition(player->entity.position);
+            MCChunkPosition newChunk = MC_PrecisePositionToChunkPosition(data->request.position);
 
-            MCPosition area = { newX, 0, newZ };
+            if (!MC_ChunkPositionEqual(oldChunk, newChunk)) {
+                cdbase_SendChunkRadius(player, &newChunk, 10);
 
-            if (newX != CD_Div(player->entity.position.x, 16) || newZ != CD_Div(player->entity.position.z, 16)) {
-                cdbase_SendChunkRadius(player, &area, 10);
+                cdbase_CheckPlayersInRegion(server, player, &newChunk, 10);
+            }
+
+            CD_DO {
+                CDPacketEntityLookMove pkt;
+
+                pkt.response.entity = player->entity;
+                pkt.response.position = cdbase_relativeMove(&player->entity.position, &data->request.position);
+                pkt.response.pitch = data->request.pitch;
+                pkt.response.yaw = data->request.yaw;
+
+                CDPacket response = { CDResponse, CDEntityLookMove, (CDPointer) &pkt };
+
+                cdbase_SendPacketToAllInRegion(player, &response );
             }
 
             player->entity.position = data->request.position;
@@ -493,7 +672,8 @@ cdbase_HandleLogin (CDServer* server, CDPlayer* player, int status)
                 CD_StringContent(player->username)), MCColorYellow));
 
     CD_HashPut(PRIVATE(player), "Player.loadedChunks", (CDPointer) CD_CreateSet (400,
-                (CDSetCompare) cdbase_CompareMCPosition, (CDSetHash) cdbase_HashMCPosition));
+                (CDSetCompare) cdbase_CompareMCChunkPosition, (CDSetHash) cdbase_HashMCPosition));
+    CD_HashPut(PRIVATE(player), "Player.seenPlayers", (CDPointer) CD_CreateList());
 
     return true;
 }
@@ -504,6 +684,8 @@ cdbase_HandleLogout (CDServer* server, CDPlayer* player)
 {
     CD_ServerBroadcast(server, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)), MCColorYellow));
+
+    CD_DestroyList((CDList *) CD_HashDelete(PRIVATE(player), "Player.seenPlayers"));
 
     return true;
 }

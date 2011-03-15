@@ -65,7 +65,7 @@ cdnbt_LoadLevelDat (CDPlugin* self)
 
     leveldatPath = CD_CreateStringFromFormat("%s/level.dat", self->server->config->cache.files.world);
 
-    MCPosition* spawnPosition = CD_malloc(sizeof(MCPosition));
+    MCBlockPosition* spawnPosition = CD_malloc(sizeof(MCBlockPosition));
 
     if (access(CD_StringContent(leveldatPath), R_OK) < 0) {
         spawnPosition->x = 0;

@@ -218,6 +218,8 @@ bool CD_ListStartIterating (CDList* self);
 
 bool CD_ListStopIterating (CDList* self, bool stop);
 
+bool CD_ListContains(CDList *self, CDPointer item);
+
 /**
  * Iterate over the given map
  *
