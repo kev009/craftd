@@ -574,6 +574,8 @@ CD_ListContains(CDList *self, CDPointer item)
         result = true;
         break;
       }
+
+      listItem = listItem->next;
     }
 
     pthread_rwlock_unlock(&self->lock);
