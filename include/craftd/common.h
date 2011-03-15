@@ -61,9 +61,6 @@ typedef int CDError;
 
 #define CDNull (0)
 
-#define CD_CHUNK_COORD(x) (x)
-#define CD_WORLD_COORD(x) ((x) << 4)
-
 #include <craftd/Arithmetic.h>
 #include <craftd/List.h>
 #include <craftd/Map.h>
