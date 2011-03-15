@@ -743,6 +743,17 @@ cdbase_HandleLogout (CDServer* server, CDPlayer* player)
         CD_StringContent(player->username)), MCColorYellow));
 
     /* TODO: Send and clean the others seenplayers. */
+
+    CDList *seenPlayer = (CDList *) CD_HashGet(PRIVATE(player), "Player.seenPlayers");
+    CD_LIST_FOREACH(seenPlayer, it)
+    {
+      CDPlayer *other = (CDPlayer *) CD_ListIteratorValue(it);
+      CDList *otherSeenPlayer = (CDList *) CD_HashGet(PRIVATE(other), "Player.seenPlayers");
+
+      cdbase_SendDestroyEntity(other, &player->entity);
+      CD_ListDeleteAll(otherSeenPlayer, (CDPointer) player);
+    }
+
     CD_DestroyList((CDList *) CD_HashDelete(PRIVATE(player), "Player.seenPlayers"));
 
     return true;
