@@ -442,7 +442,7 @@ MCMetadata* MC_AppendData (MCMetadata* metadata, MCData* data);
 
 MCMetadata* MC_MetadataFromEvent (struct bufferevent* event);
 
-inline
+static inline
 MCBlockPosition
 MC_ChunkPositionToBlockPosition (MCChunkPosition position)
 {
@@ -453,7 +453,7 @@ MC_ChunkPositionToBlockPosition (MCChunkPosition position)
     return c;
 }
 
-inline
+static inline
 MCAbsolutePosition
 MC_ChunkPositionToAbsolutePosition (MCChunkPosition position)
 {
@@ -464,7 +464,7 @@ MC_ChunkPositionToAbsolutePosition (MCChunkPosition position)
     return c;
 }
 
-inline
+static inline
 MCPrecisePosition
 MC_ChunkPositionToPrecisePosition (MCChunkPosition position)
 {
@@ -475,7 +475,7 @@ MC_ChunkPositionToPrecisePosition (MCChunkPosition position)
     return c;
 }
 
-inline
+static inline
 MCChunkPosition
 MC_BlockPositionToChunkPosition (MCBlockPosition position)
 {
@@ -485,7 +485,7 @@ MC_BlockPositionToChunkPosition (MCBlockPosition position)
   return c;
 }
 
-inline
+static inline
 MCAbsolutePosition
 MC_BlockPositionToAbsolutePosition (MCBlockPosition position)
 {
@@ -496,7 +496,7 @@ MC_BlockPositionToAbsolutePosition (MCBlockPosition position)
   return c;
 }
 
-inline
+static inline
 MCPrecisePosition
 MC_BlockPositionToPrecisePosition (MCBlockPosition position)
 {
@@ -507,7 +507,7 @@ MC_BlockPositionToPrecisePosition (MCBlockPosition position)
   return c;
 }
 
-inline
+static inline
 MCChunkPosition
 MC_AbsolutePositionToChunkPosition (MCAbsolutePosition position)
 {
@@ -517,7 +517,7 @@ MC_AbsolutePositionToChunkPosition (MCAbsolutePosition position)
   return c;
 }
 
-inline
+static inline
 MCBlockPosition
 MC_AbsolutePositionToBlockPosition (MCAbsolutePosition position)
 {
@@ -528,7 +528,7 @@ MC_AbsolutePositionToBlockPosition (MCAbsolutePosition position)
   return c;
 }
 
-inline
+static inline
 MCPrecisePosition
 MC_AbsolutePositionToPrecisePosition (MCAbsolutePosition position)
 {
@@ -539,7 +539,7 @@ MC_AbsolutePositionToPrecisePosition (MCAbsolutePosition position)
   return c;
 }
 
-inline
+static inline
 MCChunkPosition
 MC_PrecisePositionToChunkPosition (MCPrecisePosition position)
 {
@@ -549,7 +549,7 @@ MC_PrecisePositionToChunkPosition (MCPrecisePosition position)
   return c;
 }
 
-inline
+static inline
 MCBlockPosition
 MC_PrecisePositionToBlockPosition (MCPrecisePosition position)
 {
@@ -560,7 +560,7 @@ MC_PrecisePositionToBlockPosition (MCPrecisePosition position)
   return c;
 }
 
-inline
+static inline
 MCAbsolutePosition
 MC_PrecisePositionToAbsolutePosition(MCPrecisePosition position)
 {
