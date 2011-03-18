@@ -702,7 +702,8 @@ cdadmin_HandleChat (CDServer* server, CDPlayer* player, CDString* message)
         CD_StringContent(name),
         CD_StringContent(message)));
 
-    CD_ServerBroadcast(server, CD_CreateStringFromCString(MCCharset));
+    // TODO: testing/WIP?
+    //CD_ServerBroadcast(server, CD_CreateStringFromCString(MCCharset));
 
     CD_DestroyString(name);
 
