@@ -31,10 +31,6 @@
 #include <craftd/bstring/bstrlib.h>
 #include <craftd/bstring/bstraux.h>
 
-#ifndef CRAFTD_STRING_IGNORE_EXTERN
-extern const char* MCCharset;
-#endif
-
 typedef bstring CDRawString;
 
 /**

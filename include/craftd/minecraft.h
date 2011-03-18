@@ -46,6 +46,11 @@ typedef double MCDouble;
 
 typedef CDString* MCString;
 
+#ifndef CRAFTD_MINECRAFT_IGNORE_EXTERN
+extern const char* MCCharset;
+extern const char  MCCharsetPixel[];
+#endif
+
 void MC_DestroyString (MCString self);
 
 #define MC_COLOR_BLACK      "§0"

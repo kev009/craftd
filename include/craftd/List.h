@@ -114,7 +114,7 @@ CDListIterator CD_ListNext (CDListIterator it);
  *
  * @return The iterator to the prev element
  */
-CDListIterator CD_ListPrev (CDListIterator it);
+CDListIterator CD_ListPrevious (CDListIterator it);
 
 /**
  * Get the number of elements in the List
@@ -232,5 +232,8 @@ bool CD_ListContains(CDList *self, CDPointer item);
         CD_ListStopIterating(self, !CD_ListIteratorIsEqual(it, __end__) && it.raw); \
                                                                                     \
         it = CD_ListNext(it))
+
+#define CD_LIST_BREAK(self) \
+    CD_ListStopIterating(self, false); break
 
 #endif

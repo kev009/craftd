@@ -28,6 +28,8 @@
 
 #include <craftd/common.h>
 
+#define CRAFTD_PROTOCOL_VERSION (9)
+
 typedef enum _CDPacketChain {
     CDRequest,
     CDResponse

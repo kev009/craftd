@@ -84,8 +84,7 @@ cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
         }
 
         if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, eventName, ap)) {
-            result = CD_ListStopIterating(callbacks, false);
-            break;
+            result = CD_LIST_BREAK(callbacks);
         }
     }
 
@@ -109,8 +108,7 @@ cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrupted, 
         }
 
         if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, eventName, interrupted, ap)) {
-            result = CD_ListStopIterating(callbacks, false);
-            break;
+            result = CD_LIST_BREAK(callbacks);
         }
     }
 

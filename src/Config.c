@@ -48,8 +48,9 @@ CD_ParseConfig (const char* path)
 
     self->cache.daemonize = true;
 
-    self->cache.connection.port    = 25565;
-    self->cache.connection.backlog = 16;
+    self->cache.connection.port         = 25565;
+    self->cache.connection.backlog      = 16;
+    self->cache.connection.simultaneous = 3;
 
     self->cache.connection.bind.ipv4.sin_family      = AF_INET;
     self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
@@ -118,8 +119,9 @@ CD_ParseConfig (const char* path)
             }
 
             J_IN(connection, server, "connection") {
-                J_INT(connection, "port",    self->cache.connection.port);
-                J_INT(connection, "backlog", self->cache.connection.backlog);
+                J_INT(connection, "port",         self->cache.connection.port);
+                J_INT(connection, "backlog",      self->cache.connection.backlog);
+                J_INT(connection, "simultaneous", self->cache.connection.simultaneous);
 
                 J_IN(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {

@@ -29,6 +29,17 @@
 #include <craftd/minecraft.h>
 #undef CRAFTD_MINECRAFT_IGNORE_EXTERN
 
+const char* MCCharset =
+    " #$%&\"()*+,-./:;<=>!?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
+
+const char MCCharsetPixel[] = {
+    4, 5, 5, 5, 5, 4, 4, 4, 4, 5, 1, 5, 1, 5, 1, 1, 4, 5, 4, 1, 5, 6, 3, 5, 3, 5
+};
+
 const MCEntityId MCMaxEntityId = INT_MAX;
 
 void
