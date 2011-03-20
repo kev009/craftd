@@ -398,7 +398,8 @@ static
 bool
 cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 {
-    CDPlayer* player = ((CDBetaClientCache*) CACHE(client)->slot[0])->player;
+    CDBetaClientCache* cache  = CACHE(client)->slot[0];
+    CDPlayer*          player = cache->player;
 
     switch (packet->type) {
         case CDKeepAlive: {
@@ -419,6 +420,8 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 
                 return false;
             }
+
+            CD_HashPut(PRIVATE(client), "Client.player", (CDPointer) (player = cache->player = CD_CreatePlayer(client)));
 
             if (CD_HashGet(server->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(data->request.username));

@@ -53,7 +53,7 @@ CD_CreateTimeLoop (struct _CDServer* server)
     self->callbacks  = CD_CreateMap();
     self->last       = INT_MIN;
 
-    CD_SetInterval(self, 10000000, (event_callback_fn) cd_KeepTimeLoopAlive);
+    CD_SetInterval(self, 10000000, (event_callback_fn) cd_KeepTimeLoopAlive, CDNull);
 
     return self;
 }

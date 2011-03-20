@@ -26,8 +26,9 @@
 #ifndef CRAFTD_BETA_BUFFER_H
 #define CRAFTD_BETA_BUFFER_H
 
-#include <beta/minecraft.h>
 #include <craftd/Buffer.h>
+
+#include <beta/minecraft.h>
 
 /**
  * Add data to a buffer with data from the given format.
