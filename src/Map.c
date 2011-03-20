@@ -164,10 +164,10 @@ CD_MapIteratorIsEqual (CDMapIterator a, CDMapIterator b)
     return a.raw == b.raw && a.parent == b.parent;
 }
 
-int
+CDMapId
 CD_MapIteratorKey (CDMapIterator it)
 {
-    int result = 0;
+    CDMapId result = 0;
 
     pthread_rwlock_rdlock(&it.parent->lock);
     result = kh_key(it.parent->raw, it.raw);
@@ -200,8 +200,21 @@ CD_MapIteratorValid (CDMapIterator it)
     return result;
 }
 
+bool
+CD_MapHasKey (CDMap* self, CDMapId id)
+{
+    bool result = false;
+
+    pthread_rwlock_rdlock(&self->lock);
+    result = kh_exist(self->raw, kh_get(cdMap, self->raw, id));
+    pthread_rwlock_unlock(&self->lock);
+
+    return result;
+}
+
+
 CDPointer
-CD_MapGet (CDMap* self, int id)
+CD_MapGet (CDMap* self, CDMapId id)
 {
     CDPointer result = (CDPointer) NULL;
     khiter_t  it;
@@ -220,7 +233,7 @@ CD_MapGet (CDMap* self, int id)
 }
 
 CDPointer
-CD_MapPut (CDMap* self, int id, CDPointer data)
+CD_MapPut (CDMap* self, CDMapId id, CDPointer data)
 {
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;
@@ -245,7 +258,7 @@ CD_MapPut (CDMap* self, int id, CDPointer data)
 }
 
 CDPointer
-CD_MapDelete (CDMap* self, int id)
+CD_MapDelete (CDMap* self, CDMapId id)
 {
     CDPointer old = (CDPointer) NULL;
     khiter_t  it;

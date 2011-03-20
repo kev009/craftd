@@ -194,6 +194,13 @@ CDPointer CD_ListDeleteAll (CDList* self, CDPointer data);
 CDPointer CD_ListDeleteAllIf (CDList* self, CDPointer data, CDListCompareCallback callback);
 
 /**
+ * Empty the List and return an array of the contained data
+ *
+ * @return An array of the contained data
+ */
+CDPointer* CD_ListClear (CDList* self);
+
+/**
  * Get the first element in the List.
  *
  * @return The first element in the list.
@@ -207,18 +214,13 @@ CDPointer CD_ListFirst (CDList* self);
  */
 CDPointer CD_ListLast (CDList* self);
 
-/**
- * Empty the List and return an array of the contained data
- *
- * @return An array of the contained data
- */
-CDPointer* CD_ListClear (CDList* self);
+bool CD_ListContains (CDList* self, CDPointer data);
+
+bool CD_ListContainsIf (CDList* self, CDPointer data, CDListCompareCallback callback);
 
 bool CD_ListStartIterating (CDList* self);
 
 bool CD_ListStopIterating (CDList* self, bool stop);
-
-bool CD_ListContains(CDList *self, CDPointer item);
 
 /**
  * Iterate over the given map

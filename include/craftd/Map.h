@@ -31,6 +31,8 @@
 
 KHASH_MAP_INIT_INT64(cdMap, CDPointer);
 
+typedef int64_t CDMapId;
+
 /**
  * The Map class
  */
@@ -128,7 +130,7 @@ bool CD_MapIteratorIsEqual (CDMapIterator a, CDMapIterator b);
  *
  * @return The key (int) value
  */
-int CD_MapIteratorKey (CDMapIterator iterator);
+CDMapId CD_MapIteratorKey (CDMapIterator iterator);
 
 /**
  * Get the value of the given iterator position.
@@ -148,6 +150,8 @@ CDPointer CD_MapIteratorValue (CDMapIterator iterator);
  */
 bool CD_MapIteratorValid (CDMapIterator iterator);
 
+bool CD_MapHasKey (CDMap* self, CDMapId id);
+
 /**
  * Get the value of the element with the given id.
  *
@@ -155,7 +159,7 @@ bool CD_MapIteratorValid (CDMapIterator iterator);
  *
  * @return The value or NULL
  */
-CDPointer CD_MapGet (CDMap* self, int id);
+CDPointer CD_MapGet (CDMap* self, CDMapId id);
 
 /**
  * Set the value of the element with the given id.
@@ -165,7 +169,7 @@ CDPointer CD_MapGet (CDMap* self, int id);
  *
  * @return The old data if present or NULL
  */
-CDPointer CD_MapPut (CDMap* self, int id, CDPointer data);
+CDPointer CD_MapPut (CDMap* self, CDMapId id, CDPointer data);
 
 /**
  * Delete the element with the given id
@@ -174,7 +178,7 @@ CDPointer CD_MapPut (CDMap* self, int id, CDPointer data);
  *
  * @return The delete data if present or NULL
  */
-CDPointer CD_MapDelete (CDMap* self, int id);
+CDPointer CD_MapDelete (CDMap* self, CDMapId id);
 
 /**
  * Get the value of the first element in the Map

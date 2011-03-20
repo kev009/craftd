@@ -3,6 +3,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = $(libevent2_pthreads_CFLAGS) $(jansson_CFLAGS)
 AM_CPPFLAGS += $(PCRE_CFLAGS)
 AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS += -Ibeta/include
 
 SUBDIRS = mapgen
 
@@ -10,7 +11,7 @@ SUBDIRS = mapgen
 pkglib_LTLIBRARIES = libcdbeta.la libcdnbt.la libcdadmin.la libcdtests.la
 
 # The beta plugin handles default game rules
-libcdbeta_la_SOURCES = beta/main.c beta/Buffer.c beta/Packet.c beta/PacketLength.c beta/Player.c beta/World.c beta/minecraft.c
+libcdbeta_la_SOURCES = beta/main.c beta/src/Buffer.c beta/src/Packet.c beta/src/PacketLength.c beta/src/Player.c beta/src/World.c beta/src/minecraft.c
 libcdbeta_la_LDFLAGS = -version-info 0:0:0
 
 # cdnbt loads Notch's NBT region file format

@@ -24,18 +24,19 @@
  */
 
 #include <craftd/Logger.h>
-#include <craftd/Packet.h>
+
+#include <beta/Packet.h>
 
 CDPacket*
-CD_PacketFromBuffer (CDBuffer* input)
+CD_PacketFromBuffers (CDBuffers* buffers)
 {
     CDPacket* self = CD_malloc(sizeof(CDPacket));
 
     assert(self);
 
     self->chain = CDRequest;
-    self->type  = (uint32_t) (uint8_t) CD_BufferRemoveByte(input);
-    self->data  = CD_GetPacketDataFromBuffer(self, input);
+    self->type  = (uint32_t) (uint8_t) CD_BufferRemoveByte(buffers->input);
+    self->data  = CD_GetPacketDataFromBuffer(self, buffers->input);
 
     if (!self->data) {
         ERR("unparsable packet 0x%.2X", self->type);

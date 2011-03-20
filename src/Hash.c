@@ -206,7 +206,7 @@ CD_HashIteratorValid (CDHashIterator it)
 }
 
 bool
-CD_HashHas (CDHash* self, const char* name)
+CD_HashHasKey (CDHash* self, const char* name)
 {
     bool result = false;
 

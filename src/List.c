@@ -559,27 +559,37 @@ CD_ListStopIterating (CDList* self, bool stop)
 }
 
 bool
-CD_ListContains(CDList *self, CDPointer item)
+CD_ListContains (CDList* self, CDPointer data)
 {
-    assert(self);
     bool result = false;
 
-    pthread_rwlock_rdlock(&self->lock);
+    assert(self);
 
-    CDListItem *listItem = self->head;
+    CD_LIST_FOREACH(self, it) {
+        if (CD_ListIteratorValue(it) == data) {
+            result = true;
 
-    while (listItem)
-    {
-      if (listItem->value == item)
-      {
-        result = true;
-        break;
-      }
-
-      listItem = listItem->next;
+            CD_LIST_BREAK(self);
+        }
     }
 
-    pthread_rwlock_unlock(&self->lock);
+    return result;
+}
+
+bool
+CD_ListContainsIf (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    bool result = false;
+
+    assert(self);
+
+    CD_LIST_FOREACH(self, it) {
+        if (callback(data, CD_ListIteratorValue(it)) == 0) {
+            result = true;
+
+            CD_LIST_BREAK(self);
+        }
+    }
 
     return result;
 }

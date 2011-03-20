@@ -417,7 +417,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
                 CD_DestroyRegexpMatches(old);
             }
 
-            if (CD_HashHas(server->players, CD_StringContent(matches->item[1]))) {
+            if (CD_HashHasKey(server->players, CD_StringContent(matches->item[1]))) {
                 CD_ServerKick(server, (CDPlayer*) CD_HashGet(server->players, CD_StringContent(matches->item[1])), CD_CloneString(matches->item[2]));
             }
             else {
@@ -524,7 +524,7 @@ cdadmin_HandleCommand (CDServer* server, CDPlayer* player, CDString* command)
 
                 CDPlayer* assignee = NULL;
 
-                if (!CD_HashHas(server->players, CD_StringContent(matches->item[2]))) {
+                if (!CD_HashHasKey(server->players, CD_StringContent(matches->item[2]))) {
                     cdadmin_SendFailure(player, CD_CreateStringFromFormat("%s isn't connected",
                         CD_StringContent(matches->item[2])));
 

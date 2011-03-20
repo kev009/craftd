@@ -23,71 +23,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#ifndef CRAFTD_BETA_WORLD_H
+#define CRAFTD_BETA_WORLD_H
 
-#include <craftd/common.h>
-#include <craftd/Packet.h>
+typedef enum _CDWorldDimension {
+    CDWorldHell   = -1,
+    CDWorldNormal =  0
+} CDWorldDimension;
 
-/**
- * The Player class.
- */
-typedef struct _CDPlayer {
-    CDClient* client;
-    CDWorld*  world;
+typedef struct _CDWorld {
+    CDServer* server;
 
-    MCEntity entity;
+    CDWorldDimension dimension;
+    uint16_t         time;
 
-    MCFloat yaw;
-    MCFloat pitch;
-
-    CDString* username;
+    CDHash* players;
+    CDMap*  clients;
+    CDMap*  entities;
 
     CD_DEFINE_PRIVATE;
     CD_DEFINE_CACHE;
     CD_DEFINE_ERROR;
-} CDPlayer;
+} CDWorld;
 
-/**
- * Create a Player object on the given Server.
- *
- * @param server The Server the Player will play on
- *
- * @return The instantiated Player object
- */
-CDPlayer* CD_CreatePlayer (CDClient* client);
+CDWorld* CD_CreateWorld (CDServer* server);
 
-/**
- * Destroy a Player object
- */
-void CD_DestroyPlayer (CDPlayer* self);
+void CD_DestroyWorld (CDWorld* self);
 
-/**
- * Send a chat message to a player
- *
- * @param message The message to send
- */
-void CD_PlayerSendMessage (CDPlayer* self, CDString* message);
+MCEntityId CD_WorldGenerateEntityId (CDWorld* self);
 
-/**
- * Send a Packet to a Player
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
+void CD_WorldAddPlayer (CDWorld* self, CDPlayer* player);
 
-/**
- * Send a Packet to a Player and destroy the packet
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet);
+void CD_WorldBroadcast (CDWorld* self, CDString* message);
 
-/**
- * Send a Packet to a Player and destroy the packet data
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet);
+uint16_t CD_WorldGetTime (CDWorld* self);
+
+uint16_t CD_WorldSetTime (CDWorld* self, uint16_t time);
 
 #endif

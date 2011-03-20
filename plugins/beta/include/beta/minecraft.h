@@ -468,7 +468,7 @@ MC_ChunkPositionToAbsolutePosition (MCChunkPosition position)
         .x = (position.x << 9),
         .y = 0,
         .z = (position.z << 9)
-    }
+    };
 
     return result;
 }
@@ -492,7 +492,6 @@ MC_BlockPositionToChunkPosition (MCBlockPosition position)
 {
     MCChunkPosition result = {
         .x = (position.x >> 4),
-        .y = 0,
         .z = (position.z >> 4)
     };
 
@@ -531,7 +530,6 @@ MC_AbsolutePositionToChunkPosition (MCAbsolutePosition position)
 {
     MCChunkPosition result = {
         .x = (position.x >> 9),
-        .y = 0,
         .z = (position.z >> 9)
     };
 
@@ -570,7 +568,6 @@ MC_PrecisePositionToChunkPosition (MCPrecisePosition position)
 {
     MCChunkPosition result = {
         .x = (((MCInteger) position.x) >> 4),
-        .y = 0,
         .z = (((MCInteger) position.z) >> 4)
     };
 

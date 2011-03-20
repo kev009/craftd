@@ -24,9 +24,12 @@
  */
 
 #include <craftd/Plugin.h>
-#include <beta/Cache.h>
+#include <craftd/Server.h>
+
+#include <beta/common.h>
 #include <beta/Packet.h>
 #include <beta/PacketLength.h>
+#include <beta/World.h>
 
 static struct {
     pthread_mutex_t login;
@@ -36,7 +39,9 @@ static struct {
     const char* commandChar;
 } _config;
 
-#include <beta/callbacks.h>
+CDWorld* _world = NULL;
+
+#include "callbacks.c"
 
 static
 void
@@ -45,7 +50,7 @@ cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
     CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
 
     CD_LIST_FOREACH(worlds, it) {
-        CDWorld* world = CD_ListIteratorValue(it);
+        CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
 
         uint16_t current = CD_WorldGetTime(world);
 
@@ -75,13 +80,15 @@ cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
     CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
 
     CD_LIST_FOREACH(worlds, it) {
-        CDWorld* world = CD_ListIteratorValue(it);
+        CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
 
         CDPacketTimeUpdate pkt = {
             .response = {
                 .time = CD_WorldGetTime(world)
             }
         };
+
+        CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
         CD_HASH_FOREACH(world->players, it) {
             CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
@@ -97,7 +104,7 @@ cdbeta_KeepAlive (void* _, void* __, CDServer* server)
     CDBuffer* buffer = CD_PacketToBuffer(&packet);
 
     CD_LIST_FOREACH(server->clients, it) {
-        CD_ClientSendBuffer((CDClient*) CD_HashIteratorValue(it), buffer);
+        CD_ClientSendBuffer((CDClient*) CD_ListIteratorValue(it), buffer);
     }
 
     CD_DestroyBuffer(buffer);
@@ -132,19 +139,22 @@ CD_PluginInitialize (CDPlugin* self)
     CD_CacheAvailable(CACHE(self->server), 0);
 
     CD_DO { // Initialize server's cache base slot
-        CDBetaServerCache* cache = CACHE(self->server)->slot[0] = CD_malloc(sizeof(CDBetaServerCache));
+        CDBetaServerCache*   cache   = CD_alloc(sizeof(CDBetaServerCache));
+        CACHE(self->server)->slot[0] = (CDPointer) cache;
 
         cache->worlds = CD_CreateList();
     }
 
+    _world = CD_CreateWorld(self->server);
+
     self->server->packet.parsable = CD_PacketParsable;
-    self->server->packet.parse    = CD_PacketFromBuffers;
+    self->server->packet.parse    = (void* (*)(CDBuffers *)) CD_PacketFromBuffers;
 
     pthread_mutex_init(&_lock.login, NULL);
 
     CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
     CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
-    CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive));
+    CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive, CDNull));
 
     CD_EventRegister(self->server, "Client.process", cdbeta_ClientProcess);
     CD_EventRegister(self->server, "Client.processed", cdbeta_ClientProcessed);
@@ -152,12 +162,12 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "Client.connect", cdbeta_ClientConnect);
     CD_EventRegister(self->server, "Player.login", cdbeta_PlayerLogin);
     CD_EventRegister(self->server, "Player.logout", cdbeta_PlayerLogout);
-    CD_EventRegister(self->server, "Client.disconnect", cdbeta_ClientDisconnect);
+    CD_EventRegister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdbeta_ClientDisconnect);
 
     CD_EventRegister(self->server, "Client.kick", cdbeta_ClientKick);
 
-    CD_EventRegister(self->server, "Player.command", cdbeta_HandleCommand);
-    CD_EventRegister(self->server, "Player.chat", cdbeta_HandleChat);
+    CD_EventRegister(self->server, "Player.command", cdbeta_PlayerCommand);
+    CD_EventRegister(self->server, "Player.chat", cdbeta_PlayerChat);
 
     CD_EventRegister(self->server, "Player.destroy", cdbeta_PlayerDestroy);
 
@@ -178,7 +188,7 @@ CD_PluginFinalize (CDPlugin* self)
     CD_EventUnregister(self->server, "Client.connect", cdbeta_ClientConnect);
     CD_EventUnregister(self->server, "Player.login", cdbeta_PlayerLogin);
     CD_EventUnregister(self->server, "Player.logout", cdbeta_PlayerLogout);
-    CD_EventUnregister(self->server, "Client.disconnect", cdbeta_ClientDisconnect);
+    CD_EventUnregister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdbeta_ClientDisconnect);
 
     CD_EventUnregister(self->server, "Client.kick", cdbeta_ClientKick);
 

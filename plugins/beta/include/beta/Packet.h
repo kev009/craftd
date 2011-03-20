@@ -684,13 +684,13 @@ typedef union _CDPacketDisconnect {
 } CDPacketDisconnect;
 
 /**
- * Create a Packet from a Buffer
+ * Create a Packet from a Buffers object
  *
  * @param input The Buffer to read from
  *
  * @return The instantiated Packet object
  */
-CDPacket* CD_PacketFromBuffer (CDBuffer* input);
+CDPacket* CD_PacketFromBuffers (CDBuffers* buffers);
 
 /**
  * Destroy a Packet object
