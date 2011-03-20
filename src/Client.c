@@ -23,47 +23,63 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#include <craftd/Client.h>
+#include <craftd/Server.h>
 
-#include <craftd/common.h>
-#include <craftd/Job.h>
+CDClient*
+CD_CreateClient (CDServer* server)
+{
+    CDClient* self = CD_malloc(sizeof(CDClient));
 
-struct _CDWorkers;
-struct _CDServer;
+    if (!self) {
+        return NULL;
+    }
 
-typedef struct _CDWorker {
-    struct _CDServer* server;
+    assert(pthread_rwlock_init(&self->lock.status, NULL) == 0);
 
-    int       id;
-    pthread_t thread;
+    self->server = server;
 
-    struct _CDWorkers* workers;
+    self->status = CDClientConnect;
+    self->jobs   = 0;
 
-    CDJob* job;
-    bool   working;
-} CDWorker;
+    self->buffers = NULL;
 
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
+    PRIVATE(self) = CD_CreatePrivate();
+    CACHE(self)   = CD_CreateCache();
+    ERROR(self)   = CDNull;
 
-/**
- * Destroy a Worker object and its eventual working Job
- *
- * @param worker The worker object to destroy
- */
-void CD_DestroyWorker (CDWorker* self);
+    return self;
+}
 
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-bool CD_RunWorker (CDWorker* self);
+void
+CD_DestroyClient (CDClient* self)
+{
+    CD_EventDispatch(self->server, "Client.destroy", self);
 
-/**
- * Stop a worker
- */
-bool CD_StopWorker (CDWorker* self);
+    if (self->buffers) {
+        bufferevent_flush(self->buffers->raw, EV_READ | EV_WRITE, BEV_FINISHED);
+        bufferevent_disable(self->buffers->raw, EV_READ | EV_WRITE);
+        bufferevent_free(self->buffers->raw);
 
-#endif
+        CD_DestroyBuffers(self->buffers);
+    }
+
+    CD_DestroyPrivate(PRIVATE(self));
+    CD_DestroyCache(CACHE(self));
+
+    pthread_rwlock_destroy(&self->lock.status);
+
+    CD_free(self);
+}
+
+void
+CD_ClientSendBuffer (CDClient* self, CDBuffer* buffer)
+{
+    if (!self->buffers) {
+        return;
+    }
+
+    CD_BufferAddBuffer(self->buffers->output, buffer);
+
+    CD_BuffersFlush(self->buffers);
+}

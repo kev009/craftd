@@ -26,7 +26,7 @@
 #include <craftd/Worker.h>
 #include <craftd/Server.h>
 #include <craftd/Workers.h>
-#include <craftd/Player.h>
+#include <craftd/Client.h>
 #include <craftd/Logger.h>
 
 CDWorker*
@@ -103,88 +103,87 @@ CD_RunWorker (CDWorker* self)
             CD_DestroyJob(self->job);
         }
         else if (CD_JOB_IS_PLAYER(self->job)) {
-            CDPlayer* player;
+            CDClient* client;
 
-            if (self->job->type == CDPlayerProcessJob) {
-                player = ((CDPlayerProcessJobData*) self->job->data)->player;
+            if (self->job->type == CDClientProcessJob) {
+                client = ((CDClientProcessJobData*) self->job->data)->client;
             }
             else {
-                player = (CDPlayer*) self->job->data;
+                client = (CDClient*) self->job->data;
             }
 
-            if (!player) {
+            if (!client) {
                 CD_DestroyJob(self->job);
                 continue;
             }
 
-            pthread_rwlock_rdlock(&player->lock.status);
-            if (player->status == CDPlayerDisconnect) {
-                if (self->job->type != CDPlayerDisconnectJob) {
+            pthread_rwlock_rdlock(&client->lock.status);
+            if (client->status == CDClientDisconnect) {
+                if (self->job->type != CDClientDisconnectJob) {
                     CD_DestroyJob(self->job);
                     self->job = NULL;
-                    player->jobs--;
+                    client->jobs--;
                 }
             }
-            pthread_rwlock_unlock(&player->lock.status);
+            pthread_rwlock_unlock(&client->lock.status);
 
             if (!self->job) {
                 continue;
             }
 
-            if (self->job->type == CDPlayerConnectJob) {
-                CD_EventDispatch(self->server, "Player.connect", player);
+            if (self->job->type == CDClientConnectJob) {
+                CD_EventDispatch(self->server, "Client.connect", client);
 
-                pthread_rwlock_wrlock(&player->lock.status);
-                if (player->status != CDPlayerDisconnect) {
-                    player->status = CDPlayerIdle;
+                pthread_rwlock_wrlock(&client->lock.status);
+                if (client->status != CDClientDisconnect) {
+                    client->status = CDClientIdle;
                 }
-                pthread_rwlock_unlock(&player->lock.status);
+                pthread_rwlock_unlock(&client->lock.status);
 
                 CD_DestroyJob(self->job);
 
-                if (CD_BufferLength(player->buffers->input) > 0) {
-                    CD_ReadFromPlayer(player);
+                if (CD_BufferLength(client->buffers->input) > 0) {
+                    CD_ReadFromClient(client);
                 }
             }
-            else if (self->job->type == CDPlayerProcessJob) {
-                CD_EventDispatch(self->server, "Player.process", player,
-                    ((CDPlayerProcessJobData*) self->job->data)->packet);
+            else if (self->job->type == CDClientProcessJob) {
+                CD_EventDispatch(self->server, "Client.process", client,
+                    ((CDClientProcessJobData*) self->job->data)->packet);
 
-                pthread_rwlock_wrlock(&player->lock.status);
-                if (player->status != CDPlayerDisconnect) {
-                    player->status = CDPlayerIdle;
+                CD_EventDispatch(self->server, "Client.processed", client,
+                    ((CDClientProcessJobData*) self->job->data)->packet);
+
+                pthread_rwlock_wrlock(&client->lock.status);
+                if (client->status != CDClientDisconnect) {
+                    client->status = CDClientIdle;
                 }
 
-                player->jobs--;
-                pthread_rwlock_unlock(&player->lock.status);
+                client->jobs--;
+                pthread_rwlock_unlock(&client->lock.status);
 
                 CD_DestroyJob(self->job);
 
-                if (CD_BufferLength(player->buffers->input) > 0) {
-                    CD_ReadFromPlayer(player);
+                if (CD_BufferLength(client->buffers->input) > 0) {
+                    CD_ReadFromClient(client);
                 }
             }
-            else if (self->job->type == CDPlayerDisconnectJob) {
+            else if (self->job->type == CDClientDisconnectJob) {
                 while (true) {
-                    pthread_rwlock_rdlock(&player->lock.status);
+                    pthread_rwlock_rdlock(&client->lock.status);
 
-                    if (player->jobs < 1) {
-                        pthread_rwlock_unlock(&player->lock.status);
+                    if (client->jobs < 1) {
+                        pthread_rwlock_unlock(&client->lock.status);
                         break;
                     }
 
-                    pthread_rwlock_unlock(&player->lock.status);
+                    pthread_rwlock_unlock(&client->lock.status);
                 }
 
-                if (player->username) {
-                    CD_EventDispatch(self->server, "Player.logout", player, (bool) ERROR(player));
-                }
+                CD_EventDispatch(self->server, "Client.disconnect", client, (bool) ERROR(client));
 
-                CD_EventDispatch(self->server, "Player.disconnect", player, (bool) ERROR(player));
+                CD_ListPush(self->server->disconnecting, (CDPointer) client);
 
-                CD_ListPush(self->server->disconnecting, (CDPointer) player);
-
-                CD_ServerFlush(player->server, false);
+                CD_ServerFlush(client->server, false);
 
                 CD_DestroyJob(self->job);
             }

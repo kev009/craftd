@@ -29,7 +29,7 @@
 #include <craftd/common.h>
 #include <craftd/klib/khash.h>
 
-KHASH_MAP_INIT_INT(cdMap, CDPointer);
+KHASH_MAP_INIT_INT64(cdMap, CDPointer);
 
 /**
  * The Map class

@@ -27,17 +27,13 @@
 #include <craftd/Server.h>
 
 CDPlayer*
-CD_CreatePlayer (struct _CDServer* server)
+CD_CreatePlayer (CDClient* client)
 {
     CDPlayer* self = CD_malloc(sizeof(CDPlayer));
 
-    if (!self) {
-        return NULL;
-    }
+    assert(self);
 
-    assert(pthread_rwlock_init(&self->lock.status, NULL) == 0);
-
-    self->server = server;
+    self->client = client;
 
     self->entity.id         = CD_ServerGenerateEntityId(server);
     self->entity.type       = MCEntityPlayer;
@@ -47,12 +43,8 @@ CD_CreatePlayer (struct _CDServer* server)
 
     self->username = NULL;
 
-    self->status = CDPlayerConnect;
-    self->jobs   = 0;
-
-    self->buffers = NULL;
-
-    PRIVATE(self) = CD_CreateHash();
+    PRIVATE(self) = CD_CreatePrivate();
+    CACHE(self)   = CD_CreateCache();
     ERROR(self)   = CDNull;
 
     return self;
@@ -63,21 +55,12 @@ CD_DestroyPlayer (CDPlayer* self)
 {
     CD_EventDispatch(self->server, "Player.destroy", self);
 
-    if (self->buffers) {
-        bufferevent_flush(self->buffers->raw, EV_READ | EV_WRITE, BEV_FINISHED);
-        bufferevent_disable(self->buffers->raw, EV_READ | EV_WRITE);
-        bufferevent_free(self->buffers->raw);
-
-        CD_DestroyBuffers(self->buffers);
-    }
-
     if (self->username) {
         CD_DestroyString(self->username);
     }
 
-    CD_DestroyHash(PRIVATE(self));
-
-    pthread_rwlock_destroy(&self->lock.status);
+    CD_DestroyPrivate(PRIVATE(self));
+    CD_DestroyCache(CACHE(self));
 
     CD_free(self);
 }
@@ -140,16 +123,4 @@ CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
 
     CD_DestroyBuffer(data);
     CD_DestroyPacketData(packet);
-}
-
-void
-CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* buffer)
-{
-    if (!self->buffers) {
-        return;
-    }
-
-    CD_BufferAddBuffer(self->buffers->output, buffer);
-
-    CD_BuffersFlush(self->buffers);
 }

@@ -54,13 +54,9 @@
     typedef int64_t CDPointer;
 #endif
 
-typedef int CDError;
-
-#define PRIVATE(data) ((data)->_private)
-#define ERROR(data)   ((data)->_error)
-
 #define CDNull (0)
 
+#include <craftd/Error.h>
 #include <craftd/Arithmetic.h>
 #include <craftd/List.h>
 #include <craftd/Map.h>
@@ -68,6 +64,8 @@ typedef int CDError;
 #include <craftd/Set.h>
 #include <craftd/String.h>
 #include <craftd/Regexp.h>
+#include <craftd/Cache.h>
+#include <craftd/Private.h>
 
 #include <craftd/javaendian.h>
 #include <craftd/minecraft.h>

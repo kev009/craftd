@@ -2,6 +2,7 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/common.h \
 		     craftd/config.h \
 		     craftd/Config.h \
+			 craftd/Cache.h \
 		     craftd/Console.h \
 		     craftd/Event.h \
 		     craftd/Hash.h \
@@ -14,11 +15,9 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/Map.h \
 		     craftd/memory.h \
 		     craftd/minecraft.h \
-		     craftd/Packet.h \
-		     craftd/PacketLength.h \
-		     craftd/Player.h \
 		     craftd/Plugin.h \
 		     craftd/Plugins.h \
+			 craftd/Private.h \
 		     craftd/Regexp.h \
 		     craftd/Server.h \
 		     craftd/Set.h \
@@ -28,14 +27,12 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/Worker.h \
 		     craftd/Workers.h
 
-# bstring headers
 bstringdir = $(pkgincludedir)/bstring
 bstring_HEADERS = craftd/bstring/bsafe.h \
 		  craftd/bstring/bstraux.h \
 		  craftd/bstring/bstrlib.h \
 		  craftd/bstring/bstrwrap.h
 
-# klib headers
 klibdir = $(pkgincludedir)/klib
 klib_HEADERS = craftd/klib/kbtree.h \
 	       craftd/klib/khash.h \

@@ -23,47 +23,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#ifndef CRAFTD_CACHE_H
+#define CRAFTD_CACHE_H
 
 #include <craftd/common.h>
-#include <craftd/Job.h>
 
-struct _CDWorkers;
-struct _CDServer;
+typedef struct _CDCache {
+    size_t     size;
+    CDPointer* slot;
+} CDCache;
 
-typedef struct _CDWorker {
-    struct _CDServer* server;
+#define CD_DEFINE_CACHE CDCache* _cache
 
-    int       id;
-    pthread_t thread;
+#define CACHE(data) ((data)->_cache)
 
-    struct _CDWorkers* workers;
+CDCache* CD_CreateCache (void);
 
-    CDJob* job;
-    bool   working;
-} CDWorker;
+void CD_DestroyCache (CDCache* self);
 
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
+CDCache* CD_CacheAvailable (CDCache* self, size_t slot);
 
-/**
- * Destroy a Worker object and its eventual working Job
- *
- * @param worker The worker object to destroy
- */
-void CD_DestroyWorker (CDWorker* self);
-
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-bool CD_RunWorker (CDWorker* self);
-
-/**
- * Stop a worker
- */
-bool CD_StopWorker (CDWorker* self);
+CDCache* CD_CacheResize (CDCache* self, size_t size);
 
 #endif

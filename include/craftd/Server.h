@@ -31,7 +31,7 @@
 #include <craftd/TimeLoop.h>
 #include <craftd/Workers.h>
 #include <craftd/Plugins.h>
-#include <craftd/Player.h>
+#include <craftd/Client.h>
 
 /**
  * Server class.
@@ -39,14 +39,18 @@
 typedef struct _CDServer {
     char* name;
 
+    struct {
+        bool  (*parsable) (CDBuffers* buffers);
+        void* (*parse)    (CDBuffers* buffers);
+    } packet;
+
     CDTimeLoop* timeloop;
     CDWorkers*  workers;
     CDConfig*   config;
     CDPlugins*  plugins;
     CDLogger    logger;
 
-    CDHash* players;
-    CDMap*  entities;
+    CDList* clients;
     CDList* disconnecting;
 
     bool running;
@@ -60,14 +64,11 @@ typedef struct _CDServer {
         CDHash* callbacks;
     } event;
 
-    struct {
-        pthread_spinlock_t time;
-    } lock;
-
     evutil_socket_t socket;
 
-    CDHash* _private;
-    CDError _error;
+    CD_DEFINE_PRIVATE;
+    CD_DEFINE_CACHE;
+    CD_DEFINE_ERROR;
 } CDServer;
 
 /**
@@ -120,7 +121,7 @@ void CD_ServerFlush (CDServer* self, bool now);
 
 void CD_ServerCleanDisconnects (CDServer* self);
 
-void CD_ReadFromPlayer (CDPlayer* player);
+void CD_ReadFromClient (CDClient* client);
 
 /**
  * Get a new unique entity ID
@@ -138,16 +139,16 @@ extern CDServer* CDMainServer;
  */
 
 /**
- * Kick a Player from the server.
+ * Kick a Client from the server.
  *
  * The passed string is destroyed after being used, so clone it if you want to keep it
  *
  * @param reason The reason for the kicking
  */
-void CD_ServerKick (CDServer* self, CDPlayer* player, CDString* reason);
+void CD_ServerKick (CDServer* self, CDClient* client, CDString* reason);
 
 /**
- * Broadcast a chat message to every connected player.
+ * Broadcast a chat message to every connected client.
  *
  * The passed string is destroyed after being used, so clone it if you want to keep it
  *

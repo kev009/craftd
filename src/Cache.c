@@ -23,47 +23,52 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#include <craftd/Cache.h>
 
-#include <craftd/common.h>
-#include <craftd/Job.h>
+CDCache*
+CD_CreateCache (void)
+{
+    CDCache* self = CD_malloc(sizeof(CDCache));
 
-struct _CDWorkers;
-struct _CDServer;
+    assert(self);
 
-typedef struct _CDWorker {
-    struct _CDServer* server;
+    self->size = 0;
+    self->slot = NULL;
 
-    int       id;
-    pthread_t thread;
+    CD_CacheResize(self, 1);
 
-    struct _CDWorkers* workers;
+    return self;
+}
 
-    CDJob* job;
-    bool   working;
-} CDWorker;
+void
+CD_DestroyCache (CDCache* self)
+{
+    CD_free(self->slot);
 
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
+    CD_free(self);
+}
 
-/**
- * Destroy a Worker object and its eventual working Job
- *
- * @param worker The worker object to destroy
- */
-void CD_DestroyWorker (CDWorker* self);
+CDCache*
+CD_CacheAvailable (CDCache* self, size_t slot)
+{
+    assert(self);
 
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-bool CD_RunWorker (CDWorker* self);
+    if (self->size <= slot) {
+        CD_CacheResize(self, slot + 1);
+    }
 
-/**
- * Stop a worker
- */
-bool CD_StopWorker (CDWorker* self);
+    return self;
+}
 
-#endif
+CDCache*
+CD_CacheResize (CDCache* self, size_t size)
+{
+    assert(self);
+    
+    self->size = size;
+    self->slot = CD_realloc(self->slot, size * sizeof(CDPointer));
+
+    assert(self->slot);
+
+    return self;
+}

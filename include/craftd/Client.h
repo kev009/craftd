@@ -23,47 +23,58 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#ifndef CRAFTD_CLIENT_H
+#define CRAFTD_CLIENT_H
 
 #include <craftd/common.h>
-#include <craftd/Job.h>
 
-struct _CDWorkers;
 struct _CDServer;
 
-typedef struct _CDWorker {
+typedef enum _CDClientStatus {
+    CDClientConnect,
+    CDClientIdle,
+    CDClientProcess,
+    CDClientDisconnect
+} CDClientStatus;
+
+typedef struct _CDClient {
     struct _CDServer* server;
 
-    int       id;
-    pthread_t thread;
+    char            ip[128];
+    evutil_socket_t socket;
+    CDBuffers*      buffers;
 
-    struct _CDWorkers* workers;
+    CDClientStatus status;
+    uint8_t        jobs;
 
-    CDJob* job;
-    bool   working;
-} CDWorker;
+    struct {
+        pthread_rwlock_t status;
+    } lock;
+
+    CD_DEFINE_PRIVATE;
+    CD_DEFINE_CACHE;
+    CD_DEFINE_ERROR;
+} CDClient;
 
 /**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
-
-/**
- * Destroy a Worker object and its eventual working Job
+ * Create a Client object on the given Server.
  *
- * @param worker The worker object to destroy
+ * @param server The Server the Client will play on
+ *
+ * @return The instantiated Client object
  */
-void CD_DestroyWorker (CDWorker* self);
+CDClient* CD_CreateClient (struct _CDServer* server);
 
 /**
- * Main thread function, pass the result of CD_CreateWorker as argument.
+ * Destroy a Client object
  */
-bool CD_RunWorker (CDWorker* self);
+void CD_DestroyClient (CDClient* self);
 
 /**
- * Stop a worker
+ * Send a raw String to a Client
+ *
+ * @param data The raw String to send
  */
-bool CD_StopWorker (CDWorker* self);
+void CD_ClientSendBuffer (CDClient* self, CDBuffer* data);
 
 #endif

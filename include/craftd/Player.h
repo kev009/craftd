@@ -29,42 +29,22 @@
 #include <craftd/common.h>
 #include <craftd/Packet.h>
 
-struct _CDServer;
-
-typedef enum _CDPlayerStatus {
-    CDPlayerConnect,
-    CDPlayerIdle,
-    CDPlayerProcess,
-    CDPlayerDisconnect
-} CDPlayerStatus;
-
 /**
  * The Player class.
  */
 typedef struct _CDPlayer {
+    CDClient* client;
+
     MCEntity entity;
 
     MCFloat yaw;
     MCFloat pitch;
 
-    struct _CDServer* server;
-
     CDString* username;
-    char      ip[128];
 
-    evutil_socket_t socket;
-
-    CDBuffers* buffers;
-
-    CDPlayerStatus status;
-    uint8_t        jobs;
-
-    struct {
-        pthread_rwlock_t status;
-    } lock;
-
-    CDHash* _private;
-    CDError _error;
+    CD_DEFINE_PRIVATE;
+    CD_DEFINE_CACHE;
+    CD_DEFINE_ERROR;
 } CDPlayer;
 
 /**
@@ -74,7 +54,7 @@ typedef struct _CDPlayer {
  *
  * @return The instantiated Player object
  */
-CDPlayer* CD_CreatePlayer (struct _CDServer* server);
+CDPlayer* CD_CreatePlayer (CDClient* client);
 
 /**
  * Destroy a Player object
@@ -108,12 +88,5 @@ void CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet);
  * @param packet The Packet object to send
  */
 void CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a raw String to a Player
- *
- * @param data The raw String to send
- */
-void CD_PlayerSendBuffer (CDPlayer* self, CDBuffer* data);
 
 #endif

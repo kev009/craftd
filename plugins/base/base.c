@@ -31,6 +31,94 @@
 // TODO Remove HAX
 #include <zlib.h>
 
+// FIXME: This is just a dummy function
+MCEntityId
+CD_ServerGenerateEntityId (CDServer* self)
+{
+    MCEntityId result;
+
+    assert(self);
+
+    if (CD_MapLength(self->entities) != 0) {
+        result = ((MCEntity*) CD_MapLast(self->entities))->id + 1;
+    }
+    else {
+        result = 10;
+    }
+
+    return result;
+}
+
+kick {
+    CD_DO {
+        CDPacketDisconnect pkt = {
+            .response = {
+                .reason = reason
+            }
+        };
+
+        CDPacket response = { CDResponse, CDDisconnect, (CDPointer) &pkt };
+
+        CD_ClientSendPacketAndCleanData(client, &response);
+    }
+}
+
+
+void
+CD_ServerBroadcast (CDServer* self, CDString* message)
+{
+    CD_DO {
+        CDPacketChat pkt = {
+            .response = {
+                .message = message
+            }
+        };
+
+        CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+
+        CDBuffer* buffer = CD_PacketToBuffer(&response);
+
+        CD_LIST_FOREACH(self->clients, it) {
+            CDClient* client = (CDClient*) CD_ListIteratorValue(it);
+
+            pthread_rwlock_rdlock(&client->lock.status);
+            if (client->status != CDClientDisconnect) {
+                CD_ClientSendBuffer(client, buffer);
+            }
+            pthread_rwlock_unlock(&client->lock.status);
+        }
+
+        CD_DestroyBuffer(buffer);
+        CD_DestroyPacketData(&response);
+    }
+}
+
+uint16_t
+CD_ServerGetTime (CDServer* self)
+{
+    uint16_t result;
+
+    assert(self);
+
+    pthread_spin_lock(&self->lock.time);
+    result = self->time;
+    pthread_spin_unlock(&self->lock.time);
+
+    return result;
+}
+
+uint16_t
+CD_ServerSetTime (CDServer* self, uint16_t time)
+{
+    assert(self);
+
+    pthread_spin_lock(&self->lock.time);
+    self->time = time;
+    pthread_spin_unlock(&self->lock.time);
+
+    return time;
+}
+
 static struct {
     pthread_mutex_t login;
 } _lock;

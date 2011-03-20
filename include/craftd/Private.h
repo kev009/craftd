@@ -23,47 +23,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#ifndef CRAFTD_PRIVATE_H
+#define CRAFTD_PRIVATE_H
 
-#include <craftd/common.h>
-#include <craftd/Job.h>
+#define CD_DEFINE_PRIVATE CDHash* _private
 
-struct _CDWorkers;
-struct _CDServer;
+#define PRIVATE(data) ((data)->_private)
 
-typedef struct _CDWorker {
-    struct _CDServer* server;
-
-    int       id;
-    pthread_t thread;
-
-    struct _CDWorkers* workers;
-
-    CDJob* job;
-    bool   working;
-} CDWorker;
-
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
-
-/**
- * Destroy a Worker object and its eventual working Job
- *
- * @param worker The worker object to destroy
- */
-void CD_DestroyWorker (CDWorker* self);
-
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-bool CD_RunWorker (CDWorker* self);
-
-/**
- * Stop a worker
- */
-bool CD_StopWorker (CDWorker* self);
+#define CD_CreatePrivate(...)  CD_CreateHash(__VA_ARGS__)
+#define CD_DestroyPrivate(...) CD_DestroyHash(__VA_ARGS__)
 
 #endif
