@@ -398,9 +398,9 @@ typedef struct _MCEntity {
 } MCEntity;
 
 typedef struct _MCItem {
-  MCShort id;
-  MCByte  count;
-  MCShort uses;
+    MCShort id;
+    MCByte  count;
+    MCShort uses;
 } MCItem;
 
 typedef struct _MCData {
