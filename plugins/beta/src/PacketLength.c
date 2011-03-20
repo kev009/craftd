@@ -23,8 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/PacketLength.h>
-#include <craftd/Packet.h>
+#include <beta/PacketLength.h>
+#include <beta/Packet.h>
 
 #define CHECK (length < (CDPacketLength[type] + variable))
 

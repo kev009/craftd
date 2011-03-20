@@ -23,10 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/common.h>
-
 #define CRAFTD_MINECRAFT_IGNORE_EXTERN
-#include <craftd/minecraft.h>
+#include <beta/common.h>
 #undef CRAFTD_MINECRAFT_IGNORE_EXTERN
 
 const char* MCCharset =

@@ -26,7 +26,7 @@
 #ifndef CRAFTD_PACKET_H
 #define CRAFTD_PACKET_H
 
-#include <craftd/common.h>
+#include <beta/common.h>
 
 #define CRAFTD_PROTOCOL_VERSION (9)
 

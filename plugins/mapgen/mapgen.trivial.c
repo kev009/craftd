@@ -26,6 +26,8 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
+#include <beta/minecraft.h>
+
 #include <math.h>
 #include "noise/simplexnoise1234.h"
 

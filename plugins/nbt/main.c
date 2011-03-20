@@ -29,8 +29,8 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include "nbt.h"
-#include "itoa.h"
+#include <nbt/nbt.h>
+#include <nbt/itoa.h>
 
 // Temporary hax; load from config
 static const int WORLD_BASE = 36;

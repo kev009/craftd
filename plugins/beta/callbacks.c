@@ -26,6 +26,7 @@
 #include <zlib.h>
 
 #include <beta/Player.h>
+#include <beta/Cache.h>
 
 static
 bool

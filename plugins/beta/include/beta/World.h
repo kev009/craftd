@@ -26,6 +26,10 @@
 #ifndef CRAFTD_BETA_WORLD_H
 #define CRAFTD_BETA_WORLD_H
 
+#include <craftd/Server.h>
+
+#include <beta/Player.h>
+
 typedef enum _CDWorldDimension {
     CDWorldHell   = -1,
     CDWorldNormal =  0
@@ -36,6 +40,10 @@ typedef struct _CDWorld {
 
     CDWorldDimension dimension;
     uint16_t         time;
+
+    struct {
+        pthread_spinlock_t time;
+    } lock;
 
     CDHash* players;
     CDMap*  clients;

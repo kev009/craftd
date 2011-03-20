@@ -31,8 +31,7 @@ CD_CreateWorld (CDServer* server)
     CDWorld* self = CD_malloc(sizeof(CDWorld));
 
     assert(self);
-    
-    assert(pthread_spin_init(&self->lock.time, NULL) == 0);
+    assert(pthread_spin_init(&self->lock.time, 0) == 0);
 
     self->server = server;
 
@@ -56,7 +55,7 @@ void
 CD_DestroyWorld (CDWorld* self)
 {
     CD_HASH_FOREACH(self->players, it) {
-        CD_ServerKick(self->server, ((CDPlayer*) CD_HashIteratorValue(it))->client);
+        CD_ServerKick(self->server, ((CDPlayer*) CD_HashIteratorValue(it))->client, NULL);
     }
 
     CD_DestroyHash(self->players);
@@ -110,7 +109,7 @@ CD_WorldBroadcast (CDWorld* self, CDString* message)
     CDBuffer* buffer = CD_PacketToBuffer(&response);
 
     CD_HASH_FOREACH(self->players, it) {
-        CDPlayer* player = (CDPlayer*) CD_ListIteratorValue(it);
+        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
 
         pthread_rwlock_rdlock(&player->client->lock.status);
         if (player->client->status != CDClientDisconnect) {

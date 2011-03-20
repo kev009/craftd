@@ -23,8 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/Player.h>
 #include <craftd/Server.h>
+
+#include <beta/Player.h>
 
 CDPlayer*
 CD_CreatePlayer (CDClient* client)
@@ -53,7 +54,7 @@ CD_CreatePlayer (CDClient* client)
 void
 CD_DestroyPlayer (CDPlayer* self)
 {
-    CD_EventDispatch(self->server, "Player.destroy", self);
+    CD_EventDispatch(self->client->server, "Player.destroy", self);
 
     if (self->username) {
         CD_DestroyString(self->username);
@@ -84,7 +85,7 @@ CD_PlayerSendMessage (CDPlayer* self, CDString* message)
 void
 CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->buffers) {
+    if (!self->client || !self->client->buffers) {
         return;
     }
 
@@ -98,7 +99,7 @@ CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 void
 CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->buffers) {
+    if (!self->client || !self->client->buffers) {
         return;
     }
 
@@ -113,7 +114,7 @@ CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
 void
 CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->buffers) {
+    if (!self->client || !self->client->buffers) {
         return;
     }
 

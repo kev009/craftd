@@ -29,6 +29,6 @@
 #include <craftd/common.h>
 
 #include <beta/minecraft.h>
-#include <beta/Cache.h>
+#include <beta/Buffer.h>
 
 #endif
