@@ -451,134 +451,161 @@ static inline
 MCBlockPosition
 MC_ChunkPositionToBlockPosition (MCChunkPosition position)
 {
-    MCBlockPosition c;
-    c.x = position.x << 4;
-    c.y = 0;
-    c.z = position.z << 4;
-    return c;
+    MCBlockPosition result = {
+        .x = (position.x << 4),
+        .y = 0,
+        .z = (position.z << 4)
+    };
+
+    return result;
 }
 
 static inline
 MCAbsolutePosition
 MC_ChunkPositionToAbsolutePosition (MCChunkPosition position)
 {
-    MCAbsolutePosition c;
-    c.x = (position.x << 9);
-    c.y = 0;
-    c.z = (position.z << 9);
-    return c;
+    MCAbsolutePosition result = {
+        .x = (position.x << 9),
+        .y = 0,
+        .z = (position.z << 9)
+    }
+
+    return result;
 }
 
 static inline
 MCPrecisePosition
 MC_ChunkPositionToPrecisePosition (MCChunkPosition position)
 {
-    MCPrecisePosition c;
-    c.x = position.x << 4;
-    c.y = 0;
-    c.z = position.z << 4;
-    return c;
+    MCPrecisePosition result = {
+        .x = (position.x << 4),
+        .y = 0,
+        .z = (position.z << 4)
+    };
+
+    return result;
 }
 
 static inline
 MCChunkPosition
 MC_BlockPositionToChunkPosition (MCBlockPosition position)
 {
-  MCChunkPosition c;
-  c.x = position.x >> 4;
-  c.z = position.z >> 4;
-  return c;
+    MCChunkPosition result = {
+        .x = (position.x >> 4),
+        .y = 0,
+        .z = (position.z >> 4)
+    };
+
+    return result;
 }
 
 static inline
 MCAbsolutePosition
 MC_BlockPositionToAbsolutePosition (MCBlockPosition position)
 {
-  MCAbsolutePosition c;
-  c.x = position.x << 5;
-  c.y = position.y << 5;
-  c.z = position.z << 5;
-  return c;
+    MCAbsolutePosition result = {
+        .x = (position.x << 5),
+        .y = (position.y << 5),
+        .z = (position.z << 5)
+    };
+    
+    return result;
 }
 
 static inline
 MCPrecisePosition
 MC_BlockPositionToPrecisePosition (MCBlockPosition position)
 {
-  MCPrecisePosition c;
-  c.x = position.x;
-  c.y = position.y;
-  c.z = position.z;
-  return c;
+    MCPrecisePosition result = {
+        .x = position.x,
+        .y = position.y,
+        .z = position.z
+    };
+  
+    return result;
 }
 
 static inline
 MCChunkPosition
 MC_AbsolutePositionToChunkPosition (MCAbsolutePosition position)
 {
-  MCChunkPosition c;
-  c.x = position.x >> 9;
-  c.z = position.z >> 9;
-  return c;
+    MCChunkPosition result = {
+        .x = (position.x >> 9),
+        .y = 0,
+        .z = (position.z >> 9)
+    };
+
+    return result;
 }
 
 static inline
 MCBlockPosition
 MC_AbsolutePositionToBlockPosition (MCAbsolutePosition position)
 {
-  MCBlockPosition c;
-  c.x = position.x >> 5;
-  c.y = position.y >> 5;
-  c.z = position.z >> 5;
-  return c;
+    MCBlockPosition result = {
+        .x = (position.x >> 5),
+        .y = (position.y >> 5),
+        .z = (position.z >> 5)
+    };
+
+    return result;
 }
 
 static inline
 MCPrecisePosition
 MC_AbsolutePositionToPrecisePosition (MCAbsolutePosition position)
 {
-  MCPrecisePosition c;
-  c.x = position.x / 32.0;
-  c.y = position.y / 32.0;
-  c.z = position.z / 32.0;
-  return c;
+    MCPrecisePosition result = {
+        .x = (position.x / 32.0),
+        .y = (position.y / 32.0),
+        .z = (position.z / 32.0)
+    };
+
+    return result;
 }
 
 static inline
 MCChunkPosition
 MC_PrecisePositionToChunkPosition (MCPrecisePosition position)
 {
-  MCChunkPosition  c;
-  c.x = ((MCInteger) position.x) >> 4;
-  c.z = ((MCInteger) position.z) >> 4;
-  return c;
+    MCChunkPosition result = {
+        .x = (((MCInteger) position.x) >> 4),
+        .y = 0,
+        .z = (((MCInteger) position.z) >> 4)
+    };
+
+    return result;
 }
 
 static inline
 MCBlockPosition
 MC_PrecisePositionToBlockPosition (MCPrecisePosition position)
 {
-  MCBlockPosition c;
-  c.x = ((MCInteger) position.x);
-  c.y = ((MCInteger) position.y);
-  c.z = ((MCInteger) position.z);
-  return c;
+    MCBlockPosition result = {
+        .x = ((MCInteger) position.x),
+        .y = ((MCInteger) position.y),
+        .z = ((MCInteger) position.z)
+    };
+
+    return result;
 }
 
 static inline
 MCAbsolutePosition
 MC_PrecisePositionToAbsolutePosition(MCPrecisePosition position)
 {
-  MCAbsolutePosition c;
-  c.x = ((MCInteger) (position.x * 32.0));
-  c.y = ((MCInteger) (position.y * 32.0));
-  c.z = ((MCInteger) (position.z * 32.0));
-  return c;
+    MCAbsolutePosition result = {
+        .x = ((MCInteger) (position.x * 32.0)),
+        .y = ((MCInteger) (position.y * 32.0)),
+        .z = ((MCInteger) (position.z * 32.0))
+    };
+
+    return result;
 }
 
-#define MC_ChunkPositionEqual(c1,c2)      ((c1.x == c2.x) && (c1.z == c2.z))
-#define MC_BlockPositionEqual(c1,c2)      ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
-#define MC_AbsolutePositionEqueal(c1,c2)  ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
-#define MC_PrecisePositionEqual(c1,c2)    ((c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z))
+#define MC_ChunkPositionEqual(a, b)     ((a.x == b.x) && (a.z == b.z))
+#define MC_BlockPositionEqual(a, b)     ((a.x == b.x) && (a.y == b.y) && (a.z == b.z))
+#define MC_AbsolutePositionEqueal(a, b) ((a.x == b.x) && (a.y == b.y) && (a.z == b.z))
+#define MC_PrecisePositionEqual(a, b)   ((a.x == b.x) && (a.y == b.y) && (a.z == b.z))
 
 #endif

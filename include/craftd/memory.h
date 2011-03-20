@@ -55,6 +55,11 @@ void* CD_calloc (size_t number, size_t size);
 void* CD_malloc (size_t size);
 
 /**
+ * Simple malloc wrapper that sets the memory to zero
+ */
+void* CD_alloc (size_t size);
+
+/**
  * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
  *
  * @param pointer pointer to the heap address to reallocate

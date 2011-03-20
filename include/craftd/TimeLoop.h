@@ -83,7 +83,7 @@ bool CD_StopTimeLoop (CDTimeLoop* self);
  *
  * @return An ID referring to the timeout with which you can stop it
  */
-int CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback);
+int CD_SetTimeout (CDTimeLoop* self, float seconds, event_callback_fn callback, CDPointer data);
 
 /**
  * Stop the timeout from happening
@@ -100,7 +100,7 @@ void CD_ClearTimeout (CDTimeLoop* self, int id);
  *
  * @return An ID referring to the interval with which you can stop it
  */
-int CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback);
+int CD_SetInterval (CDTimeLoop* self, float seconds, event_callback_fn callback, CDPointer data);
 
 /**
  * Stop the interval from happening

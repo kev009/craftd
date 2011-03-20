@@ -43,6 +43,12 @@ CD_CreateCache (void)
 void
 CD_DestroyCache (CDCache* self)
 {
+    for (size_t i = 0; i < self->size; i++) {
+        if (self->slot[i]) {
+            CD_free((void*) self->slot[i]);
+        }
+    }
+
     CD_free(self->slot);
 
     CD_free(self);
@@ -64,11 +70,24 @@ CDCache*
 CD_CacheResize (CDCache* self, size_t size)
 {
     assert(self);
+
+    if (size < self->size) {
+        for (size_t i = self->size; i > size; i--) {
+            CD_free((void*) self->slot[i]);
+        }
+    }
     
-    self->size = size;
     self->slot = CD_realloc(self->slot, size * sizeof(CDPointer));
 
     assert(self->slot);
+
+    if (size > self->size) {
+        for (size_t i = self->size; i < size; i++) {
+            self->slot[i] = CDNull;
+        }
+    }
+
+    self->size = size;
 
     return self;
 }

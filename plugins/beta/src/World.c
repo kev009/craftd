@@ -109,7 +109,7 @@ CD_WorldBroadcast (CDWorld* self, CDString* message)
 
     CDBuffer* buffer = CD_PacketToBuffer(&response);
 
-    CD_HASH_FOREACH(self->payers, it) {
+    CD_HASH_FOREACH(self->players, it) {
         CDPlayer* player = (CDPlayer*) CD_ListIteratorValue(it);
 
         pthread_rwlock_rdlock(&player->client->lock.status);

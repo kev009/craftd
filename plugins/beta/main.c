@@ -38,6 +38,71 @@ static struct {
 
 #include <beta/callbacks.h>
 
+static
+void
+cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
+{
+    CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
+
+    CD_LIST_FOREACH(worlds, it) {
+        CDWorld* world = CD_ListIteratorValue(it);
+
+        uint16_t current = CD_WorldGetTime(world);
+
+        if (current >= 0 && current <= 11999) {
+            CD_WorldSetTime(world, current += server->config->cache.rate.day);
+        }
+        else if (current >= 12000 && current <= 13799) {
+            CD_WorldSetTime(world, current += server->config->cache.rate.sunset);
+        }
+        else if (current >= 13800 && current <= 22199) {
+            CD_WorldSetTime(world, current += server->config->cache.rate.night);
+        }
+        else if (current >= 22200 && current <= 23999) {
+            CD_WorldSetTime(world, current += server->config->cache.rate.sunrise);
+        }
+
+        if (current >= 24000) {
+            CD_WorldSetTime(world, current - 24000);
+        }
+    }
+}
+
+static
+void
+cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
+{
+    CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
+
+    CD_LIST_FOREACH(worlds, it) {
+        CDWorld* world = CD_ListIteratorValue(it);
+
+        CDPacketTimeUpdate pkt = {
+            .response = {
+                .time = CD_WorldGetTime(world)
+            }
+        };
+
+        CD_HASH_FOREACH(world->players, it) {
+            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
+        }
+    }
+}
+
+static
+void
+cdbeta_KeepAlive (void* _, void* __, CDServer* server)
+{
+    CDPacket  packet = { CDResponse, CDKeepAlive, };
+    CDBuffer* buffer = CD_PacketToBuffer(&packet);
+
+    CD_LIST_FOREACH(server->clients, it) {
+        CD_ClientSendBuffer((CDClient*) CD_HashIteratorValue(it), buffer);
+    }
+
+    CD_DestroyBuffer(buffer);
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
@@ -77,8 +142,8 @@ CD_PluginInitialize (CDPlugin* self)
 
     pthread_mutex_init(&_lock.login, NULL);
 
-    CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease));
-    CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate));
+    CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
+    CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
     CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive));
 
     CD_EventRegister(self->server, "Client.process", cdbeta_ClientProcess);

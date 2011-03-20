@@ -30,6 +30,10 @@ typedef struct _CDBetaServerCache {
     CDList* worlds;
 } CDBetaServerCache;
 
+typedef struct _CDBetaClientCache {
+    CDPlayer* player;
+} CDBetaClientCache;
+
 typedef struct _CDBetaPlayerCache {
     CDList* seenPlayers;
 } CDBetaPlayerCache;

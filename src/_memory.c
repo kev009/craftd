@@ -60,6 +60,18 @@ CD_malloc (size_t size)
 }
 
 void*
+CD_alloc (size_t size)
+{
+    void* pointer = CD_malloc(size);
+
+    if (pointer) {
+        memset(pointer, 0, size);
+    }
+
+    return pointer;
+}
+
+void*
 CD_realloc (void* pointer, size_t size)
 {
     void* newPointer;
