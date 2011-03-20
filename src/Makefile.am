@@ -41,7 +41,6 @@ craftd_SOURCES += craftd.c \
 				  TimeLoop.c \
 				  Worker.c \
 				  Workers.c \
-				  minecraft.c \
 				  _memory.c
 
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) -export-dynamic

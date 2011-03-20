@@ -14,7 +14,6 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/Logger.h \
 		     craftd/Map.h \
 		     craftd/memory.h \
-		     craftd/minecraft.h \
 		     craftd/Plugin.h \
 		     craftd/Plugins.h \
 			 craftd/Private.h \

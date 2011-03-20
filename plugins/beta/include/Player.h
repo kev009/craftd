@@ -23,58 +23,71 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_JOB_H
-#define CRAFTD_JOB_H
+#ifndef CRAFTD_PLAYER_H
+#define CRAFTD_PLAYER_H
 
 #include <craftd/common.h>
+#include <craftd/Packet.h>
 
-#include <craftd/Client.h>
-
-typedef enum _CDJobType {
-    CDClientConnectJob,
-    CDClientProcessJob,
-    CDClientDisconnectJob,
-
-    CDCustomJob
-} CDJobType;
-
-#define CD_JOB_IS_CUSTOM(job) ( \
-    job->type == CDCustomJob    \
-)
-
-#define CD_JOB_IS_PLAYER(job) (             \
-        job->type == CDClientConnectJob     \
-    ||  job->type == CDClientProcessJob     \
-    ||  job->type == CDClientDisconnectJob  \
-)
-
-typedef void (*CDCustomJobCallback) (CDPointer);
-
-typedef struct _CDCustomJobData {
-    CDCustomJobCallback callback;
-    CDPointer           data;
-} CDCustomJobData;
-
-typedef struct _CDClientProcessJobData {
+/**
+ * The Player class.
+ */
+typedef struct _CDPlayer {
     CDClient* client;
-    void*     packet;
-} CDClientProcessJobData;
+    CDWorld*  world;
 
-typedef struct _CDJob {
-    CDJobType type;
-    CDPointer data;
-} CDJob;
+    MCEntity entity;
 
-CDJob* CD_CreateJob (CDJobType type, CDPointer data);
+    MCFloat yaw;
+    MCFloat pitch;
 
-void CD_DestroyJob (CDJob* job);
+    CDString* username;
 
-void CD_DestroyJobData (CDJob* job);
+    CD_DEFINE_PRIVATE;
+    CD_DEFINE_CACHE;
+    CD_DEFINE_ERROR;
+} CDPlayer;
 
-CDPointer CD_DestroyJobKeepData (CDJob* job);
+/**
+ * Create a Player object on the given Server.
+ *
+ * @param server The Server the Player will play on
+ *
+ * @return The instantiated Player object
+ */
+CDPlayer* CD_CreatePlayer (CDClient* client);
 
-CDCustomJobData* CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data);
+/**
+ * Destroy a Player object
+ */
+void CD_DestroyPlayer (CDPlayer* self);
 
-CDClientProcessJobData* CD_CreateClientProcessJob (CDClient* client, void* packet);
+/**
+ * Send a chat message to a player
+ *
+ * @param message The message to send
+ */
+void CD_PlayerSendMessage (CDPlayer* self, CDString* message);
+
+/**
+ * Send a Packet to a Player
+ *
+ * @param packet The Packet object to send
+ */
+void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
+
+/**
+ * Send a Packet to a Player and destroy the packet
+ *
+ * @param packet The Packet object to send
+ */
+void CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet);
+
+/**
+ * Send a Packet to a Player and destroy the packet data
+ *
+ * @param packet The Packet object to send
+ */
+void CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet);
 
 #endif

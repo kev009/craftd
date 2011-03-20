@@ -35,7 +35,7 @@ CD_CreatePlayer (CDClient* client)
 
     self->client = client;
 
-    self->entity.id         = CD_ServerGenerateEntityId(server);
+    self->entity.id         = 0;
     self->entity.type       = MCEntityPlayer;
     self->entity.position.x = 0;
     self->entity.position.y = 0;
@@ -90,7 +90,7 @@ CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 
     CDBuffer* data = CD_PacketToBuffer(packet);
 
-    CD_PlayerSendBuffer(self, data);
+    CD_ClientSendBuffer(self->client, data);
 
     CD_DestroyBuffer(data);
 }
@@ -104,7 +104,7 @@ CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
 
     CDBuffer* data = CD_PacketToBuffer(packet);
 
-    CD_PlayerSendBuffer(self, data);
+    CD_ClientSendBuffer(self->client, data);
 
     CD_DestroyBuffer(data);
     CD_DestroyPacket(packet);
@@ -119,7 +119,7 @@ CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
 
     CDBuffer* data = CD_PacketToBuffer(packet);
 
-    CD_PlayerSendBuffer(self, data);
+    CD_ClientSendBuffer(self->client, data);
 
     CD_DestroyBuffer(data);
     CD_DestroyPacketData(packet);

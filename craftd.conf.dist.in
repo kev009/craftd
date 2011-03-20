@@ -47,7 +47,7 @@
         ],
 
         "plugins": [
-            { "name": "base",
+            { "name": "beta",
                 "commandChar": "/"
             },
 

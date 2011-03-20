@@ -23,70 +23,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PLAYER_H
-#define CRAFTD_PLAYER_H
+#ifndef CRAFTD_BETA_H
+#define CRAFTD_BETA_H
 
-#include <craftd/common.h>
-#include <craftd/Packet.h>
+#include <beta/minecraft.h>
 
-/**
- * The Player class.
- */
-typedef struct _CDPlayer {
-    CDClient* client;
-
-    MCEntity entity;
-
-    MCFloat yaw;
-    MCFloat pitch;
-
-    CDString* username;
-
-    CD_DEFINE_PRIVATE;
-    CD_DEFINE_CACHE;
-    CD_DEFINE_ERROR;
-} CDPlayer;
-
-/**
- * Create a Player object on the given Server.
- *
- * @param server The Server the Player will play on
- *
- * @return The instantiated Player object
- */
-CDPlayer* CD_CreatePlayer (CDClient* client);
-
-/**
- * Destroy a Player object
- */
-void CD_DestroyPlayer (CDPlayer* self);
-
-/**
- * Send a chat message to a player
- *
- * @param message The message to send
- */
-void CD_PlayerSendMessage (CDPlayer* self, CDString* message);
-
-/**
- * Send a Packet to a Player
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a Packet to a Player and destroy the packet
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet);
-
-/**
- * Send a Packet to a Player and destroy the packet data
- *
- * @param packet The Packet object to send
- */
-void CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet);
+#include <beta/World.h>
+#include <beta/Player.h>
+#include <beta/Packet.h>
+#include <beta/PacketLength.h>
 
 #endif

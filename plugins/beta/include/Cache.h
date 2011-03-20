@@ -23,58 +23,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_JOB_H
-#define CRAFTD_JOB_H
+#ifndef CRAFTD_BETA_CACHE_H
+#define CRAFTD_BETA_CACHE_H
 
-#include <craftd/common.h>
+typedef struct _CDBetaServerCache {
+    CDList* worlds;
+} CDBetaServerCache;
 
-#include <craftd/Client.h>
-
-typedef enum _CDJobType {
-    CDClientConnectJob,
-    CDClientProcessJob,
-    CDClientDisconnectJob,
-
-    CDCustomJob
-} CDJobType;
-
-#define CD_JOB_IS_CUSTOM(job) ( \
-    job->type == CDCustomJob    \
-)
-
-#define CD_JOB_IS_PLAYER(job) (             \
-        job->type == CDClientConnectJob     \
-    ||  job->type == CDClientProcessJob     \
-    ||  job->type == CDClientDisconnectJob  \
-)
-
-typedef void (*CDCustomJobCallback) (CDPointer);
-
-typedef struct _CDCustomJobData {
-    CDCustomJobCallback callback;
-    CDPointer           data;
-} CDCustomJobData;
-
-typedef struct _CDClientProcessJobData {
-    CDClient* client;
-    void*     packet;
-} CDClientProcessJobData;
-
-typedef struct _CDJob {
-    CDJobType type;
-    CDPointer data;
-} CDJob;
-
-CDJob* CD_CreateJob (CDJobType type, CDPointer data);
-
-void CD_DestroyJob (CDJob* job);
-
-void CD_DestroyJobData (CDJob* job);
-
-CDPointer CD_DestroyJobKeepData (CDJob* job);
-
-CDCustomJobData* CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data);
-
-CDClientProcessJobData* CD_CreateClientProcessJob (CDClient* client, void* packet);
+typedef struct _CDBetaPlayerCache {
+    CDList* seenPlayers;
+} CDBetaPlayerCache;
 
 #endif

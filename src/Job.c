@@ -76,7 +76,7 @@ CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data)
 }
 
 CDClientProcessJobData*
-CD_CreateClientProcessJob (CDClient* client, CDPacket* packet)
+CD_CreateClientProcessJob (CDClient* client, void* packet)
 {
     CDClientProcessJobData* self = CD_malloc(sizeof(CDClientProcessJobData));
 

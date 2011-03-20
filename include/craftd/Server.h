@@ -123,13 +123,6 @@ void CD_ServerCleanDisconnects (CDServer* self);
 
 void CD_ReadFromClient (CDClient* client);
 
-/**
- * Get a new unique entity ID
- *
- * @return The generated entity ID
- */
-MCEntityId CD_ServerGenerateEntityId (CDServer* self);
-
 #ifndef CRAFTD_SERVER_IGNORE_EXTERN
 extern CDServer* CDMainServer;
 #endif

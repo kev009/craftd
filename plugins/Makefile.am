@@ -7,11 +7,11 @@ AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
 SUBDIRS = mapgen
 
 # The list of core libraries that are always built
-pkglib_LTLIBRARIES = libcdbase.la libcdnbt.la libcdadmin.la libcdtests.la
+pkglib_LTLIBRARIES = libcdbeta.la libcdnbt.la libcdadmin.la libcdtests.la
 
-# The base plugin handles default game rules
-libcdbase_la_SOURCES = base/base.c
-libcdbase_la_LDFLAGS = -version-info 0:0:0
+# The beta plugin handles default game rules
+libcdbeta_la_SOURCES = beta/beta.c
+libcdbeta_la_LDFLAGS = -version-info 0:0:0
 
 # cdnbt loads Notch's NBT region file format
 libcdnbt_la_SOURCES = nbt/cdnbt.c nbt/nbt.c nbt/nbt.h nbt/itoa.c nbt/itoa.h

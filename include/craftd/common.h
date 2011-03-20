@@ -68,7 +68,6 @@
 #include <craftd/Private.h>
 
 #include <craftd/javaendian.h>
-#include <craftd/minecraft.h>
 
 #include <craftd/Buffer.h>
 #include <craftd/Buffers.h>
