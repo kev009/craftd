@@ -20,6 +20,8 @@ end
 
 task :default => ['craftd:build', 'craftd:plugins']
 
+task :install => ['craftd:install']
+
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
   craftd.sources   = FileList['src/**/*.c', 'third-party/bstring/{bstrlib,bstraux}.c']
@@ -86,9 +88,7 @@ namespace :craftd do |craftd|
 
   task :build => [:requirements, 'craftd']
 
-  task :install => :build do
-
-  end
+  task :install => :build
 
   desc 'Build all plugins'
   task :plugins => ['plugin:beta:build', 'plugin:nbt:build']
@@ -191,3 +191,5 @@ namespace :craftd do |craftd|
     end
   end
 end
+
+task :generate => [:clobber, 'generate:configure', 'generate:makefile']

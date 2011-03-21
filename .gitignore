@@ -164,3 +164,4 @@ stylecop.*
 test
 mkmf.log
 config.h
+conftest*
