@@ -97,10 +97,10 @@ namespace :craftd do |craftd|
   task :install => :build
 
   desc 'Build all plugins'
-  task :plugins => ['plugin:beta:build', 'plugin:nbt:build']
+  task :plugins => ['plugin:protocol:build', 'plugin:persistence:build', 'plugin:commands:build']
 
   namespace :plugin do |plugin|
-    plugin.names = [:beta, :nbt, :mapgen, :tests]
+    plugin.names = ['protocol/beta', 'persistence/nbt', 'mapgen']
 
     class << plugin
       def file (name)
@@ -114,86 +114,97 @@ namespace :craftd do |craftd|
       end
     end
 
-    namespace :beta do |beta|
-      beta.headers   = FileList['plugins/beta/include/*.h']
-      beta.sources   = FileList['plugins/beta/**/*.c'].exclude('callbacks.c')
-      beta.libraries = ''
+    namespace :protocol do |protocol|
+      task :build => ['beta:build']
 
-      CLEAN.include beta.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file(:beta)}", 'plugins/beta/include/config.h'
+      namespace :beta do |beta|
+        beta.libraries = ''
+        beta.headers   = FileList['plugins/protocol/beta/include/*.h']
+        beta.sources   = FileList['plugins/protocol/beta/**/*.c'].exclude('callbacks.c')
 
-      beta.sources.each {|f|
-        file f.ext('o') => f do
-          sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+        CLEAN.include beta.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('protocol.beta')}", 'plugins/protocol/beta/include/config.h'
+
+        beta.sources.each {|f|
+          file f.ext('o') => f do
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        desc 'Check for beta plugin requirements'
+        task :requirements => 'plugins/protocol/beta/include/config.h'
+
+        file 'plugins/protocol/beta/include/config.h' do
+          create_config 'plugins/protocol/beta/include/config.h'
         end
-      }
 
-      desc 'Check for beta plugin requirements'
-      task :requirements => 'plugins/beta/include/config.h'
+        file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries}"
+        end
 
-      file 'plugins/beta/include/config.h' do
-        create_config 'plugins/beta/include/config.h'
+        desc 'Build beta plugin'
+        task :build => [:requirements, "plugins/#{plugin.file('protocol.beta')}"]
       end
-
-      file "plugins/#{plugin.file(:beta)}" => beta.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file(:beta)} -o plugins/#{plugin.file(:beta)} #{beta.libraries}"
-      end
-
-      desc 'Build beta plugin'
-      task :build => [:requirements, "plugins/#{plugin.file(:beta)}"]
     end
 
-    namespace :nbt do |nbt|
-      nbt.headers = FileList['plugins/nbt/include/*.h']
-      nbt.sources = FileList['plugins/nbt/main.c', 'plugins/nbt/src/*.c',
-        'plugins/nbt/cNBT/nbt_{parsing,treeops,util}.c']
+    namespace :persistence do |persistence|
+      task :build => ['nbt:build']
 
-      nbt.libraries = ''
+      namespace :nbt do |nbt|
+        nbt.libraries = ''
+        nbt.headers   = FileList['plugins/persistence/nbt/include/*.h']
+        nbt.sources   = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
+          'plugins/persistence/nbt/cNBT/nbt_{parsing,treeops,util}.c']
 
-      CLEAN.include nbt.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file(:nbt)}", 'plugins/nbt/include/config.h'
+        CLEAN.include nbt.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('command.nbt')}", 'plugins/persistence/nbt/include/config.h'
 
-      nbt.sources.each {|f|
-        file f.ext('o') => f do
-          sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+        nbt.sources.each {|f|
+          file f.ext('o') => f do
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        desc 'Check for nbt plugin requirements'
+        task :requirements => 'plugins/persistence/nbt/include/config.h'
+
+        file 'plugins/persistence/nbt/include/config.h' do
+          create_config 'plugins/persistence/nbt/include/config.h'
         end
-      }
 
-      desc 'Check for nbt plugin requirements'
-      task :requirements => 'plugins/nbt/include/config.h'
+        file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries}"
+        end
 
-      file 'plugins/nbt/include/config.h' do
-        create_config 'plugins/nbt/include/config.h'
+        desc 'Build nbt plugin'
+        task :build => [:requirements, "plugins/#{plugin.file('persistence.nbt')}"]
       end
-
-      file "plugins/#{plugin.file(:nbt)}" => nbt.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file(:nbt)} -o plugins/#{plugin.file(:nbt)} #{nbt.libraries}"
-      end
-
-      desc 'Build nbt plugin'
-      task :build => [:requirements, "plugins/#{plugin.file(:nbt)}"]
     end
 
-    namespace :admin do |admin|
-      admin.headers   = FileList['plugins/admin/include/*.h']
-      admin.sources   = FileList['plugins/admin/main.c', 'plugins/admin/src/*.c']
-      admin.libraries = ''
+    namespace :commands do |commands|
+      task :build => []#['admin:build']
 
-      CLEAN.include admin.sources.ext('o')
-      CLOBBER.include "plugin/#{plugin.file(:admin)}", 'plugins/admin/include/config.h'
+      namespace :admin do |admin|
+        admin.libraries = ''
+        admin.headers   = FileList['plugins/commands/admin/include/*.h']
+        admin.sources   = FileList['plugins/commands/admin/main.c', 'plugins/commands/admin/src/*.c']
 
-      admin.sources.each {|f|
-        file f.ext('o') => f do
-          sh "#{CC} #{CFLAGS} -Iinclude #{includes} -o #{f.ext('o')} -c #{f}"
+        CLEAN.include admin.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('command.admin')}", 'plugins/admin/include/config.h'
+
+        admin.sources.each {|f|
+          file f.ext('o') => f do
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        file "plugins/#{plugin.file('command.admin')}" => admin.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('command.admin')} -o plugins/#{plugin.file('command.admin')} #{admin.libraries}"
         end
-      }
 
-      file "plugin/#{plugin.file(:admin)}" => admin.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file(:admin)} -o plugins/#{plugin.file(:admin)} #{admin.libraries}"
+        desc 'Build admin plugin'
+        task :build => [:requirements, "plugins/#{plugin.file('command.admin')}"]
       end
-
-      desc 'Build admin plugin'
-      task :build => [:requirements, "plugins/#{plugin.file(:admin)}"]
     end
   end
 end
