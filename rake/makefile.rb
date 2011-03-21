@@ -12,13 +12,16 @@ def sh (args)
   end
 end
 
-desc 'Generate a makefile from the Rakefile'
+desc 'Generate a Makefile from the Rakefile'
 task :makefile do
   $gen_makefile = true
   $makefile_data << "all: main\n"
   
   $makefile_data << "main:\n"
   Rake::Task[:default].invoke
+
+  $makefile_data << "install:\n"
+  Rake::Task[:install].invoke
   
   $makefile_data << "clean:\n"
   CLEAN.each do |f|

@@ -163,3 +163,4 @@ stylecop.*
 *.dbmdl
 test
 mkmf.log
+config.h

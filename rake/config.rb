@@ -1,3 +1,5 @@
+UNIVERSAL_INTS.clear
+
 def create_config (path)
     create_header path
 
