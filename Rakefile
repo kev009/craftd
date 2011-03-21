@@ -104,7 +104,7 @@ namespace :craftd do |craftd|
 
     class << plugin
       def file (name)
-        "libcd#{name}.#{CONFIG['DLEXT']}"
+        "#{name}.#{CONFIG['DLEXT']}"
       end
 
       def includes
@@ -157,7 +157,7 @@ namespace :craftd do |craftd|
           'plugins/persistence/nbt/cNBT/nbt_{parsing,treeops,util}.c']
 
         CLEAN.include nbt.sources.ext('o')
-        CLOBBER.include "plugins/#{plugin.file('command.nbt')}", 'plugins/persistence/nbt/include/config.h'
+        CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}", 'plugins/persistence/nbt/include/config.h'
 
         nbt.sources.each {|f|
           file f.ext('o') => f do
@@ -182,15 +182,13 @@ namespace :craftd do |craftd|
     end
 
     namespace :commands do |commands|
-      task :build => []#['admin:build']
+      task :build => ['admin:build']
 
       namespace :admin do |admin|
-        admin.libraries = ''
-        admin.headers   = FileList['plugins/commands/admin/include/*.h']
-        admin.sources   = FileList['plugins/commands/admin/main.c', 'plugins/commands/admin/src/*.c']
+        admin.sources = FileList['plugins/commands/admin/main.c']
 
         CLEAN.include admin.sources.ext('o')
-        CLOBBER.include "plugins/#{plugin.file('command.admin')}", 'plugins/admin/include/config.h'
+        CLOBBER.include "plugins/#{plugin.file('commands.admin')}"
 
         admin.sources.each {|f|
           file f.ext('o') => f do
@@ -198,12 +196,12 @@ namespace :craftd do |craftd|
           end
         }
 
-        file "plugins/#{plugin.file('command.admin')}" => admin.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('command.admin')} -o plugins/#{plugin.file('command.admin')} #{admin.libraries}"
+        file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries}"
         end
 
         desc 'Build admin plugin'
-        task :build => [:requirements, "plugins/#{plugin.file('command.admin')}"]
+        task :build => [:requirements, "plugins/#{plugin.file('commands.admin')}"]
       end
     end
   end
