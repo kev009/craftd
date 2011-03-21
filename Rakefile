@@ -1,7 +1,10 @@
 require 'mkmf'
 require 'rake'
 require 'rake/clean'
-load 'extras/rake_variables.rb'
+
+load 'rake/variables.rb'
+load 'rake/config.rb'
+load 'rake/makefile.rb'
 
 VERSION = '0.1a'
 
@@ -66,7 +69,15 @@ namespace :craftd do |craftd|
     have_func 'be64toh'
     have_func 'htobe64'
 
-    create_header 'include/config.h'
+    check_sizeof 'FUNCTION_POINTER' do |c|
+       "typedef void(*FUNCTION_POINTER)();\n" + c
+    end
+
+    check_sizeof 'POINTER' do |c|
+       "typedef void* POINTER;\n" + c
+    end
+
+    create_config 'include/config.h'
   end
 
   file 'craftd' => craftd.sources.ext('o') do
@@ -97,7 +108,7 @@ namespace :craftd do |craftd|
       beta.libraries = ''
 
       CLEAN.include beta.sources.ext('o')
-      CLOBBER.include 'plugins/beta/include/config.h'
+      CLOBBER.include "plugins/#{library(:beta)}", 'plugins/beta/include/config.h'
 
       beta.sources.each {|f|
         file f.ext('o') => f do
@@ -109,15 +120,15 @@ namespace :craftd do |craftd|
       task :requirements => 'plugins/beta/include/config.h'
 
       file 'plugins/beta/include/config.h' do
-        create_header 'plugins/beta/include/config.h'
+        create_config 'plugins/beta/include/config.h'
       end
 
-      file library(:beta) => beta.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{library(:beta)} -o #{library(:beta)} #{beta.libraries}"
+      file "plugins/#{library(:beta)}" => beta.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{library(:beta)} -o plugins/#{library(:beta)} #{beta.libraries}"
       end
 
       desc 'Build beta plugin'
-      task :build => [:requirements, library(:beta)]
+      task :build => [:requirements, "plugins/#{library(:beta)}"]
     end
 
     namespace :nbt do |nbt|
@@ -128,7 +139,7 @@ namespace :craftd do |craftd|
       nbt.libraries = ''
 
       CLEAN.include nbt.sources.ext('o')
-      CLOBBER.include 'plugins/nbt/include/config.h'
+      CLOBBER.include "plugins/#{library(:nbt)}", 'plugins/nbt/include/config.h'
 
       nbt.sources.each {|f|
         file f.ext('o') => f do
@@ -140,15 +151,15 @@ namespace :craftd do |craftd|
       task :requirements => 'plugins/nbt/include/config.h'
 
       file 'plugins/nbt/include/config.h' do
-        create_header 'plugins/nbt/include/config.h'
+        create_config 'plugins/nbt/include/config.h'
       end
 
-      file library(:nbt) => nbt.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{library(:nbt)} -o #{library(:nbt)} #{nbt.libraries}"
+      file "plugins/#{library(:nbt)}" => nbt.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{library(:nbt)} -o plugins/#{library(:nbt)} #{nbt.libraries}"
       end
 
       desc 'Build nbt plugin'
-      task :build => [:requirements, library(:nbt)]
+      task :build => [:requirements, "plugins/#{library(:nbt)}"]
     end
 
     namespace :admin do |admin|
@@ -157,7 +168,7 @@ namespace :craftd do |craftd|
       admin.libraries = ''
 
       CLEAN.include admin.sources.ext('o')
-      CLOBBER.include 'plugins/admin/include/config.h'
+      CLOBBER.include "plugin/#{library(:admin)}", 'plugins/admin/include/config.h'
 
       admin.sources.each {|f|
         file f.ext('o') => f do
@@ -165,12 +176,12 @@ namespace :craftd do |craftd|
         end
       }
 
-      file library(:admin) => admin.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{library(:admin)} -o #{library(:admin)} #{admin.libraries}"
+      file "plugin/#{library(:admin)}" => admin.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{library(:admin)} -o plugins/#{library(:admin)} #{admin.libraries}"
       end
 
       desc 'Build admin plugin'
-      task :build => [:requirements, library(:admin)]
+      task :build => [:requirements, "plugins/#{library(:admin)}"]
     end
   end
 end
