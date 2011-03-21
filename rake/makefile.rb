@@ -25,16 +25,16 @@ namespace :generate do |generate|
     Rake::Task[:install].invoke
     
     $makefile << "clean:\n"
-    CLEAN.each do |f|
+    CLEAN.exclude('Makefile', 'configure').each do |f|
       $makefile << "\trm -rf #{f}\n"
     end
     
     $makefile << "clobber:\n"
-    CLEAN.each do |f|
+    CLEAN.exclude('Makefile', 'configure').each do |f|
       $makefile << "\trm -rf #{f}\n"
     end
 
-    CLOBBER.each do |f|
+    CLOBBER.exclude('Makefile', 'configure').each do |f|
       $makefile << "\trm -rf #{f}\n"
     end
     

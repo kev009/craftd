@@ -8,7 +8,8 @@ load 'rake/makefile.rb'
 
 VERSION = '0.1a'
 
-CC      = ENV['CC'] || 'gcc'
+CC      = ENV['CC']  || 'gcc'
+CXX     = ENV['CXX'] || 'g++'
 CFLAGS  = "-Wall -Wextra -Wno-unused -std=gnu99 -fPIC #{ENV['CFLAGS']} -DCRAFTD_VERSION='\"#{VERSION}\"'"
 LDFLAGS = "#{ENV['LDFLAGS']}"
 
@@ -18,9 +19,14 @@ else
   CFLAGS << ' -DNDEBUG -Os'
 end
 
+# Stuff building
 task :default => ['craftd:build', 'craftd:plugins']
 
+# Stuff installation
 task :install => ['craftd:install']
+
+# Static scripts generation
+task :generate => [:clobber, 'generate:configure', 'generate:makefile']
 
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
@@ -191,5 +197,3 @@ namespace :craftd do |craftd|
     end
   end
 end
-
-task :generate => [:clobber, 'generate:configure', 'generate:makefile']

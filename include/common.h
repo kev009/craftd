@@ -48,7 +48,7 @@
 #define CD_DO \
     for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
 
-#if SIZEOF_FP == 4 && SIZEOF_INTPTR_T == 4
+#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
     typedef int32_t CDPointer;
 #else
     typedef int64_t CDPointer;
