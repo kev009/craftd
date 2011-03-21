@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if 0
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -383,3 +384,4 @@ CD_PluginFinalize (CDPlugin* self)
 
     return true;
 }
+#endif

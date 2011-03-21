@@ -69,9 +69,11 @@ namespace :craftd do |craftd|
     create_header 'include/config.h'
   end
 
-  task :build => [:requirements] + craftd.sources.ext('o') do
+  file 'craftd' => craftd.sources.ext('o') do
     sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd -export-dynamic #{LDFLAGS} #{craftd.libraries}"
   end
+
+  task :build => [:requirements, 'craftd']
 
   desc 'Build all plugins'
   task :plugins => ['plugin:beta:build', 'plugin:nbt:build']
@@ -80,7 +82,7 @@ namespace :craftd do |craftd|
     plugin.names = [:beta, :nbt, :mapgen, :tests]
 
     define_singleton_method :library do |name|
-      "-Wl,-soname,libcd#{name} -o plugins/#{name}/libcd#{name}.so"
+      "libcd#{name}.#{CONFIG['DLEXT']}"
     end
 
     define_singleton_method :includes do
@@ -110,10 +112,12 @@ namespace :craftd do |craftd|
         create_header 'plugins/beta/include/config.h'
       end
 
-      desc 'Build beta plugin'
-      task :build => [:requirements] + beta.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared #{library(:beta)} #{beta.libraries}"
+      file library(:beta) => beta.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{library(:beta)} -o #{library(:beta)} #{beta.libraries}"
       end
+
+      desc 'Build beta plugin'
+      task :build => [:requirements, library(:beta)]
     end
 
     namespace :nbt do |nbt|
@@ -135,14 +139,16 @@ namespace :craftd do |craftd|
       desc 'Check for nbt plugin requirements'
       task :requirements => 'plugins/nbt/include/config.h'
 
-      file 'plugins/beta/include/config.h' do
+      file 'plugins/nbt/include/config.h' do
         create_header 'plugins/nbt/include/config.h'
       end
 
-      desc 'Build nbt plugin'
-      task :build => [:requirements] + nbt.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared #{library(:nbt)} #{nbt.libraries}"
+      file library(:nbt) => nbt.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{library(:nbt)} -o #{library(:nbt)} #{nbt.libraries}"
       end
+
+      desc 'Build nbt plugin'
+      task :build => [:requirements, library(:nbt)]
     end
 
     namespace :admin do |admin|
@@ -159,10 +165,12 @@ namespace :craftd do |craftd|
         end
       }
 
-      desc 'Build admin plugin'
-      task :build => [:requirements] + admin.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared #{library(:admin)} #{admin.libraries}"
+      file library(:admin) => admin.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{library(:admin)} -o #{library(:admin)} #{admin.libraries}"
       end
+
+      desc 'Build admin plugin'
+      task :build => [:requirements, library(:admin)]
     end
   end
 end
