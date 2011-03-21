@@ -9,13 +9,13 @@ load 'rake/makefile.rb'
 VERSION = '0.1a'
 
 CC      = ENV['CC'] || 'gcc'
-CFLAGS  = "-Wall -Wextra -Wno-unused -std=gnu99 #{ENV['CFLAGS'] || $CFLAGS} -DCRAFTD_VERSION='\"#{VERSION}\"'"
-LDFLAGS = "#{ENV['LDFLAGS'] || $LDFLAGS}"
+CFLAGS  = "-Wall -Wextra -Wno-unused -std=gnu99 -fPIC #{ENV['CFLAGS']} -DCRAFTD_VERSION='\"#{VERSION}\"'"
+LDFLAGS = "#{ENV['LDFLAGS']}"
 
 if ENV['DEBUG']
   CFLAGS << ' -g3 -O0 -DCRAFTD_DEBUG'
 else
-  CFLAGS << ' -DNDEBUG'
+  CFLAGS << ' -DNDEBUG -Os'
 end
 
 task :default => ['craftd:build', 'craftd:plugins']
