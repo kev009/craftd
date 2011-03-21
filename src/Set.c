@@ -14,6 +14,8 @@ static
 bool
 cmpAtom (CDSet* self, CDPointer a, CDPointer b)
 {
+    assert(self);
+
     return a == b;
 }
 
@@ -21,6 +23,8 @@ static
 unsigned int
 hashAtom (CDSet* self, CDPointer pointer)
 {
+    assert(self);
+
     return (unsigned long) pointer >> 2;
 }
 

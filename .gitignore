@@ -6,8 +6,8 @@
 ###
 
 ## Binaries and generated
-src/craftd
-src/craftd-proxy
+craftd
+craftd-proxy
 third-party/jansson/src/jansson_config.h
 craftd.conf.dist
 
@@ -49,9 +49,7 @@ Makefile.in
 /config.log
 /config.status
 /config.sub
-include/craftd/config.h
-include/craftd/config.h.in
-include/craftd/stamp-h1
+include/config.h
 
 # libtool
 build-aux/ltmain.sh
@@ -164,3 +162,4 @@ stylecop.*
 ~$*
 *.dbmdl
 test
+mkmf.log

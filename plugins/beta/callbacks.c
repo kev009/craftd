@@ -25,6 +25,9 @@
 
 #include <zlib.h>
 
+#include <craftd/Logger.h>
+
+#include <beta/World.h>
 #include <beta/Player.h>
 #include <beta/Cache.h>
 
@@ -32,6 +35,8 @@ static
 bool
 cdbeta_CompareMCChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
 {
+    assert(self);
+
     return (a->x == b->x && a->z == b->z);
 }
 
@@ -41,6 +46,8 @@ cdbeta_HashMCPosition (CDSet* self, MCChunkPosition* position)
 {
     const int HASHMULTIPLIER = 31;
     const int CHUNKBUCKETS   = 401; // Max chunks to the nearest prime
+
+    assert(self);
 
     return ((((position->x * HASHMULTIPLIER)) * HASHMULTIPLIER + position->z) * HASHMULTIPLIER) % CHUNKBUCKETS;
 }
@@ -112,6 +119,10 @@ static
 void
 cdbeta_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 {
+    assert(self);
+    assert(coord);
+    assert(player);
+
     CD_DO {
         CDPacketPreChunk pkt = {
             .response = {
@@ -130,8 +141,11 @@ cdbeta_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 
 static
 void
-cdbeta_ChunkMemberFree (CDSet* self, MCChunkPosition* coord, CDPointer unused)
+cdbeta_ChunkMemberFree (CDSet* self, MCChunkPosition* coord, void* _)
 {
+    assert(self);
+    assert(coord);
+
     CD_free(coord);
 }
 
@@ -139,6 +153,10 @@ static
 void
 cdbeta_ChunkRadiusLoad (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 {
+    assert(self);
+    assert(coord);
+    assert(player);
+
     cdbeta_SendChunk(player->client->server, player, coord);
 }
 
@@ -330,8 +348,8 @@ cdbeta_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
     CD_PlayerSendPacket(player, &response);
   }
 
-  CDString *s = CD_CreateStringFromFormat("You should now see %s", CD_StringContent(other->username));
-  CD_PlayerSendMessage(player, s);
+    CD_PlayerSendMessage(player, CD_CreateStringFromFormat(
+        "You should now see %s", CD_StringContent(other->username)));
 }
 
 static

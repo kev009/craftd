@@ -23,37 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <nbt/itoa.h>
+#ifndef CRAFTD_VERSION_H
+#define CRAFTD_VERSION_H
 
-char*
-itoa (int value, char* result, int base)
-{
-    int   tmp_value;
-    char  tmp_char;
-    char* ptr = result;
-    char* ptr1 = result;
+#define CRAFTD_NOTICE_MESSAGE "(craftd-" CRAFTD_VERSION ")\n" \
+    "    Copyright (c) 2011 Kevin Bowling - http://mc.kev009.com/craftd/\n"
 
-    assert(base > 2 || base < 36);
-
-    do {
-        tmp_value = value;
-        value /= base;
-        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"
-            [35 + (tmp_value - value * base)];
-    } while (value);
-
-    /* Add a negative sign if needed */
-    if (tmp_value < 0) {
-        *ptr++ = '-';
-    }
-
-    *ptr-- = '\0';
-    
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr-- = *ptr1;
-        *ptr1++ = tmp_char;
-    }
-
-    return result;
-}
+#endif

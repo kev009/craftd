@@ -38,16 +38,16 @@ main (int argc, char** argv)
     char*     config    = NULL;
 
     static const char* configSearchPath[] = {
-      "%s/.craftd/craftd.conf", // %s is replaced with $HOME
-      "/etc/craftd/craftd.conf",
-      "/usr/local/etc/craftd/craftd.conf",
-      "craftd.conf", // Current working directory (for devs)
-      NULL
+        "%s/.craftd/craftd.conf", // %s is replaced with $HOME
+        "/etc/craftd/craftd.conf",
+        "/usr/local/etc/craftd/craftd.conf",
+        "craftd.conf", // Current working directory (for devs)
+        NULL
     };
 
     CDDefaultLogger = CDConsoleLogger;
 
-    LOG(LOG_INFO, "%s " CRAFTD_VERSION, argv[0]);
+    LOG(LOG_INFO, "%s " CRAFTD_NOTICE_MESSAGE, argv[0]);
 
     while ((opt = getopt(argc, argv, "c:dhnv")) != -1) {
         switch (opt) {
@@ -70,12 +70,13 @@ main (int argc, char** argv)
             case 'h': // print help message
             default: {
                 fprintf(stderr, "\nUsage: %s [OPTION]...\n"
-                    "-c <conf file>\tspecify a conf file location\n"
-                    "-d\t\tenable verbose debugging messages\n"
-                    "-h\t\tdisplay this help and exit\n"
-                    "-n\t\tdon't fork/daemonize (overrides config file)\n"
-                    "-v\t\toutput version information and exit\n"
-                    "\nFor complete documentation, visit the wiki.\n\n", argv[0]);
+                    "-c <conf file>    specify a conf file location\n"
+                    "-d                enable verbose debugging messages\n"
+                    "-h                display this help and exit\n"
+                    "-n                don't fork/daemonize (overrides config file)\n"
+                    "-v                output version information and exit\n"
+                    "\n"
+                    "For complete documentation, visit the wiki.\n\n", argv[0]);
 
                 exit((opt == 'h') ? EXIT_SUCCESS : EXIT_FAILURE);
             }

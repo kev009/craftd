@@ -391,7 +391,7 @@ CD_StringContent (CDString* self)
     }
 }
 
-const size_t
+size_t
 CD_StringLength (CDString* self)
 {
     if (!self) {
@@ -402,7 +402,7 @@ CD_StringLength (CDString* self)
     }
 }
 
-const size_t
+size_t
 CD_StringSize (CDString* self)
 {
     if (!self) {
@@ -422,7 +422,7 @@ CD_StringEmpty (CDString* self)
 bool
 CD_StringBlank (CDString* self)
 {
-    for (size_t i = 0; i < self->raw->slen; i++) {
+    for (int i = 0; i < self->raw->slen; i++) {
         if (!isspace(self->raw->data[i])) {
             return false;
         }

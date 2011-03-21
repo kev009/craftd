@@ -39,7 +39,7 @@ static struct {
     const char* commandChar;
 } _config;
 
-CDWorld* _world = NULL;
+static CDWorld* _world = NULL;
 
 #include "callbacks.c"
 
