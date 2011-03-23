@@ -27,7 +27,7 @@
 #include <craftd/Server.h>
 
 CDPlugin*
-CD_CreatePlugin (CDServer* server, const char* path)
+CD_CreatePlugin (CDServer* server, const char* path, lt_dladvise* advise)
 {
     CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
@@ -40,7 +40,9 @@ CD_CreatePlugin (CDServer* server, const char* path)
 
     self->initialize = NULL;
     self->finalize   = NULL;
-    self->handle     = lt_dlopenext(path);
+    self->handle     = (advise != NULL)
+        ? lt_dlopenadvise(path, *advise)
+        : lt_dlopenext(path);
 
     if (!self->handle) {
         CDString* tmp = CD_CreateStringFromFormat("libcd%s", path);

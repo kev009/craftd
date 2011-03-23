@@ -2,14 +2,14 @@ require 'mkmf'
 require 'rake'
 require 'rake/clean'
 
-begin
-  require 'rake/convert'
-rescue Exception
-end
-
 load 'rake/variables.rb'
 load 'rake/configure.rb'
 load 'rake/misc.rb'
+
+begin
+  require 'rake/convert'
+rescue LoadError
+end
 
 VERSION = '0.1a'
 

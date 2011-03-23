@@ -69,7 +69,7 @@ typedef struct _CDPlugin {
  *
  * @return The instantiated Plugin object
  */
-CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path);
+CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path, lt_dladvise* advise);
 
 /**
  * Destroy a Plugin object

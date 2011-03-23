@@ -26,7 +26,7 @@
 #ifndef CRAFTD_PLUGINS_H
 #define CRAFTD_PLUGINS_H
 
-#include "Plugin.h"
+#include <craftd/Plugin.h>
 
 struct _CDServer;
 
@@ -37,6 +37,8 @@ typedef struct _CDPlugins {
     struct _CDServer* server;
 
     CDHash* items;
+
+    lt_dladvise advise;
 } CDPlugins;
 
 /**

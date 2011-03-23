@@ -40,6 +40,10 @@ CD_CreatePlugins (struct _CDServer* server)
     self->items  = CD_CreateHash();
 
     lt_dlinit();
+    
+    lt_dladvise_init(&self->advise);
+    lt_dladvise_ext(&self->advise);
+    lt_dladvise_global(&self->advise);
 
     J_DO {
         J_IN(server, self->server->config->data, "server") {
@@ -65,6 +69,7 @@ CD_DestroyPlugins (CDPlugins* self)
 
     CD_free(self);
 
+    lt_dladvise_destroy(&self->advise);
     lt_dlexit();
 }
 
@@ -89,7 +94,7 @@ CD_LoadPlugins (CDPlugins* self)
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
-    CDPlugin* plugin = CD_CreatePlugin(self->server, path);
+    CDPlugin* plugin = CD_CreatePlugin(self->server, path, &self->advise);
 
     if (!plugin) {
         if (errno == ENOENT) {
