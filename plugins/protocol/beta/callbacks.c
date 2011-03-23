@@ -778,7 +778,7 @@ cdbeta_ClientDisconnect (CDServer* server, CDClient* client, bool status)
 
 static
 bool
-cdbeta_ClientKick (CDClient* client, CDString* reason)
+cdbeta_ClientKick (CDServer* server, CDClient* client, CDString* reason)
 {
     CD_DO {
         CDPacketDisconnect pkt = {
