@@ -39,8 +39,6 @@ static struct {
     const char* commandChar;
 } _config;
 
-static CDWorld* _world = NULL;
-
 #include "callbacks.c"
 
 static
@@ -100,7 +98,7 @@ static
 void
 cdbeta_KeepAlive (void* _, void* __, CDServer* server)
 {
-    CDPacket  packet = { CDResponse, CDKeepAlive, };
+    CDPacket  packet = { CDResponse, CDKeepAlive, CDNull };
     CDBuffer* buffer = CD_PacketToBuffer(&packet);
 
     CD_LIST_FOREACH(server->clients, it) {
@@ -142,10 +140,11 @@ CD_PluginInitialize (CDPlugin* self)
         CDBetaServerCache*   cache   = CD_alloc(sizeof(CDBetaServerCache));
         CACHE(self->server)->slot[0] = (CDPointer) cache;
 
-        cache->worlds = CD_CreateList();
-    }
+        cache->worlds       = CD_CreateList();
+        cache->defaultWorld = CD_CreateWorld(self->server);
 
-    _world = CD_CreateWorld(self->server);
+        CD_HashPut(PRIVATE(self), "World.default", (CDPointer) cache->defaultWorld);
+    }
 
     self->server->packet.parsable = CD_PacketParsable;
     self->server->packet.parse    = (void* (*)(CDBuffers *)) CD_PacketFromBuffers;

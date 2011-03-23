@@ -32,8 +32,23 @@ CD_CreateJob (CDJobType type, CDPointer data)
 
     assert(self);
 
-    self->type = type;
-    self->data = data;
+    self->type     = type;
+    self->data     = data;
+    self->external = false;
+
+    return self;
+}
+
+CDJob*
+CD_CreateExternalJob (CDJobType type, CDPointer data)
+{
+    CDJob* self = CD_malloc(sizeof(CDJob));
+
+    assert(self);
+
+    self->type     = type;
+    self->data     = data;
+    self->external = true;
 
     return self;
 }
@@ -43,7 +58,7 @@ CD_DestroyJob (CDJob* self)
 {
     assert(self);
 
-    if (self->data) {
+    if (!self->external && self->data) {
         CD_free((void*) self->data);
     }
 

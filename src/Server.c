@@ -157,7 +157,7 @@ cd_ReadCallback (struct bufferevent* event, CDClient* client)
 
     pthread_rwlock_wrlock(&client->lock.status);
 
-    SDEBUG(client->server, "read data from %s, %d byte/s available", client->ip, CD_BufferLength(client->buffers->input));
+    SDEBUG(self, "read data from %s, %d byte/s available", client->ip, CD_BufferLength(client->buffers->input));
 
     if (client->status == CDClientIdle) {
         void* packet;
@@ -210,7 +210,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDClient* client)
 
     SLOG(self, LOG_NOTICE, "%s disconnected", client->ip);
 
-    CD_AddJob(client->server->workers, CD_CreateJob(CDClientDisconnectJob, (CDPointer) client));
+    CD_AddJob(client->server->workers, CD_CreateExternalJob(CDClientDisconnectJob, (CDPointer) client));
 
     pthread_rwlock_unlock(&client->lock.status);
 }
@@ -309,7 +309,7 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
 
     CD_ListPush(self->clients, (CDPointer) client);
 
-    CD_AddJob(self->workers, CD_CreateJob(CDClientConnectJob, (CDPointer) client));
+    CD_AddJob(self->workers, CD_CreateExternalJob(CDClientConnectJob, (CDPointer) client));
 }
 
 bool
@@ -441,7 +441,7 @@ CD_ServerKick (CDServer* self, CDClient* client, CDString* reason)
 
     client->status = CDClientDisconnect;
 
-    CD_AddJob(client->server->workers, CD_CreateJob(CDClientDisconnectJob, (CDPointer) client));
+    CD_AddJob(client->server->workers, CD_CreateExternalJob(CDClientDisconnectJob, (CDPointer) client));
 
     pthread_rwlock_unlock(&client->lock.status);
 }

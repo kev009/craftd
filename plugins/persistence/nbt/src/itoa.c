@@ -24,6 +24,7 @@
  */
 
 #include <nbt/itoa.h>
+#include <assert.h>
 
 char*
 itoa (int value, char* result, int base)

@@ -417,11 +417,14 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
     CDBetaClientCache* cache  = (CDBetaClientCache*) CACHE(client)->slot[0];
     CDPlayer*          player = cache->player;
 
-    if (player) {
+    if (player && player->world) {
         world = player->world;
     }
     else {
-        world = _world;
+        CD_DO {
+            CDBetaServerCache* cache = (CDBetaServerCache*) CACHE(server)->slot[0];
+                               world = cache->defaultWorld;
+        }
     }
 
     switch (packet->type) {
@@ -443,10 +446,6 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 
                 return false;
             }
-
-            CD_HashPut(PRIVATE(client), "Client.player", (CDPointer) (player = cache->player = CD_CreatePlayer(client)));
-
-            player->world = world;
 
             if (CD_HashHasKey(world->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(data->request.username));
@@ -555,6 +554,11 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             CDPacketHandshake* data = (CDPacketHandshake*) packet->data;
 
             SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
+
+            player = cache->player = CD_CreatePlayer(client);
+            player->world = world;
+
+            CD_HashPut(PRIVATE(client), "Client.player", (CDPointer) player);
 
             CDPacketHandshake pkt = {
                 .response = {

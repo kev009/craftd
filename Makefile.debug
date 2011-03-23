@@ -228,7 +228,9 @@ craftd_plugin_protocol_beta_requirements: plugins/protocol/beta/include/config.h
 
 plugins/protocol/beta/main.c: 
 
-plugins/protocol/beta/main.o: plugins/protocol/beta/main.c
+plugins/protocol/beta/callbacks.c: 
+
+plugins/protocol/beta/main.o: plugins/protocol/beta/main.c plugins/protocol/beta/callbacks.c
 	$(CC) -Wall -Wextra -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -g3 -O0 -DCRAFTD_DEBUG $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/protocol/beta/main.o -c plugins/protocol/beta/main.c
 
 plugins/protocol/beta/src/minecraft.c: 

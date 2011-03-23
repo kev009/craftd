@@ -43,6 +43,7 @@ CD_CreatePlayer (CDClient* client)
     self->entity.position.z = 0;
 
     self->username = NULL;
+    self->world    = NULL;
 
     PRIVATE(self) = CD_CreatePrivate();
     CACHE(self)   = CD_CreateCache();
@@ -85,7 +86,7 @@ CD_PlayerSendMessage (CDPlayer* self, CDString* message)
 void
 CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->client || !self->client->buffers) {
+    if (!self || !self->client || !self->client->buffers) {
         return;
     }
 
@@ -99,7 +100,7 @@ CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 void
 CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->client || !self->client->buffers) {
+    if (!self || !self->client || !self->client->buffers) {
         return;
     }
 
@@ -114,7 +115,7 @@ CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
 void
 CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
 {
-    if (!self->client || !self->client->buffers) {
+    if (!self || !self->client || !self->client->buffers) {
         return;
     }
 

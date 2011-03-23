@@ -206,7 +206,11 @@ CD_MapHasKey (CDMap* self, CDMapId id)
     bool result = false;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_exist(self->raw, kh_get(cdMap, self->raw, id));
+    khiter_t it = kh_get(cdMap, self->raw, id);
+
+    if (it != kh_end(self->raw)) {
+        result = kh_exist(self->raw, it);
+    }
     pthread_rwlock_unlock(&self->lock);
 
     return result;

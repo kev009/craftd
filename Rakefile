@@ -145,8 +145,14 @@ namespace :craftd do |craftd|
         CLOBBER.include "plugins/#{plugin.file('protocol.beta')}", 'plugins/protocol/beta/include/config.h'
 
         beta.sources.each {|f|
-          file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          if f.end_with?('main.c')
+            file f.ext('o') => [f, "#{File.dirname(f)}/callbacks.c"] do
+              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            end
+          else
+            file f.ext('o') => c_file(f) do
+              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            end
           end
         }
 

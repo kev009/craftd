@@ -211,7 +211,11 @@ CD_HashHasKey (CDHash* self, const char* name)
     bool result = false;
 
     pthread_rwlock_rdlock(&self->lock);
-    result = kh_exist(self->raw, kh_get(cdHash, self->raw, name));
+    khiter_t it = kh_get(cdHash, self->raw, name);
+
+    if (it != kh_end(self->raw)) {
+        result = kh_exist(self->raw, it);
+    }
     pthread_rwlock_unlock(&self->lock);
 
     return result;

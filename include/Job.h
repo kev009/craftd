@@ -63,9 +63,13 @@ typedef struct _CDClientProcessJobData {
 typedef struct _CDJob {
     CDJobType type;
     CDPointer data;
+
+    bool external;
 } CDJob;
 
 CDJob* CD_CreateJob (CDJobType type, CDPointer data);
+
+CDJob* CD_CreateExternalJob (CDJobType type, CDPointer data);
 
 void CD_DestroyJob (CDJob* job);
 

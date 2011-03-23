@@ -29,9 +29,11 @@
 #include <beta/common.h>
 
 #include <beta/Player.h>
+#include <beta/World.h>
 
 typedef struct _CDBetaServerCache {
-    CDList* worlds;
+    CDList*  worlds;
+    CDWorld* defaultWorld;
 } CDBetaServerCache;
 
 typedef struct _CDBetaClientCache {
