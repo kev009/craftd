@@ -116,7 +116,8 @@ namespace :craftd do |craftd|
   task :install => :build
 
   desc 'Build all plugins'
-  task :plugins => ['plugin:protocol:build', 'plugin:persistence:build', 'plugin:commands:build', 'plugin:tests:build']
+  task :plugins => ['plugin:protocol:build', 'plugin:persistence:build', 'plugin:mapgen:build',
+    'plugin:commands:build', 'plugin:tests:build']
 
   namespace :plugin do |plugin|
     plugin.names = ['protocol/beta', 'persistence/nbt', 'mapgen']
@@ -203,6 +204,50 @@ namespace :craftd do |craftd|
 
         desc 'Build nbt plugin'
         task :build => [:requirements, "plugins/#{plugin.file('persistence.nbt')}"]
+      end
+    end
+
+    namespace :mapgen do |mapgen|
+      task :build => ['classic:build', 'trivial:build']
+
+      namespace :classic do |classic|
+        classic.sources = FileList['plugins/mapgen/classic/main.c', 'plugins/mapgen/noise/simplexnoise1234.c']
+
+        CLEAN.include classic.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
+
+        classic.sources.each {|f|
+          file f.ext('o') => c_file(f) do
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{LDFLAGS} ${LDFLAGS}"
+        end
+
+        desc 'Build classic mapgen'
+        task :build => "plugins/#{plugin.file('mapgen.classic')}"
+      end
+
+      namespace :trivial do |trivial|
+        trivial.sources = FileList['plugins/mapgen/trivial/main.c']
+
+        CLEAN.include trivial.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('mapgen.trivial')}"
+
+        trivial.sources.each {|f|
+          file f.ext('o') => c_file(f) do
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        file "plugins/#{plugin.file('mapgen.trivial')}" => trivial.sources.ext('o') do
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS} ${LDFLAGS}"
+        end
+
+        desc 'Build trivial mapgen'
+        task :build => "plugins/#{plugin.file('mapgen.trivial')}"
       end
     end
 

@@ -29,7 +29,7 @@
 #include <beta/minecraft.h>
 
 #include <math.h>
-#include "noise/simplexnoise1234.h"
+#include <noise/simplexnoise1234.h>
 
 static struct {
     CDString* seed;

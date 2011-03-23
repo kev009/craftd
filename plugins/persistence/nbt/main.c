@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -32,6 +31,8 @@
 
 #include <nbt/nbt.h>
 #include <nbt/itoa.h>
+
+#if 0
 
 // Temporary hax; load from config
 static const int WORLD_BASE = 36;
@@ -68,6 +69,7 @@ cdnbt_LoadLevelDat (CDPlugin* self)
 
     MCBlockPosition* spawnPosition = CD_malloc(sizeof(MCBlockPosition));
 
+    // TODO: proper spawn point generation
     if (access(CD_StringContent(leveldatPath), R_OK) < 0) {
         spawnPosition->x = 0;
         spawnPosition->y = 120;
@@ -80,6 +82,10 @@ cdnbt_LoadLevelDat (CDPlugin* self)
             CD_free(spawnPosition);
 
             return false;
+        }
+
+        if (valid_level(nf->root) != 0) {
+
         }
 
         data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
@@ -384,4 +390,5 @@ CD_PluginFinalize (CDPlugin* self)
 
     return true;
 }
+
 #endif

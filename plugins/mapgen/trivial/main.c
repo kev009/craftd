@@ -28,9 +28,6 @@
 
 #include <beta/minecraft.h>
 
-#include <math.h>
-#include "noise/simplexnoise1234.h"
-
 static
 bool
 cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
