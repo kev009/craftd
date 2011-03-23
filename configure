@@ -2,6 +2,8 @@ CC=${CC:-gcc}
 LIBS=
 FILE=`mktemp -u`
 DEFS=
+function do_clean { rm -f $FILE; rm -f $FILE.c; rm -f $FILE.o; }
+function do_exit { do_clean; exit 1; }
 
 
 cat > $FILE.c <<EOF
@@ -14,7 +16,7 @@ int t() { lt_dlopen(); return 0; }
 EOF
 
 echo -n "Checking for ltdl... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lltdl $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -lltdl $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -lltdl"
@@ -28,7 +30,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "libtool not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -43,7 +45,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for pthread... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lpthread $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -lpthread $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -lpthread"
@@ -57,7 +59,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "pthread not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -74,7 +76,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))pthread_spin_init; return 0;
 EOF
 
 echo -n "Checking for pthread_spin_init() in pthread.h... "
-if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -Wall -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_PTHREAD_SPIN_INIT 1"
 
   echo yes
@@ -94,7 +96,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for event... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -levent $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -levent $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -levent"
@@ -108,7 +110,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "libevent2 not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -123,7 +125,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for event_pthreads... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -levent_pthreads $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -levent_pthreads $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -levent_pthreads"
@@ -137,7 +139,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "libevent2 with pthreads not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -155,7 +157,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for ((_EVENT_NUMERIC_VERSION >> 24) == 2) in event2/event.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE___EVENT_NUMERIC_VERSION_24_2_ 1"
 
   echo yes
@@ -175,7 +177,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for jansson... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -ljansson $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -ljansson $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -ljansson"
@@ -189,7 +191,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "jansson not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -207,7 +209,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for (JANSSON_MAJOR_VERSION == 2) in jansson.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE__JANSSON_MAJOR_VERSION_2_ 1"
 
   echo yes
@@ -227,7 +229,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for z... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lz $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -lz $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -lz"
@@ -241,7 +243,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "zlib not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -256,7 +258,7 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for pcre... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lpcre $LIBS) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c -lpcre $LIBS) 2>&1`" == "" ]]; then
   LAST=yes
 
   LIBS="$LIBS -lpcre"
@@ -270,7 +272,7 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "libpcre not found"
-  exit 1
+  do_exit
 fi
 
     
@@ -283,7 +285,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for endian.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_ENDIAN_H 1"
 
   echo yes
@@ -301,7 +303,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for sys/endian.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_SYS_ENDIAN_H 1"
 
   echo yes
@@ -319,7 +321,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for netinet/in.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_NETINET_IN_H 1"
 
   echo yes
@@ -337,7 +339,7 @@ cat > $FILE.c <<EOF
 EOF
 
 echo -n "Checking for arpa/inet.h... "
-if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_ARPA_INET_H 1"
 
   echo yes
@@ -357,7 +359,7 @@ int t() { be64toh(); return 0; }
 EOF
 
 echo -n "Checking for be64toh()... "
-if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -Wall -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_BE64TOH 1"
 
   echo yes
@@ -377,7 +379,7 @@ int t() { htobe64(); return 0; }
 EOF
 
 echo -n "Checking for htobe64()... "
-if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -Wall -pipe -o $FILE -c $FILE.c) 2>&1`" == "" ]]; then
   DEFS="$DEFS\n#define HAVE_HTOBE64 1"
 
   echo yes
@@ -404,7 +406,7 @@ EOF
 $CC $CFLAGS -o $FILE $FILE.c
 
 echo -n "Checking size of FUNCTION_POINTER... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c) 2>&1`" == "" ]]; then
   SIZE=$(exec $FILE)
   DEFS="$DEFS\n#define SIZEOF_FUNCTION_POINTER $SIZE"
 
@@ -436,7 +438,7 @@ EOF
 $CC $CFLAGS -o $FILE $FILE.c
 
 echo -n "Checking size of POINTER... "
-if [[ "`($CC $CFLAGS -o $FILE $FILE.c) 2>&1`" == "" ]]; then
+if [[ "`($CC $CFLAGS -pipe -o $FILE $FILE.c) 2>&1`" == "" ]]; then
   SIZE=$(exec $FILE)
   DEFS="$DEFS\n#define SIZEOF_POINTER $SIZE"
 
@@ -498,3 +500,4 @@ EOF
 DEFS=
 
       
+do_clean
