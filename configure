@@ -1,0 +1,450 @@
+CC=${CC:-gcc}
+FILE=`mktemp -u`
+DEFS=
+
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { lt_dlopen(); return 0; }
+
+EOF
+
+echo -n "Checking for ltdl... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lltdl) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install ltdl and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for pthread... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lpthread) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install pthread and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <pthread.h>
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))pthread_spin_init; return 0; }
+
+EOF
+
+echo -n "Checking for pthread_spin_init() in pthread.h... "
+if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_PTHREAD_SPIN_INIT 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for event... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -levent) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install event and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for event_pthreads... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -levent_pthreads) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install event_pthreads and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <event2/event.h>
+/*top*/
+#if ! ((_EVENT_NUMERIC_VERSION >> 24) == 2)
+# error
+>>>>>> ((_EVENT_NUMERIC_VERSION >> 24) == 2) undefined <<<<<<
+#endif
+
+EOF
+
+echo -n "Checking for ((_EVENT_NUMERIC_VERSION >> 24) == 2) in event2/event.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE___EVENT_NUMERIC_VERSION_24_2_ 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for jansson... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -ljansson) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install jansson and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <jansson.h>
+/*top*/
+#if ! (JANSSON_MAJOR_VERSION == 2)
+# error
+>>>>>> (JANSSON_MAJOR_VERSION == 2) undefined <<<<<<
+#endif
+
+EOF
+
+echo -n "Checking for (JANSSON_MAJOR_VERSION == 2) in jansson.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE__JANSSON_MAJOR_VERSION_2_ 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for z... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lz) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install z and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
+
+EOF
+
+echo -n "Checking for pcre... "
+if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lpcre) 2>&1`" == "" ]]; then
+  echo yes
+else
+  echo no
+
+  echo "Install pcre and try again"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <endian.h>
+
+EOF
+
+echo -n "Checking for endian.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_ENDIAN_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <sys/endian.h>
+
+EOF
+
+echo -n "Checking for sys/endian.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_SYS_ENDIAN_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <netinet/in.h>
+
+EOF
+
+echo -n "Checking for netinet/in.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_NETINET_IN_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+#include <arpa/inet.h>
+
+EOF
+
+echo -n "Checking for arpa/inet.h... "
+if [[ "`($CC $CFLAGS -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_ARPA_INET_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { be64toh(); return 0; }
+
+EOF
+
+echo -n "Checking for be64toh()... "
+if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_BE64TOH 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+
+
+/*top*/
+int main() {return 0;}
+int t() { htobe64(); return 0; }
+
+EOF
+
+echo -n "Checking for htobe64()... "
+if [[ "`($CC $CFLAGS -Wall -c $FILE.c) 2>&1`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_HTOBE64 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+cat > $FILE.c <<EOF
+typedef void(*FUNCTION_POINTER)();
+
+
+typedef FUNCTION_POINTER rbcv_typedef_;
+static rbcv_typedef_ *rbcv_ptr_;
+
+#include <stdio.h>
+/*top*/
+int conftest_const = (int)(sizeof((*rbcv_ptr_)));
+int main() {printf("%d\n", conftest_const); return 0;}
+
+EOF
+
+$CC $CFLAGS -o $FILE $FILE.c
+
+echo -n "Checking size of FUNCTION_POINTER... "
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c) 2>&1`" == "" ]]; then
+  SIZE=$(exec $FILE)
+  DEFS="$DEFS\n#define SIZEOF_FUNCTION_POINTER $SIZE"
+
+  echo $SIZE
+else
+  echo no
+
+  echo "Could not define size of FUNCTION_POINTER"
+
+  exit 1
+fi
+
+      
+
+cat > $FILE.c <<EOF
+typedef void* POINTER;
+
+
+typedef POINTER rbcv_typedef_;
+static rbcv_typedef_ *rbcv_ptr_;
+
+#include <stdio.h>
+/*top*/
+int conftest_const = (int)(sizeof((*rbcv_ptr_)));
+int main() {printf("%d\n", conftest_const); return 0;}
+
+EOF
+
+$CC $CFLAGS -o $FILE $FILE.c
+
+echo -n "Checking size of POINTER... "
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c) 2>&1`" == "" ]]; then
+  SIZE=$(exec $FILE)
+  DEFS="$DEFS\n#define SIZEOF_POINTER $SIZE"
+
+  echo $SIZE
+else
+  echo no
+
+  echo "Could not define size of POINTER"
+
+  exit 1
+fi
+
+      
+
+cat > include/config.h <<EOF
+#ifndef INCLUDE_CONFIG_H
+#define INCLUDE_CONFIG_H
+EOF
+
+echo -e $DEFS >> include/config.h
+
+cat >> include/config.h <<EOF
+
+#endif
+EOF
+
+DEFS=
+
+      
+
+cat > plugins/persistence/nbt/include/config.h <<EOF
+#ifndef PLUGINS_PERSISTENCE_NBT_INCLUDE_CONFIG_H
+#define PLUGINS_PERSISTENCE_NBT_INCLUDE_CONFIG_H
+EOF
+
+echo -e $DEFS >> plugins/persistence/nbt/include/config.h
+
+cat >> plugins/persistence/nbt/include/config.h <<EOF
+
+#endif
+EOF
+
+DEFS=
+
+      
+
+cat > plugins/protocol/beta/include/config.h <<EOF
+#ifndef PLUGINS_PROTOCOL_BETA_INCLUDE_CONFIG_H
+#define PLUGINS_PROTOCOL_BETA_INCLUDE_CONFIG_H
+EOF
+
+echo -e $DEFS >> plugins/protocol/beta/include/config.h
+
+cat >> plugins/protocol/beta/include/config.h <<EOF
+
+#endif
+EOF
+
+DEFS=
+
+      

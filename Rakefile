@@ -1,17 +1,15 @@
 require 'mkmf'
 require 'rake'
 require 'rake/clean'
+require 'rake/convert'
 
 load 'rake/variables.rb'
-load 'rake/config.rb'
-load 'rake/makefile.rb'
+load 'rake/configure.rb'
 
 VERSION = '0.1a'
 
-CC      = ENV['CC']  || 'gcc'
-CXX     = ENV['CXX'] || 'g++'
-CFLAGS  = "-Wall -Wextra -Wno-unused -std=gnu99 -fPIC #{ENV['CFLAGS']} -DCRAFTD_VERSION='\"#{VERSION}\"'"
-LDFLAGS = "#{ENV['LDFLAGS']}"
+CC     = (ENV['CC'] ||= 'gcc')
+CFLAGS = "-Wall -Wextra -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"'"
 
 if ENV['DEBUG']
   CFLAGS << ' -g3 -O0 -DCRAFTD_DEBUG'
@@ -25,9 +23,6 @@ task :default => ['craftd:build', 'craftd:plugins']
 # Stuff installation
 task :install => ['craftd:install']
 
-# Static scripts generation
-task :generate => [:clobber, 'generate:configure', 'generate:makefile']
-
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
   craftd.sources   = FileList['src/**/*.c', 'third-party/bstring/{bstrlib,bstraux}.c']
@@ -38,7 +33,7 @@ namespace :craftd do |craftd|
 
   craftd.sources.each {|f|
     file f.ext('o') => f do
-      sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+      sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
     end
   }
 
@@ -89,7 +84,7 @@ namespace :craftd do |craftd|
   end
 
   file 'craftd' => craftd.sources.ext('o') do
-    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd -export-dynamic #{LDFLAGS} #{craftd.libraries}"
+    sh "${CC} #{CFLAGS} ${CFLAGS} #{craftd.sources.ext('o')} -o craftd -export-dynamic #{craftd.libraries} ${LDFLAGS}"
   end
 
   task :build => [:requirements, 'craftd']
@@ -127,7 +122,7 @@ namespace :craftd do |craftd|
 
         beta.sources.each {|f|
           file f.ext('o') => f do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
           end
         }
 
@@ -139,7 +134,7 @@ namespace :craftd do |craftd|
         end
 
         file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries}"
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries} ${LDFLAGS}"
         end
 
         desc 'Build beta plugin'
@@ -161,7 +156,7 @@ namespace :craftd do |craftd|
 
         nbt.sources.each {|f|
           file f.ext('o') => f do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
           end
         }
 
@@ -173,7 +168,7 @@ namespace :craftd do |craftd|
         end
 
         file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries}"
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries} ${LDFLAGS}"
         end
 
         desc 'Build nbt plugin'
@@ -192,12 +187,12 @@ namespace :craftd do |craftd|
 
         admin.sources.each {|f|
           file f.ext('o') => f do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
           end
         }
 
         file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries}"
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries} ${LDFLAGS}"
         end
 
         desc 'Build admin plugin'

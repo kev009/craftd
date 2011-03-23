@@ -27,10 +27,13 @@ git://github.com/kev009/craftd.git.
 
 Keep in mind that this is bleeding edge and may not always be stable or usable.
 
-If you need to compile from the git repo, don't forget to run ./autogen.sh
-before heading into ./configure.
+Ruby and Rake are the suggested way of building craftd, although a statically generated
+Makefile and configure script are shipped if you cannot/do not want to install Ruby and Rake.
 
-Once you have the source prepared you can run ./configure, make, and make install.
+If you need to compile from the git repo, don't forget to run ./autogen.sh
+before heading into configuration/compilation.
+
+Once you have the source prepared you can run rake install OR ./configure, make, and make install.
 By default, the server binary is located at /usr/local/bin/craftd.
 
 At the moment craftd does not generate world data for a new server. You will need to
