@@ -4,6 +4,6 @@
 [submodule "plugins/tests/tinytest"]
 	path = plugins/tests/tinytest
 	url = git://github.com/nmathewson/tinytest.git
-[submodule "plugins/nbt/cNBT"]
-	path = plugins/nbt/cNBT
+[submodule "plugins/persistence/nbt/cNBT"]
+	path = plugins/persistence/nbt/cNBT
 	url = git://github.com/FliPPeh/cNBT.git
