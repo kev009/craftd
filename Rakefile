@@ -41,27 +41,27 @@ namespace :craftd do |craftd|
   task :requirements => 'include/config.h'
   
   file 'include/config.h' do
-    have_library 'ltdl', 'lt_dlopen' or fail 'libtool not found'
+    have_library 'ltdl', 'lt_dlopen' or die 'libtool not found'
 
     # check thread stuff
-    have_library 'pthread' or fail 'pthread not found'
+    have_library 'pthread' or die 'pthread not found'
     have_func 'pthread_spin_init', 'pthread.h'
 
     # check for libevent 2
-    have_library 'event' or fail 'libevent2 not found'
-    have_library 'event_pthreads' or fail 'libevent2 with pthreads not found'
+    have_library 'event' or die 'libevent2 not found'
+    have_library 'event_pthreads' or die 'libevent2 with pthreads not found'
     have_macro '((_EVENT_NUMERIC_VERSION >> 24) == 2)', 'event2/event.h' do |c|
       c.sub('ifndef', 'if !')
     end
 
     # check for libjansson 2
-    have_library 'jansson' or fail 'jansson not found'
+    have_library 'jansson' or die 'jansson not found'
     have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c|
       c.sub('ifndef', 'if !')
     end
 
-    have_library 'z' or fail 'zlib not found'
-    have_library 'pcre' or fail 'libpcre not found'
+    have_library 'z' or die 'zlib not found'
+    have_library 'pcre' or die 'libpcre not found'
 
     # endianness stuff
     have_header 'endian.h'

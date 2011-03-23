@@ -1,4 +1,5 @@
 CC=${CC:-gcc}
+LIBS=
 FILE=`mktemp -u`
 DEFS=
 
@@ -13,17 +14,24 @@ int t() { lt_dlopen(); return 0; }
 EOF
 
 echo -n "Checking for ltdl... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lltdl) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lltdl $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -lltdl"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install ltdl and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "libtool not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -35,17 +43,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for pthread... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lpthread) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lpthread $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -lpthread"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install pthread and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "pthread not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -79,17 +94,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for event... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -levent) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -levent $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -levent"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install event and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "libevent2 not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -101,17 +123,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for event_pthreads... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -levent_pthreads) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -levent_pthreads $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -levent_pthreads"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install event_pthreads and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "libevent2 with pthreads not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -146,17 +175,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for jansson... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -ljansson) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -ljansson $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -ljansson"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install jansson and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "jansson not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -191,17 +227,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for z... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lz) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lz $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -lz"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install z and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "zlib not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
@@ -213,17 +256,24 @@ int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
 EOF
 
 echo -n "Checking for pcre... "
-if [[ "`($CC $CFLAGS -o $FILE -c $FILE.c -lpcre) 2>&1`" == "" ]]; then
-  echo yes
+if [[ "`($CC $CFLAGS -o $FILE $FILE.c -lpcre $LIBS) 2>&1`" == "" ]]; then
+  LAST=yes
+
+  LIBS="$LIBS -lpcre"
 else
-  echo no
+  LAST=no
+fi
 
-  echo "Install pcre and try again"
+echo $LAST
 
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "libpcre not found"
   exit 1
 fi
 
-      
+    
 
 cat > $FILE.c <<EOF
 
