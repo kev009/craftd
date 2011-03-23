@@ -47,17 +47,17 @@
         ],
 
         "plugins": [
-            { "name": "beta",
+            { "name": "protocol.beta",
                 "commandChar": "/"
             },
 
-            { "name": "nbt" },
+            { "name": "persistence.nbt" },
 
             { "name": "mapgen.classic",
                 "seed": "trolololol"
             },
 
-            { "name": "admin",
+            { "name": "commands.admin",
                 "authorizations": [
                     { "name": "Notch", "password": "faggotree", "level": "admin" }
                 ],

@@ -54,6 +54,12 @@
     typedef int64_t CDPointer;
 #endif
 
+#ifdef __cplusplus
+#   define PUBLIC extern "C"
+#else
+#   define PUBLIC extern
+#endif
+
 #define CDNull (0)
 
 #include <craftd/Error.h>

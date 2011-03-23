@@ -25,11 +25,12 @@
 
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
-#include <craftd/Player.h>
 
-#include "tinytest/tinytest.h"
-#include "tinytest/tinytest_macros.h"
+#include <beta/Player.h>
+#include <beta/minecraft.h>
 
+#include <tinytest/tinytest.h>
+#include <tinytest/tinytest_macros.h>
 
 void
 cdtest_String_fromBuffer (void* data)
