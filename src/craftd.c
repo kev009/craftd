@@ -126,6 +126,7 @@ main (int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
+
     /* By default, mask debugging messages */
     if (!debugging) {
         server->logger.setlogmask(LOG_MASK(LOG_DEBUG));

@@ -77,7 +77,6 @@ typedef struct _CDConfig {
 
         struct {
             const char* motd;
-            const char* world;
         } files;
 
         int workers;

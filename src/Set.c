@@ -29,10 +29,16 @@ hashAtom (CDSet* self, CDPointer pointer)
 }
 
 CDSet*
-CD_CreateSet (int hint, CDSetCompare cmp, CDSetHash hash)
+CD_CreateSet (void)
+{
+    return CD_CreateSetWith(4000, NULL, NULL);
+}
+
+CDSet*
+CD_CreateSetWith (int hint, CDSetCompare cmp, CDSetHash hash)
 {
     CDSet*     self;
-    static int primes[] = { 509, 509, 1021, 2053, 4093, 8191, 16381, 32771, 65521, INT_MAX };
+    static int primes[] = { 509, 1021, 2053, 4093, 8191, 16381, 32771, 65521, INT_MAX };
     size_t     i;
 
     assert(hint >= 0);
@@ -63,7 +69,7 @@ CD_CreateSet (int hint, CDSetCompare cmp, CDSetHash hash)
 CDSet*
 CD_CloneSet (CDSet* self, int hint)
 {
-    CDSet* cloned = CD_CreateSet(hint, self->cmp, self->hash);
+    CDSet* cloned = CD_CreateSetWith(hint, self->cmp, self->hash);
 
     assert(self);
     assert(cloned);
@@ -284,18 +290,18 @@ CD_SetIntersect (CDSet* a, CDSet* b)
     if (a == NULL) {
         assert(b);
 
-        return CD_CreateSet(b->size, b->cmp, b->hash);
+        return CD_CreateSetWith(b->size, b->cmp, b->hash);
     }
 
     if (b == NULL) {
-        return CD_CreateSet(a->size, a->cmp, a->hash);
+        return CD_CreateSetWith(a->size, a->cmp, a->hash);
     }
 
     if (a->length < b->length) {
         return CD_SetIntersect(b, a);
     }
 
-    CDSet* result = CD_CreateSet(CD_Min(a->size, b->size), a->cmp, a->hash);
+    CDSet* result = CD_CreateSetWith(CD_Min(a->size, b->size), a->cmp, a->hash);
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 
@@ -329,14 +335,14 @@ CD_SetMinus (CDSet* a, CDSet* b)
     if (a == NULL) {
         assert(b);
 
-        return CD_CreateSet(b->size, b->cmp, b->hash);
+        return CD_CreateSetWith(b->size, b->cmp, b->hash);
     }
 
     if (b == NULL) {
         return CD_CloneSet(a, a->size);
     }
 
-    CDSet* result = CD_CreateSet(CD_Min(a->size, b->size), a->cmp, a->hash);
+    CDSet* result = CD_CreateSetWith(CD_Min(a->size, b->size), a->cmp, a->hash);
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 
@@ -377,7 +383,7 @@ CD_SetDifference (CDSet* a, CDSet* b)
         return CD_CloneSet(a, a->size);
     }
 
-    CDSet* result = CD_CreateSet(CD_Min(a->size, b->size), a->cmp, a->hash);
+    CDSet* result = CD_CreateSetWith(CD_Min(a->size, b->size), a->cmp, a->hash);
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 

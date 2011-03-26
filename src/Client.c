@@ -35,7 +35,9 @@ CD_CreateClient (CDServer* server)
         return NULL;
     }
 
-    assert(pthread_rwlock_init(&self->lock.status, NULL) == 0);
+    if (pthread_rwlock_init(&self->lock.status, NULL) != 0) {
+        CD_abort("pthread rwlock failed to initialize");
+    }
 
     self->server = server;
 
@@ -44,8 +46,7 @@ CD_CreateClient (CDServer* server)
 
     self->buffers = NULL;
 
-    PRIVATE(self) = CD_CreatePrivate();
-    CACHE(self)   = CD_CreateCache();
+    DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
     return self;
@@ -64,8 +65,7 @@ CD_DestroyClient (CDClient* self)
         CD_DestroyBuffers(self->buffers);
     }
 
-    CD_DestroyPrivate(PRIVATE(self));
-    CD_DestroyCache(CACHE(self));
+    CD_DestroyDynamic(DYNAMIC(self));
 
     pthread_rwlock_destroy(&self->lock.status);
 

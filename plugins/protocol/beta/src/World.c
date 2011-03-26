@@ -32,7 +32,10 @@ CD_CreateWorld (CDServer* server, const char* name)
 
     assert(self);
     assert(name);
-    assert(pthread_spin_init(&self->lock.time, 0) == 0);
+
+    if (pthread_spin_init(&self->lock.time, 0) != 0) {
+        CD_abort("pthread spinlock failed to initialize");
+    }
 
     self->server = server;
 
@@ -44,13 +47,24 @@ CD_CreateWorld (CDServer* server, const char* name)
     self->clients  = CD_CreateMap();
     self->entities = CD_CreateMap();
 
-    PRIVATE(self) = CD_CreatePrivate();
-    CACHE(self)   = CD_CreateCache();
+    self->chunks = CD_CreateSetWith(2000, (CDSetCompare) CD_CompareChunkPosition, (CDSetHash) CD_HashChunkPosition);
+
+    DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
-    CD_WorldSetTime(self, 0);
+    CD_EventDispatch(server, "World.create", self);
 
     return self;
+}
+
+bool
+CD_WorldSave (CDWorld* self)
+{
+    bool result;
+
+    CD_EventDispatchWithResult(result, self->server, "World.save", self);
+
+    return result;
 }
 
 void
@@ -58,18 +72,25 @@ CD_DestroyWorld (CDWorld* self)
 {
     assert(self);
 
+    CD_EventDispatch(self->server, "World.destroy", self);
+
     CD_HASH_FOREACH(self->players, it) {
-        CD_ServerKick(self->server, ((CDPlayer*) CD_HashIteratorValue(it))->client, NULL);
+        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
+
+        if (player->client->status != CDClientDisconnect) {
+            CD_ServerKick(self->server, player->client, NULL);
+        }
     }
 
     CD_DestroyHash(self->players);
     CD_DestroyMap(self->clients);
     CD_DestroyMap(self->entities);
 
+    CD_DestroySet(self->chunks);
+
     CD_DestroyString(self->name);
 
-    CD_DestroyPrivate(PRIVATE(self));
-    CD_DestroyCache(CACHE(self));
+    CD_DestroyDynamic(DYNAMIC(self));
 
     pthread_spin_destroy(&self->lock.time);
 
@@ -152,4 +173,20 @@ CD_WorldSetTime (CDWorld* self, uint16_t time)
     pthread_spin_unlock(&self->lock.time);
 
     return time;
+}
+
+MCChunk*
+CD_WorldGetChunk (CDWorld* self, int x, int z)
+{
+    MCChunk* result = CD_alloc(sizeof(MCChunk));
+
+    CD_EventDispatch(self->server, "World.chunk", self, x, z, result);
+
+    return result;
+}
+
+void
+CD_WorldSetChunk (CDWorld* self, MCChunk* chunk)
+{
+    CD_EventDispatch(self->server, "World.chunk=", self, chunk->position.x, chunk->position.z, chunk);
 }

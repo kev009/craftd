@@ -23,14 +23,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_PRIVATE_H
-#define CRAFTD_PRIVATE_H
+#ifndef CRAFTD_DYNAMIC_H
+#define CRAFTD_DYNAMIC_H
 
-#define CD_DEFINE_PRIVATE CDHash* _private
+#define CD_DEFINE_DYNAMIC CDHash* _dynamic
 
-#define PRIVATE(data) ((data)->_private)
+#define DYNAMIC(data) ((data)->_dynamic)
 
-#define CD_CreatePrivate(...)  CD_CreateHash(__VA_ARGS__)
-#define CD_DestroyPrivate(...) CD_DestroyHash(__VA_ARGS__)
+#define CD_CreateDynamic()  CD_CreateHash()
+#define CD_DestroyDynamic(self) CD_DestroyHash(self)
+
+#define CD_DynamicGet(object, property)        CD_HashGet(DYNAMIC(object), property)
+#define CD_DynamicPut(object, property, value) CD_HashPut(DYNAMIC(object), property, (value))
+#define CD_DynamicDelete(object, property)     CD_HashDelete(DYNAMIC(object), property)
 
 #endif

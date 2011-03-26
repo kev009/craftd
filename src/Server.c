@@ -71,8 +71,7 @@ CD_CreateServer (const char* path)
 
     self->running = false;
 
-    PRIVATE(self) = CD_CreatePrivate();
-    CACHE(self)   = CD_CreateCache();
+    DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
     return self;
@@ -119,12 +118,8 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyHash(self->event.callbacks);
     }
 
-    if (PRIVATE(self)) {
-        CD_DestroyPrivate(PRIVATE(self));
-    }
-
-    if (CACHE(self)) {
-        CD_DestroyCache(CACHE(self));
+    if (DYNAMIC(self)) {
+        CD_DestroyDynamic(DYNAMIC(self));
     }
 
     if (self->name) {
@@ -369,6 +364,9 @@ CD_RunServer (CDServer* self)
 
     CD_LoadPlugins(self->plugins);
 
+    CD_EventDispatch(self, "Server.start!");
+    CD_EventUnregister(self, "Server.start!", NULL);
+
     self->running = true;
 
     while (self->running) {
@@ -433,7 +431,7 @@ CD_ServerKick (CDServer* self, CDClient* client, CDString* reason)
         reason = CD_CreateStringFromCString("No reason");
     }
 
-    SLOG(self, LOG_NOTICE, "%s kicked: %s", client->ip, CD_StringContent(reason));
+    SLOG(self, LOG_DEBUG, "%s kicked: %s", client->ip, CD_StringContent(reason));
 
     CD_EventDispatch(self, "Client.kick", client, reason);
 

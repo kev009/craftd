@@ -51,8 +51,7 @@ typedef struct _CDClient {
         pthread_rwlock_t status;
     } lock;
 
-    CD_DEFINE_PRIVATE;
-    CD_DEFINE_CACHE;
+    CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;
 } CDClient;
 

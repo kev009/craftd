@@ -143,7 +143,7 @@ namespace :craftd do |craftd|
         beta.sources   = FileList['plugins/protocol/beta/**/*.c'].exclude('callbacks.c')
 
         CLEAN.include beta.sources.ext('o')
-        CLOBBER.include "plugins/#{plugin.file('protocol.beta')}", 'plugins/protocol/beta/include/config.h'
+        CLOBBER.include "plugins/#{plugin.file('protocol.beta')}"
 
         beta.sources.each {|f|
           if f.end_with?('main.c')
@@ -157,19 +157,12 @@ namespace :craftd do |craftd|
           end
         }
 
-        desc 'Check for beta plugin requirements'
-        task :requirements => 'plugins/protocol/beta/include/config.h'
-
-        file 'plugins/protocol/beta/include/config.h' do
-          create_config 'plugins/protocol/beta/include/config.h'
-        end
-
         file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
           sh "${CC} #{CFLAGS} ${CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries} #{LDFLAGS} ${LDFLAGS}"
         end
 
         desc 'Build beta plugin'
-        task :build => [:requirements, "plugins/#{plugin.file('protocol.beta')}"]
+        task :build => ["plugins/#{plugin.file('protocol.beta')}"]
       end
     end
 
@@ -177,33 +170,25 @@ namespace :craftd do |craftd|
       task :build => ['nbt:build']
 
       namespace :nbt do |nbt|
-        nbt.libraries = ''
-        nbt.headers   = FileList['plugins/persistence/nbt/include/*.h']
-        nbt.sources   = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
-          'plugins/persistence/nbt/cNBT/nbt_{parsing,treeops,util}.c']
+        nbt.headers = FileList['plugins/persistence/nbt/include/*.h']
+        nbt.sources = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
+          'plugins/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c']
 
         CLEAN.include nbt.sources.ext('o')
-        CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}", 'plugins/persistence/nbt/include/config.h'
+        CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}"
 
         nbt.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/persistence/nbt -o #{f.ext('o')} -c #{f}"
           end
         }
-
-        desc 'Check for nbt plugin requirements'
-        task :requirements => 'plugins/persistence/nbt/include/config.h'
-
-        file 'plugins/persistence/nbt/include/config.h' do
-          create_config 'plugins/persistence/nbt/include/config.h'
-        end
 
         file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
           sh "${CC} #{CFLAGS} ${CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries} #{LDFLAGS} ${LDFLAGS}"
         end
 
         desc 'Build nbt plugin'
-        task :build => [:requirements, "plugins/#{plugin.file('persistence.nbt')}"]
+        task :build => ["plugins/#{plugin.file('persistence.nbt')}"]
       end
     end
 

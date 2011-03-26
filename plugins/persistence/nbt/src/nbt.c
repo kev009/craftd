@@ -23,26 +23,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_BETA_CACHE_H
-#define CRAFTD_BETA_CACHE_H
+#include <nbt/nbt.h>
+#include <errno.h>
 
-#include <beta/common.h>
+nbt_node*
+nbt_parse_path (const char* path)
+{
+    FILE*     file   = fopen(path, "rb");
+    nbt_node* result = NULL;
 
-#include <beta/Player.h>
-#include <beta/World.h>
+    if (file == NULL) {
+        errno = NBT_EIO;
 
-typedef struct _CDBetaServerCache {
-    CDList*  worlds;
-    CDWorld* defaultWorld;
-} CDBetaServerCache;
+        return NULL;
+    }
 
-typedef struct _CDBetaClientCache {
-    CDPlayer* player;
-} CDBetaClientCache;
+    result = nbt_parse_file(file);
 
-typedef struct _CDBetaPlayerCache {
-    CDSet*  loadedChunks;
-    CDList* seenPlayers;
-} CDBetaPlayerCache;
+    fclose(file);
 
-#endif
+    return result;
+}

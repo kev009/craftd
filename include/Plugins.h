@@ -65,6 +65,10 @@ bool CD_LoadPlugins (CDPlugins* self);
  *
  * @param path The path to the plugin
  */
-CDPlugin* CD_LoadPlugin (CDPlugins* self, const char* path);
+CDPlugin* CD_LoadPlugin (CDPlugins* self, const char* name);
+
+CDPlugin* CD_GetPlugin (CDPlugins* self, const char* name);
+
+void CD_UnloadPlugin (CDPlugins* self, const char* name);
 
 #endif

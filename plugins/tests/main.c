@@ -362,7 +362,7 @@ struct testcase_t cd_utils_List_tests[] = {
 void
 cdtest_Set_put (void* data)
 {
-    CDSet* set = CD_CreateSet(10, NULL, NULL);
+    CDSet* set = CD_CreateSet();
 
     CD_SetPut(set, 1);
     CD_SetPut(set, 9001);
@@ -378,7 +378,7 @@ cdtest_Set_put (void* data)
 void
 cdtest_Set_delete (void* data)
 {
-    CDSet* set = CD_CreateSet(10, NULL, NULL);
+    CDSet* set = CD_CreateSet();
 
     CD_SetPut(set, 1);
     CD_SetPut(set, 2);
@@ -396,7 +396,7 @@ cdtest_Set_delete (void* data)
 void
 cdtest_Set_length (void* data)
 {
-    CDSet* set = CD_CreateSet(10, NULL, NULL);
+    CDSet* set = CD_CreateSet();
 
     CD_SetPut(set, 1);
     CD_SetPut(set, 3);

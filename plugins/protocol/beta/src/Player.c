@@ -45,8 +45,7 @@ CD_CreatePlayer (CDClient* client)
     self->username = NULL;
     self->world    = NULL;
 
-    PRIVATE(self) = CD_CreatePrivate();
-    CACHE(self)   = CD_CreateCache();
+    DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
     return self;
@@ -61,8 +60,7 @@ CD_DestroyPlayer (CDPlayer* self)
         CD_DestroyString(self->username);
     }
 
-    CD_DestroyPrivate(PRIVATE(self));
-    CD_DestroyCache(CACHE(self));
+    CD_DestroyDynamic(DYNAMIC(self));
 
     CD_free(self);
 }

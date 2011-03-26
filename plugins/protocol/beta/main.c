@@ -45,7 +45,7 @@ static
 void
 cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
 {
-    CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
+    CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
     CD_LIST_FOREACH(worlds, it) {
         CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
@@ -75,7 +75,7 @@ static
 void
 cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
 {
-    CDList* worlds = ((CDBetaServerCache*) CACHE(server)->slot[0])->worlds;
+    CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
     CD_LIST_FOREACH(worlds, it) {
         CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
@@ -108,11 +108,60 @@ cdbeta_KeepAlive (void* _, void* __, CDServer* server)
     CD_DestroyBuffer(buffer);
 }
 
+static
+bool
+cdbeta_ServerStart (CDServer* server)
+{
+    CDPlugin* self = CD_GetPlugin(server->plugins, "protocol.beta");
+
+    CD_DO { // Initialize server's cache base slot
+        CDList*  worlds       = CD_CreateList();
+        CDWorld* defaultWorld = NULL;
+
+        J_DO {
+            J_FOREACH(world, self->config, "worlds") {
+                J_IF_BOOL(world, "default") {
+                    if (J_BOOL_VALUE) {
+                        J_IF_STRING(world, "name") {
+                            defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!defaultWorld) {
+            defaultWorld = CD_CreateWorld(self->server, "default");
+        }
+
+        CD_ListPush(worlds, (CDPointer) defaultWorld);
+
+        J_DO {
+            J_FOREACH(world, self->config, "worlds") {
+                J_IF_BOOL(world, "default") {
+                    if (!J_BOOL_VALUE) {
+                        J_IF_STRING(world, "name") {
+                            CD_ListPush(worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
+                        }
+                    }
+                }
+            }
+        }
+
+        CD_DynamicPut(self->server, "World.list", (CDPointer) worlds);
+        CD_DynamicPut(self->server, "World.default", (CDPointer) defaultWorld);
+    }
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("Beta 1.3");
+
+    CD_EventRegister(self->server, "Server.start!", cdbeta_ServerStart);
 
     CD_DO { // Initiailize config cache
         _config.commandChar = "/";
@@ -122,58 +171,14 @@ CD_PluginInitialize (CDPlugin* self)
         }
     }
 
-    CD_CacheAvailable(CACHE(self->server), 0);
-
-    CD_DO { // Initialize server's cache base slot
-        CDBetaServerCache*   cache   = CD_alloc(sizeof(CDBetaServerCache));
-        CACHE(self->server)->slot[0] = (CDPointer) cache;
-
-        cache->worlds = CD_CreateList();
-
-        J_DO {
-            J_FOREACH(world, self->config, "worlds") {
-                J_IF_BOOL(world, "default") {
-                    if (J_BOOL_VALUE) {
-                        J_IF_STRING(world, "name") {
-                            cache->defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
-                        }
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!cache->defaultWorld) {
-            cache->defaultWorld = CD_CreateWorld(self->server, "default");
-        }
-
-        CD_ListPush(cache->worlds, (CDPointer) cache->defaultWorld);
-
-        J_DO {
-            J_FOREACH(world, self->config, "worlds") {
-                J_IF_BOOL(world, "default") {
-                    if (!J_BOOL_VALUE) {
-                        J_IF_STRING(world, "name") {
-                            CD_ListPush(cache->worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
-                        }
-                    }
-                }
-            }
-        }
-
-        CD_HashPut(PRIVATE(self), "World.list", (CDPointer) cache->worlds);
-        CD_HashPut(PRIVATE(self), "World.default", (CDPointer) cache->defaultWorld);
-    }
-
     self->server->packet.parsable = CD_PacketParsable;
     self->server->packet.parse    = (void* (*)(CDBuffers *)) CD_PacketFromBuffers;
 
     pthread_mutex_init(&_lock.login, NULL);
 
-    CD_HashPut(PRIVATE(self), "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
-    CD_HashPut(PRIVATE(self), "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
-    CD_HashPut(PRIVATE(self), "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive, CDNull));
+    CD_DynamicPut(self, "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
+    CD_DynamicPut(self, "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
+    CD_DynamicPut(self, "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive, CDNull));
 
     CD_EventRegister(self->server, "Client.process", cdbeta_ClientProcess);
     CD_EventRegister(self->server, "Client.processed", cdbeta_ClientProcessed);
@@ -197,9 +202,9 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_ClearInterval(self->server->timeloop, (int) CD_HashDelete(PRIVATE(self), "Event.timeIncrease"));
-    CD_ClearInterval(self->server->timeloop, (int) CD_HashDelete(PRIVATE(self), "Event.timeUpdate"));
-    CD_ClearInterval(self->server->timeloop, (int) CD_HashDelete(PRIVATE(self), "Event.keepAlive"));
+    CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.timeIncrease"));
+    CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.timeUpdate"));
+    CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.keepAlive"));
 
     CD_EventUnregister(self->server, "Client.process", cdbeta_ClientProcess);
     CD_EventUnregister(self->server, "Client.processed", cdbeta_ClientProcessed);
@@ -215,6 +220,14 @@ CD_PluginFinalize (CDPlugin* self)
     CD_EventUnregister(self->server, "Player.chat", cdbeta_PlayerChat);
 
     CD_EventUnregister(self->server, "Player.destroy", cdbeta_PlayerDestroy);
+
+    CD_DynamicDelete(self->server, "World.default");
+
+    CDList* worlds = (CDList*) CD_DynamicDelete(self->server, "World.list");
+
+    CD_LIST_FOREACH(worlds, it) {
+        CD_DestroyWorld((CDWorld*) CD_ListIteratorValue(it));
+    }
 
     pthread_mutex_destroy(&_lock.login);
 

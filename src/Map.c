@@ -35,7 +35,10 @@ CD_CreateMap (void)
     self->raw = kh_init(cdMap);
 
     assert(self->raw);
-    assert(pthread_rwlock_init(&self->lock, NULL) == 0);
+
+    if (pthread_rwlock_init(&self->lock, NULL) != 0) {
+        CD_abort("pthread rwlock failed to initialize");
+    }
 
     return self;
 }

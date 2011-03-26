@@ -82,8 +82,7 @@ CD_CreatePlugin (CDServer* server, const char* name)
         }
     }
 
-    PRIVATE(self) = CD_CreatePrivate();
-    CACHE(self)   = CD_CreateCache();
+    DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
     if (self->initialize) {
@@ -117,8 +116,8 @@ CD_DestroyPlugin (CDPlugin* self)
         CD_DestroyString(self->description);
     }
 
-    if (PRIVATE(self)) {
-        CD_DestroyHash(PRIVATE(self));
+    if (DYNAMIC(self)) {
+        CD_DestroyDynamic(DYNAMIC(self));
     }
 
     CD_free(self);

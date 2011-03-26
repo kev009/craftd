@@ -141,14 +141,14 @@ cdadmin_SetPlayerAuthLevel (CDPlayer* player, const char* level)
         apply = CDLevelRegisteredUser;
     }
 
-    CD_HashPut(PRIVATE(player), "Authorization.level", apply);
+    CD_DynamicPut((player), "Authorization.level", apply);
 }
 
 static
 CDAuthLevel
 cdadmin_GetPlayerAuthLevel (CDPlayer* player)
 {
-    return CD_HashGet(PRIVATE(player), "Authorization.level");
+    return CD_DynamicGet(player, "Authorization.level");
 }
 
 static
@@ -299,7 +299,7 @@ CD_PluginInitialize (CDPlugin* self)
 
     _tickets = CD_CreateList();
 
-    CD_HashPut(PRIVATE(self->server), "Admin.tickets", (CDPointer) _tickets);
+    CD_DynamicPut(self->server, "Admin.tickets", (CDPointer) _tickets);
 
     CD_EventRegisterWithPriority(self->server, "Player.command", -10, cdadmin_HandleCommand);
     CD_EventRegisterWithPriority(self->server, "Player.chat", -10, cdadmin_HandleChat);
@@ -318,7 +318,7 @@ CD_PluginFinalize (CDPlugin* self)
 
     CD_EventUnregister(self->server, "Player.logout", (CDEventCallbackFunction) cdadmin_PlayerLogout);
 
-    CD_DestroyList((CDList*) CD_HashDelete(PRIVATE(self->server), "Admin.tickets"));
+    CD_DestroyList((CDList*) CD_DynamicDelete(self->server, "Admin.tickets"));
 
     return true;
 }

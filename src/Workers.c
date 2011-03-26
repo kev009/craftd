@@ -40,12 +40,25 @@ CD_CreateWorkers (CDServer* server)
 
     self->jobs = CD_CreateList();
 
-    assert(pthread_attr_init(&self->attributes) == 0);
-    assert(pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED) == 0);
-    assert(pthread_attr_setstacksize(&self->attributes, CD_THREAD_STACK) == 0);
+    if (pthread_attr_init(&self->attributes) != 0) {
+        CD_abort("pthread attribute failed to initialize");
+    }
 
-    assert(pthread_mutex_init(&self->lock.mutex, NULL) == 0);
-    assert(pthread_cond_init(&self->lock.condition, NULL) == 0);
+    if (pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED) != 0) {
+        CD_abort("pthread attribute failed to set in detach state");
+    }
+
+    if (pthread_attr_setstacksize(&self->attributes, CD_THREAD_STACK) != 0) {
+        CD_abort("pthread attribute failed to set stack size");
+    }
+
+    if (pthread_mutex_init(&self->lock.mutex, NULL) != 0) {
+        CD_abort("pthread mutex failed to initialize");
+    }
+
+    if (pthread_cond_init(&self->lock.condition, NULL) != 0) {
+        CD_abort("pthread cond failed to initialize");
+    }
 
     return self;
 }

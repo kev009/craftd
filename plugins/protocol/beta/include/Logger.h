@@ -23,26 +23,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_CACHE_H
-#define CRAFTD_CACHE_H
+#ifndef CRAFTD_BETA_LOGGER_H
+#define CRAFTD_BETA_LOGGER_H
 
-#include <craftd/common.h>
+#include <craftd/Logger.h>
 
-typedef struct _CDCache {
-    size_t     size;
-    CDPointer* slot;
-} CDCache;
+#define WLOG(world, priority, format, ...) \
+    server->logger.log(priority, "%s[%s]> " format, CD_ServerToString(world->server), CD_StringContent(world->name), ##__VA_ARGS__)
 
-#define CD_DEFINE_CACHE CDCache* _cache
+#define WDEBUG(world, format, ...) WLOG(world, LOG_DEBUG, format, ##__VA_ARGS__)
 
-#define CACHE(data) ((data)->_cache)
-
-CDCache* CD_CreateCache (void);
-
-void CD_DestroyCache (CDCache* self);
-
-CDCache* CD_CacheAvailable (CDCache* self, size_t slot);
-
-CDCache* CD_CacheResize (CDCache* self, size_t size);
+#define WERR(world, format, ...) WLOG(world, LOG_CRIT, format, ##__VA_ARGS__)
 
 #endif

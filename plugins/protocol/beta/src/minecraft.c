@@ -218,3 +218,23 @@ MC_StringColor (MCString self, MCStringColor color)
         return self;
     }
 }
+
+bool
+CD_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
+{
+    assert(self);
+
+    return (a->x == b->x && a->z == b->z);
+}
+
+unsigned int
+CD_HashChunkPosition (CDSet* self, MCChunkPosition* position)
+{
+    const int HASHMULTIPLIER = 31;
+    const int CHUNKBUCKETS   = 401; // Max chunks to the nearest prime
+
+    assert(self);
+
+    return ((((position->x * HASHMULTIPLIER)) * HASHMULTIPLIER + position->z) * HASHMULTIPLIER) % CHUNKBUCKETS;
+}
+

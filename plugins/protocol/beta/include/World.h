@@ -49,15 +49,17 @@ typedef struct _CDWorld {
     CDHash* players;
     CDMap*  clients;
     CDMap*  entities;
-    
-    MCBlockPosition spawn;
 
-    CD_DEFINE_PRIVATE;
-    CD_DEFINE_CACHE;
+    MCBlockPosition spawnPosition;
+    CDSet*          chunks;
+
+    CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;
 } CDWorld;
 
 CDWorld* CD_CreateWorld (CDServer* server, const char* name);
+
+bool CD_WorldSave (CDWorld* self);
 
 void CD_DestroyWorld (CDWorld* self);
 
@@ -72,5 +74,9 @@ void CD_WorldBroadcast (CDWorld* self, CDString* message);
 uint16_t CD_WorldGetTime (CDWorld* self);
 
 uint16_t CD_WorldSetTime (CDWorld* self, uint16_t time);
+
+MCChunk* CD_WorldGetChunk (CDWorld* self, int x, int z);
+
+void CD_WorldSetChunk (CDWorld* self, MCChunk* chunk);
 
 #endif

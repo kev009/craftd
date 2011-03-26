@@ -37,6 +37,8 @@ typedef struct _CDSet {
 
 typedef void (*CDSetApply) (CDSet* self, CDPointer value, CDPointer context);
 
+CDSet* CD_CreateSet (void);
+
 /**
  * Allocate and create a new Set
  *
@@ -46,7 +48,8 @@ typedef void (*CDSetApply) (CDSet* self, CDPointer value, CDPointer context);
  *
  * @return The instantiated Set object
  */
-CDSet* CD_CreateSet (int hint, CDSetCompare cmp, CDSetHash hash);
+CDSet* CD_CreateSetWith (int hint, CDSetCompare cmp, CDSetHash hash);
+
 
 CDSet* CD_CloneSet (CDSet* self, int hint);
 

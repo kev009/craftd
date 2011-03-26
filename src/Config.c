@@ -80,8 +80,7 @@ CD_ParseConfig (const char* path)
     self->cache.spawn.y = 0;
     self->cache.spawn.z = 0;
 
-    self->cache.files.motd  = "/etc/craftd/motd.conf";
-    self->cache.files.world = "/usr/share/craftd/world";
+    self->cache.files.motd = "/etc/craftd/motd.conf";
 
     self->cache.workers = 2;
 
@@ -100,9 +99,8 @@ CD_ParseConfig (const char* path)
                 J_BOOL(game, "standard", self->cache.game.standard);
             }
 
-            J_IN(files, server, "file") {
+            J_IN(files, server, "files") {
                 J_STRING(files, "motd",  self->cache.files.motd);
-                J_STRING(files, "world", self->cache.files.world);
             }
 
             J_IN(rate, server, "rate") {

@@ -24,9 +24,8 @@
         "night": 20
     },
 
-    "file": {
-        "motd": "@sysconfdir@/craftd/motd.conf.dist",
-        "world": "@localstatedir@/craftd/world"
+    "files": {
+        "motd": "@sysconfdir@/craftd/motd.conf.dist"
     },
 
     "game": {
@@ -55,7 +54,9 @@
                 ]
             },
 
-            { "name": "persistence.nbt" },
+            { "name": "persistence.nbt",
+                "path": "@datadir@/worlds"
+            },
 
             { "name": "mapgen.classic",
                 "seed": "trolololol"

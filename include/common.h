@@ -27,14 +27,26 @@
 #define CRAFTD_COMMON_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
 #include <assert.h>
 
 #include <pthread.h>
+
+static inline void CD_abort (const char* error, ...) {
+    va_list ap;
+    
+    va_start(ap, error);
+    vfprintf(stderr, error, ap);
+    va_end(ap);
+
+    abort();
+}
 
 #include <event2/event.h>
 #include <event2/buffer.h>
@@ -70,8 +82,7 @@
 #include <craftd/Set.h>
 #include <craftd/String.h>
 #include <craftd/Regexp.h>
-#include <craftd/Cache.h>
-#include <craftd/Private.h>
+#include <craftd/Dynamic.h>
 
 #include <craftd/javaendian.h>
 

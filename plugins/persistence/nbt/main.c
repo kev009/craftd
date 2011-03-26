@@ -31,9 +31,14 @@
 
 #include <beta/minecraft.h>
 #include <beta/World.h>
+#include <beta/Logger.h>
 
 #include <nbt/nbt.h>
 #include <nbt/itoa.h>
+
+static struct {
+    const char* path;
+} _config;
 
 #if 0
 // Temporary hax; load from config
@@ -373,14 +378,95 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 
 #endif
 
+static
 bool
-cdnbt_WorldLoad (CDServer* server, CDWorld* world)
+cdnbt_WorldCreate (CDServer* server, CDWorld* world)
+{
+    int       error = CDNull;
+    CDString* path  = CD_CreateStringFromFormat("%s/%s/level.dat", _config.path, CD_StringContent(world->name));
+    nbt_node* root  = nbt_parse_path(CD_StringContent(path));
+
+    if (!root || errno != NBT_OK) {
+        goto error;
+    }
+
+    nbt_node* data = nbt_find_by_name(root, "Data")->payload.tag_compound->data;
+
+    if (errno != NBT_OK) {
+        goto error;
+    }
+
+    world->spawnPosition = (MCBlockPosition) {
+        .x = nbt_find_by_name(data, "SpawnX")->payload.tag_int,
+        .y = nbt_find_by_name(data, "SpawnY")->payload.tag_int,
+        .z = nbt_find_by_name(data, "SpawnZ")->payload.tag_int
+    };
+
+    WDEBUG(world, "spawn position: (%d, %d, %d)",
+        world->spawnPosition.x,
+        world->spawnPosition.y,
+        world->spawnPosition.z);
+
+    CD_WorldSetTime(world, nbt_find_by_name(data, "Time")->payload.tag_long);
+
+    world->dimension = nbt_find_by_name(data, "Dimension")->payload.tag_int;
+
+    done: {
+        if (root) {
+            nbt_free(root);
+        }
+
+        return true;
+    }
+
+    error: {
+        int  status = errno;
+        bool done   = false;
+
+        if (root) {
+            nbt_free(root);
+        }
+
+        CD_EventDispatchWithResult(done, server, "Mapgen.level", world);
+
+        if (!done) {
+            WERR(world, "cNBT error: %s", nbt_error_to_string(status));
+        }
+        else {
+            WDEBUG(world, "spawn position: (%d, %d, %d)",
+                world->spawnPosition.x,
+                world->spawnPosition.y,
+                world->spawnPosition.z);
+        }
+
+        return true;
+    }
+}
+
+static
+bool
+cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
 {
     return true;
 }
 
+static
 bool
-cdnbt_WorldChunk (CDServer* server, CDWorld* world, MCChunkPosition position, MCChunk* chunk)
+cdnbt_WorldSetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
+{
+    return true;
+}
+
+static
+bool
+cdnbt_WorldSave (CDServer* server, CDWorld* world)
+{
+    return true;
+}
+
+static
+bool
+cdnbt_WorldDestroy (CDServer* server, CDWorld* world)
 {
     return true;
 }
@@ -391,8 +477,19 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("cNBT Persistence");
 
-    CD_EventRegister(self->server, "World.load", cdnbt_WorldLoad);
-    CD_EventRegister(self->server, "World.chunk", cdnbt_WorldChunk);
+    CD_DO { // Initialize configuration stuff
+        _config.path = "/usr/share/craftd/worlds";
+
+        J_DO {
+            J_STRING(self->config, "path", _config.path);
+        }
+    }
+
+    CD_EventRegister(self->server, "World.create",  cdnbt_WorldCreate);
+    CD_EventRegister(self->server, "World.chunk",   cdnbt_WorldGetChunk);
+    CD_EventRegister(self->server, "World.chunk=",  cdnbt_WorldSetChunk);
+    CD_EventRegister(self->server, "World.save",    cdnbt_WorldSave);
+    CD_EventRegister(self->server, "World.destroy", cdnbt_WorldDestroy);
 
     return true;
 }
@@ -401,8 +498,11 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventRegister(self->server, "World.load", cdnbt_WorldLoad);
-    CD_EventRegister(self->server, "World.chunk", cdnbt_WorldChunk);
+    CD_EventUnregister(self->server, "World.create",  cdnbt_WorldCreate);
+    CD_EventUnregister(self->server, "World.chunk",   cdnbt_WorldGetChunk);
+    CD_EventUnregister(self->server, "World.chunk=",   cdnbt_WorldSetChunk);
+    CD_EventUnregister(self->server, "World.save",    cdnbt_WorldSave);
+    CD_EventUnregister(self->server, "World.destroy", cdnbt_WorldDestroy);
 
     return true;
 }

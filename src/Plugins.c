@@ -92,19 +92,31 @@ CD_LoadPlugins (CDPlugins* self)
 }
 
 CDPlugin*
-CD_LoadPlugin (CDPlugins* self, const char* path)
+CD_LoadPlugin (CDPlugins* self, const char* name)
 {
-    CDPlugin* plugin = CD_CreatePlugin(self->server, path);
+    CDPlugin* plugin = CD_CreatePlugin(self->server, name);
 
     if (!plugin) {
         if (errno == ENOENT) {
-            SERR(self->server, "%s could not be found", path);
+            SERR(self->server, "%s could not be found", name);
         }
 
         return NULL;
     }
 
-    CD_HashPut(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
+    CD_HashPut(self->items, name, (CDPointer) plugin);
 
     return plugin;
+}
+
+CDPlugin*
+CD_GetPlugin (CDPlugins* self, const char* name)
+{
+    return (CDPlugin*) CD_HashGet(self->items, name);
+}
+
+void
+CD_UnloadPlugin (CDPlugins* self, const char* name)
+{
+    CD_DestroyPlugin((CDPlugin*) CD_HashDelete(self->items, name));
 }

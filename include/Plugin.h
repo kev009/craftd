@@ -60,8 +60,7 @@ typedef struct _CDPlugin {
 
     const json_t* config;
 
-    CD_DEFINE_PRIVATE;
-    CD_DEFINE_CACHE;
+    CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;
 } CDPlugin;
 
