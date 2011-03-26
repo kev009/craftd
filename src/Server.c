@@ -44,8 +44,6 @@ CD_CreateServer (const char* path)
 {
     CDServer* self = CD_malloc(sizeof(CDServer));
 
-    assert(self);
-
     self->name = NULL;
 
     self->packet.parsable = NULL;
@@ -61,8 +59,6 @@ CD_CreateServer (const char* path)
     self->timeloop = CD_CreateTimeLoop(self);
     self->workers  = CD_CreateWorkers(self);
     self->plugins  = CD_CreatePlugins(self);
-
-    assert(self->workers && self->timeloop && self->plugins);
 
     self->clients       = CD_CreateList();
     self->disconnecting = CD_CreateList();

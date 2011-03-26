@@ -30,8 +30,6 @@ CD_CreateBuffers (void)
 {
     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
 
-    assert(self);
-
     self->input  = CD_CreateBuffer();
     self->output = CD_CreateBuffer();
 
@@ -45,8 +43,6 @@ CDBuffers*
 CD_WrapBuffers (CDRawBuffers buffers)
 {
     CDBuffers* self = CD_malloc(sizeof(CDBuffers));
-
-    assert(self);
 
     self->input  = CD_WrapBuffer(bufferevent_get_input(buffers));
     self->output = CD_WrapBuffer(bufferevent_get_output(buffers));

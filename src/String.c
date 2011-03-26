@@ -101,8 +101,6 @@ CD_CreateString (void)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
-    assert(self);
-
     self->raw      = bfromcstr("");
     self->length   = 0;
     self->external = false;
@@ -117,11 +115,7 @@ CD_CreateStringFromCString (const char* string)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
-    assert(self);
-
     self->raw = CD_malloc(sizeof(*self->raw));
-
-    assert(self->raw);
 
     if (string == NULL) {
         self->raw->data = (unsigned char*) "";
@@ -145,8 +139,6 @@ CD_CreateStringFromCStringCopy (const char* string)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
-    assert(self);
-
     self->raw      = bfromcstr(string);
     self->external = false;
 
@@ -161,8 +153,6 @@ CDString*
 CD_CreateStringFromBuffer (const char* buffer, size_t length)
 {
     CDString* self = CD_malloc(sizeof(CDString));
-
-    assert(self);
 
     self->raw      = CD_malloc(sizeof(*self->raw));
     self->external = true;
@@ -182,8 +172,6 @@ CDString*
 CD_CreateStringFromBufferCopy (const char* buffer, size_t length)
 {
     CDString* self = CD_malloc(sizeof(CDString));
-
-    assert(self);
 
     self->raw      = blk2bstr(buffer, length);
     self->external = false;

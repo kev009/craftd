@@ -30,8 +30,6 @@ CD_CreateBuffer (void)
 {
     CDBuffer* self = CD_malloc(sizeof(CDBuffer));
 
-    assert(self);
-
     self->raw      = evbuffer_new();
     self->external = false;
 
@@ -44,8 +42,6 @@ CDBuffer*
 CD_WrapBuffer (CDRawBuffer buffer)
 {
     CDBuffer* self = CD_malloc(sizeof(CDBuffer));
-
-    assert(self);
 
     self->raw      = buffer;
     self->external = true;

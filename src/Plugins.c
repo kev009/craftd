@@ -32,10 +32,6 @@ CD_CreatePlugins (struct _CDServer* server)
 {
     CDPlugins* self = CD_malloc(sizeof(CDPlugins));
 
-    if (!self) {
-        return NULL;
-    }
-
     self->server = server;
     self->items  = CD_CreateHash();
 

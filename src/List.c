@@ -47,8 +47,6 @@ cd_ListCreateItem (CDPointer data)
 {
     CDListItem* item = (CDListItem*) CD_malloc(sizeof(CDListItem));
 
-    assert(item);
-
     item->next  = NULL;
     item->prev  = NULL;
     item->value = data;
@@ -175,8 +173,6 @@ CDList*
 CD_CreateList (void)
 {
     CDList* self = CD_malloc(sizeof(CDList));
-
-    assert(self);
 
     self->head    = NULL;
     self->tail    = NULL;
@@ -324,8 +320,6 @@ CD_ListPush (CDList* self, CDPointer data)
     pthread_rwlock_wrlock(&self->lock);
 
     CDListItem* item = (CDListItem *) CD_malloc(sizeof(CDListItem));
-
-    assert(item);
 
     item->next  = NULL;
     item->prev  = NULL;

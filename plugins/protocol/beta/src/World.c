@@ -30,7 +30,6 @@ CD_CreateWorld (CDServer* server, const char* name)
 {
     CDWorld* self = CD_malloc(sizeof(CDWorld));
 
-    assert(self);
     assert(name);
 
     if (pthread_spin_init(&self->lock.time, 0) != 0) {

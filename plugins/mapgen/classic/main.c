@@ -27,310 +27,24 @@
 #include <craftd/Plugin.h>
 
 #include <beta/minecraft.h>
-
-#include <math.h>
-#include <noise/simplexnoise1234.h>
+#include <beta/World.h>
 
 static struct {
-    CDString* seed;
+    const char* seed;
 } _config;
 
-static
-float
-cdmg_Multifractal2d (float x, float z, float lacunarity, int octaves)
-{
-    float exponentArray[octaves];
-    float frequency = 1.0;
-    float H         = 0.25;
-    float offset    = 0.7;
-    float weight    = 1.0;
-    float result    = 0.0;
-
-    for (int i = 0; i < octaves; i++) {
-        exponentArray[i] = pow(frequency, -H);
-        frequency       *= lacunarity;
-    }
-
-    for (int i = 0; i < octaves; i++) {
-        float _signal = (snoise2(x, z) + offset) * exponentArray[i];
-
-        if (weight > 1.0) {
-            weight = 1.0;
-        }
-
-        result += (weight * _signal);
-        weight *= _signal;
-        x      *= lacunarity;
-        z      *= lacunarity;
-    }
-
-    return result;
-}
+#include "helpers.c"
 
 static
-float
-cdmg_Multifractal3d (float x, float y, float z, float lacunarity, int octaves)
+bool
+cdclassic_GenerateLevel (CDServer* server, CDWorld* world)
 {
-    float exponentArray[octaves];
-    float frequency   = 1.0;
-    float H           = 0.25;
-    float offset      = 0.7;
-    float weight      = 1.0;
-    float totalWeight = 0.0;
-    float result      = 0.0;
-
-    for (int i = 0; i < octaves; i++) {
-        exponentArray[i] = pow(frequency, -H);
-        frequency       *= lacunarity;
-    }
-
-    for (int i = 0; i < octaves; i++) {
-        float _signal = (snoise3(x, y, z) + offset) * exponentArray[i];
-
-        if (weight > 1.0) {
-            weight = 1.0;
-        }
-
-        result      += (weight * _signal);
-        totalWeight += (exponentArray[i] * weight);
-
-        weight *= _signal;
-        x      *= lacunarity;
-        z      *= lacunarity;
-    }
-
-    return result;
-}
-
-static
-void
-cdmg_GenerateHeightMap (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    // step 1: generate the height map
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.00155; // magic
-            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.00155;
-
-            chunkData->heightMap[x + (z * 16)] = cdmg_Multifractal2d(totalX, totalZ, 2.7, 20) * 13.5 + 55;
-        }
-    }
-}
-
-static
-void
-cdmg_GenerateFilledChunk (MCChunk* chunkData, int chunkX, int chunkZ, MCBlockType blockType)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            for (int y = 0; y < chunkData->heightMap[x + (z * 16)] && y < 128; y++) {
-                // stone is the basis of MC worlds
-                chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
-            }
-        }
-    }
-}
-
-static
-void
-cdmg_GenerateSkyLight (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    int lightValue = 0x0F;
-
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            for (int y = chunkData->heightMap[x + (z * 16)]; y < 128; y++) {
-                if (y % 2) {
-                    chunkData->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] |= (lightValue << 4);
-                }
-                else {
-                    chunkData->skyLight[((z * 128) + (x * 128 * 16) + y) / 2] |= (lightValue);
-                }
-            }
-        }
-    }
-}
-
-static
-void
-cdmg_DigCaves (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            float totalX = ((((float) chunkX) * 16.0) + ((float) x));
-            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z));
-
-            for (int y = 0; y < 54; y++) {
-                float result  = (snoise3(totalX / 12.0, y / 12.0, totalZ / 12.0)
-                    + (0.5 * snoise3(totalX / 24.0, y / 24.0, totalZ / 24.0))) / 1.5;
-
-                if (result > 0.35) {
-                    if (y < 16) {
-                        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCLava;
-                    }
-                    else {
-                        // cave
-                        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
-                    }
-                }
-            }
-
-            for (int y = 54; y < chunkData->heightMap[x + (z * 16)] - 4; y++) {
-                float result = (snoise3(totalX / 12.0, y / 12.0, totalZ / 12.0)
-                    + (0.5 * snoise3(totalX / 24.0, y / 24.0, totalZ / 24.0))) / 1.5;
-
-                if (result > 0.45) {
-                    // cave
-                    chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
-                }
-            }
-
-            // update height map
-            for (int y = chunkData->heightMap[x + (z * 16)]; y > 0 && chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
-                chunkData->heightMap[x + (z * 16)] = y;
-            }
-        }
-    }
-}
-
-static
-void
-cdmg_ErodeLandscape (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            float totalX = ((((float) chunkX) * 16.0) + ((float) x));
-            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z));
-
-            // erosion (over ground)
-            for (int y = 65; y < chunkData->heightMap[x + (z * 16)]; y++) {
-                float result = (snoise3(totalX / 40.0, y / 50.0, totalZ / 40.0)
-                    + (0.5 * snoise3(totalX / 80.0, y / 100.0, totalZ / 80.0))) / 1.5;
-
-                if (result > 0.50) {
-                    // cave
-                    chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
-                }
-            }
-
-            // update height map
-            int y = chunkData->heightMap[x + (z * 16)];
-            while (y > 0 && chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
-                chunkData->heightMap[x + (z * 16)] = y--;
-            }
-        }
-    }
-}
-
-static
-void
-cdmg_AddSediments (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            // step 3: replace top with grass / the higher, the less blocks / 0 to 3
-
-            int y              = chunkData->heightMap[x + (z * 16)];
-            int sedimentHeight = (128 - chunkData->heightMap[x + (z * 16)]) / 21; // 0 - 3 blocks
-
-            if (y < 64) {
-                for (int i = 0; i < sedimentHeight; i++) {
-                    // sand underwater
-                    chunkData->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCSand;
-                }
-            }
-            else if (y >= 64 && sedimentHeight > 0) {
-                for (int i = 0; i < sedimentHeight - 1; i++, sedimentHeight--) {
-                    chunkData->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCDirt;
-                }
-
-                chunkData->blocks[y + (z * 128) + (x * 128 * 16) + sedimentHeight - 1] = MCGrass;
-            }
-
-            chunkData->heightMap[x + (z * 16)] += sedimentHeight;
-        }
-    }
-}
-
-static
-void
-cdmg_FloodWithWater (MCChunk* chunkData, int chunkX, int chunkZ, int8_t waterLevel)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            // step 4: flood with water at level 64
-            for (int y = waterLevel; chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
-                chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = MCWater;
-            }
-        }
-    }
-}
-
-static
-void
-cdmg_BedrockGround (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    for (int x = 0; x < 16; x++) {
-        for (int z = 0; z < 16; z++) {
-            chunkData->blocks[0 + (z * 128) + (x*128*16)] = MCBedrock;
-            chunkData->blocks[1 + (z * 128) + (x*128*16)] = MCBedrock;
-            chunkData->heightMap[x+(z * 16)]              = CD_Max(chunkData->heightMap[x + (z * 16)], 2);
-        }
-    }
-}
-
-static
-void
-cdmg_AddMineral (MCChunk* chunkData, int x, int z, int y, float totalX, float totalZ, float totalY, MCBlockType blockType, float probability)
-{
-    if (snoise4(totalX, totalY, totalZ, blockType) + 1.0 <= (0.25 * probability)) {
-        chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
-    }
-}
-
-static
-void
-cdmg_AddMinerals (MCChunk* chunkData, int chunkX, int chunkZ)
-{
-    for (int x = 0; x < 16; x++) {
-        float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.075;
-
-        for (int z = 0; z < 16; z++) {
-            float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.075;
-
-            for (int y = 2; y < chunkData->heightMap[x + (z * 16)]; y++) {
-                if (chunkData->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
-                    continue;
-                }
-
-                float totalY = (((float) y)) * 0.075;
-
-                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCCoalOre, 1.3);
-                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCDirt, 2.5);
-                cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCGravel, 2.5);
-
-                // 5 blocks under the surface
-                if (y < chunkData->heightMap[x + (z * 16)] - 5) {
-                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCIronOre, 1.15);
-                }
-
-                if (y < 40) {
-                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCLapisLazuliOre, 0.80);
-                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCGoldOre, 0.85);
-                }
-
-                if (y < 20) {
-                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCDiamondOre, 0.80);
-                    cdmg_AddMineral(chunkData, x, z, y, totalX, totalZ, totalY, MCRedstoneOre, 1.2);
-                }
-            }
-        }
-    }
+    return true;
 }
 
 static
 bool
-cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunk* data, CDString* seed)
+cdclassic_GenerateChunk (CDServer* server, int x, int z, MCChunk* data, const char* seed)
 {
     memset(data, 0, sizeof(MCChunk));
 
@@ -338,17 +52,17 @@ cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunk* data, CDS
         seed = _config.seed;
     }
 
-    cdmg_GenerateHeightMap(data, chunkX, chunkZ);
-    cdmg_GenerateFilledChunk(data, chunkX, chunkZ, MCStone);
-    cdmg_DigCaves(data, chunkX, chunkZ);
-    cdmg_ErodeLandscape(data, chunkX, chunkZ);
-    cdmg_AddMinerals(data, chunkX, chunkZ);
-    cdmg_AddSediments(data, chunkX, chunkZ);
-    cdmg_FloodWithWater(data, chunkX, chunkZ, 64);
-    cdmg_BedrockGround(data, chunkX, chunkZ);
-    cdmg_GenerateSkyLight(data, chunkX, chunkZ);
+    cdclassic_GenerateHeightMap(data, x, z);
+    cdclassic_GenerateFilledChunk(data, x, z, MCStone);
+    cdclassic_DigCaves(data, x, z);
+    cdclassic_ErodeLandscape(data, x, z);
+    cdclassic_AddMinerals(data, x, z);
+    cdclassic_AddSediments(data, x, z);
+    cdclassic_FloodWithWater(data, x, z, 64);
+    cdclassic_BedrockGround(data, x, z);
+    cdclassic_GenerateSkyLight(data, x, z);
 
-    return false;
+    return true;
 }
 
 extern
@@ -358,33 +72,16 @@ CD_PluginInitialize (CDPlugin* self)
     self->description = CD_CreateStringFromCString("Classic Mapgen");
 
     CD_DO { // Initiailize config cache
-        _config.seed = NULL;
+        _config.seed = "^_^";
 
         J_DO {
-            J_IN(server, self->server->config->data, "server") {
-                J_IN(plugin, server, "plugin") {
-                    J_FOREACH(plugin, plugin, "plugins") {
-                        J_IF_STRING(plugin, "name") {
-                            if (CD_CStringIsEqual(J_STRING_VALUE, "mapgen.classic")) {
-                                J_IF_STRING(plugin, "seed") {
-                                    _config.seed = CD_CreateStringFromCString(J_STRING_VALUE);
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (_config.seed == NULL) {
-            _config.seed = CD_CreateStringFromCString("^_^");
+            J_STRING(self->config, "seed", _config.seed);
         }
     }
 
 
-    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventRegister(self->server, "Mapgen.level", cdclassic_GenerateLevel);
+    CD_EventRegister(self->server, "Mapgen.chunk", cdclassic_GenerateChunk);
 
     return true;
 }
@@ -393,7 +90,8 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventUnregister(self->server, "Mapgen.level", cdclassic_GenerateLevel);
+    CD_EventUnregister(self->server, "Mapgen.chunk", cdclassic_GenerateChunk);
 
     return true;
 }

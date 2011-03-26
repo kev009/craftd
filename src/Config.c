@@ -32,10 +32,6 @@ CD_ParseConfig (const char* path)
 {
     CDConfig* self = CD_malloc(sizeof(CDConfig));
 
-    if (!self) {
-        return NULL;
-    }
-
     self->data = json_load_file(path, 0, &self->error);
 
     if (!self->data) {

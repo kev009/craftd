@@ -48,7 +48,7 @@ cd_ConsoleLog (int priority, const char* format, ...)
     CDString* priorityBuffer;
     CDString* messageBuffer = CD_CreateStringFromFormatList(format, ap);
 
-    if (priority >= (sizeof(names) / sizeof(char*)) || priority < 0) {
+    if (priority >= ARRAY_SIZE(names) || priority < 0) {
         priorityBuffer = CD_CreateStringFromCString("UNKNOWN");
     }
     else {

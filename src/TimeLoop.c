@@ -38,14 +38,17 @@ CD_CreateTimeLoop (struct _CDServer* server)
 {
     CDTimeLoop* self = CD_malloc(sizeof(CDTimeLoop));
 
-    if (!self) {
-        return NULL;
+    if (pthread_spin_init(&self->lock.last, PTHREAD_PROCESS_PRIVATE) != 0) {
+        CD_abort("pthread spinlock failed to initialize");
     }
 
-    pthread_spin_init(&self->lock.last, PTHREAD_PROCESS_PRIVATE);
+    if (pthread_attr_init(&self->attributes) != 0) {
+        CD_abort("pthread attribute failed to initialize");
+    }
 
-    pthread_attr_init(&self->attributes);
-    pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED);
+    if (pthread_attr_setdetachstate(&self->attributes, PTHREAD_CREATE_DETACHED) != 0) {
+        CD_abort("pthread attribute failed to set in detach state");
+    }
 
     self->server     = server;
     self->running    = false;

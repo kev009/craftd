@@ -114,45 +114,45 @@ cdbeta_ServerStart (CDServer* server)
 {
     CDPlugin* self = CD_GetPlugin(server->plugins, "protocol.beta");
 
-    CD_DO { // Initialize server's cache base slot
-        CDList*  worlds       = CD_CreateList();
-        CDWorld* defaultWorld = NULL;
+    CDList*  worlds       = CD_CreateList();
+    CDWorld* defaultWorld = NULL;
 
-        J_DO {
-            J_FOREACH(world, self->config, "worlds") {
-                J_IF_BOOL(world, "default") {
-                    if (J_BOOL_VALUE) {
-                        J_IF_STRING(world, "name") {
-                            defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
-                        }
-
-                        break;
+    J_DO {
+        J_FOREACH(world, self->config, "worlds") {
+            J_IF_BOOL(world, "default") {
+                if (J_BOOL_VALUE) {
+                    J_IF_STRING(world, "name") {
+                        defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
                     }
+
+                    break;
                 }
             }
         }
-
-        if (!defaultWorld) {
-            defaultWorld = CD_CreateWorld(self->server, "default");
-        }
-
-        CD_ListPush(worlds, (CDPointer) defaultWorld);
-
-        J_DO {
-            J_FOREACH(world, self->config, "worlds") {
-                J_IF_BOOL(world, "default") {
-                    if (!J_BOOL_VALUE) {
-                        J_IF_STRING(world, "name") {
-                            CD_ListPush(worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
-                        }
-                    }
-                }
-            }
-        }
-
-        CD_DynamicPut(self->server, "World.list", (CDPointer) worlds);
-        CD_DynamicPut(self->server, "World.default", (CDPointer) defaultWorld);
     }
+
+    if (!defaultWorld) {
+        defaultWorld = CD_CreateWorld(self->server, "default");
+    }
+
+    CD_ListPush(worlds, (CDPointer) defaultWorld);
+
+    J_DO {
+        J_FOREACH(world, self->config, "worlds") {
+            J_IF_BOOL(world, "default") {
+                if (!J_BOOL_VALUE) {
+                    J_IF_STRING(world, "name") {
+                        CD_ListPush(worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
+                    }
+                }
+            }
+        }
+    }
+
+    CD_DynamicPut(self->server, "World.list", (CDPointer) worlds);
+    CD_DynamicPut(self->server, "World.default", (CDPointer) defaultWorld);
+
+    return true;
 }
 
 extern

@@ -30,8 +30,6 @@ CD_CreateMap (void)
 {
     CDMap* self = CD_malloc(sizeof(CDMap));
 
-    assert(self);
-
     self->raw = kh_init(cdMap);
 
     assert(self->raw);

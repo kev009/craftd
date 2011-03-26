@@ -34,8 +34,6 @@ CD_CreateWorker (CDServer* server)
 {
     CDWorker* self = CD_malloc(sizeof(CDWorker));
 
-    assert(self);
-
     self->server  = server;
     self->thread  = 0;
     self->id      = 0;

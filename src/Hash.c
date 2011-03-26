@@ -31,8 +31,6 @@ CD_CreateHash (void)
 {
     CDHash* self = CD_malloc(sizeof(CDHash));
 
-    assert(self);
-
     self->raw = kh_init(cdHash);
 
     assert(self->raw);

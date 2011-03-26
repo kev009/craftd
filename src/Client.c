@@ -31,10 +31,6 @@ CD_CreateClient (CDServer* server)
 {
     CDClient* self = CD_malloc(sizeof(CDClient));
 
-    if (!self) {
-        return NULL;
-    }
-
     if (pthread_rwlock_init(&self->lock.status, NULL) != 0) {
         CD_abort("pthread rwlock failed to initialize");
     }

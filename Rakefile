@@ -202,9 +202,16 @@ namespace :craftd do |craftd|
         CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
 
         classic.sources.each {|f|
-          file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+          if f.end_with?('main.c')
+            file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
+              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+            end
+          else
+            file f.ext('o') => c_file(f) do
+              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+            end
           end
+
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do

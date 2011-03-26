@@ -31,8 +31,6 @@ CD_CreatePlugin (CDServer* server, const char* name)
 {
     CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
-    assert(self);
-
     self->server = server;
 
     self->name        = CD_CreateStringFromCString(name);

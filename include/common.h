@@ -48,6 +48,8 @@ static inline void CD_abort (const char* error, ...) {
     abort();
 }
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
+
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>

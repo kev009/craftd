@@ -55,8 +55,6 @@ CD_CreateEventCallback (CDEventCallbackFunction function, int priority)
 {
     CDEventCallback* self = CD_malloc(sizeof(CDEventCallback));
 
-    assert(self);
-
     self->function = function;
     self->priority = priority;
 

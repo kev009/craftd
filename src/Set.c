@@ -49,8 +49,6 @@ CD_CreateSetWith (int hint, CDSetCompare cmp, CDSetHash hash)
 
     self = CD_malloc(sizeof(CDSet) + primes[i - 1] * sizeof(self->buckets[0]));
 
-    assert(self);
-
     self->size    = primes[i - 1];
     self->cmp     = cmp  ? cmp  : cmpAtom;
     self->hash    = hash ? hash : hashAtom;
@@ -240,8 +238,6 @@ CD_SetToArray (CDSet* self, CDPointer end)
     assert(self);
 
     array = CD_malloc((self->length + 1) * sizeof(CDPointer));
-
-    assert(array);
 
     for (size_t i = 0; i < self->size; i++) {
         for (member = self->buckets[i]; member != NULL; member = member->next) {

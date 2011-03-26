@@ -390,16 +390,10 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         goto error;
     }
 
-    nbt_node* data = nbt_find_by_name(root, "Data")->payload.tag_compound->data;
-
-    if (errno != NBT_OK) {
-        goto error;
-    }
-
     world->spawnPosition = (MCBlockPosition) {
-        .x = nbt_find_by_name(data, "SpawnX")->payload.tag_int,
-        .y = nbt_find_by_name(data, "SpawnY")->payload.tag_int,
-        .z = nbt_find_by_name(data, "SpawnZ")->payload.tag_int
+        .x = nbt_find_by_name(root, "SpawnX")->payload.tag_int,
+        .y = nbt_find_by_name(root, "SpawnY")->payload.tag_int,
+        .z = nbt_find_by_name(root, "SpawnZ")->payload.tag_int
     };
 
     WDEBUG(world, "spawn position: (%d, %d, %d)",
@@ -407,9 +401,9 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         world->spawnPosition.y,
         world->spawnPosition.z);
 
-    CD_WorldSetTime(world, nbt_find_by_name(data, "Time")->payload.tag_long);
+    CD_WorldSetTime(world, nbt_find_by_name(root, "Time")->payload.tag_long);
 
-    world->dimension = nbt_find_by_name(data, "Dimension")->payload.tag_int;
+    world->dimension = nbt_find_by_name(root, "Dimension")->payload.tag_int;
 
     done: {
         if (root) {
@@ -430,7 +424,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         CD_EventDispatchWithResult(done, server, "Mapgen.level", world);
 
         if (!done) {
-            WERR(world, "cNBT error: %s", nbt_error_to_string(status));
+            WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(status));
         }
         else {
             WDEBUG(world, "spawn position: (%d, %d, %d)",

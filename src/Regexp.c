@@ -44,8 +44,6 @@ CD_CreateRegexp (char* string, int options)
 
     CDRegexp* self = CD_malloc(sizeof(CDRegexp));
 
-    assert(self);
-
     self->string  = string;
     self->options = options;
     self->pattern = pattern;
@@ -82,9 +80,7 @@ CD_DestroyRegexpKeepString (CDRegexp* self)
 CDRegexpMatches*
 CD_CreateRegexpMatches (size_t length)
 {
-    CDRegexpMatches* self = CD_malloc(sizeof(CDRegexpMatches));
-
-    assert(self);
+    CDRegexpMatches* self = CD_alloc(sizeof(CDRegexpMatches));
 
     self->length = length;
     self->item   = CD_calloc(length, sizeof(CDString*));
@@ -145,10 +141,6 @@ CD_RegexpMatchString (char* regexp, int options, CDString* string)
 {
     CDRegexp* self = CD_CreateRegexp(regexp, options);
 
-    if (!self) {
-        return NULL;
-    }
-
     CDRegexpMatches* result = CD_RegexpMatch(self, string);
 
     CD_DestroyRegexpKeepString(self);
@@ -160,10 +152,6 @@ CDRegexpMatches*
 CD_RegexpMatchCString (char* regexp, int options, char* string)
 {
     CDRegexp* self = CD_CreateRegexp(regexp, options);
-
-    if (!self) {
-        return NULL;
-    }
 
     CDString*        str     = CD_CreateStringFromCString(string);
     CDRegexpMatches* matches = CD_RegexpMatch(self, str);
@@ -185,7 +173,7 @@ CD_RegexpTest (CDRegexp* self, CDString* string)
     assert(string);
 
     pcre_fullinfo(self->pattern, self->study, PCRE_INFO_CAPTURECOUNT, &length);
-    substrings = CD_malloc((length * 3) * sizeof(int));
+    substrings = CD_alloc((length * 3) * sizeof(int));
 
     result = pcre_exec(self->pattern, self->study, CD_StringContent(string), CD_StringSize(string), 0, 0, substrings, length);
 

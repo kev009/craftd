@@ -30,8 +30,6 @@ CD_CreateJob (CDJobType type, CDPointer data)
 {
     CDJob* self = CD_malloc(sizeof(CDJob));
 
-    assert(self);
-
     self->type     = type;
     self->data     = data;
     self->external = false;
@@ -43,8 +41,6 @@ CDJob*
 CD_CreateExternalJob (CDJobType type, CDPointer data)
 {
     CDJob* self = CD_malloc(sizeof(CDJob));
-
-    assert(self);
 
     self->type     = type;
     self->data     = data;
@@ -82,8 +78,6 @@ CD_CreateCustomJob (CDCustomJobCallback callback, CDPointer data)
 {
     CDCustomJobData* self = CD_malloc(sizeof(CDCustomJobData));
 
-    assert(self);
-
     self->callback = callback;
     self->data     = data;
 
@@ -94,8 +88,6 @@ CDClientProcessJobData*
 CD_CreateClientProcessJob (CDClient* client, void* packet)
 {
     CDClientProcessJobData* self = CD_malloc(sizeof(CDClientProcessJobData));
-
-    assert(self);
 
     self->client = client;
     self->packet = packet;

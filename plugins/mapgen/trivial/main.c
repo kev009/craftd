@@ -27,12 +27,20 @@
 #include <craftd/Plugin.h>
 
 #include <beta/minecraft.h>
+#include <beta/World.h>
 
 static
 bool
-cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunk* data, CDString* seed)
+cdtrivial_GenerateLevel (CDServer* server, CDWorld* world)
 {
-    int lightValue = CD_Max(0x0F - ABS(chunkX) - ABS(chunkZ), 0);
+    return true;
+}
+
+static
+bool
+cdtrivial_GenerateChunk (CDServer* server, int x, int z, MCChunk* data, const char* seed)
+{
+    int lightValue = CD_Max(0x0F - ABS(x) - ABS(z), 0);
 
     // this should only put 1 layer of bedrock
     for (int x = 0; x < 16; x++) {
@@ -56,7 +64,8 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("Trivial Mapgen");
 
-    CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventRegister(self->server, "Mapgen.level", cdtrivial_GenerateLevel);
+    CD_EventRegister(self->server, "Mapgen.chunk", cdtrivial_GenerateChunk);
 
     return true;
 }
@@ -65,7 +74,8 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
+    CD_EventUnregister(self->server, "Mapgen.level", cdtrivial_GenerateLevel);
+    CD_EventUnregister(self->server, "Mapgen.chunk", cdtrivial_GenerateChunk);
 
     return true;
 }
