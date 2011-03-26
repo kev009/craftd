@@ -479,15 +479,8 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
                 CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            MCBlockPosition* spawnPosition = (MCBlockPosition*) CD_DynamicGet(server, "World.spawnPosition");
+            MCChunkPosition spawnChunk = MC_BlockPositionToChunkPosition(world->spawnPosition);
 
-            if (!spawnPosition) {
-                SERR(server, "unknown spawn position, can't finish login procedure");
-
-                return false;
-            }
-
-            MCChunkPosition spawnChunk = MC_BlockPositionToChunkPosition(*spawnPosition);
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
@@ -506,7 +499,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             CD_DO {
                 CDPacketSpawnPosition pkt = {
                     .response = {
-                        .position = *spawnPosition
+                        .position = world->spawnPosition
                     }
                 };
 
@@ -516,7 +509,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             }
 
             CD_DO {
-                MCPrecisePosition pos = MC_BlockPositionToPrecisePosition(*spawnPosition);
+                MCPrecisePosition pos = MC_BlockPositionToPrecisePosition(world->spawnPosition);
                 CDPacketPlayerMoveLook pkt = {
                     .response = {
                         .position = {

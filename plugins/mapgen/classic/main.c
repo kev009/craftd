@@ -39,6 +39,12 @@ static
 bool
 cdclassic_GenerateLevel (CDServer* server, CDWorld* world)
 {
+    world->spawnPosition = (MCBlockPosition) {
+        .x = 0,
+        .y = 120,
+        .z = 0
+    };
+
     return true;
 }
 

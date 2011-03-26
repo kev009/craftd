@@ -38,87 +38,9 @@
 
 static struct {
     const char* path;
+
+    int base;
 } _config;
-
-#if 0
-// Temporary hax; load from config
-static const int WORLD_BASE = 36;
-
-/**
- * Run at plugin startup to initialize World.spawnPosition struct with default spawn
- * coordinates and make sure the world directory exists.
- *
- * @return true on success, false otherwise
- */
-static
-bool
-cdnbt_LoadLevelDat (CDPlugin* self)
-{
-    struct stat statBuffer;
-
-    if (stat(self->server->config->cache.files.world, &statBuffer) < 0) {
-        SERR(self->server, "world directory %s does not exist", self->server->config->cache.files.world);
-
-        return false;
-    }
-
-    CDString* leveldatPath;
-    nbt_file* nf;
-    nbt_tag*  data;
-
-    if (nbt_init(&nf) != NBT_OK) {
-        SERR(self->server, "cannot initialize level.dat structure");
-
-        return false;
-    }
-
-    leveldatPath = CD_CreateStringFromFormat("%s/level.dat", self->server->config->cache.files.world);
-
-    MCBlockPosition* spawnPosition = CD_malloc(sizeof(MCBlockPosition));
-
-    // TODO: proper spawn point generation
-    if (access(CD_StringContent(leveldatPath), R_OK) < 0) {
-        spawnPosition->x = 0;
-        spawnPosition->y = 120;
-        spawnPosition->z = 0;
-    }
-    else {
-        if (nbt_parse(nf, CD_StringContent(leveldatPath)) != NBT_OK) {
-            SERR(self->server, "cannot parse level.dat (%s).", CD_StringContent(leveldatPath));
-
-            CD_free(spawnPosition);
-
-            return false;
-        }
-
-        if (valid_level(nf->root) != 0) {
-
-        }
-
-        data = nbt_find_tag_by_name("Data", nbt_cast_compound(nf->root));
-
-        nbt_tag* t_gameTime = nbt_find_tag_by_name("Time", nbt_cast_compound(data));
-        nbt_tag* t_spawnX   = nbt_find_tag_by_name("SpawnX", nbt_cast_compound(data));
-        nbt_tag* t_spawnY   = nbt_find_tag_by_name("SpawnY", nbt_cast_compound(data));
-        nbt_tag* t_spawnZ   = nbt_find_tag_by_name("SpawnZ", nbt_cast_compound(data));
-
-        CD_ServerSetTime(self->server, *(nbt_cast_long(t_gameTime)));
-
-        spawnPosition->x = *(nbt_cast_int(t_spawnX));
-        spawnPosition->y = *(nbt_cast_int(t_spawnY));
-        spawnPosition->z = *(nbt_cast_int(t_spawnZ));
-    }
-
-    DEBUG("spawn position: (%d, %d, %d)", spawnPosition->x, spawnPosition->y, spawnPosition->z);
-
-    CD_HashPut(PRIVATE(self->server), "World.spawnPosition", (CDPointer) spawnPosition);
-
-    nbt_free(nf);
-
-    CD_DestroyString(leveldatPath);
-
-    return true;
-}
 
 static
 bool
@@ -144,24 +66,82 @@ cdnbt_ValidChunk (nbt_tag* nbtRoot)
 
 static
 bool
-cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
+cdnbt_WorldCreate (CDServer* server, CDWorld* world)
 {
-    const char   bufferSize = 8; // Big enough for all base36 int values and -,nul
-    int          fd;
+    int       error = CDNull;
+    CDString* path  = CD_CreateStringFromFormat("%s/%s/level.dat", _config.path, CD_StringContent(world->name));
+    nbt_node* root  = nbt_parse_path(CD_StringContent(path));
+
+    if (!root || errno != NBT_OK) {
+        goto error;
+    }
+
+    world->spawnPosition = (MCBlockPosition) {
+        .x = nbt_find_by_name(root, "SpawnX")->payload.tag_int,
+        .y = nbt_find_by_name(root, "SpawnY")->payload.tag_int,
+        .z = nbt_find_by_name(root, "SpawnZ")->payload.tag_int
+    };
+
+    WDEBUG(world, "spawn position: (%d, %d, %d)",
+        world->spawnPosition.x,
+        world->spawnPosition.y,
+        world->spawnPosition.z);
+
+    CD_WorldSetTime(world, nbt_find_by_name(root, "Time")->payload.tag_long);
+
+    world->dimension = nbt_find_by_name(root, "Dimension")->payload.tag_int;
+
+    done: {
+        if (root) {
+            nbt_free(root);
+        }
+
+        return true;
+    }
+
+    error: {
+        int  status      = errno;
+        bool interrupted = false;
+
+        if (root) {
+            nbt_free(root);
+        }
+
+        CD_EventDispatchWithResult(interrupted, server, "Mapgen.level", world);
+
+        if (interrupted) {
+            WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(status));
+        }
+        else {
+            WDEBUG(world, "spawn position: (%d, %d, %d)",
+                world->spawnPosition.x,
+                world->spawnPosition.y,
+                world->spawnPosition.z);
+        }
+
+        return true;
+    }
+}
+
+static
+bool
+cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
+{
+    int fd;
 
     // Chunk directory and subdir location
-    char directory1[bufferSize];
-    char directory2[bufferSize];
+    char directory1[8];
+    char directory2[8];
 
-    itoa((x & 63), directory1, WORLD_BASE);
-    itoa((z & 63), directory2, WORLD_BASE);
+    itoa((x & 63), directory1, _config.base);
+    itoa((z & 63), directory2, _config.base);
 
     // Chunk file name
-    char chunkName1[bufferSize];
-    char chunkName2[bufferSize];
+    char chunkName1[8];
+    char chunkName2[8];
 
-    itoa(x, chunkName1, WORLD_BASE);
-    itoa(z, chunkName2, WORLD_BASE);
+    itoa(x, chunkName1, _config.base);
+    itoa(z, chunkName2, _config.base);
 
     CDString* chunkPath = CD_CreateStringFromFormat("%s/%s/%s/c.%s.%s.dat",
         server->config->cache.files.world,
@@ -171,13 +151,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 
     SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
-    nbt_file* nf = NULL;
-
-    if (nbt_init(&nf) != NBT_OK) {
-        SERR(server, "cannot init chunk struct");
-
-        goto error;
-    }
+    nbt_node* root = NULL;
 
     if (access(CD_StringContent(chunkPath), R_OK) < 0) {
         SDEBUG(server, "Generating chunk: %d,%d\n", x, z );
@@ -374,73 +348,7 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
 
         return false;
     }
-}
 
-#endif
-
-static
-bool
-cdnbt_WorldCreate (CDServer* server, CDWorld* world)
-{
-    int       error = CDNull;
-    CDString* path  = CD_CreateStringFromFormat("%s/%s/level.dat", _config.path, CD_StringContent(world->name));
-    nbt_node* root  = nbt_parse_path(CD_StringContent(path));
-
-    if (!root || errno != NBT_OK) {
-        goto error;
-    }
-
-    world->spawnPosition = (MCBlockPosition) {
-        .x = nbt_find_by_name(root, "SpawnX")->payload.tag_int,
-        .y = nbt_find_by_name(root, "SpawnY")->payload.tag_int,
-        .z = nbt_find_by_name(root, "SpawnZ")->payload.tag_int
-    };
-
-    WDEBUG(world, "spawn position: (%d, %d, %d)",
-        world->spawnPosition.x,
-        world->spawnPosition.y,
-        world->spawnPosition.z);
-
-    CD_WorldSetTime(world, nbt_find_by_name(root, "Time")->payload.tag_long);
-
-    world->dimension = nbt_find_by_name(root, "Dimension")->payload.tag_int;
-
-    done: {
-        if (root) {
-            nbt_free(root);
-        }
-
-        return true;
-    }
-
-    error: {
-        int  status = errno;
-        bool done   = false;
-
-        if (root) {
-            nbt_free(root);
-        }
-
-        CD_EventDispatchWithResult(done, server, "Mapgen.level", world);
-
-        if (!done) {
-            WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(status));
-        }
-        else {
-            WDEBUG(world, "spawn position: (%d, %d, %d)",
-                world->spawnPosition.x,
-                world->spawnPosition.y,
-                world->spawnPosition.z);
-        }
-
-        return true;
-    }
-}
-
-static
-bool
-cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
-{
     return true;
 }
 
@@ -473,9 +381,11 @@ CD_PluginInitialize (CDPlugin* self)
 
     CD_DO { // Initialize configuration stuff
         _config.path = "/usr/share/craftd/worlds";
+        _config.base = 36;
 
         J_DO {
             J_STRING(self->config, "path", _config.path);
+            J_INT(self->config, "base", _config.base);
         }
     }
 
