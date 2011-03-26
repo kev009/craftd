@@ -26,15 +26,17 @@
 #include <beta/World.h>
 
 CDWorld*
-CD_CreateWorld (CDServer* server)
+CD_CreateWorld (CDServer* server, const char* name)
 {
     CDWorld* self = CD_malloc(sizeof(CDWorld));
 
     assert(self);
+    assert(name);
     assert(pthread_spin_init(&self->lock.time, 0) == 0);
 
     self->server = server;
 
+    self->name      = CD_CreateStringFromCStringCopy(name);
     self->dimension = CDWorldNormal;
     self->time      = 0;
 
@@ -54,6 +56,8 @@ CD_CreateWorld (CDServer* server)
 void
 CD_DestroyWorld (CDWorld* self)
 {
+    assert(self);
+
     CD_HASH_FOREACH(self->players, it) {
         CD_ServerKick(self->server, ((CDPlayer*) CD_HashIteratorValue(it))->client, NULL);
     }
@@ -61,6 +65,8 @@ CD_DestroyWorld (CDWorld* self)
     CD_DestroyHash(self->players);
     CD_DestroyMap(self->clients);
     CD_DestroyMap(self->entities);
+
+    CD_DestroyString(self->name);
 
     CD_DestroyPrivate(PRIVATE(self));
     CD_DestroyCache(CACHE(self));

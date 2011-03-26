@@ -72,8 +72,8 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
     CD_DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
-        MCChunkData* data = CD_malloc(sizeof(MCChunkData));
-        bool         interrupted;
+        MCChunk* data = CD_malloc(sizeof(MCChunk));
+        bool     interrupted;
 
         CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, data);
 
@@ -104,7 +104,6 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
                 .length = written,
                 .item   = (MCByte*) buffer
             }
-
         };
 
         CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };

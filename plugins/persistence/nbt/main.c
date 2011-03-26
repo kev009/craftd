@@ -29,11 +29,13 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
+#include <beta/minecraft.h>
+#include <beta/World.h>
+
 #include <nbt/nbt.h>
 #include <nbt/itoa.h>
 
 #if 0
-
 // Temporary hax; load from config
 static const int WORLD_BASE = 36;
 
@@ -369,13 +371,28 @@ cdnbt_LoadChunk (CDServer* server, int x, int z, MCChunkData* chunkData)
     }
 }
 
+#endif
+
+bool
+cdnbt_WorldLoad (CDServer* server, CDWorld* world)
+{
+    return true;
+}
+
+bool
+cdnbt_WorldChunk (CDServer* server, CDWorld* world, MCChunkPosition position, MCChunk* chunk)
+{
+    return true;
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    cdnbt_LoadLevelDat(self);
+    self->description = CD_CreateStringFromCString("cNBT Persistence");
 
-    CD_EventRegister(self->server, "Chunk.load", cdnbt_LoadChunk);
+    CD_EventRegister(self->server, "World.load", cdnbt_WorldLoad);
+    CD_EventRegister(self->server, "World.chunk", cdnbt_WorldChunk);
 
     return true;
 }
@@ -384,11 +401,8 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
-    CD_EventUnregister(self->server, "Chunk.load", cdnbt_LoadChunk);
-
-    CD_free((void*) CD_HashGet(PRIVATE(self->server), "World.spawnPosition"));
+    CD_EventRegister(self->server, "World.load", cdnbt_WorldLoad);
+    CD_EventRegister(self->server, "World.chunk", cdnbt_WorldChunk);
 
     return true;
 }
-
-#endif

@@ -48,7 +48,11 @@
 
         "plugins": [
             { "name": "protocol.beta",
-                "commandChar": "/"
+                "commandChar": "/",
+
+                "worlds": [
+                    { "name": "world", "default": true }
+                ]
             },
 
             { "name": "persistence.nbt" },
@@ -59,7 +63,10 @@
 
             { "name": "commands.admin",
                 "authorizations": [
-                    { "name": "Notch", "password": "faggotree", "level": "admin" }
+                    { "name": "Notch",
+                        "password": "faggotree",
+                        "level": "admin"
+                    }
                 ],
 
                 "ticket": {

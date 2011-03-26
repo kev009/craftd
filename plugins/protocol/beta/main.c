@@ -112,25 +112,13 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->name = CD_CreateStringFromCString("Beta 1.3");
+    self->description = CD_CreateStringFromCString("Beta 1.3");
 
     CD_DO { // Initiailize config cache
         _config.commandChar = "/";
 
         J_DO {
-            J_IN(server, self->server->config->data, "server") {
-                J_IN(plugin, server, "plugin") {
-                    J_FOREACH(plugin, plugin, "plugins") {
-                        J_IF_STRING(plugin, "name") {
-                            if (CD_CStringIsEqual(J_STRING_VALUE, "beta")) {
-                                J_STRING(plugin, "commandChar", _config.commandChar);
-
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            J_STRING(self->config, "commandChar", _config.commandChar);
         }
     }
 
@@ -140,9 +128,41 @@ CD_PluginInitialize (CDPlugin* self)
         CDBetaServerCache*   cache   = CD_alloc(sizeof(CDBetaServerCache));
         CACHE(self->server)->slot[0] = (CDPointer) cache;
 
-        cache->worlds       = CD_CreateList();
-        cache->defaultWorld = CD_CreateWorld(self->server);
+        cache->worlds = CD_CreateList();
 
+        J_DO {
+            J_FOREACH(world, self->config, "worlds") {
+                J_IF_BOOL(world, "default") {
+                    if (J_BOOL_VALUE) {
+                        J_IF_STRING(world, "name") {
+                            cache->defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!cache->defaultWorld) {
+            cache->defaultWorld = CD_CreateWorld(self->server, "default");
+        }
+
+        CD_ListPush(cache->worlds, (CDPointer) cache->defaultWorld);
+
+        J_DO {
+            J_FOREACH(world, self->config, "worlds") {
+                J_IF_BOOL(world, "default") {
+                    if (!J_BOOL_VALUE) {
+                        J_IF_STRING(world, "name") {
+                            CD_ListPush(cache->worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
+                        }
+                    }
+                }
+            }
+        }
+
+        CD_HashPut(PRIVATE(self), "World.list", (CDPointer) cache->worlds);
         CD_HashPut(PRIVATE(self), "World.default", (CDPointer) cache->defaultWorld);
     }
 

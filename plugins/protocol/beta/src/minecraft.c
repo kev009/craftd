@@ -112,10 +112,6 @@ MC_AppendData (MCMetadata* metadata, MCData* data)
     return metadata;
 }
 
-extern size_t cd_UTF8_strlen (const char* data);
-extern size_t cd_UTF8_offset (const char* data, size_t offset);
-extern void   cd_UpdateLength (CDString* self);
-
 bool
 MC_StringIsValid (MCString self)
 {
@@ -125,8 +121,8 @@ MC_StringIsValid (MCString self)
         bool      has = false;
         CDString* ch  = CD_CharAt(self, i);
 
-        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
+        for (size_t h = 0, he = CD_UTF8_strlen(MCCharset); h < he; h++) {
+            const char* che = &MCCharset[CD_UTF8_offset(MCCharset, h)];
 
             if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
@@ -156,8 +152,8 @@ MC_StringSanitize (MCString self)
         bool      has = false;
         CDString* ch  = CD_CharAt(self, i);
 
-        for (size_t h = 0, he = cd_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[cd_UTF8_offset(MCCharset, h)];
+        for (size_t h = 0, he = CD_UTF8_strlen(MCCharset); h < he; h++) {
+            const char* che = &MCCharset[CD_UTF8_offset(MCCharset, h)];
 
             if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
@@ -180,7 +176,7 @@ MC_StringSanitize (MCString self)
         CD_DestroyString(ch);
     }
 
-    cd_UpdateLength(self);
+    self->length = CD_UTF8_strnlen(CD_StringContent(self), self->raw->slen);
 
     return result;
 }

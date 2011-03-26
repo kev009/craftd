@@ -24,7 +24,7 @@ if defined?(EXPORT)
 end
 
 CC      = (ENV['CC'] ||= 'gcc')
-CFLAGS  = "-Wall -Wextra -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"'"
+CFLAGS  = "-Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"'"
 LDFLAGS = "-export-dynamic"
 
 if ENV['DEBUG']

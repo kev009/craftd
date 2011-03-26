@@ -30,7 +30,7 @@
 
 static
 bool
-cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
+cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunk* data, CDString* seed)
 {
     int lightValue = CD_Max(0x0F - ABS(chunkX) - ABS(chunkZ), 0);
 
@@ -54,7 +54,7 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->name = CD_CreateStringFromCString("Mapgen.trivial");
+    self->description = CD_CreateStringFromCString("Trivial Mapgen");
 
     CD_EventRegister(self->server, "Mapgen.generateChunk", cdmg_GenerateChunk);
 

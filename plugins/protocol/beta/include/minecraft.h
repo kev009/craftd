@@ -116,14 +116,6 @@ static const char MCLongSize    = 8;
 static const char MCFloatSize   = 4;
 static const char MCDoubleSize  = 8;
 
-typedef struct _MCChunkData {
-    uint8_t blocks[32768];
-    uint8_t data[16384];
-    uint8_t blockLight[16384];
-    uint8_t skyLight[16384];
-    uint8_t heightMap[256];
-} MCChunkData;
-
 typedef struct _MCSize {
     MCByte x;
     MCByte y;
@@ -164,6 +156,17 @@ typedef struct _MCRelativePosition {
     MCByte y;
     MCByte z;
 } MCRelativePosition;
+
+typedef struct _MCChunk {
+    MCChunkPosition position;
+
+    uint8_t heightMap[256];
+
+    uint8_t blocks[32768];
+    uint8_t data[16384];
+    uint8_t blockLight[16384];
+    uint8_t skyLight[16384];
+} MCChunk;
 
 typedef enum _MCItemType {
     MCIronShovel          = 0x100,

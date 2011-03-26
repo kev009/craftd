@@ -104,7 +104,7 @@ cdmg_Multifractal3d (float x, float y, float z, float lacunarity, int octaves)
 
 static
 void
-cdmg_GenerateHeightMap (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_GenerateHeightMap (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     // step 1: generate the height map
     for (int x = 0; x < 16; x++) {
@@ -119,7 +119,7 @@ cdmg_GenerateHeightMap (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_GenerateFilledChunk (MCChunkData* chunkData, int chunkX, int chunkZ, MCBlockType blockType)
+cdmg_GenerateFilledChunk (MCChunk* chunkData, int chunkX, int chunkZ, MCBlockType blockType)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -133,7 +133,7 @@ cdmg_GenerateFilledChunk (MCChunkData* chunkData, int chunkX, int chunkZ, MCBloc
 
 static
 void
-cdmg_GenerateSkyLight (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_GenerateSkyLight (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     int lightValue = 0x0F;
 
@@ -153,7 +153,7 @@ cdmg_GenerateSkyLight (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_DigCaves (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_DigCaves (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -195,7 +195,7 @@ cdmg_DigCaves (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_ErodeLandscape (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_ErodeLandscape (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -224,7 +224,7 @@ cdmg_ErodeLandscape (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_AddSediments (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_AddSediments (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -254,7 +254,7 @@ cdmg_AddSediments (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_FloodWithWater (MCChunkData* chunkData, int chunkX, int chunkZ, int8_t waterLevel)
+cdmg_FloodWithWater (MCChunk* chunkData, int chunkX, int chunkZ, int8_t waterLevel)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -268,7 +268,7 @@ cdmg_FloodWithWater (MCChunkData* chunkData, int chunkX, int chunkZ, int8_t wate
 
 static
 void
-cdmg_BedrockGround (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_BedrockGround (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -281,7 +281,7 @@ cdmg_BedrockGround (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 void
-cdmg_AddMineral (MCChunkData* chunkData, int x, int z, int y, float totalX, float totalZ, float totalY, MCBlockType blockType, float probability)
+cdmg_AddMineral (MCChunk* chunkData, int x, int z, int y, float totalX, float totalZ, float totalY, MCBlockType blockType, float probability)
 {
     if (snoise4(totalX, totalY, totalZ, blockType) + 1.0 <= (0.25 * probability)) {
         chunkData->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
@@ -290,7 +290,7 @@ cdmg_AddMineral (MCChunkData* chunkData, int x, int z, int y, float totalX, floa
 
 static
 void
-cdmg_AddMinerals (MCChunkData* chunkData, int chunkX, int chunkZ)
+cdmg_AddMinerals (MCChunk* chunkData, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.075;
@@ -330,9 +330,9 @@ cdmg_AddMinerals (MCChunkData* chunkData, int chunkX, int chunkZ)
 
 static
 bool
-cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunkData* data, CDString* seed)
+cdmg_GenerateChunk (CDServer* server, int chunkX, int chunkZ, MCChunk* data, CDString* seed)
 {
-    memset(data, 0, sizeof(MCChunkData));
+    memset(data, 0, sizeof(MCChunk));
 
     if (seed == NULL) {
         seed = _config.seed;
@@ -355,7 +355,7 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->name = CD_CreateStringFromCString("Mapgen.classic");
+    self->description = CD_CreateStringFromCString("Classic Mapgen");
 
     CD_DO { // Initiailize config cache
         _config.seed = NULL;

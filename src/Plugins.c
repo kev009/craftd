@@ -94,7 +94,7 @@ CD_LoadPlugins (CDPlugins* self)
 CDPlugin*
 CD_LoadPlugin (CDPlugins* self, const char* path)
 {
-    CDPlugin* plugin = CD_CreatePlugin(self->server, path, &self->advise);
+    CDPlugin* plugin = CD_CreatePlugin(self->server, path);
 
     if (!plugin) {
         if (errno == ENOENT) {
@@ -105,7 +105,6 @@ CD_LoadPlugin (CDPlugins* self, const char* path)
     }
 
     CD_HashPut(self->items, CD_StringContent(plugin->name), (CDPointer) plugin);
-
 
     return plugin;
 }

@@ -38,6 +38,7 @@ typedef enum _CDWorldDimension {
 typedef struct _CDWorld {
     CDServer* server;
 
+    CDString*        name;
     CDWorldDimension dimension;
     uint16_t         time;
 
@@ -48,15 +49,19 @@ typedef struct _CDWorld {
     CDHash* players;
     CDMap*  clients;
     CDMap*  entities;
+    
+    MCBlockPosition spawn;
 
     CD_DEFINE_PRIVATE;
     CD_DEFINE_CACHE;
     CD_DEFINE_ERROR;
 } CDWorld;
 
-CDWorld* CD_CreateWorld (CDServer* server);
+CDWorld* CD_CreateWorld (CDServer* server, const char* name);
 
 void CD_DestroyWorld (CDWorld* self);
+
+void CD_WorldLoad (CDWorld* self);
 
 MCEntityId CD_WorldGenerateEntityId (CDWorld* self);
 

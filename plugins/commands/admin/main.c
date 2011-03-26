@@ -285,26 +285,14 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->name = CD_CreateStringFromCString("Admin");
+    self->description = CD_CreateStringFromCString("Admin Commands [auth, ticket, player, workers]");
 
     CD_DO { // Initiailize config cache
         _config.ticket.max = 20;
 
         J_DO {
-            J_IN(server, self->server->config->data, "server") {
-                J_IN(plugin, server, "plugin") {
-                    J_FOREACH(plugin, plugin, "plugins") {
-                        J_IF_STRING(plugin, "name") {
-                            if (CD_CStringIsEqual(J_STRING_VALUE, "admin")) {
-                                J_IN(ticket, plugin, "ticket") {
-                                    J_INT(ticket, "max", _config.ticket.max);
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-                }
+            J_IN(ticket, self->config, "ticket") {
+                J_INT(ticket, "max", _config.ticket.max);
             }
         }
     }

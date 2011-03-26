@@ -29,6 +29,7 @@
 #include <ltdl.h>
 
 #include <craftd/common.h>
+#include <craftd/Config.h>
 
 struct _CDPlugin;
 struct _CDServer;
@@ -49,27 +50,30 @@ typedef bool (*CDPluginFinalizer)(struct _CDPlugin*);
 typedef struct _CDPlugin {
     struct _CDServer* server;
 
-    CDString* path;
     CDString* name;
+    CDString* description;
 
     lt_dlhandle handle;
 
     CDPluginInitializer initialize;
     CDPluginFinalizer   finalize;
 
-    CDHash* _private;
-    CDError _error;
+    const json_t* config;
+
+    CD_DEFINE_PRIVATE;
+    CD_DEFINE_CACHE;
+    CD_DEFINE_ERROR;
 } CDPlugin;
 
 /**
  * Create a Plugin from a given path.
  *
  * @param server The Server the plugin will run on
- * @param path The path to the plugin
+ * @param name The name of the plugin
  *
  * @return The instantiated Plugin object
  */
-CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* path, lt_dladvise* advise);
+CDPlugin* CD_CreatePlugin (struct _CDServer* server, const char* name);
 
 /**
  * Destroy a Plugin object

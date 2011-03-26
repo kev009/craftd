@@ -27,31 +27,29 @@
 #include <craftd/Server.h>
 
 CDPlugin*
-CD_CreatePlugin (CDServer* server, const char* path, lt_dladvise* advise)
+CD_CreatePlugin (CDServer* server, const char* name)
 {
     CDPlugin* self = CD_malloc(sizeof(CDPlugin));
 
     assert(self);
 
-    self->server  = server;
-    self->name    = NULL;
-    self->path    = CD_CreateStringFromCString(path);
-    PRIVATE(self) = NULL;
+    self->server = server;
+
+    self->name        = CD_CreateStringFromCString(name);
+    self->description = NULL;
 
     self->initialize = NULL;
     self->finalize   = NULL;
-    self->handle     = (advise != NULL)
-        ? lt_dlopenadvise(path, *advise)
-        : lt_dlopenext(path);
+    self->handle     = lt_dlopenadvise(name, server->plugins->advise);
 
     if (!self->handle) {
-        CDString* tmp = CD_CreateStringFromFormat("libcd%s", path);
+        CDString* tmp = CD_CreateStringFromFormat("libcd%s", name);
         self->handle = lt_dlopenext(CD_StringContent(tmp));
         CD_DestroyString(tmp);
     }
 
     if (!self->handle) {
-        CDString* tmp = CD_CreateStringFromFormat("lib%s", path);
+        CDString* tmp = CD_CreateStringFromFormat("lib%s", name);
         self->handle = lt_dlopenext(CD_StringContent(tmp));
         CD_DestroyString(tmp);
     }
@@ -59,7 +57,7 @@ CD_CreatePlugin (CDServer* server, const char* path, lt_dladvise* advise)
     if (!self->handle) {
         CD_DestroyPlugin(self);
 
-        SERR(server, "Couldn't load plugin %s", path);
+        SERR(server, "Couldn't load plugin %s", name);
 
         errno = ENOENT;
 
@@ -69,18 +67,35 @@ CD_CreatePlugin (CDServer* server, const char* path, lt_dladvise* advise)
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    PRIVATE(self) = CD_CreateHash();
+    J_DO {
+        J_IN(server, self->server->config->data, "server") {
+            J_IN(plugin, server, "plugin") {
+                J_FOREACH(plugin, plugin, "plugins") {
+                    J_IF_STRING(plugin, "name") {
+                        if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
+                            self->config = plugin;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    PRIVATE(self) = CD_CreatePrivate();
+    CACHE(self)   = CD_CreateCache();
     ERROR(self)   = CDNull;
 
     if (self->initialize) {
         self->initialize(self);
     }
 
-    if (!self->name) {
-        self->name = CD_CloneString(self->path);
+    if (self->description) {
+        SLOG(server, LOG_NOTICE, "Loaded plugin %s - %s", name, CD_StringContent(self->description));
     }
-
-    SLOG(server, LOG_NOTICE, "Loaded plugin %s", CD_StringContent(self->name));
+    else {
+        SLOG(server, LOG_NOTICE, "Loaded plugin %s", name);
+    }
 
     return self;
 }
@@ -96,10 +111,10 @@ CD_DestroyPlugin (CDPlugin* self)
         lt_dlclose(self->handle);
     }
 
-    CD_DestroyString(self->path);
+    CD_DestroyString(self->name);
 
-    if (self->name) {
-        CD_DestroyString(self->name);
+    if (self->description) {
+        CD_DestroyString(self->description);
     }
 
     if (PRIVATE(self)) {

@@ -25,6 +25,8 @@
 
 #include <craftd/common.h>
 
+static
+inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {
@@ -46,7 +48,7 @@ cd_UTF8_nextCharLength (char data)
 }
 
 size_t
-cd_UTF8_strlen (const char* data)
+CD_UTF8_strlen (const char* data)
 {
     size_t result  = 0;
     size_t i       = 0;
@@ -60,7 +62,7 @@ cd_UTF8_strlen (const char* data)
 }
 
 size_t
-cd_UTF8_strnlen (const char* data, size_t limit)
+CD_UTF8_strnlen (const char* data, size_t limit)
 {
     size_t result  = 0;
     size_t i       = 0;
@@ -74,7 +76,7 @@ cd_UTF8_strnlen (const char* data, size_t limit)
 }
 
 size_t
-cd_UTF8_offset (const char* data, size_t offset)
+CD_UTF8_offset (const char* data, size_t offset)
 {
     size_t result = 0;
 
@@ -85,12 +87,13 @@ cd_UTF8_offset (const char* data, size_t offset)
     return result;
 }
 
+static
 void
 cd_UpdateLength (CDString* self)
 {
     assert(self);
 
-    self->length = cd_UTF8_strnlen(CD_StringContent(self), self->raw->slen);
+    self->length = CD_UTF8_strnlen(CD_StringContent(self), self->raw->slen);
 }
 
 CDString*
@@ -202,7 +205,7 @@ CD_CreateStringFromFormat (const char* format, ...)
 
     va_end(ap);
 
-    self->length = cd_UTF8_strlen(CD_StringContent(self));
+    self->length = CD_UTF8_strlen(CD_StringContent(self));
 
     return self;
 }
@@ -230,13 +233,13 @@ CD_CreateStringFromOffset (CDString* string, size_t offset, size_t limit)
         return NULL;
     }
 
-    data = CD_StringContent(string) + cd_UTF8_offset(CD_StringContent(string), offset);
+    data = CD_StringContent(string) + CD_UTF8_offset(CD_StringContent(string), offset);
 
     if (limit == 0) {
         limit = strlen(data);
     }
     else {
-        limit = cd_UTF8_offset(data, limit);
+        limit = CD_UTF8_offset(data, limit);
     }
 
     return CD_CreateStringFromBufferCopy(data, limit);
@@ -301,7 +304,7 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
         CD_DestroyString(tmp);
     }
 
-    size_t offset = cd_UTF8_offset((const char*) self->raw->data, index);
+    size_t offset = CD_UTF8_offset((const char*) self->raw->data, index);
 
     if (breplace(self->raw, offset, cd_UTF8_nextCharLength(self->raw->data[offset]), set->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
@@ -325,7 +328,7 @@ CD_InsertString (CDString* self, CDString* insert, size_t position)
         CD_DestroyString(tmp);
     }
 
-    if (binsert(self->raw, cd_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
+    if (binsert(self->raw, CD_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
     }
     else {

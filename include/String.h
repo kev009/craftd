@@ -128,6 +128,13 @@ CDString* CD_CreateStringFromOffset (CDString* self, size_t offset, size_t limit
 CDString* CD_CloneString (CDString* self);
 
 /**
+ * Replace the String content and destroy the passed object
+ */
+CDString* CD_ReplaceString (CDString* self, CDString* string);
+
+CDString* CD_ReplaceCString (CDString* self, const char* string);
+
+/**
  * Destroy the String object AND the raw string
  */
 void CD_DestroyString (CDString* self);
@@ -204,5 +211,11 @@ bool CD_StringEndWith (CDString* self, const char* check);
 bool CD_StringIsEqual (CDString* a, const char* b);
 
 bool CD_CStringIsEqual (const char* a, const char* b);
+
+size_t CD_UTF8_strlen (const char* data);
+
+size_t CD_UTF8_strnlen (const char* data, size_t limit);
+
+size_t CD_UTF8_offset (const char* data, size_t offset);
 
 #endif
