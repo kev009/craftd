@@ -468,36 +468,4 @@ EOF
 DEFS=
 
       
-
-cat > plugins/persistence/nbt/include/config.h <<EOF
-#ifndef PLUGINS_PERSISTENCE_NBT_INCLUDE_CONFIG_H
-#define PLUGINS_PERSISTENCE_NBT_INCLUDE_CONFIG_H
-EOF
-
-echo -e $DEFS >> plugins/persistence/nbt/include/config.h
-
-cat >> plugins/persistence/nbt/include/config.h <<EOF
-
-#endif
-EOF
-
-DEFS=
-
-      
-
-cat > plugins/protocol/beta/include/config.h <<EOF
-#ifndef PLUGINS_PROTOCOL_BETA_INCLUDE_CONFIG_H
-#define PLUGINS_PROTOCOL_BETA_INCLUDE_CONFIG_H
-EOF
-
-echo -e $DEFS >> plugins/protocol/beta/include/config.h
-
-cat >> plugins/protocol/beta/include/config.h <<EOF
-
-#endif
-EOF
-
-DEFS=
-
-      
 do_clean

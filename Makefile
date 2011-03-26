@@ -68,11 +68,6 @@ src/Event.c:
 src/Event.o: src/Event.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/Event.o -c src/Event.c
 
-src/Cache.c: 
-
-src/Cache.o: src/Cache.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/Cache.o -c src/Cache.c
-
 src/Buffer.c: 
 
 src/Buffer.o: src/Buffer.c
@@ -82,11 +77,6 @@ src/Buffers.c:
 
 src/Buffers.o: src/Buffers.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/Buffers.o -c src/Buffers.c
-
-src/Private.c: 
-
-src/Private.o: src/Private.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/Private.o -c src/Private.c
 
 src/String.c: 
 
@@ -102,6 +92,11 @@ src/craftd.c:
 
 src/craftd.o: src/craftd.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/craftd.o -c src/craftd.c
+
+src/Dynamic.c: 
+
+src/Dynamic.o: src/Dynamic.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/Dynamic.o -c src/Dynamic.c
 
 src/Logger.c: 
 
@@ -152,8 +147,8 @@ third-party/bstring/bstraux.h:
 third-party/bstring/bstraux.o: third-party/bstring/bstraux.c third-party/bstring/bstraux.h
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o third-party/bstring/bstraux.o -c third-party/bstring/bstraux.c
 
-craftd: src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Cache.o src/Buffer.o src/Buffers.o src/Private.o src/String.o src/Hash.o src/craftd.o src/Logger.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Cache.o src/Buffer.o src/Buffers.o src/Private.o src/String.o src/Hash.o src/craftd.o src/Logger.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o -o craftd -lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl -export-dynamic $(LDFLAGS)
+craftd: src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/craftd.o src/Dynamic.o src/Logger.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/craftd.o src/Dynamic.o src/Logger.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o -o craftd -lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl -export-dynamic $(LDFLAGS)
 
 craftd.conf.dist.in: 
 
@@ -186,7 +181,9 @@ craftd_plugin_commands_build: craftd_plugin_commands_admin_build
 
 plugins/mapgen/classic/main.c: 
 
-plugins/mapgen/classic/main.o: plugins/mapgen/classic/main.c
+plugins/mapgen/classic/helpers.c: 
+
+plugins/mapgen/classic/main.o: plugins/mapgen/classic/main.c plugins/mapgen/classic/helpers.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/mapgen -o plugins/mapgen/classic/main.o -c plugins/mapgen/classic/main.c
 
 plugins/mapgen/noise/simplexnoise1234.c: 
@@ -213,47 +210,51 @@ craftd_plugin_mapgen_trivial_build: plugins/mapgen.trivial.so
 
 craftd_plugin_mapgen_build: craftd_plugin_mapgen_classic_build craftd_plugin_mapgen_trivial_build
 
-plugins/persistence/nbt/include/config.h: 
-
-craftd_plugin_persistence_nbt_requirements: plugins/persistence/nbt/include/config.h
-
 plugins/persistence/nbt/main.c: 
 
 plugins/persistence/nbt/main.o: plugins/persistence/nbt/main.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/persistence/nbt/main.o -c plugins/persistence/nbt/main.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/main.o -c plugins/persistence/nbt/main.c
+
+plugins/persistence/nbt/src/nbt.c: 
+
+plugins/persistence/nbt/include/nbt.h: 
+
+plugins/persistence/nbt/src/nbt.o: plugins/persistence/nbt/src/nbt.c plugins/persistence/nbt/include/nbt.h
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/src/nbt.o -c plugins/persistence/nbt/src/nbt.c
 
 plugins/persistence/nbt/src/itoa.c: 
 
 plugins/persistence/nbt/include/itoa.h: 
 
 plugins/persistence/nbt/src/itoa.o: plugins/persistence/nbt/src/itoa.c plugins/persistence/nbt/include/itoa.h
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/persistence/nbt/src/itoa.o -c plugins/persistence/nbt/src/itoa.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/src/itoa.o -c plugins/persistence/nbt/src/itoa.c
+
+plugins/persistence/nbt/cNBT/nbt_loading.c: 
+
+plugins/persistence/nbt/cNBT/nbt_loading.o: plugins/persistence/nbt/cNBT/nbt_loading.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/cNBT/nbt_loading.o -c plugins/persistence/nbt/cNBT/nbt_loading.c
 
 plugins/persistence/nbt/cNBT/nbt_parsing.c: 
 
 plugins/persistence/nbt/cNBT/nbt_parsing.o: plugins/persistence/nbt/cNBT/nbt_parsing.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/persistence/nbt/cNBT/nbt_parsing.o -c plugins/persistence/nbt/cNBT/nbt_parsing.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/cNBT/nbt_parsing.o -c plugins/persistence/nbt/cNBT/nbt_parsing.c
 
 plugins/persistence/nbt/cNBT/nbt_treeops.c: 
 
 plugins/persistence/nbt/cNBT/nbt_treeops.o: plugins/persistence/nbt/cNBT/nbt_treeops.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/persistence/nbt/cNBT/nbt_treeops.o -c plugins/persistence/nbt/cNBT/nbt_treeops.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/cNBT/nbt_treeops.o -c plugins/persistence/nbt/cNBT/nbt_treeops.c
 
 plugins/persistence/nbt/cNBT/nbt_util.c: 
 
 plugins/persistence/nbt/cNBT/nbt_util.o: plugins/persistence/nbt/cNBT/nbt_util.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/persistence/nbt/cNBT/nbt_util.o -c plugins/persistence/nbt/cNBT/nbt_util.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/persistence/nbt -o plugins/persistence/nbt/cNBT/nbt_util.o -c plugins/persistence/nbt/cNBT/nbt_util.c
 
-plugins/persistence.nbt.so: plugins/persistence/nbt/main.o plugins/persistence/nbt/src/itoa.o plugins/persistence/nbt/cNBT/nbt_parsing.o plugins/persistence/nbt/cNBT/nbt_treeops.o plugins/persistence/nbt/cNBT/nbt_util.o
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) plugins/persistence/nbt/main.o plugins/persistence/nbt/src/itoa.o plugins/persistence/nbt/cNBT/nbt_parsing.o plugins/persistence/nbt/cNBT/nbt_treeops.o plugins/persistence/nbt/cNBT/nbt_util.o -shared -Wl,-soname,persistence.nbt.so -o plugins/persistence.nbt.so  -export-dynamic $(LDFLAGS)
+plugins/persistence.nbt.so: plugins/persistence/nbt/main.o plugins/persistence/nbt/src/nbt.o plugins/persistence/nbt/src/itoa.o plugins/persistence/nbt/cNBT/nbt_loading.o plugins/persistence/nbt/cNBT/nbt_parsing.o plugins/persistence/nbt/cNBT/nbt_treeops.o plugins/persistence/nbt/cNBT/nbt_util.o
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) plugins/persistence/nbt/main.o plugins/persistence/nbt/src/nbt.o plugins/persistence/nbt/src/itoa.o plugins/persistence/nbt/cNBT/nbt_loading.o plugins/persistence/nbt/cNBT/nbt_parsing.o plugins/persistence/nbt/cNBT/nbt_treeops.o plugins/persistence/nbt/cNBT/nbt_util.o -shared -Wl,-soname,persistence.nbt.so -o plugins/persistence.nbt.so -lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl -export-dynamic $(LDFLAGS)
 
-craftd_plugin_persistence_nbt_build: craftd_plugin_persistence_nbt_requirements plugins/persistence.nbt.so
+craftd_plugin_persistence_nbt_build: plugins/persistence.nbt.so
 
 craftd_plugin_persistence_build: craftd_plugin_persistence_nbt_build
-
-plugins/protocol/beta/include/config.h: 
-
-craftd_plugin_protocol_beta_requirements: plugins/protocol/beta/include/config.h
 
 plugins/protocol/beta/main.c: 
 
@@ -307,7 +308,7 @@ plugins/protocol/beta/src/Player.o: plugins/protocol/beta/src/Player.c plugins/p
 plugins/protocol.beta.so: plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o -shared -Wl,-soname,protocol.beta.so -o plugins/protocol.beta.so  -export-dynamic $(LDFLAGS)
 
-craftd_plugin_protocol_beta_build: craftd_plugin_protocol_beta_requirements plugins/protocol.beta.so
+craftd_plugin_protocol_beta_build: plugins/protocol.beta.so
 
 craftd_plugin_protocol_build: craftd_plugin_protocol_beta_build
 
@@ -347,13 +348,12 @@ clean:
 	rm -rf src/Console.o
 	rm -rf src/Job.o
 	rm -rf src/Event.o
-	rm -rf src/Cache.o
 	rm -rf src/Buffer.o
 	rm -rf src/Buffers.o
-	rm -rf src/Private.o
 	rm -rf src/String.o
 	rm -rf src/Hash.o
 	rm -rf src/craftd.o
+	rm -rf src/Dynamic.o
 	rm -rf src/Logger.o
 	rm -rf src/Client.o
 	rm -rf src/Map.o
@@ -371,7 +371,9 @@ clean:
 	rm -rf plugins/protocol/beta/src/Packet.o
 	rm -rf plugins/protocol/beta/src/Player.o
 	rm -rf plugins/persistence/nbt/main.o
+	rm -rf plugins/persistence/nbt/src/nbt.o
 	rm -rf plugins/persistence/nbt/src/itoa.o
+	rm -rf plugins/persistence/nbt/cNBT/nbt_loading.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_parsing.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_treeops.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_util.o
@@ -395,13 +397,12 @@ clobber:
 	rm -rf src/Console.o
 	rm -rf src/Job.o
 	rm -rf src/Event.o
-	rm -rf src/Cache.o
 	rm -rf src/Buffer.o
 	rm -rf src/Buffers.o
-	rm -rf src/Private.o
 	rm -rf src/String.o
 	rm -rf src/Hash.o
 	rm -rf src/craftd.o
+	rm -rf src/Dynamic.o
 	rm -rf src/Logger.o
 	rm -rf src/Client.o
 	rm -rf src/Map.o
@@ -419,7 +420,9 @@ clobber:
 	rm -rf plugins/protocol/beta/src/Packet.o
 	rm -rf plugins/protocol/beta/src/Player.o
 	rm -rf plugins/persistence/nbt/main.o
+	rm -rf plugins/persistence/nbt/src/nbt.o
 	rm -rf plugins/persistence/nbt/src/itoa.o
+	rm -rf plugins/persistence/nbt/cNBT/nbt_loading.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_parsing.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_treeops.o
 	rm -rf plugins/persistence/nbt/cNBT/nbt_util.o
@@ -433,9 +436,7 @@ clobber:
 	rm -rf include/config.h
 	rm -rf craftd.conf.dist
 	rm -rf plugins/protocol.beta.so
-	rm -rf plugins/protocol/beta/include/config.h
 	rm -rf plugins/persistence.nbt.so
-	rm -rf plugins/persistence/nbt/include/config.h
 	rm -rf plugins/mapgen.classic.so
 	rm -rf plugins/mapgen.trivial.so
 	rm -rf plugins/commands.admin.so
