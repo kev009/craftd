@@ -1,8 +1,8 @@
 CC = gcc
 PREFIX = /usr
-LIBDIR = $(PREFIX)/lib
+LIBDIR = /usr/lib
 LOCALESTATEDIR = /var
-DATADIR = $(PREFIX)/share
+DATADIR = /usr/share
 SYSCONFDIR = /etc
 all: default
 
@@ -156,7 +156,7 @@ craftd.conf.dist: craftd.conf.dist.in
 	rm -f craftd.conf.dist craftd.conf.dist.tmp
 	srcdir=''
 	test -f ./craftd.conf.dist.in || srcdir=./;
-	sed -e 's|@localstatedir[@]|$(LOCALESTATEDIR)|g' -e 's|@datadir[@]|$(DATADIR)|g' -e 's|@sysconfdir[@]|$(SYSCONFDIR)|g' -e 's|@libdir[@]|$(LIBDIR)|g' craftd.conf.dist.in > craftd.conf.dist.tmp
+	sed -e "s|@localstatedir[@]|$(LOCALESTATEDIR)|g" -e "s|@datadir[@]|$(DATADIR)|g" -e "s|@sysconfdir[@]|$(SYSCONFDIR)|g" -e "s|@libdir[@]|$(LIBDIR)|g" craftd.conf.dist.in > craftd.conf.dist.tmp
 	mv craftd.conf.dist.tmp craftd.conf.dist
 
 include/config.h: 
@@ -194,7 +194,7 @@ plugins/mapgen/noise/simplexnoise1234.o: plugins/mapgen/noise/simplexnoise1234.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -g3 -O0 -DCRAFTD_DEBUG $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -Iplugins/mapgen -o plugins/mapgen/noise/simplexnoise1234.o -c plugins/mapgen/noise/simplexnoise1234.c
 
 plugins/mapgen.classic.so: plugins/mapgen/classic/main.o plugins/mapgen/noise/simplexnoise1234.o
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -g3 -O0 -DCRAFTD_DEBUG $(CFLAGS) plugins/mapgen/classic/main.o plugins/mapgen/noise/simplexnoise1234.o -shared -Wl,-soname,persistence.nbt.so -o plugins/mapgen.classic.so -export-dynamic $(LDFLAGS)
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -g3 -O0 -DCRAFTD_DEBUG $(CFLAGS) plugins/mapgen/classic/main.o plugins/mapgen/noise/simplexnoise1234.o -shared -Wl,-soname,persistence.nbt.so -o plugins/mapgen.classic.so -lm -export-dynamic $(LDFLAGS)
 
 craftd_plugin_mapgen_classic_build: plugins/mapgen.classic.so
 

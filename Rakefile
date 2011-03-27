@@ -196,7 +196,8 @@ namespace :craftd do |craftd|
       task :build => ['classic:build', 'trivial:build']
 
       namespace :classic do |classic|
-        classic.sources = FileList['plugins/mapgen/classic/main.c', 'plugins/mapgen/noise/simplexnoise1234.c']
+        classic.libraries = '-lm'
+        classic.sources   = FileList['plugins/mapgen/classic/main.c', 'plugins/mapgen/noise/simplexnoise1234.c']
 
         CLEAN.include classic.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
@@ -215,7 +216,7 @@ namespace :craftd do |craftd|
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{LDFLAGS} ${LDFLAGS}"
+          sh "${CC} #{CFLAGS} ${CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.libraries} #{LDFLAGS} ${LDFLAGS}"
         end
 
         desc 'Build classic mapgen'
