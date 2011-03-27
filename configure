@@ -38,6 +38,31 @@ fi
 cat > $FILE.c <<EOF
 
 
+#include <pthread.h>
+
+EOF
+
+echo -n "Checking for pthread.h... "
+if [[ "`($CC $FLAGS -pipe -o $FILE -c $FILE.c) 2>&1 | grep -v warning`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_PTHREAD_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "pthread-dev not found"
+  do_exit
+fi
+
+    
+
+cat > $FILE.c <<EOF
+
+
 /*top*/
 int main() {return 0;}
 int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
@@ -170,6 +195,31 @@ fi
 cat > $FILE.c <<EOF
 
 
+#include <jansson.h>
+
+EOF
+
+echo -n "Checking for jansson.h... "
+if [[ "`($CC $FLAGS -pipe -o $FILE -c $FILE.c) 2>&1 | grep -v warning`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_JANSSON_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "jansson-dev not found"
+  do_exit
+fi
+
+    
+
+cat > $FILE.c <<EOF
+
+
 /*top*/
 int main() {return 0;}
 int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
@@ -222,6 +272,31 @@ fi
 cat > $FILE.c <<EOF
 
 
+#include <zlib.h>
+
+EOF
+
+echo -n "Checking for zlib.h... "
+if [[ "`($CC $FLAGS -pipe -o $FILE -c $FILE.c) 2>&1 | grep -v warning`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_ZLIB_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "zlib-dev not found"
+  do_exit
+fi
+
+    
+
+cat > $FILE.c <<EOF
+
+
 /*top*/
 int main() {return 0;}
 int t() { void ((*volatile p)()); p = (void ((*)()))main; return 0; }
@@ -243,6 +318,31 @@ echo $LAST
 
 if [[ "$LAST" == "no" ]]; then
   echo -e "zlib not found"
+  do_exit
+fi
+
+    
+
+cat > $FILE.c <<EOF
+
+
+#include <pcre.h>
+
+EOF
+
+echo -n "Checking for pcre.h... "
+if [[ "`($CC $FLAGS -pipe -o $FILE -c $FILE.c) 2>&1 | grep -v warning`" == "" ]]; then
+  DEFS="$DEFS\n#define HAVE_PCRE_H 1"
+
+  echo yes
+else
+  echo no
+fi
+
+      
+
+if [[ "$LAST" == "no" ]]; then
+  echo -e "libpcre-dev not found"
   do_exit
 fi
 

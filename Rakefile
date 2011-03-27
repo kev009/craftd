@@ -60,6 +60,7 @@ namespace :craftd do |craftd|
     have_library 'ltdl', 'lt_dlopen' or die 'libtool not found'
 
     # check thread stuff
+    have_header 'pthread.h' or die 'pthread-dev not found'
     have_library 'pthread' or die 'pthread not found'
     have_func 'pthread_spin_init', 'pthread.h'
 
@@ -71,12 +72,18 @@ namespace :craftd do |craftd|
     end
 
     # check for libjansson 2
+    have_header 'jansson.h' or die 'jansson-dev not found'
     have_library 'jansson' or die 'jansson not found'
     have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c|
       c.sub('ifndef', 'if !')
     end
 
+    # zlib checks
+    have_header 'zlib.h' or die 'zlib-dev not found'
     have_library 'z' or die 'zlib not found'
+
+    # pcre checks
+    have_header 'pcre.h' or die 'libpcre-dev not found'
     have_library 'pcre' or die 'libpcre not found'
 
     # endianness stuff
