@@ -71,23 +71,35 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
     CD_DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
-        MCChunk* data = CD_malloc(sizeof(MCChunk));
-        bool     interrupted;
+        MCChunk* chunk = CD_malloc(sizeof(MCChunk));
+        CDError  status;
 
-        CD_EventDispatchWithResult(interrupted, server, "Chunk.load", coord->x, coord->z, data);
+        CD_EventDispatchWithError(status, server, "World.chunk", player->world, coord->x, coord->z, chunk);
 
-        if (interrupted) {
+        if (status != CDOk) {
+            CD_free(chunk);
+
             return false;
         }
 
         uLongf written = compressBound(81920);
-        Bytef* buffer  = (Bytef*) CD_malloc(compressBound(81920));
+        Bytef* buffer  = CD_malloc(written);
+        Bytef* data    = CD_malloc(81920);
+            
+        MC_ChunkToByteArray(chunk, data);
+
         if (compress(buffer, &written, (Bytef*) data, 81920) != Z_OK) {
             SERR(server, "zlib compress failure");
+
+            CD_free(chunk);
             CD_free(data);
+
             return false;
         }
-        SDEBUG(server, "compressed %ld bytes", written);
+
+        SDEBUG(server, "compressed to %ld bytes", written);
+
+        CD_free(chunk);
         CD_free(data);
 
         CDPacketMapChunk pkt = {

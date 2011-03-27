@@ -55,7 +55,7 @@
             },
 
             { "name": "persistence.nbt",
-                "path": "@datadir@/worlds"
+                "path": "@datadir@/craftd/worlds"
             },
 
             { "name": "mapgen.classic",

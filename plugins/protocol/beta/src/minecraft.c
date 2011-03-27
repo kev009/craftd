@@ -238,3 +238,16 @@ CD_HashChunkPosition (CDSet* self, MCChunkPosition* position)
     return ((((position->x * HASHMULTIPLIER)) * HASHMULTIPLIER + position->z) * HASHMULTIPLIER) % CHUNKBUCKETS;
 }
 
+void
+MC_ChunkToByteArray (MCChunk* chunk, uint8_t* array)
+{
+    size_t offset = 0;
+
+    memcpy(array + offset, chunk->blocks, 32768);
+    offset += 32768;
+    memcpy(array + offset, chunk->data, 16384);
+    offset += 16384;
+    memcpy(array + offset, chunk->blockLight, 16384);
+    offset += 16384;
+    memcpy(array + offset, chunk->skyLight, 16384);
+}

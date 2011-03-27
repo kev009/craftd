@@ -24,5 +24,3 @@
  */
 
 #include <cNBT/nbt.h>
-
-nbt_node* nbt_parse_path (const char* path);

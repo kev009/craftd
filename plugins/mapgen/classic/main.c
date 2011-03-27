@@ -52,7 +52,7 @@ static
 bool
 cdclassic_GenerateChunk (CDServer* server, int x, int z, MCChunk* data, const char* seed)
 {
-    memset(data, 0, sizeof(MCChunk));
+    memset(data, 0, sizeof(*data));
 
     if (seed == NULL) {
         seed = _config.seed;

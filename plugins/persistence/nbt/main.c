@@ -44,24 +44,24 @@ static struct {
 
 static
 bool
-cdnbt_ValidChunk (nbt_tag* nbtRoot)
+cdnbt_ValidChunk (nbt_node* root)
 {
-    /* Check valid root element */
-    nbt_tag* root = nbt_find_tag_by_name("Level", nbt_cast_compound(nbtRoot));
+    static char*  names[] = { "Blocks", "Data", "BlockLight", "SkyLight" };
+    static size_t sizes[] = { 32768, 16384, 16384, 16384 };
 
-    if ((root != NULL) && (strcmp(root->name, "Level") == 0) && (root->type == TAG_COMPOUND)) {
-        nbt_tag* blocks = nbt_find_tag_by_name("Blocks", nbt_cast_compound(root));
+    nbt_node* node;
 
-        if ((blocks != NULL) && (blocks->type == TAG_BYTE_ARRAY)) {
-            nbt_byte_array* arr = (nbt_byte_array*) blocks->value;
+    for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
+        if ((node = nbt_find_by_name(root, names[i])) == NULL) {
+            return false;
+        }
 
-            if (arr->length == 32768) {
-                return true; /* Valid at last. */
-            }
+        if (node->type != TAG_BYTE_ARRAY || node->payload.tag_byte_array.length != sizes[i]) {
+            return false;
         }
     }
 
-    return false;
+    return true;
 }
 
 static
@@ -100,17 +100,17 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
     }
 
     error: {
-        int  status      = errno;
-        bool interrupted = false;
+        int     old = errno;
+        CDError status;
 
         if (root) {
             nbt_free(root);
         }
 
-        CD_EventDispatchWithResult(interrupted, server, "Mapgen.level", world);
+        CD_EventDispatchWithError(status, server, "Mapgen.level", world);
 
-        if (interrupted) {
-            WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(status));
+        if (status != CDOk) {
+            WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(old));
         }
         else {
             WDEBUG(world, "spawn position: (%d, %d, %d)",
@@ -143,8 +143,8 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
     itoa(x, chunkName1, _config.base);
     itoa(z, chunkName2, _config.base);
 
-    CDString* chunkPath = CD_CreateStringFromFormat("%s/%s/%s/c.%s.%s.dat",
-        server->config->cache.files.world,
+    CDString* chunkPath = CD_CreateStringFromFormat("%s/%s/%s/%s/c.%s.%s.dat",
+        _config.path, CD_StringContent(world->name),
         directory1, directory2,
         chunkName1, chunkName2
     );
@@ -157,7 +157,7 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
         SDEBUG(server, "Generating chunk: %d,%d\n", x, z );
 
         CD_DO {
-            CDString* dir = CD_CreateStringFromFormat("%s/%s", server->config->cache.files.world,
+            CDString* dir = CD_CreateStringFromFormat("%s/%s/%s", _config.path, CD_StringContent(world->name),
                 directory1);
 
             mkdir(CD_StringContent(dir), 0755);
@@ -166,7 +166,7 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
         }
 
         CD_DO {
-            CDString* dir = CD_CreateStringFromFormat("%s/%s/%s", server->config->cache.files.world,
+            CDString* dir = CD_CreateStringFromFormat("%s/%s/%s/%s", _config.path, CD_StringContent(world->name),
                 directory1, directory2);
 
             mkdir(CD_StringContent(dir), 0755);
@@ -190,73 +190,18 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
             }
         }
 
-        CD_EventDispatch(server, "Mapgen.generateChunk", x, z, chunkData, NULL);
+        CD_DO {
+            CDError status;
 
-    	nbt_tag* t_level;
-	    nbt_tag* t_sub;
+            CD_EventDispatchWithError(status, server, "Mapgen.chunk", x, z, chunk, NULL);
 
-        // Level
-        nbt_new_compound(&nf->root, "");
-        nbt_new_compound(&t_level, "Level");
-        nbt_add_tag(t_level, nf->root);
-
-        // Blocks
-        nbt_new_byte_array(&t_sub, "Blocks");
-        nbt_set_byte_array(t_sub, chunkData->blocks, 32768);
-        nbt_add_tag(t_sub, t_level);
-
-        // Data
-        nbt_new_byte_array(&t_sub, "Data");
-        nbt_set_byte_array(t_sub, chunkData->data, 16384);
-        nbt_add_tag(t_sub, t_level);
-
-        // SkyLight
-        nbt_new_byte_array(&t_sub, "SkyLight");
-        nbt_set_byte_array(t_sub, chunkData->skyLight, 16384);
-        nbt_add_tag(t_sub, t_level);
-
-        // BlockLight
-        nbt_new_byte_array(&t_sub, "BlockLight");
-        nbt_set_byte_array(t_sub, chunkData->blockLight, 16384);
-        nbt_add_tag(t_sub, t_level);
-
-        // HeigtMap
-        nbt_new_byte_array(&t_sub, "HeightMap");
-        nbt_set_byte_array(t_sub, chunkData->heightMap, 256);
-        nbt_add_tag(t_sub, t_level);
-
-        // Entities
-        nbt_new_list(&t_sub, "Entities", TAG_COMPOUND);
-        nbt_add_tag(t_sub, t_level);
-
-        // TileEntities
-        nbt_new_list(&t_sub, "TileEntities", TAG_COMPOUND);
-        nbt_add_tag(t_sub, t_level);
-
-        // LastUpdate
-        nbt_new_long(&t_sub, "LastUpdate");
-        nbt_set_long(t_sub, 0);
-        nbt_add_tag(t_sub, t_level);
-
-        // xPos
-        nbt_new_int(&t_sub, "xPos");
-        nbt_set_int(t_sub, x);
-        nbt_add_tag(t_sub, t_level);
-
-        // zPos
-        nbt_new_int(&t_sub, "zPos");
-        nbt_set_int(t_sub, z);
-        nbt_add_tag(t_sub, t_level);
-
-        // TerrainPopulated
-        nbt_new_byte(&t_sub, "TerrainPopulated");
-        nbt_set_byte(t_sub, 0);
-        nbt_add_tag(t_sub, t_level);
-
-        /* write the nbt to disk */
-        nbt_write(nf, CD_StringContent(chunkPath));
-
-        goto done;
+            if (status != CDOk) {
+                goto error;
+            }
+            else {
+                goto done;
+            }
+        }
     }
 
     load: {
@@ -267,57 +212,39 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
             fcntl(fd, F_SETLKW, &lock);
         }
 
-        int reasonCode;
+        root = nbt_parse_path(CD_StringContent(chunkPath));
 
-        if ((reasonCode = nbt_parse(nf, CD_StringContent(chunkPath))) != NBT_OK) {
-            const char* reason;
-
-            switch (reasonCode) {
-                case NBT_EGZ:  reason = strerror(errno);      break;
-                case NBT_EMEM: reason = "out of memory";      break;
-                case NBT_ERR:  reason = "chunk format error"; break;
-                default:       reason = "unknown error";      break;
-            }
-
-            SERR(server, "cannot parse chunk '%s': %s", CD_StringContent(chunkPath), reason);
-
-            goto error;
-        }
-
-        if (cdnbt_ValidChunk(nf->root) == true) {
-            nbt_tag* t_level      = nbt_find_tag_by_name("Level", nbt_cast_compound(nf->root));
-            nbt_tag* t_blocks     = nbt_find_tag_by_name("Blocks", nbt_cast_compound(t_level));
-            nbt_tag* t_data       = nbt_find_tag_by_name("Data", nbt_cast_compound(t_level));
-            nbt_tag* t_skyLight   = nbt_find_tag_by_name("SkyLight", nbt_cast_compound(t_level));
-            nbt_tag* t_blockLight = nbt_find_tag_by_name("BlockLight", nbt_cast_compound(t_level));
-
-            nbt_byte_array* blocks     = nbt_cast_byte_array(t_blocks);
-            nbt_byte_array* data       = nbt_cast_byte_array(t_data);
-            nbt_byte_array* skyLight   = nbt_cast_byte_array(t_skyLight);
-            nbt_byte_array* blockLight = nbt_cast_byte_array(t_blockLight);
-
-            memcpy(chunkData->blocks,     blocks->content,     blocks->length);
-            memcpy(chunkData->data,       data->content,       data->length);
-            memcpy(chunkData->skyLight,   skyLight->content,   skyLight->length);
-            memcpy(chunkData->blockLight, blockLight->content, blockLight->length);
-
-            CD_DO {
-                struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
-                fcntl(fd, F_SETLKW, &lock);
-
-                close(fd);
-            }
-        }
-        else {
+        if (!root || errno != NBT_OK || !cdnbt_ValidChunk(root)) {
             SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
 
             goto error;
         }
+
+        nbt_node* node;
+
+        node = nbt_find_by_name(root, "Blocks");
+        memcpy(chunk->blocks, node->payload.tag_byte_array.data, 32768);
+
+        node = nbt_find_by_name(root, "Data");
+        memcpy(chunk->data, node->payload.tag_byte_array.data, 16384);
+
+        node = nbt_find_by_name(root, "BlockLight");
+        memcpy(chunk->blockLight, node->payload.tag_byte_array.data, 16384);
+
+        node = nbt_find_by_name(root, "SkyLight");
+        memcpy(chunk->skyLight, node->payload.tag_byte_array.data, 16384);
+
+        CD_DO {
+            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
+            fcntl(fd, F_SETLKW, &lock);
+
+            close(fd);
+        }
     }
 
     done: {
-        if (nf) {
-            nbt_free(nf);
+        if (root) {
+            nbt_free(root);
         }
 
         CD_DestroyString(chunkPath);
@@ -333,8 +260,8 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
     }
 
     error: {
-        if (nf) {
-            nbt_free(nf);
+        if (root) {
+            nbt_free(root);
         }
 
         CD_DestroyString(chunkPath);
@@ -348,8 +275,6 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
         return false;
     }
-
-    return true;
 }
 
 static

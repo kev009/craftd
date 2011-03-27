@@ -450,6 +450,8 @@ MCMetadata* MC_AppendData (MCMetadata* metadata, MCData* data);
 
 MCMetadata* MC_MetadataFromEvent (struct bufferevent* event);
 
+void MC_ChunkToByteArray (MCChunk* chunk, uint8_t* array);
+
 static inline
 MCBlockPosition
 MC_ChunkPositionToBlockPosition (MCChunkPosition position)

@@ -28,6 +28,10 @@
 
 typedef int CDError;
 
+typedef enum _CDErrorType {
+    CDOk
+} CDErrorType;
+
 #define CD_DEFINE_ERROR CDError _error;
 
 #define ERROR(data) ((data)->_error)

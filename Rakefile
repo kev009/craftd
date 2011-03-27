@@ -14,9 +14,9 @@ end
 VERSION = '0.1a'
 
 PREFIX         = (ENV['PREFIX']         ||= '/usr')
-LIBDIR         = (ENV['LIBDIR']         ||= '${PREFIX}/lib')
+LIBDIR         = (ENV['LIBDIR']         ||= "#{PREFIX}/lib")
 LOCALESTATEDIR = (ENV['LOCALESTATEDIR'] ||= '/var')
-DATADIR        = (ENV['DATADIR']        ||= '${PREFIX}/share')
+DATADIR        = (ENV['DATADIR']        ||= "#{PREFIX}/share")
 SYSCONFDIR     = (ENV['SYSCONFDIR']     ||= '/etc')
 
 if defined?(EXPORT)
@@ -107,7 +107,7 @@ namespace :craftd do |craftd|
     sh %{rm -f craftd.conf.dist craftd.conf.dist.tmp}
     sh %{srcdir=''}
     sh %{test -f ./craftd.conf.dist.in || srcdir=./;}
-    sh %{sed -e 's|@localstatedir[@]|${LOCALESTATEDIR}|g' -e 's|@datadir[@]|${DATADIR}|g' -e 's|@sysconfdir[@]|${SYSCONFDIR}|g' -e 's|@libdir[@]|${LIBDIR}|g' craftd.conf.dist.in > craftd.conf.dist.tmp}
+    sh %{sed -e "s|@localstatedir[@]|${LOCALESTATEDIR}|g" -e "s|@datadir[@]|${DATADIR}|g" -e "s|@sysconfdir[@]|${SYSCONFDIR}|g" -e "s|@libdir[@]|${LIBDIR}|g" craftd.conf.dist.in > craftd.conf.dist.tmp}
     sh %{mv craftd.conf.dist.tmp craftd.conf.dist}
   end
 

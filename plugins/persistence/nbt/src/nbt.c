@@ -22,25 +22,3 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <nbt/nbt.h>
-#include <errno.h>
-
-nbt_node*
-nbt_parse_path (const char* path)
-{
-    FILE*     file   = fopen(path, "rb");
-    nbt_node* result = NULL;
-
-    if (file == NULL) {
-        errno = NBT_EIO;
-
-        return NULL;
-    }
-
-    result = nbt_parse_file(file);
-
-    fclose(file);
-
-    return result;
-}

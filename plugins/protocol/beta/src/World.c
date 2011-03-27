@@ -59,11 +59,11 @@ CD_CreateWorld (CDServer* server, const char* name)
 bool
 CD_WorldSave (CDWorld* self)
 {
-    bool result;
+    bool status;
 
-    CD_EventDispatchWithResult(result, self->server, "World.save", self);
+    CD_EventDispatchWithError(status, self->server, "World.save", self);
 
-    return result;
+    return status == CDOk;
 }
 
 void

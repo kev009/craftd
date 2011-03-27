@@ -105,6 +105,35 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrup
         cd_EventAfterDispatch(self, eventName, interrupted, ##__VA_ARGS__);                         \
     }
 
+#define CD_EventDispatchWithError(error, self, eventName, ...)                                              \
+    CD_DO {                                                                                                 \
+        assert(self);                                                                                       \
+        assert(eventName);                                                                                  \
+                                                                                                            \
+        bool __interrupted__ = false;                                                                       \
+             error           = CDOk;                                                                        \
+                                                                                                            \
+        if (!cd_EventBeforeDispatch(self, eventName, ##__VA_ARGS__, &error)) {                              \
+            break;                                                                                          \
+        }                                                                                                   \
+                                                                                                            \
+        CDList* __callbacks__ = (CDList*) CD_HashGet(self->event.callbacks, eventName);                     \
+                                                                                                            \
+        CD_LIST_FOREACH(__callbacks__, it) {                                                                \
+            if (!CD_ListIteratorValue(it)) {                                                                \
+                continue;                                                                                   \
+            }                                                                                               \
+                                                                                                            \
+            if (!((CDEventCallback*) CD_ListIteratorValue(it))->function(self, ##__VA_ARGS__, &error)) {    \
+                __interrupted__ = !CD_ListStopIterating(__callbacks__, false);                              \
+                break;                                                                                      \
+            }                                                                                               \
+        }                                                                                                   \
+                                                                                                            \
+        cd_EventAfterDispatch(self, eventName, __interrupted__, ##__VA_ARGS__, &error);                     \
+    }
+
+
 /**
  * Register a callback for an event.
  *
