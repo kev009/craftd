@@ -23,73 +23,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_COMMON_H
-#define CRAFTD_COMMON_H
+#ifndef CRAFTD_UTILS_H
+#define CRAFTD_UTILS_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <limits.h>
-#include <errno.h>
-#include <assert.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include <pthread.h>
-
-static inline void CD_abort (const char* error, ...) {
-    va_list ap;
-    
-    va_start(ap, error);
-    vfprintf(stderr, error, ap);
-    va_end(ap);
-
-    abort();
-}
-
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
-
-#include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <event2/listener.h>
-#include <event2/thread.h>
-
-#include <craftd/config.h>
-#include <craftd/memory.h>
-
-#define CD_DO \
-    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
-
-#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
-    typedef int32_t CDPointer;
-#else
-    typedef int64_t CDPointer;
-#endif
-
-#ifdef __cplusplus
-#   define PUBLIC extern "C"
-#else
-#   define PUBLIC extern
-#endif
-
-#define CDNull (0)
-
-#include <craftd/Error.h>
-#include <craftd/Arithmetic.h>
-#include <craftd/List.h>
-#include <craftd/Map.h>
-#include <craftd/Hash.h>
-#include <craftd/Set.h>
-#include <craftd/String.h>
-#include <craftd/Regexp.h>
-#include <craftd/Dynamic.h>
-
-#include <craftd/javaendian.h>
-#include <craftd/utils.h>
-
-#include <craftd/Buffer.h>
-#include <craftd/Buffers.h>
+int mkdir_p (const char* path, mode_t mode);
 
 #endif

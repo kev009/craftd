@@ -23,6 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <libgen.h>
+
 #include <craftd/common.h>
 
 static
@@ -444,4 +446,28 @@ bool
 CD_CStringIsEqual (const char* a, const char* b)
 {
     return strcmp(a, b) == 0;
+}
+
+CDString*
+CD_StringDirname (CDString* self)
+{
+    char*     path      = strdup(CD_StringContent(self));
+    char*     directory = dirname(path);
+    CDString* result    = CD_CreateStringFromCStringCopy(directory);
+
+    free(path);
+
+    return result;
+}
+
+CDString*
+CD_StringBasename (CDString* self)
+{
+    char*     path   = strdup(CD_StringContent(self));
+    char*     file   = basename(path);
+    CDString* result = CD_CreateStringFromCStringCopy(file);
+
+    free(path);
+
+    return result;
 }

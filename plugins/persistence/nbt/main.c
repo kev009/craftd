@@ -79,6 +79,72 @@ cdnbt_ValidChunk (nbt_node* root)
 }
 
 static
+CDString*
+cdnbt_ChunkPath (CDWorld* world, int x, int z)
+{
+    // Chunk directory and subdir location
+    char directory1[8];
+    char directory2[8];
+
+    itoa((x & 63), directory1, _config.base);
+    itoa((z & 63), directory2, _config.base);
+
+    // Chunk file name
+    char chunkName1[8];
+    char chunkName2[8];
+
+    itoa(x, chunkName1, _config.base);
+    itoa(z, chunkName2, _config.base);
+
+    return CD_CreateStringFromFormat("%s/%s/%s/%s/c.%s.%s.dat",
+        _config.path, CD_StringContent(world->name),
+        directory1, directory2,
+        chunkName1, chunkName2
+    );
+}
+
+static
+CDError
+cdnbt_GenerateChunk (CDWorld* world, int x, int z, MCChunk* chunk, const char* seed)
+{
+    CDError   status;
+    CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
+    CDString* directory = CD_StringDirname(chunkPath);
+
+    mkdir_p(CD_StringContent(directory), S_IRWXU);
+
+    CD_DO {
+        struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
+                 int fd   = open(CD_StringContent(chunkPath), O_CREAT, 0755);
+
+        fcntl(fd, F_GETLK, &lock);
+
+        if (lock.l_type == F_UNLCK) {
+            lock.l_type = F_WRLCK;
+            fcntl(fd, F_SETLKW, &lock);
+        }
+        else {
+            close(fd);
+
+            status = CDOk;
+
+            goto end;
+        }
+    }
+
+    CD_EventDispatchWithError(status, world->server, "Mapgen.chunk", world, x, z, chunk, seed);
+
+    // TODO: save the generated chunk
+
+    end: {
+        CD_DestroyString(chunkPath);
+        CD_DestroyString(directory);
+    }
+
+    return status;
+}
+
+static
 bool
 cdnbt_WorldCreate (CDServer* server, CDWorld* world)
 {
@@ -119,7 +185,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
             nbt_free(root);
         }
 
-        CD_EventDispatchWithError(status, server, "Mapgen.level", world);
+        CD_EventDispatchWithError(status, server, "Mapgen.level", world, NULL);
 
         if (status != CDOk) {
             WERR(world, "Couldn't load world base data: %s", nbt_error_to_string(old));
@@ -141,79 +207,16 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 {
     int fd;
 
-    // Chunk directory and subdir location
-    char directory1[8];
-    char directory2[8];
-
-    itoa((x & 63), directory1, _config.base);
-    itoa((z & 63), directory2, _config.base);
-
-    // Chunk file name
-    char chunkName1[8];
-    char chunkName2[8];
-
-    itoa(x, chunkName1, _config.base);
-    itoa(z, chunkName2, _config.base);
-
-    CDString* chunkPath = CD_CreateStringFromFormat("%s/%s/%s/%s/c.%s.%s.dat",
-        _config.path, CD_StringContent(world->name),
-        directory1, directory2,
-        chunkName1, chunkName2
-    );
+    CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
 
     SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
     nbt_node* root = NULL;
 
     if (access(CD_StringContent(chunkPath), R_OK) < 0) {
-        SDEBUG(server, "Generating chunk: %d,%d\n", x, z );
+        SDEBUG(server, "Generating chunk: %d,%d\n", x, z);
 
-        CD_DO {
-            CDString* dir = CD_CreateStringFromFormat("%s/%s/%s", _config.path, CD_StringContent(world->name),
-                directory1);
-
-            mkdir(CD_StringContent(dir), 0755);
-
-            CD_DestroyString(dir);
-        }
-
-        CD_DO {
-            CDString* dir = CD_CreateStringFromFormat("%s/%s/%s/%s", _config.path, CD_StringContent(world->name),
-                directory1, directory2);
-
-            mkdir(CD_StringContent(dir), 0755);
-
-            CD_DestroyString(dir);
-        }
-
-        CD_DO {
-            struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
-                         fd   = open(CD_StringContent(chunkPath), O_CREAT, 0755);
-
-            fcntl(fd, F_GETLK, &lock);
-
-            if (lock.l_type == F_UNLCK) {
-                lock.l_type = F_WRLCK;
-                fcntl(fd, F_SETLKW, &lock);
-            }
-            else {
-                close(fd);
-                goto load;
-            }
-        }
-
-        CD_DO {
-            CDError status;
-
-            CD_EventDispatchWithError(status, server, "Mapgen.chunk", x, z, chunk, NULL);
-
-            if (status != CDOk) {
-                goto error;
-            }
-            else {
-                goto done;
-            }
-        }
+        cdnbt_GenerateChunk(world, x, z, chunk, NULL);
     }
 
     load: {

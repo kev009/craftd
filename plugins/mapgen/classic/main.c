@@ -37,8 +37,12 @@ static struct {
 
 static
 bool
-cdclassic_GenerateLevel (CDServer* server, CDWorld* world)
+cdclassic_GenerateLevel (CDServer* server, CDWorld* world, const char* seed)
 {
+    if (seed == NULL) {
+        seed = _config.seed;
+    }
+
     world->spawnPosition = (MCBlockPosition) {
         .x = 0,
         .y = 120,
@@ -50,8 +54,10 @@ cdclassic_GenerateLevel (CDServer* server, CDWorld* world)
 
 static
 bool
-cdclassic_GenerateChunk (CDServer* server, int x, int z, MCChunk* data, const char* seed)
+cdclassic_GenerateChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* data, const char* seed)
 {
+    puts("LOL");
+
     memset(data, 0, sizeof(*data));
 
     if (seed == NULL) {

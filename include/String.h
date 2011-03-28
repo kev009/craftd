@@ -218,4 +218,8 @@ size_t CD_UTF8_strnlen (const char* data, size_t limit);
 
 size_t CD_UTF8_offset (const char* data, size_t offset);
 
+CDString* CD_StringDirname (CDString* self);
+
+CDString* CD_StringBasename (CDString* self);
+
 #endif
