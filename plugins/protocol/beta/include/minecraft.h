@@ -586,8 +586,8 @@ MC_PrecisePositionToAbsolutePosition(MCPrecisePosition position)
 #define MC_AbsolutePositionEqueal(a, b) ((a.x == b.x) && (a.y == b.y) && (a.z == b.z))
 #define MC_PrecisePositionEqual(a, b)   ((a.x == b.x) && (a.y == b.y) && (a.z == b.z))
 
-bool CD_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b);
+bool MC_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b);
 
-unsigned int CD_HashChunkPosition (CDSet* self, MCChunkPosition* position);
+unsigned int MC_HashChunkPosition (CDSet* self, MCChunkPosition* position);
 
 #endif

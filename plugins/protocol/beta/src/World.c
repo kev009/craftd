@@ -46,7 +46,7 @@ CD_CreateWorld (CDServer* server, const char* name)
     self->clients  = CD_CreateMap();
     self->entities = CD_CreateMap();
 
-    self->chunks = CD_CreateSetWith(2000, (CDSetCompare) CD_CompareChunkPosition, (CDSetHash) CD_HashChunkPosition);
+    self->chunks = CD_CreateSetWith(2000, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition);
 
     DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;

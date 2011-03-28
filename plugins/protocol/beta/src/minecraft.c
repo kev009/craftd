@@ -220,7 +220,7 @@ MC_StringColor (MCString self, MCStringColor color)
 }
 
 bool
-CD_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
+MC_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
 {
     assert(self);
 
@@ -228,7 +228,7 @@ CD_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
 }
 
 unsigned int
-CD_HashChunkPosition (CDSet* self, MCChunkPosition* position)
+MC_HashChunkPosition (CDSet* self, MCChunkPosition* position)
 {
     const int HASHMULTIPLIER = 31;
     const int CHUNKBUCKETS   = 401; // Max chunks to the nearest prime

@@ -44,19 +44,33 @@ static struct {
 
 static
 bool
-cdnbt_ValidChunk (nbt_node* root)
+cdnbt_ValidLevel (nbt_node* root)
 {
-    static char*  names[] = { "Blocks", "Data", "BlockLight", "SkyLight" };
-    static size_t sizes[] = { 32768, 16384, 16384, 16384 };
+    static char*    names[] = { ".Data.Time", ".Data.SpawnX", ".Data.SpawnY", ".Data.SpawnZ" };
+    static nbt_type types[] = { TAG_LONG,     TAG_INT,        TAG_INT,        TAG_INT };
 
     nbt_node* node;
 
     for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
-        if ((node = nbt_find_by_name(root, names[i])) == NULL) {
+        if ((node = nbt_find_by_path(root, names[i])) == NULL || node->type != types[i]) {
             return false;
         }
+    }
 
-        if (node->type != TAG_BYTE_ARRAY || node->payload.tag_byte_array.length != sizes[i]) {
+    return true;
+}
+
+static
+bool
+cdnbt_ValidChunk (nbt_node* root)
+{
+    static char*  names[] = { ".Level.HeightMap", ".Level.Blocks", ".Level.Data", ".Level.BlockLight", ".Level.SkyLight" };
+    static size_t sizes[] = { 256,                32768,           16384,         16384,               16384 };
+
+    nbt_node* node;
+
+    for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
+        if ((node = nbt_find_by_path(root, names[i])) == NULL || node->type != TAG_BYTE_ARRAY || node->payload.tag_byte_array.length != sizes[i]) {
             return false;
         }
     }
@@ -72,14 +86,14 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
     CDString* path  = CD_CreateStringFromFormat("%s/%s/level.dat", _config.path, CD_StringContent(world->name));
     nbt_node* root  = nbt_parse_path(CD_StringContent(path));
 
-    if (!root || errno != NBT_OK) {
+    if (!root || errno != NBT_OK || !cdnbt_ValidLevel(root)) {
         goto error;
     }
 
     world->spawnPosition = (MCBlockPosition) {
-        .x = nbt_find_by_name(root, "SpawnX")->payload.tag_int,
-        .y = nbt_find_by_name(root, "SpawnY")->payload.tag_int,
-        .z = nbt_find_by_name(root, "SpawnZ")->payload.tag_int
+        .x = nbt_find_by_path(root, ".Data.SpawnX")->payload.tag_int,
+        .y = nbt_find_by_path(root, ".Data.SpawnY")->payload.tag_int,
+        .z = nbt_find_by_path(root, ".Data.SpawnZ")->payload.tag_int
     };
 
     WDEBUG(world, "spawn position: (%d, %d, %d)",
@@ -87,9 +101,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         world->spawnPosition.y,
         world->spawnPosition.z);
 
-    CD_WorldSetTime(world, nbt_find_by_name(root, "Time")->payload.tag_long);
-
-    world->dimension = nbt_find_by_name(root, "Dimension")->payload.tag_int;
+    CD_WorldSetTime(world, nbt_find_by_path(root, ".Data.Time")->payload.tag_long);
 
     done: {
         if (root) {
@@ -222,16 +234,19 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
         nbt_node* node;
 
-        node = nbt_find_by_name(root, "Blocks");
+        node = nbt_find_by_path(root, ".Level.HeightMap");
+        memcpy(chunk->heightMap, node->payload.tag_byte_array.data, 256);
+
+        node = nbt_find_by_path(root, ".Level.Blocks");
         memcpy(chunk->blocks, node->payload.tag_byte_array.data, 32768);
 
-        node = nbt_find_by_name(root, "Data");
+        node = nbt_find_by_path(root, ".Level.Data");
         memcpy(chunk->data, node->payload.tag_byte_array.data, 16384);
 
-        node = nbt_find_by_name(root, "BlockLight");
+        node = nbt_find_by_path(root, ".Level.BlockLight");
         memcpy(chunk->blockLight, node->payload.tag_byte_array.data, 16384);
 
-        node = nbt_find_by_name(root, "SkyLight");
+        node = nbt_find_by_path(root, ".Level.SkyLight");
         memcpy(chunk->skyLight, node->payload.tag_byte_array.data, 16384);
 
         CD_DO {

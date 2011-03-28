@@ -32,27 +32,6 @@
 
 static
 bool
-cdbeta_CompareMCChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
-{
-    assert(self);
-
-    return (a->x == b->x && a->z == b->z);
-}
-
-static
-unsigned int
-cdbeta_HashMCPosition (CDSet* self, MCChunkPosition* position)
-{
-    const int HASHMULTIPLIER = 31;
-    const int CHUNKBUCKETS   = 401; // Max chunks to the nearest prime
-
-    assert(self);
-
-    return ((((position->x * HASHMULTIPLIER)) * HASHMULTIPLIER + position->z) * HASHMULTIPLIER) % CHUNKBUCKETS;
-}
-
-static
-bool
 cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
 {
     CD_DO {
@@ -176,7 +155,7 @@ cdbeta_SendChunkRadius (CDPlayer* player, MCChunkPosition* area, int radius)
 {
     CDSet* loadedChunks = (CDSet*) CD_DynamicGet(player, "Player.loadedChunks");
     CDSet* oldChunks    = loadedChunks;
-    CDSet* newChunks    = CD_CreateSetWith(400, (CDSetCompare) CD_CompareChunkPosition, (CDSetHash) CD_HashChunkPosition);
+    CDSet* newChunks    = CD_CreateSetWith(400, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition);
 
     for (int x = -radius; x < radius; x++) {
         for (int z = -radius; z < radius; z++) {
@@ -712,7 +691,7 @@ cdbeta_PlayerLogin (CDServer* server, CDPlayer* player, int status)
 
 
     CD_DynamicPut(player, "Player.loadedChunks", (CDPointer) CD_CreateSetWith(
-        400, (CDSetCompare) cdbeta_CompareMCChunkPosition, (CDSetHash) cdbeta_HashMCPosition));
+        400, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition));
 
     CD_DynamicPut(player, "Player.seenPlayers", (CDPointer) CD_CreateList());
 
