@@ -111,26 +111,7 @@ cdnbt_GenerateChunk (CDWorld* world, int x, int z, MCChunk* chunk, const char* s
     CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
     CDString* directory = CD_StringDirname(chunkPath);
 
-    mkdir_p(CD_StringContent(directory), S_IRWXU);
-
-    CD_DO {
-        struct flock lock = { F_WRLCK, SEEK_SET, 0, 0, 0 };
-                 int fd   = open(CD_StringContent(chunkPath), O_CREAT, 0755);
-
-        fcntl(fd, F_GETLK, &lock);
-
-        if (lock.l_type == F_UNLCK) {
-            lock.l_type = F_WRLCK;
-            fcntl(fd, F_SETLKW, &lock);
-        }
-        else {
-            close(fd);
-
-            status = CDOk;
-
-            goto end;
-        }
-    }
+    CD_mkdir(CD_StringContent(directory), 0755);
 
     CD_EventDispatchWithError(status, world->server, "Mapgen.chunk", world, x, z, chunk, seed);
 
@@ -203,34 +184,27 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
 
 static
 bool
-cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
+cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk, CDError* error)
 {
-    int fd;
-
     CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
 
     SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
     nbt_node* root = NULL;
 
-    if (access(CD_StringContent(chunkPath), R_OK) < 0) {
+    if (!CD_PathExists(CD_StringContent(chunkPath))) {
         SDEBUG(server, "Generating chunk: %d,%d\n", x, z);
 
         cdnbt_GenerateChunk(world, x, z, chunk, NULL);
     }
 
     load: {
-        CD_DO {
-            struct flock lock = { F_RDLCK, SEEK_SET, 0, 0, 0 };
-                         fd   = open(CD_StringContent(chunkPath), O_RDONLY);
-
-            fcntl(fd, F_SETLKW, &lock);
-        }
-
         root = nbt_parse_path(CD_StringContent(chunkPath));
 
         if (!root || errno != NBT_OK || !cdnbt_ValidChunk(root)) {
             SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
+
+            cdnbt_GenerateChunk(world, x, z, chunk, NULL);
 
             goto error;
         }
@@ -251,13 +225,6 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
         node = nbt_find_by_path(root, ".Level.SkyLight");
         memcpy(chunk->skyLight, node->payload.tag_byte_array.data, 16384);
-
-        CD_DO {
-            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
-            fcntl(fd, F_SETLKW, &lock);
-
-            close(fd);
-        }
     }
 
     done: {
@@ -266,13 +233,6 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
         }
 
         CD_DestroyString(chunkPath);
-
-        CD_DO {
-            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
-            fcntl(fd, F_SETLKW, &lock);
-
-            close(fd);
-        }
 
         return true;
     }
@@ -284,14 +244,9 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
         CD_DestroyString(chunkPath);
 
-        CD_DO {
-            struct flock lock = { F_UNLCK, SEEK_SET, 0, 0, 0 };
-            fcntl(fd, F_SETLKW, &lock);
+        *error = 1;
 
-            close(fd);
-        }
-
-        return false;
+        return true;
     }
 }
 

@@ -26,9 +26,25 @@
 #ifndef CRAFTD_UTILS_H
 #define CRAFTD_UTILS_H
 
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <craftd/String.h>
 
-int mkdir_p (const char* path, mode_t mode);
+int CD_mkdir (const char* path, mode_t mode);
+
+bool CD_IsFile (const char* path);
+
+bool CD_IsDirectory (const char* path);
+
+bool CD_IsSymlink (const char* path);
+
+bool CD_PathExists (const char* path);
+
+bool CD_IsReadable (const char* path);
+
+bool CD_IsWritable (const char* path);
+
+bool CD_IsExecutable (const char* path);
 
 #endif

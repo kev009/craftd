@@ -26,7 +26,7 @@
 #include <craftd/common.h>
 
 int
-mkdir_p (const char* path, mode_t mode)
+CD_mkdir (const char* path, mode_t mode)
 {
     size_t length = strlen(path);
     char   tmp[length + 1];
@@ -46,4 +46,165 @@ mkdir_p (const char* path, mode_t mode)
     }
 
     return 0;
+}
+
+bool
+CD_IsFile (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) == 0) {
+        if (S_ISREG(s.st_mode)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+CD_IsDirectory (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) == 0) {
+        if (S_ISDIR(s.st_mode)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+CD_IsSymlink (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) == 0) {
+        if (S_ISLNK(s.st_mode)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+CD_PathExists (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) < 0) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+bool
+CD_IsReadable (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) < 0) {
+        return false;
+    }
+    else {
+        CD_DO {
+            uid_t uid = geteuid();
+
+            if (s.st_uid == uid && s.st_mode & S_IRUSR) {
+                return true;
+            }
+        }
+
+        CD_DO {
+            gid_t gid = getegid();
+
+            if (s.st_gid == gid && s.st_mode & S_IRGRP) {
+                return true;
+            }
+        }
+
+        if (s.st_mode & S_IROTH) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+CD_IsWriteable (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) < 0) {
+        CDString* tmp = CD_CreateStringFromCString(path);
+        CDString* dir = CD_StringDirname(tmp);
+
+        if (CD_IsDirectory(CD_StringContent(dir)) && CD_IsReadable(CD_StringContent(dir)) && CD_IsExecutable(CD_StringContent(dir))) {
+            return true;
+        }
+
+        return false;
+    }
+    else {
+        CD_DO {
+            uid_t uid = geteuid();
+
+            if (s.st_uid == uid && s.st_mode & S_IWUSR) {
+                return true;
+            }
+        }
+
+        CD_DO {
+            gid_t gid = getegid();
+
+            if (s.st_gid == gid && s.st_mode & S_IWGRP) {
+                return true;
+            }
+        }
+
+        if (s.st_mode & S_IWOTH) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+CD_IsExecutable (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) < 0) {
+        return false;
+    }
+    else {
+        CD_DO {
+            uid_t uid = geteuid();
+
+            if (s.st_uid == uid && s.st_mode & S_IXUSR) {
+                return true;
+            }
+        }
+
+        CD_DO {
+            gid_t gid = getegid();
+
+            if (s.st_gid == gid && s.st_mode & S_IXGRP) {
+                return true;
+            }
+        }
+
+        if (s.st_mode & S_IXOTH) {
+            return true;
+        }
+    }
+
+    return false;
 }
