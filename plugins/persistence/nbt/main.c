@@ -190,42 +190,35 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
     SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
 
-    nbt_node* root = NULL;
+    nbt_node* root = nbt_parse_path(CD_StringContent(chunkPath));
 
-    if (!CD_PathExists(CD_StringContent(chunkPath))) {
-        SDEBUG(server, "Generating chunk: %d,%d\n", x, z);
-
-        cdnbt_GenerateChunk(world, x, z, chunk, NULL);
-    }
-
-    load: {
-        root = nbt_parse_path(CD_StringContent(chunkPath));
-
-        if (!root || errno != NBT_OK || !cdnbt_ValidChunk(root)) {
+    if (!root || errno != NBT_OK || !cdnbt_ValidChunk(root)) {
+        if (cdnbt_GenerateChunk(world, x, z, chunk, NULL) == CDOk) {
+            SDEBUG(server, "generated chunk: %d,%d", x, z);
+            goto done;
+        }
+        else {
             SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
-
-            cdnbt_GenerateChunk(world, x, z, chunk, NULL);
-
             goto error;
         }
-
-        nbt_node* node;
-
-        node = nbt_find_by_path(root, ".Level.HeightMap");
-        memcpy(chunk->heightMap, node->payload.tag_byte_array.data, 256);
-
-        node = nbt_find_by_path(root, ".Level.Blocks");
-        memcpy(chunk->blocks, node->payload.tag_byte_array.data, 32768);
-
-        node = nbt_find_by_path(root, ".Level.Data");
-        memcpy(chunk->data, node->payload.tag_byte_array.data, 16384);
-
-        node = nbt_find_by_path(root, ".Level.BlockLight");
-        memcpy(chunk->blockLight, node->payload.tag_byte_array.data, 16384);
-
-        node = nbt_find_by_path(root, ".Level.SkyLight");
-        memcpy(chunk->skyLight, node->payload.tag_byte_array.data, 16384);
     }
+
+    nbt_node* node;
+
+    node = nbt_find_by_path(root, ".Level.HeightMap");
+    memcpy(chunk->heightMap, node->payload.tag_byte_array.data, 256);
+
+    node = nbt_find_by_path(root, ".Level.Blocks");
+    memcpy(chunk->blocks, node->payload.tag_byte_array.data, 32768);
+
+    node = nbt_find_by_path(root, ".Level.Data");
+    memcpy(chunk->data, node->payload.tag_byte_array.data, 16384);
+
+    node = nbt_find_by_path(root, ".Level.BlockLight");
+    memcpy(chunk->blockLight, node->payload.tag_byte_array.data, 16384);
+
+    node = nbt_find_by_path(root, ".Level.SkyLight");
+    memcpy(chunk->skyLight, node->payload.tag_byte_array.data, 16384);
 
     done: {
         if (root) {

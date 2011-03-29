@@ -23,19 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_ERROR_H
-#define CRAFTD_ERROR_H
+#include <craftd/Error.h>
 
-typedef int CDError;
-
-typedef enum _CDErrorType {
-    CDOk
-} CDErrorType;
-
-#define CD_DEFINE_ERROR CDError _error;
-
-#define ERROR(data) ((data)->_error)
-
-int CD_ErrorToErrno (CDError error);
-
-#endif
+int
+CD_ErrorToErrno (CDError error)
+{
+    return 0;
+}

@@ -178,10 +178,20 @@ MCChunk*
 CD_WorldGetChunk (CDWorld* self, int x, int z)
 {
     MCChunk* result = CD_alloc(sizeof(MCChunk));
+    CDError  status;
 
-    CD_EventDispatch(self->server, "World.chunk", self, x, z, result);
+    CD_EventDispatchWithError(status, self->server, "World.chunk", self, x, z, result);
 
-    return result;
+    if (status == CDOk) {
+        return result;
+    }
+    else {
+        CD_free(result);
+
+        errno = CD_ErrorToErrno(status);
+
+        return NULL;
+    }
 }
 
 void

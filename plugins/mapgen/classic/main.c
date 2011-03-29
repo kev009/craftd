@@ -56,8 +56,6 @@ static
 bool
 cdclassic_GenerateChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* data, const char* seed)
 {
-    puts("LOL");
-
     memset(data, 0, sizeof(*data));
 
     if (seed == NULL) {
