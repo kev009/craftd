@@ -188,17 +188,17 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 {
     CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
 
-    SDEBUG(server, "loading chunk %s", CD_StringContent(chunkPath));
+    WDEBUG(world, "loading chunk %s", CD_StringContent(chunkPath));
 
     nbt_node* root = nbt_parse_path(CD_StringContent(chunkPath));
 
     if (!root || errno != NBT_OK || !cdnbt_ValidChunk(root)) {
         if (cdnbt_GenerateChunk(world, x, z, chunk, NULL) == CDOk) {
-            SDEBUG(server, "generated chunk: %d,%d", x, z);
+            WDEBUG(world, "generated chunk: %d,%d", x, z);
             goto done;
         }
         else {
-            SERR(server, "bad chunk file '%s'", CD_StringContent(chunkPath));
+            WERR(world, "bad chunk file '%s'", CD_StringContent(chunkPath));
             goto error;
         }
     }

@@ -179,7 +179,7 @@ namespace :craftd do |craftd|
       namespace :nbt do |nbt|
         nbt.headers = FileList['plugins/persistence/nbt/include/*.h']
         nbt.sources = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
-          'plugins/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c']
+          'plugins/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c', 'plugins/persistence/nbt/cNBT/{buffer}.c']
 
         CLEAN.include nbt.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}"
