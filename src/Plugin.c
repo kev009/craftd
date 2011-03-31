@@ -65,13 +65,13 @@ CD_CreatePlugin (CDServer* server, const char* name)
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    J_DO {
+    J_DO { self->config = NULL;
         J_IN(server, self->server->config->data, "server") {
             J_IN(plugin, server, "plugin") {
                 J_FOREACH(plugin, plugin, "plugins") {
                     J_IF_STRING(plugin, "name") {
                         if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                            self->config = plugin;
+                            self->config = (CDRawConfig) plugin;
                             break;
                         }
                     }

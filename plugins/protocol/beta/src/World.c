@@ -38,6 +38,17 @@ CD_CreateWorld (CDServer* server, const char* name)
 
     self->server = server;
 
+    J_DO { self->config = NULL;
+        J_FOREACH(world, CD_GetPlugin(server->plugins, "protocol.beta")->config, "worlds") {
+            J_IF_STRING(world, "name") {
+                if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
+                    self->config = (CDRawConfig) world;
+                    break;
+                }
+            }
+        }
+    }
+
     self->name      = CD_CreateStringFromCStringCopy(name);
     self->dimension = CDWorldNormal;
     self->time      = 0;

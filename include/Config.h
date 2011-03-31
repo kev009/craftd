@@ -29,9 +29,12 @@
 #include <craftd/common.h>
 #include <jansson.h>
 
+typedef json_t*      CDRawConfig;
+typedef json_error_t CDRawConfigError;
+
 typedef struct _CDConfig {
-    json_t*      data;
-    json_error_t error;
+    CDRawConfig      data;
+    CDRawConfigError error;
 
     struct {
         bool daemonize;

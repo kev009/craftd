@@ -38,6 +38,8 @@ typedef enum _CDWorldDimension {
 typedef struct _CDWorld {
     CDServer* server;
 
+    CDRawConfig config;
+
     CDString*        name;
     CDWorldDimension dimension;
     uint16_t         time;

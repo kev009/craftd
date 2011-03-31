@@ -58,7 +58,7 @@ typedef struct _CDPlugin {
     CDPluginInitializer initialize;
     CDPluginFinalizer   finalize;
 
-    const json_t* config;
+    CDRawConfig config;
 
     CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;
