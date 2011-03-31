@@ -28,7 +28,7 @@
 
 #include <beta/common.h>
 
-#define CRAFTD_PROTOCOL_VERSION (9)
+#define CRAFTD_PROTOCOL_VERSION (10)
 
 typedef enum _CDPacketChain {
     CDRequest,
