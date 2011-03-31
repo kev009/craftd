@@ -117,6 +117,9 @@ CD_ParseConfig (const char* path)
                 J_INT(connection, "backlog",      self->cache.connection.backlog);
                 J_INT(connection, "simultaneous", self->cache.connection.simultaneous);
 
+                self->cache.connection.bind.ipv4.sin_port  = htons(self->cache.connection.port);
+                self->cache.connection.bind.ipv6.sin6_port = htons(self->cache.connection.port);
+
                 J_IN(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
                         if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
@@ -139,6 +142,9 @@ CD_ParseConfig (const char* path)
 
             J_IN(connection, httpd, "connection") {
                 J_INT(connection, "port", self->cache.httpd.connection.port);
+
+                self->cache.httpd.connection.bind.ipv4.sin_port  = htons(self->cache.httpd.connection.port);
+                self->cache.httpd.connection.bind.ipv6.sin6_port = htons(self->cache.httpd.connection.port);
 
                 J_IN(bind, connection, "bind") {
                     J_IF_STRING(bind, "ipv4") {
