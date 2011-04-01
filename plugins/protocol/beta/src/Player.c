@@ -68,7 +68,7 @@ CD_DestroyPlayer (CDPlayer* self)
 void
 CD_PlayerSendMessage (CDPlayer* self, CDString* message)
 {
-    CD_DO {
+    DO {
         CDPacketChat pkt = {
             .response = {
                 .message = message

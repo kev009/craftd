@@ -39,6 +39,23 @@ task :default => ['craftd:build', 'craftd:plugins']
 # Stuff installation
 task :install => ['craftd:install']
 
+namespace :dependencies do
+  namespace :libevent do |libevent|
+    task :fetch do
+
+    end
+
+    desc 'Build libevent 2'
+    task :build => :fetch do
+
+    end
+  end
+
+  namespace :jansson do |jansson|
+
+  end
+end
+
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
   craftd.sources   = FileList['src/**/*.c', 'third-party/bstring/{bstrlib,bstraux}.c']

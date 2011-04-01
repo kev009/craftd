@@ -54,7 +54,6 @@ CD_CreateWorld (CDServer* server, const char* name)
     self->time      = 0;
 
     self->players  = CD_CreateHash();
-    self->clients  = CD_CreateMap();
     self->entities = CD_CreateMap();
 
     self->chunks = CD_CreateSetWith(2000, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition);
@@ -93,7 +92,6 @@ CD_DestroyWorld (CDWorld* self)
     }
 
     CD_DestroyHash(self->players);
-    CD_DestroyMap(self->clients);
     CD_DestroyMap(self->entities);
 
     CD_DestroySet(self->chunks);
@@ -131,7 +129,35 @@ CD_WorldAddPlayer (CDWorld* self, CDPlayer* player)
 }
 
 void
-CD_WorldBroadcast (CDWorld* self, CDString* message)
+CD_WorldBroadcastBuffer (CDWorld* self, CDBuffer* buffer)
+{
+    assert(self);
+
+    CD_HASH_FOREACH(self->players, it) {
+        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
+
+        pthread_rwlock_rdlock(&player->client->lock.status);
+        if (player->client->status != CDClientDisconnect) {
+            CD_ClientSendBuffer(player->client, buffer);
+        }
+        pthread_rwlock_unlock(&player->client->lock.status);
+    }
+}
+
+void
+CD_WorldBroadcastPacket (CDWorld* self, CDPacket* packet)
+{
+    assert(self);
+
+    CDBuffer* buffer = CD_PacketToBuffer(packet);
+
+    CD_WorldBroadcastBuffer(self, buffer);
+
+    CD_DestroyBuffer(buffer);
+}
+
+void
+CD_WorldBroadcastMessage (CDWorld* self, CDString* message)
 {
     assert(self);
 
@@ -143,19 +169,8 @@ CD_WorldBroadcast (CDWorld* self, CDString* message)
 
     CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
 
-    CDBuffer* buffer = CD_PacketToBuffer(&response);
+    CD_WorldBroadcastPacket(self, &response);
 
-    CD_HASH_FOREACH(self->players, it) {
-        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
-
-        pthread_rwlock_rdlock(&player->client->lock.status);
-        if (player->client->status != CDClientDisconnect) {
-            CD_ClientSendBuffer(player->client, buffer);
-        }
-        pthread_rwlock_unlock(&player->client->lock.status);
-    }
-
-    CD_DestroyBuffer(buffer);
     CD_DestroyPacketData(&response);
 }
 

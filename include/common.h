@@ -31,14 +31,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <unistd.h>
+#include <string.h>
 #include <limits.h>
-#include <errno.h>
+
 #include <assert.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include <pthread.h>
 
-static inline void CD_abort (const char* error, ...) {
+static inline
+void
+CD_abort (const char* error, ...)
+{
     va_list ap;
     
     va_start(ap, error);
@@ -50,6 +58,9 @@ static inline void CD_abort (const char* error, ...) {
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
 
+#define DO \
+    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
+
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -57,10 +68,6 @@ static inline void CD_abort (const char* error, ...) {
 #include <event2/thread.h>
 
 #include <craftd/config.h>
-#include <craftd/memory.h>
-
-#define CD_DO \
-    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
 
 #if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
     typedef int32_t CDPointer;
@@ -75,6 +82,8 @@ static inline void CD_abort (const char* error, ...) {
 #endif
 
 #define CDNull (0)
+
+#include <craftd/memory.h>
 
 #include <craftd/Error.h>
 #include <craftd/Arithmetic.h>

@@ -88,9 +88,7 @@ cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
 
         CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
 
-        CD_HASH_FOREACH(world->players, it) {
-            CD_PlayerSendPacket((CDPlayer*) CD_HashIteratorValue(it), &packet);
-        }
+        CD_WorldBroadcastPacket(world, &packet);
     }
 }
 
@@ -163,7 +161,7 @@ CD_PluginInitialize (CDPlugin* self)
 
     CD_EventRegister(self->server, "Server.start!", cdbeta_ServerStart);
 
-    CD_DO { // Initiailize config cache
+    DO { // Initiailize config cache
         _config.commandChar = "/";
 
         J_DO {

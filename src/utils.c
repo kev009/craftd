@@ -48,6 +48,18 @@ CD_mkdir (const char* path, mode_t mode)
     return 0;
 }
 
+size_t
+CD_FileSize (const char* path)
+{
+    struct stat s;
+
+    if (stat(path, &s) == 0) {
+        return s.st_size;
+    }
+    
+    return 0;
+}
+
 bool
 CD_IsFile (const char* path)
 {
@@ -112,7 +124,7 @@ CD_IsReadable (const char* path)
         return false;
     }
     else {
-        CD_DO {
+        DO {
             uid_t uid = geteuid();
 
             if (s.st_uid == uid && s.st_mode & S_IRUSR) {
@@ -120,7 +132,7 @@ CD_IsReadable (const char* path)
             }
         }
 
-        CD_DO {
+        DO {
             gid_t gid = getegid();
 
             if (s.st_gid == gid && s.st_mode & S_IRGRP) {
@@ -152,7 +164,7 @@ CD_IsWriteable (const char* path)
         return false;
     }
     else {
-        CD_DO {
+        DO {
             uid_t uid = geteuid();
 
             if (s.st_uid == uid && s.st_mode & S_IWUSR) {
@@ -160,7 +172,7 @@ CD_IsWriteable (const char* path)
             }
         }
 
-        CD_DO {
+        DO {
             gid_t gid = getegid();
 
             if (s.st_gid == gid && s.st_mode & S_IWGRP) {
@@ -185,7 +197,7 @@ CD_IsExecutable (const char* path)
         return false;
     }
     else {
-        CD_DO {
+        DO {
             uid_t uid = geteuid();
 
             if (s.st_uid == uid && s.st_mode & S_IXUSR) {
@@ -193,7 +205,7 @@ CD_IsExecutable (const char* path)
             }
         }
 
-        CD_DO {
+        DO {
             gid_t gid = getegid();
 
             if (s.st_gid == gid && s.st_mode & S_IXGRP) {

@@ -28,13 +28,14 @@
 #include <craftd/Logger.h>
 
 #include <beta/World.h>
+#include <beta/Region.h>
 #include <beta/Player.h>
 
 static
 bool
 cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
 {
-    CD_DO {
+    DO {
         CDPacketPreChunk pkt = {
             .response = {
                 .position = *coord,
@@ -47,7 +48,7 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
         CD_PlayerSendPacketAndCleanData(player, &response);
     }
 
-    CD_DO {
+    DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
         MCChunk* chunk = CD_malloc(sizeof(MCChunk));
@@ -112,7 +113,7 @@ cdbeta_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
     assert(coord);
     assert(player);
 
-    CD_DO {
+    DO {
         CDPacketPreChunk pkt = {
             .response = {
                 .position = *coord,
@@ -199,26 +200,25 @@ cdbeta_CoordInRadius(MCChunkPosition *coord, MCChunkPosition *centerCoord, int r
 
 static
 bool
-cdbeta_posDistanceGreater( MCPrecisePosition a, MCPrecisePosition b, int maxdist )
+cdbeta_DistanceGreater (MCPrecisePosition a, MCPrecisePosition b, int maxDistance)
 {
-  return (abs( a.x - b.x ) > maxdist ||
-          abs( a.y - b.y ) > maxdist ||
-          abs( a.z - b.z ) > maxdist);
+    return (abs( a.x - b.x ) > maxDistance ||
+            abs( a.y - b.y ) > maxDistance ||
+            abs( a.z - b.z ) > maxDistance);
 }
 
 static
 MCRelativePosition
-cdbeta_relativeMove(MCPrecisePosition *pos1, MCPrecisePosition *pos2)
+cdbeta_RelativeMove (MCPrecisePosition* a, MCPrecisePosition* b)
 {
-  MCAbsolutePosition absPos1 = MC_PrecisePositionToAbsolutePosition(*pos1);
-  MCAbsolutePosition absPos2 = MC_PrecisePositionToAbsolutePosition(*pos2);
-  MCRelativePosition relPos;
+    MCAbsolutePosition absoluteA = MC_PrecisePositionToAbsolutePosition(*a);
+    MCAbsolutePosition absoluteB = MC_PrecisePositionToAbsolutePosition(*b);
 
-  relPos.x = absPos2.x - absPos1.x;
-  relPos.y = absPos2.y - absPos1.y;
-  relPos.z = absPos2.z - absPos1.z;
-
-  return relPos;
+    return (MCRelativePosition) {
+        .x = absoluteA.x - absoluteB.x,
+        .y = absoluteA.y - absoluteB.y,
+        .z = absoluteA.z - absoluteB.z
+    };
 }
 
 static
@@ -238,115 +238,131 @@ cdbeta_SendPacketToAllInRegion(CDPlayer *player, CDPacket *pkt)
 
 static
 void
-cdbeta_SendUpdatePos(CDPlayer *player, MCPrecisePosition *newpos, bool andLook, MCFloat pitch, MCFloat yaw )
+cdbeta_SendUpdatePos(CDPlayer* player, MCPrecisePosition* newPosition, bool andLook, MCFloat pitch, MCFloat yaw)
 {
-  if ( cdbeta_posDistanceGreater(player->entity.position, *newpos, 2) || true )
-  {
-    CD_DO {
-      CDPacketEntityTeleport pkt;
+    if (cdbeta_DistanceGreater(player->entity.position, *newPosition, 2) || true) {
+        DO {
+            CDPacketEntityTeleport pkt;
 
-      pkt.response.entity   = player->entity;
-      pkt.response.position = MC_PrecisePositionToAbsolutePosition(*newpos);
+            pkt.response.entity   = player->entity;
+            pkt.response.position = MC_PrecisePositionToAbsolutePosition(*newPosition);
 
-      if (andLook)
-      {
-        pkt.response.pitch = pitch;
-        pkt.response.rotation = yaw;
-      }
-      else
-      {
-        pkt.response.pitch = player->pitch;
-        pkt.response.rotation = player->yaw;
-      }
-
-      CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer)  &pkt };
-
-      cdbeta_SendPacketToAllInRegion(player, &response);
+            if (andLook) {
+                pkt.response.pitch = pitch;
+                pkt.response.rotation = yaw;
+            }
+            else {
+                pkt.response.pitch = player->pitch;
+                pkt.response.rotation = player->yaw;
+            }
+            
+            CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer)  &pkt };
+            
+            cdbeta_SendPacketToAllInRegion(player, &response);
+        }
     }
-  }
-  else
-  {
-    if (andLook)
-    {
-      CDPacketEntityLookMove pkt;
+    else {
+        if (andLook) {
+            CDPacketEntityLookMove pkt = {
+                .response = {
+                    .entity   = player->entity,
+                    .position = CD_RelativeMove(&player->entity.position, newPosition),
+                    .yaw      = yaw,
+                    .pitch    = pitch
+                }
+            };
 
-      pkt.response.entity = player->entity;
-      pkt.response.position = cdbeta_relativeMove(&player->entity.position, newpos);
-      pkt.response.yaw = yaw;
-      pkt.response.pitch = pitch;
+
+            CDPacket response = { CDResponse, CDEntityLookMove, (CDPointer) &pkt };
+
+            CD_RegionBroadcastPacket(player, &response);
+        }
+        else {
+            CDPacketEntityRelativeMove pkt = {
+                .response = {
+                    .entity   = player->entity,
+                    .position = CD_RelativeMove(&player->entity.position, newPosition)
+                }
+            };
+
+            CDPacket response = { CDResponse, CDEntityRelativeMove, (CDPointer) &pkt };
+
+            CD_RegionBroadcastPacket(player, &response);
+        }
     }
-    else
-    {
-      CDPacketEntityRelativeMove pkt;
-
-      pkt.response.entity = player->entity;
-      pkt.response.position = cdbeta_relativeMove(&player->entity.position, newpos);
-
-      CDPacket response = { CDResponse, CDEntityRelativeMove,(CDPointer)  &pkt };
-
-      cdbeta_SendPacketToAllInRegion(player, &response );
-    }
-  }
 }
 
 static
 void
 cdbeta_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
 {
-  CD_DO {
-    CDPacketNamedEntitySpawn pkt;
+    DO {
+        CDPacketNamedEntitySpawn pkt = {
+            .response = {
+                .entity   = other->entity,
+                .name     = other->username,
+                .pitch    = other->pitch,
+                .rotation = other->yaw,
 
-    pkt.response.entity = other->entity;
-    pkt.response.name = other->username;
-    pkt.response.pitch = other->pitch;
-    pkt.response.rotation = other->yaw;
-    pkt.response.item.id = 0;
-    pkt.response.position = MC_PrecisePositionToAbsolutePosition(other->entity.position);
+                .item = {
+                    .id = 0
+                },
 
-    CDPacket response = { CDResponse, CDNamedEntitySpawn, (CDPointer) &pkt };
+                .position = MC_PrecisePositionToAbsolutePosition(other->entity.position)
+            }
+        };
 
-    CD_PlayerSendPacket(player, &response);
-  }
+        CDPacket response = { CDResponse, CDNamedEntitySpawn, (CDPointer) &pkt };
 
-  for (int i = 0; i < 5; i++)
-  {
-     CD_DO {
-       CDPacketEntityEquipment pkt;
-       pkt.response.entity = other->entity;
-       pkt.response.slot = i;
-       pkt.response.item = -1;
-       pkt.response.damage = 0;
+        CD_PlayerSendPacket(player, &response);
+    }
 
-       CDPacket response = { CDResponse, CDEntityEquipment, (CDPointer) &pkt };
+    for (int i = 0; i < 5; i++) {
+        DO {
+            CDPacketEntityEquipment pkt = {
+                .response = {
+                    .entity = other->entity,
 
-       CD_PlayerSendPacket(player, &response);
-     }
-  }
+                    .slot   = i,
+                    .item   = -1,
+                    .damage = 0
+                }
+            };
 
-  CD_DO {
-    CDPacketEntityTeleport pkt;
+            CDPacket response = { CDResponse, CDEntityEquipment, (CDPointer) &pkt };
 
-    pkt.response.entity = other->entity;
-    pkt.response.pitch = other->pitch;
-    pkt.response.rotation = 0;
-    pkt.response.position = MC_PrecisePositionToAbsolutePosition(other->entity.position);
+            CD_PlayerSendPacket(player, &response);
+        }
+    }
 
-    CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer) &pkt };
+    DO {
+        CDPacketEntityTeleport pkt = {
+            .response = {
+                .entity   = other->entity,
+                .pitch    = other->pitch,
+                .rotation = 0,
+                .position = MC_PrecisePositionToAbsolutePosition(other->entity.position)
+            }
+        };
 
-    CD_PlayerSendPacket(player, &response);
-  }
+        CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer) &pkt };
 
-    CD_PlayerSendMessage(player, CD_CreateStringFromFormat(
-        "You should now see %s", CD_StringContent(other->username)));
+        CD_PlayerSendPacket(player, &response);
+    }
+
+    CD_PlayerSendMessage(player, CD_CreateStringFromFormat("You should now see %s", CD_StringContent(other->username)));
 }
 
 static
 void
 cdbeta_SendDestroyEntity (CDPlayer* player, MCEntity* entity)
 {
-    CD_DO {
-        CDPacketEntityDestroy pkt;
-        pkt.response.entity = *entity;
+    DO {
+        CDPacketEntityDestroy pkt = {
+            .response = {
+                .entity = *entity
+            }
+        };
 
         CDPacket response = { CDResponse, CDEntityDestroy, (CDPointer) &pkt };
 
@@ -450,11 +466,14 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
                 player->username = CD_CloneString(data->request.username);
             }
 
+            player->world = world;
+
             CD_HashPut(world->players, CD_StringContent(player->username), (CDPointer) player);
+            CD_MapPut(world->entities, player->entity.id, (CDPointer) player);
 
             pthread_mutex_unlock(&_lock.login);
 
-            CD_DO {
+            DO {
                 CDPacketLogin pkt = {
                     .response = {
                         .id         = player->entity.id,
@@ -487,7 +506,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             }
 
             /* Send Spawn Position to initialize compass */
-            CD_DO {
+            DO {
                 CDPacketSpawnPosition pkt = {
                     .response = {
                         .position = world->spawnPosition
@@ -499,7 +518,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
                 CD_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            CD_DO {
+            DO {
                 MCPrecisePosition pos = MC_BlockPositionToPrecisePosition(world->spawnPosition);
                 CDPacketPlayerMoveLook pkt = {
                     .response = {
@@ -532,16 +551,15 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 
             SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
 
-            player        = CD_CreatePlayer(client);
-            player->world = world;
-
-            CD_DynamicPut(client, "Client.player", (CDPointer) player);
-
             CDPacketHandshake pkt = {
                 .response = {
                     .hash = CD_CreateStringFromCString("-")
                 }
             };
+
+            player = CD_CreatePlayer(client);
+
+            CD_DynamicPut(client, "Client.player", (CDPointer) player);
 
             CDPacket response = { CDResponse, CDHandshake, (CDPointer) &pkt };
 
@@ -597,7 +615,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             player->yaw   = data->request.yaw;
             player->pitch = data->request.pitch;
 
-            CD_DO {
+            DO {
               CDPacketEntityLook pkt;
 
               pkt.response.entity = player->entity;
@@ -674,7 +692,7 @@ cdbeta_PlayerLogin (CDServer* server, CDPlayer* player, int status)
         return true;
     }
 
-    CD_DO {
+    DO {
         CDPacketTimeUpdate pkt = {
             .response = {
                 .time = CD_WorldGetTime(player->world)
@@ -686,7 +704,7 @@ cdbeta_PlayerLogin (CDServer* server, CDPlayer* player, int status)
         CD_PlayerSendPacket(player, &packet);
     }
 
-    CD_WorldBroadcast(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has joined the game",
+    CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has joined the game",
                 CD_StringContent(player->username)), MCColorYellow));
 
 
@@ -707,7 +725,7 @@ bool
 cdbeta_PlayerLogout (CDServer* server, CDPlayer* player)
 {
     if (player->world) {
-        CD_WorldBroadcast(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
+        CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
             CD_StringContent(player->username)), MCColorYellow));
 
         CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");
@@ -719,6 +737,9 @@ cdbeta_PlayerLogout (CDServer* server, CDPlayer* player)
             cdbeta_SendDestroyEntity(other, &player->entity);
             CD_ListDeleteAll(otherSeenPlayers, (CDPointer) player);
         }
+
+        CD_HashDelete(player->world->players, CD_StringContent(player->username));
+        CD_MapDelete(player->world->entities, player->entity.id);
     }
 
     return true;
@@ -728,16 +749,10 @@ static
 bool
 cdbeta_ClientDisconnect (CDServer* server, CDClient* client, bool status)
 {
-    CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
+    CDPlayer* player = (CDPlayer*) CD_DynamicGet(client, "Client.player");
 
-    CD_LIST_FOREACH(worlds, it) {
-        CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
-
-        if (CD_MapHasKey(world->clients, (CDPointer) client)) {
-            CD_EventDispatch(server, "Player.logout", (CDPlayer*) CD_MapGet(world->clients, (CDPointer) client), status);
-
-            CD_LIST_BREAK(worlds);
-        }
+    if (player->world) {
+        CD_EventDispatch(server, "Player.logout", player, status);
     }
 
     return true;
@@ -747,7 +762,7 @@ static
 bool
 cdbeta_ClientKick (CDServer* server, CDClient* client, CDString* reason)
 {
-    CD_DO {
+    DO {
         CDPacketDisconnect pkt = {
             .response = {
                 .reason = reason

@@ -59,13 +59,8 @@ CD_ParseConfig (const char* path)
     self->cache.httpd.enabled         = true;
     self->cache.httpd.connection.port = 25566;
 
-    self->cache.httpd.connection.bind.ipv4.sin_family      = AF_INET;
-    self->cache.httpd.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
-    self->cache.httpd.connection.bind.ipv4.sin_port        = htons(self->cache.httpd.connection.port);
-
-    self->cache.httpd.connection.bind.ipv6.sin6_family = AF_INET6;
-    self->cache.httpd.connection.bind.ipv6.sin6_addr   = in6addr_any;
-    self->cache.httpd.connection.bind.ipv6.sin6_port   = htons(self->cache.httpd.connection.port);
+    self->cache.httpd.connection.bind.ipv4 = "0.0.0.0";
+    self->cache.httpd.connection.bind.ipv6 = "::";
 
     self->cache.rate.sunrise = 20;
     self->cache.rate.day     = 20;
@@ -143,21 +138,9 @@ CD_ParseConfig (const char* path)
             J_IN(connection, httpd, "connection") {
                 J_INT(connection, "port", self->cache.httpd.connection.port);
 
-                self->cache.httpd.connection.bind.ipv4.sin_port  = htons(self->cache.httpd.connection.port);
-                self->cache.httpd.connection.bind.ipv6.sin6_port = htons(self->cache.httpd.connection.port);
-
                 J_IN(bind, connection, "bind") {
-                    J_IF_STRING(bind, "ipv4") {
-                        if (evutil_inet_pton(AF_INET, J_STRING_VALUE, &self->cache.httpd.connection.bind.ipv4.sin_addr) != 1) {
-                            self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
-                        }
-                    }
-
-                    J_IF_STRING(bind, "ipv6") {
-                        if (evutil_inet_pton(AF_INET6, J_STRING_VALUE, &self->cache.httpd.connection.bind.ipv6.sin6_addr) != 1) {
-                            self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
-                        }
-                    }
+                    J_STRING(bind, "ipv4", self->cache.httpd.connection.bind.ipv4);
+                    J_STRING(bind, "ipv6", self->cache.httpd.connection.bind.ipv6);
                 }
             }
         }

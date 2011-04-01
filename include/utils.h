@@ -26,12 +26,11 @@
 #ifndef CRAFTD_UTILS_H
 #define CRAFTD_UTILS_H
 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <craftd/String.h>
+#include <craftd/common.h>
 
 int CD_mkdir (const char* path, mode_t mode);
+
+size_t CD_FileSize (const char* path);
 
 bool CD_IsFile (const char* path);
 

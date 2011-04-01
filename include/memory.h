@@ -26,14 +26,21 @@
 #ifndef CRAFTD_MEMORY_H
 #define CRAFTD_MEMORY_H
 
-#include <stdlib.h>
+#include <common.h>
 
 /**
  * Simple free wrapper
  *
  * @param pointer The pointer to free
  */
-void CD_free (void* pointer);
+static inline
+void
+CD_free (void* pointer)
+{
+    if (pointer) {
+        free(pointer);
+    }
+}
 
 /**
  * Simple calloc wrapper w/error handling
@@ -43,7 +50,18 @@ void CD_free (void* pointer);
  *
  * @return valid pointer to heap memory
  */
-void* CD_calloc (size_t number, size_t size);
+static inline
+void*
+CD_calloc (size_t number, size_t size)
+{
+    void* pointer;
+
+    if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
+        CD_abort("could not allocate memory with a calloc");
+    }
+
+    return pointer;
+}
 
 /**
  * Simple malloc wrapper w/error handling
@@ -52,12 +70,34 @@ void* CD_calloc (size_t number, size_t size);
  *
  * @return valid pointer to heap memory
  */
-void* CD_malloc (size_t size);
+static inline
+void*
+CD_malloc (size_t size)
+{
+    void* pointer;
+
+    if ((pointer = malloc(size)) == NULL) {
+        CD_abort("could not allocate memory with a malloc");
+    }
+
+    return pointer;
+}
 
 /**
  * Simple malloc wrapper that sets the memory to zero
  */
-void* CD_alloc (size_t size);
+static inline
+void*
+CD_alloc (size_t size)
+{
+    void* pointer = CD_malloc(size);
+
+    if (pointer) {
+        memset(pointer, 0, size);
+    }
+
+    return pointer;
+}
 
 /**
  * Simple realloc wrapper w/error handling.  Mimics glibc's implementation
@@ -67,6 +107,27 @@ void* CD_alloc (size_t size);
  *
  * @return resized valid pointer to heap memory
  */
-void* CD_realloc (void* pointer, size_t size);
+static inline
+void*
+CD_realloc (void* pointer, size_t size)
+{
+    void* newPointer;
+
+    if (pointer == NULL) {
+        return CD_malloc(size);
+    }
+
+    if (size == 0) {
+        CD_free(pointer);
+
+        return NULL;
+    }
+
+    if ((newPointer = realloc(pointer, size)) == NULL) {
+      CD_abort("could not allocate memory with a realloc");
+    }
+
+    return newPointer;
+}
 
 #endif

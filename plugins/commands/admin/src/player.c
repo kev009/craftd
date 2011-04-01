@@ -49,7 +49,7 @@ if (CD_StringIsEqual(matches->item[1], "player")) {
         goto done;
     }
 
-    CD_DO {
+    DO {
         CDRegexpMatches* old = matches;
         matches = CD_RegexpMatch(regexp, old->item[2]);
         CD_DestroyRegexpMatches(old);
@@ -92,7 +92,7 @@ if (CD_StringIsEqual(matches->item[1], "player")) {
             goto done;
         }
 
-        CD_DO {
+        DO {
             CDRegexpMatches* old = matches;
             matches = CD_RegexpMatch(regexp, old->item[2]);
             CD_DestroyRegexpMatches(old);

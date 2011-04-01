@@ -287,7 +287,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("Admin Commands [auth, ticket, player, workers]");
 
-    CD_DO { // Initiailize config cache
+    DO { // Initiailize config cache
         _config.ticket.max = 20;
 
         J_DO {

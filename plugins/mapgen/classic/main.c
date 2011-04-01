@@ -81,7 +81,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("Classic Mapgen");
 
-    CD_DO { // Initiailize config cache
+    DO { // Initiailize config cache
         _config.seed = "^_^";
 
         J_DO {

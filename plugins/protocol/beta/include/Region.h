@@ -23,65 +23,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_BETA_WORLD_H
-#define CRAFTD_BETA_WORLD_H
+#ifndef CRAFTD_BETA_REGION_H
+#define CRAFTD_BETA_REGION_H
 
-#include <craftd/Server.h>
-
+#include <beta/minecraft.h>
 #include <beta/Player.h>
 
-typedef enum _CDWorldDimension {
-    CDWorldHell   = -1,
-    CDWorldNormal =  0
-} CDWorldDimension;
+bool CD_IsCoordInRadius (MCChunkPosition* coord, MCChunkPosition* centerCoord, int radius);
 
-typedef struct _CDWorld {
-    CDServer* server;
+bool CD_IsDistanceGreater (MCPrecisePosition a, MCPrecisePosition b, int maxDistance);
 
-    CDRawConfig config;
+MCRelativePosition CD_RelativeMove (MCPrecisePosition* a, MCPrecisePosition* b);
 
-    CDString*        name;
-    CDWorldDimension dimension;
-    uint16_t         time;
+void CD_RegionBroadcastPacket (CDPlayer* player, CDPacket* packet);
 
-    struct {
-        pthread_spinlock_t time;
-    } lock;
-
-    CDHash* players;
-    CDMap*  entities;
-
-    MCBlockPosition spawnPosition;
-    CDSet*          chunks;
-
-    CD_DEFINE_DYNAMIC;
-    CD_DEFINE_ERROR;
-} CDWorld;
-
-CDWorld* CD_CreateWorld (CDServer* server, const char* name);
-
-bool CD_WorldSave (CDWorld* self);
-
-void CD_DestroyWorld (CDWorld* self);
-
-void CD_WorldLoad (CDWorld* self);
-
-MCEntityId CD_WorldGenerateEntityId (CDWorld* self);
-
-void CD_WorldAddPlayer (CDWorld* self, CDPlayer* player);
-
-void CD_WorldBroadcastBuffer (CDWorld* self, CDBuffer* buffer);
-
-void CD_WorldBroadcastPacket (CDWorld* self, CDPacket* packet);
-
-void CD_WorldBroadcastMessage (CDWorld* self, CDString* message);
-
-uint16_t CD_WorldGetTime (CDWorld* self);
-
-uint16_t CD_WorldSetTime (CDWorld* self, uint16_t time);
-
-MCChunk* CD_WorldGetChunk (CDWorld* self, int x, int z);
-
-void CD_WorldSetChunk (CDWorld* self, MCChunk* chunk);
 
 #endif

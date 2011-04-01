@@ -270,7 +270,7 @@ CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("cNBT Persistence");
 
-    CD_DO { // Initialize configuration stuff
+    DO { // Initialize configuration stuff
         _config.path = "/usr/share/craftd/worlds";
         _config.base = 36;
 

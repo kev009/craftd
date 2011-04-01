@@ -23,65 +23,52 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_BETA_WORLD_H
-#define CRAFTD_BETA_WORLD_H
+#ifndef CRAFTD_HTTPD_H
+#define CRAFTD_HTTPD_H
 
-#include <craftd/Server.h>
+#include <craftd/common.h>
 
-#include <beta/Player.h>
+#include <event2/http.h>
 
-typedef enum _CDWorldDimension {
-    CDWorldHell   = -1,
-    CDWorldNormal =  0
-} CDWorldDimension;
+typedef struct _CDContentType {
+  const char* extension;
+  const char* mime;
+} CDContentType;
 
-typedef struct _CDWorld {
-    CDServer* server;
+static const CDContentType CDContentTypes[] = {
+  { "txt",  "text/plain" },
+  { "c",    "text/plain" },
+  { "h",    "text/plain" },
+  { "js",   "text/javascript" },
+  { "html", "text/html" },
+  { "htm",  "text/html" },
+  { "css",  "text/css" },
+  { "gif",  "image/gif" },
+  { "jpg",  "image/jpeg"},
+  { "jpeg", "image/jpeg" },
+  { "png",  "image/png" },
+  { "pdf",  "application/pdf" },
+  { "ps",   "application/postsript" },
+  { NULL },
+};
 
-    CDRawConfig config;
+struct _CDServer;
 
-    CDString*        name;
-    CDWorldDimension dimension;
-    uint16_t         time;
+typedef struct _CDHTTPd {
+    struct _CDServer* server;
 
     struct {
-        pthread_spinlock_t time;
-    } lock;
+        struct event_base*          base;
+        struct evhttp*              httpd;
+        struct evhttp_bound_socket* handle;
+    } event;
 
-    CDHash* players;
-    CDMap*  entities;
+    pthread_t      thread;
+    pthread_attr_t attributes;
+} CDHTTPd;
 
-    MCBlockPosition spawnPosition;
-    CDSet*          chunks;
+CDHTTPd* CD_CreateHTTPd (struct _CDServer* server);
 
-    CD_DEFINE_DYNAMIC;
-    CD_DEFINE_ERROR;
-} CDWorld;
-
-CDWorld* CD_CreateWorld (CDServer* server, const char* name);
-
-bool CD_WorldSave (CDWorld* self);
-
-void CD_DestroyWorld (CDWorld* self);
-
-void CD_WorldLoad (CDWorld* self);
-
-MCEntityId CD_WorldGenerateEntityId (CDWorld* self);
-
-void CD_WorldAddPlayer (CDWorld* self, CDPlayer* player);
-
-void CD_WorldBroadcastBuffer (CDWorld* self, CDBuffer* buffer);
-
-void CD_WorldBroadcastPacket (CDWorld* self, CDPacket* packet);
-
-void CD_WorldBroadcastMessage (CDWorld* self, CDString* message);
-
-uint16_t CD_WorldGetTime (CDWorld* self);
-
-uint16_t CD_WorldSetTime (CDWorld* self, uint16_t time);
-
-MCChunk* CD_WorldGetChunk (CDWorld* self, int x, int z);
-
-void CD_WorldSetChunk (CDWorld* self, MCChunk* chunk);
+void* CD_RunHTTPd (CDHTTPd* self);
 
 #endif

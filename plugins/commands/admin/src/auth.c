@@ -36,13 +36,13 @@ if (CD_StringIsEqual(matches->item[1], "auth")) {
         goto done;
     }
 
-    CD_DO {
+    DO {
         CDRegexpMatches* old = matches;
         matches = CD_RegexpMatch(regexp, old->item[2]);
         CD_DestroyRegexpMatches(old);
     }
 
-    CD_DO {
+    DO {
         const char* currentName     = NULL;
         const char* currentPassword = NULL;
         const char* name            = NULL;

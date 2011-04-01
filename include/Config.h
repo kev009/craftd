@@ -55,8 +55,8 @@ typedef struct _CDConfig {
 
             struct {
                 struct {
-                    struct sockaddr_in  ipv4;
-                    struct sockaddr_in6 ipv6;
+                    const char* ipv4;
+                    const char* ipv6;
                 } bind;
 
                 uint16_t port;

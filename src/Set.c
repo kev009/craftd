@@ -72,7 +72,7 @@ CD_CloneSet (CDSet* self, int hint)
     assert(self);
     assert(cloned);
 
-    CD_DO {
+    DO {
         CDSetMember* oldMember;
 
         for (size_t i = 0; i < self->size; i++) {
@@ -267,7 +267,7 @@ CD_SetUnion (CDSet* a, CDSet* b)
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 
-    CD_DO {
+    DO {
         CDSetMember* member;
 
         for (size_t i = 0; i < b->size; i++) {
@@ -301,7 +301,7 @@ CD_SetIntersect (CDSet* a, CDSet* b)
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 
-    CD_DO {
+    DO {
         CDSetMember* member;
 
         for (size_t i = 0; i < b->size; i++) {
@@ -342,7 +342,7 @@ CD_SetMinus (CDSet* a, CDSet* b)
 
     assert(a->cmp == b->cmp && a->hash == b->hash);
 
-    CD_DO {
+    DO {
         CDSetMember* member;
 
         for (size_t i = 0; i < a->size; i++) {
@@ -389,7 +389,7 @@ CD_SetDifference (CDSet* a, CDSet* b)
         a = sets[i];
         b = sets[i + 1];
 
-        CD_DO {
+        DO {
             CDSetMember* member;
 
             for (size_t i = 0; i < b->size; i++) {

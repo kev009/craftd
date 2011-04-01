@@ -52,7 +52,7 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrup
  * @param eventName The name of the event to dispatch
  */
 #define CD_EventDispatch(self, eventName, ...)                                                      \
-    CD_DO {                                                                                         \
+    DO {                                                                                         \
         assert(self);                                                                               \
         assert(eventName);                                                                          \
                                                                                                     \
@@ -79,7 +79,7 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrup
     }
 
 #define CD_EventDispatchWithResult(interrupted, self, eventName, ...)                               \
-    CD_DO {                                                                                         \
+    DO {                                                                                         \
         assert(self);                                                                               \
         assert(eventName);                                                                          \
                                                                                                     \
@@ -106,7 +106,7 @@ bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrup
     }
 
 #define CD_EventDispatchWithError(error, self, eventName, ...)                                              \
-    CD_DO {                                                                                                 \
+    DO {                                                                                                 \
         assert(self);                                                                                       \
         assert(eventName);                                                                                  \
                                                                                                             \

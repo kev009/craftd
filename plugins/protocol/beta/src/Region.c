@@ -23,71 +23,50 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/Logger.h>
-#include <craftd/memory.h>
+#include <beta/Region.h>
+
+bool
+CD_IsCoordInRadius (MCChunkPosition* coord, MCChunkPosition* centerCoord, int radius)
+{
+    return (coord->x >= centerCoord->x - radius &&
+            coord->x <= centerCoord->x + radius &&
+            coord->z >= centerCoord->z - radius &&
+            coord->z <= centerCoord->z + radius);
+}
+
+bool
+CD_IsDistanceGreater (MCPrecisePosition a, MCPrecisePosition b, int maxDistance)
+{
+    return (abs( a.x - b.x ) > maxDistance ||
+            abs( a.y - b.y ) > maxDistance ||
+            abs( a.z - b.z ) > maxDistance);
+}
+
+MCRelativePosition
+CD_RelativeMove (MCPrecisePosition* a, MCPrecisePosition* b)
+{
+    MCAbsolutePosition absoluteA = MC_PrecisePositionToAbsolutePosition(*a);
+    MCAbsolutePosition absoluteB = MC_PrecisePositionToAbsolutePosition(*b);
+
+    return (MCRelativePosition) {
+        .x = absoluteA.x - absoluteB.x,
+        .y = absoluteA.y - absoluteB.y,
+        .z = absoluteA.z - absoluteB.z
+    };
+}
 
 void
-CD_free (void* pointer)
+CD_RegionBroadcastPacket (CDPlayer* player, CDPacket* packet)
 {
-    if (pointer) {
-        free(pointer);
+    CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");
+
+    CD_LIST_FOREACH(seenPlayers, it) {
+        if (player == (CDPlayer*) CD_ListIteratorValue(it)) {
+            continue;
+        }
+
+        CD_PlayerSendPacket((CDPlayer*) CD_ListIteratorValue(it), packet);
     }
 }
 
-void*
-CD_calloc (size_t number, size_t size)
-{
-    void* pointer;
 
-    if ((pointer = calloc(number, size)) == NULL && number > 0 && size > 0) {
-        CD_abort("could not allocate memory with a calloc");
-    }
-
-    return pointer;
-}
-
-void*
-CD_malloc (size_t size)
-{
-    void* pointer;
-
-    if ((pointer = malloc(size)) == NULL) {
-        CD_abort("could not allocate memory with a malloc");
-    }
-
-    return pointer;
-}
-
-void*
-CD_alloc (size_t size)
-{
-    void* pointer = CD_malloc(size);
-
-    if (pointer) {
-        memset(pointer, 0, size);
-    }
-
-    return pointer;
-}
-
-void*
-CD_realloc (void* pointer, size_t size)
-{
-    void* newPointer;
-
-    if (pointer == NULL) {
-        return CD_malloc(size);
-    }
-
-    if (size == 0) {
-        CD_free(pointer);
-
-        return NULL;
-    }
-
-    if ((newPointer = realloc(pointer, size)) == NULL) {
-      CD_abort("could not allocate memory with a realloc");
-    }
-
-    return newPointer;
-}

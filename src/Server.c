@@ -60,6 +60,13 @@ CD_CreateServer (const char* path)
     self->workers  = CD_CreateWorkers(self);
     self->plugins  = CD_CreatePlugins(self);
 
+    if (self->config->cache.httpd.enabled) {
+        self->httpd = CD_CreateHTTPd(self);
+    }
+    else {
+        self->httpd = NULL;
+    }
+
     self->clients       = CD_CreateList();
     self->disconnecting = CD_CreateList();
 
@@ -326,7 +333,7 @@ CD_RunServer (CDServer* self)
     evutil_make_socket_nonblocking(self->socket);
 
     #ifndef WIN32
-    CD_DO {
+    DO {
         int one = 1;
         setsockopt(self->socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     }
@@ -362,6 +369,11 @@ CD_RunServer (CDServer* self)
 
     CD_EventDispatch(self, "Server.start!");
     CD_EventUnregister(self, "Server.start!", NULL);
+
+    // Start HTTPd if enabled
+    if (self->httpd) {
+        pthread_create(&self->httpd->thread, &self->httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, self->httpd);
+    }
 
     self->running = true;
 

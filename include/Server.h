@@ -28,6 +28,7 @@
 
 #include <craftd/Config.h>
 #include <craftd/Logger.h>
+#include <craftd/HTTPd.h>
 #include <craftd/TimeLoop.h>
 #include <craftd/Workers.h>
 #include <craftd/Plugins.h>
@@ -43,6 +44,8 @@ typedef struct _CDServer {
         bool  (*parsable) (CDBuffers* buffers);
         void* (*parse)    (CDBuffers* buffers);
     } packet;
+
+    CDHTTPd* httpd;
 
     CDTimeLoop* timeloop;
     CDWorkers*  workers;
