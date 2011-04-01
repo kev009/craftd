@@ -55,20 +55,31 @@ static
 void
 cd_JSONRequest (struct evhttp_request* request, CDServer* server)
 {
+    struct evbuffer* buffer = evhttp_request_get_input_buffer(request);
+    char*            text   = CD_alloc(evbuffer_get_length(buffer) + 1);
+    
+    evbuffer_remove(buffer, text, evbuffer_get_length(buffer));
+
     json_error_t error;
-    json_t*      input  = json_loads((const char*) evbuffer_pullup(evhttp_request_get_input_buffer(request), -1), 0, &error);
+    json_t*      input  = json_loads(text, 0, &error);
     json_t*      output = json_object();
 
-    if (evhttp_request_get_command(request) != EVHTTP_REQ_POST || input == NULL) {
+    printf("%s\n", text);
+
+    if (evhttp_request_get_command(request) != EVHTTP_REQ_POST) {
+        goto error;
+    }
+
+    if (input == NULL) {
+        SERR(server, "RPC.JSON: error on line %d: %s", error.line, error.text);
+        
         goto error;
     }
 
     CD_EventDispatch(server, "RPC.JSON", input, output);
 
     done: {
-        json_delete(input);
-
-        char*           outString = json_dumps(output, JSON_INDENT(2));
+        char*            outString = json_dumps(output, JSON_INDENT(2));
         struct evbuffer* outBuffer = evbuffer_new();
 
         evbuffer_add_printf(outBuffer, "%s", outString);
@@ -78,12 +89,16 @@ cd_JSONRequest (struct evhttp_request* request, CDServer* server)
         evbuffer_free(outBuffer);
         free(outString);
         json_delete(output);
+        json_delete(input);
+        CD_free(text);
 
         return;
     }
 
     error: {
         evhttp_send_error(request, HTTP_INTERNAL, "Internal server error");
+
+        CD_free(text);
 
         if (input) {
             json_delete(input);
@@ -193,7 +208,7 @@ CD_RunHTTPd (CDHTTPd* self)
         self->server->config->cache.httpd.connection.bind.ipv4,
         self->server->config->cache.httpd.connection.port);
 
-    SLOG(self->server, LOG_NOTICE, "Started HTTPd on %s:%d",
+    SLOG(self->server, LOG_NOTICE, "Started HTTPd at http://%s:%d",
         self->server->config->cache.httpd.connection.bind.ipv4,
         self->server->config->cache.httpd.connection.port);
 

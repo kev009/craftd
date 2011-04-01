@@ -206,7 +206,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDClient* client)
 
     ERROR(client) = error;
 
-    SLOG(self, LOG_NOTICE, "%s disconnected", client->ip);
+    SLOG(self, LOG_INFO, "%s disconnected", client->ip);
 
     CD_AddJob(client->server->workers, CD_CreateExternalJob(CDClientDisconnectJob, (CDPointer) client));
 
@@ -361,6 +361,11 @@ CD_RunServer (CDServer* self)
     // Start the TimeLoop for timed events
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
 
+    // Start HTTPd if enabled
+    if (self->httpd) {
+        pthread_create(&self->httpd->thread, &self->httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, self->httpd);
+    }
+
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, (event_callback_fn) cd_Accept, self);
 
     event_add(self->event.listener, NULL);
@@ -368,12 +373,6 @@ CD_RunServer (CDServer* self)
     CD_LoadPlugins(self->plugins);
 
     CD_EventDispatch(self, "Server.start!");
-    CD_EventUnregister(self, "Server.start!", NULL);
-
-    // Start HTTPd if enabled
-    if (self->httpd) {
-        pthread_create(&self->httpd->thread, &self->httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, self->httpd);
-    }
 
     self->running = true;
 
@@ -389,9 +388,15 @@ CD_RunServer (CDServer* self)
 bool
 CD_StopServer (CDServer* self)
 {
+    if (!self->running) {
+        return true;
+    }
+
     self->running = false;
 
     CD_ServerFlush(self, true);
+
+    CD_EventDispatch(self, "Server.stop!");
 
     return true;
 }
@@ -439,7 +444,7 @@ CD_ServerKick (CDServer* self, CDClient* client, CDString* reason)
         reason = CD_CreateStringFromCString("No reason");
     }
 
-    SLOG(self, LOG_DEBUG, "%s kicked: %s", client->ip, CD_StringContent(reason));
+    SLOG(self, LOG_INFO, "%s kicked: %s", client->ip, CD_StringContent(reason));
 
     CD_EventDispatch(self, "Client.kick", client, reason);
 

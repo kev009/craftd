@@ -153,13 +153,38 @@ cdbeta_ServerStart (CDServer* server)
     return true;
 }
 
+static
+bool
+cdbeta_ServerStop (CDServer* server)
+{
+    CD_DynamicDelete(server, "World.default");
+
+    CDList* worlds = (CDList*) CD_DynamicDelete(server, "World.list");
+
+    CD_LIST_FOREACH(worlds, it) {
+        CD_DestroyWorld((CDWorld*) CD_ListIteratorValue(it));
+    }
+
+    return true;
+}
+
+bool
+cdbeta_JSON (CDServer* server, json_t* input, json_t* output)
+{
+    char* text = json_dumps(input, JSON_INDENT(2));
+
+    SLOG(server, LOG_NOTICE, "%s", text);
+
+    free(text);
+
+    return true;
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
     self->description = CD_CreateStringFromCString("Beta 1.3");
-
-    CD_EventRegister(self->server, "Server.start!", cdbeta_ServerStart);
 
     DO { // Initiailize config cache
         _config.commandChar = "/";
@@ -177,6 +202,11 @@ CD_PluginInitialize (CDPlugin* self)
     CD_DynamicPut(self, "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
     CD_DynamicPut(self, "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
     CD_DynamicPut(self, "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive, CDNull));
+
+    CD_EventRegister(self->server, "RPC.JSON", cdbeta_JSON);
+
+    CD_EventRegister(self->server, "Server.start!", cdbeta_ServerStart);
+    CD_EventRegister(self->server, "Server.stop!", cdbeta_ServerStop);
 
     CD_EventRegister(self->server, "Client.process", cdbeta_ClientProcess);
     CD_EventRegister(self->server, "Client.processed", cdbeta_ClientProcessed);
@@ -204,6 +234,11 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.keepAlive"));
 
+    CD_EventUnregister(self->server, "RPC.JSON", cdbeta_JSON);
+
+    CD_EventUnregister(self->server, "Server.start!", cdbeta_ServerStart);
+    CD_EventUnregister(self->server, "Server.stop!", cdbeta_ServerStop);
+
     CD_EventUnregister(self->server, "Client.process", cdbeta_ClientProcess);
     CD_EventUnregister(self->server, "Client.processed", cdbeta_ClientProcessed);
 
@@ -218,14 +253,6 @@ CD_PluginFinalize (CDPlugin* self)
     CD_EventUnregister(self->server, "Player.chat", cdbeta_PlayerChat);
 
     CD_EventUnregister(self->server, "Player.destroy", cdbeta_PlayerDestroy);
-
-    CD_DynamicDelete(self->server, "World.default");
-
-    CDList* worlds = (CDList*) CD_DynamicDelete(self->server, "World.list");
-
-    CD_LIST_FOREACH(worlds, it) {
-        CD_DestroyWorld((CDWorld*) CD_ListIteratorValue(it));
-    }
 
     pthread_mutex_destroy(&_lock.login);
 

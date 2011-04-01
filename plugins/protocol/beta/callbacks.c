@@ -724,22 +724,29 @@ static
 bool
 cdbeta_PlayerLogout (CDServer* server, CDPlayer* player)
 {
-    if (player->world) {
-        CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
-            CD_StringContent(player->username)), MCColorYellow));
+    CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
+        CD_StringContent(player->username)), MCColorYellow));
 
-        CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");
+    CDList* seenPlayers = (CDList*) CD_DynamicDelete(player, "Player.seenPlayers");
 
-        CD_LIST_FOREACH(seenPlayers, it) {
-            CDPlayer* other            = (CDPlayer*) CD_ListIteratorValue(it);
-            CDList*   otherSeenPlayers = (CDList*) CD_DynamicGet(other, "Player.seenPlayers");
+    CD_LIST_FOREACH(seenPlayers, it) {
+        CDPlayer* other            = (CDPlayer*) CD_ListIteratorValue(it);
+        CDList*   otherSeenPlayers = (CDList*) CD_DynamicGet(other, "Player.seenPlayers");
 
-            cdbeta_SendDestroyEntity(other, &player->entity);
-            CD_ListDeleteAll(otherSeenPlayers, (CDPointer) player);
-        }
+        cdbeta_SendDestroyEntity(other, &player->entity);
+        CD_ListDeleteAll(otherSeenPlayers, (CDPointer) player);
+    }
 
-        CD_HashDelete(player->world->players, CD_StringContent(player->username));
-        CD_MapDelete(player->world->entities, player->entity.id);
+    CD_HashDelete(player->world->players, CD_StringContent(player->username));
+    CD_MapDelete(player->world->entities, player->entity.id);
+
+    CD_DestroyList(seenPlayers);
+
+    CDSet* chunks = (CDSet*) CD_DynamicDelete(player, "Player.loadedChunks");
+
+    if (chunks) {
+        CD_SetMap(chunks, (CDSetApply) cdbeta_ChunkMemberFree, CDNull);
+        CD_DestroySet(chunks);
     }
 
     return true;
@@ -812,16 +819,5 @@ static
 bool
 cdbeta_PlayerDestroy (CDServer* server, CDPlayer* player)
 {
-    CD_DestroyList((CDList*) CD_DynamicDelete(player, "Player.seenPlayers"));
-
-    if (player->username) {
-        CDSet* chunks = (CDSet*) CD_DynamicDelete(player, "Player.loadedChunks");
-
-        if (chunks) {
-            CD_SetMap(chunks, (CDSetApply) cdbeta_ChunkMemberFree, CDNull);
-            CD_DestroySet(chunks);
-        }
-    }
-
     return true;
 }
