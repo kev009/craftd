@@ -18,11 +18,6 @@ src/TimeLoop.c:
 src/TimeLoop.o: src/TimeLoop.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/TimeLoop.o -c src/TimeLoop.c
 
-src/memory.c: 
-
-src/memory.o: src/memory.c
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/memory.o -c src/memory.c
-
 src/List.c: 
 
 src/List.o: src/List.c
@@ -128,6 +123,11 @@ src/SystemLogger.c:
 src/SystemLogger.o: src/SystemLogger.c
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/SystemLogger.o -c src/SystemLogger.c
 
+src/HTTPd.c: 
+
+src/HTTPd.o: src/HTTPd.c
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o src/HTTPd.o -c src/HTTPd.c
+
 src/Regexp.c: 
 
 src/Regexp.o: src/Regexp.c
@@ -157,8 +157,8 @@ third-party/bstring/bstraux.h:
 third-party/bstring/bstraux.o: third-party/bstring/bstraux.c third-party/bstring/bstraux.h
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -o third-party/bstring/bstraux.o -c third-party/bstring/bstraux.c
 
-craftd: src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/Error.o src/craftd.o src/Dynamic.o src/Logger.o src/utils.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) src/Set.o src/TimeLoop.o src/memory.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/Error.o src/craftd.o src/Dynamic.o src/Logger.o src/utils.o src/Client.o src/Map.o src/SystemLogger.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o -o craftd -lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl -export-dynamic $(LDFLAGS)
+craftd: src/Set.o src/TimeLoop.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/Error.o src/craftd.o src/Dynamic.o src/Logger.o src/utils.o src/Client.o src/Map.o src/SystemLogger.o src/HTTPd.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) src/Set.o src/TimeLoop.o src/List.o src/Worker.o src/Server.o src/Plugin.o src/ConsoleLogger.o src/Plugins.o src/Console.o src/Job.o src/Event.o src/Buffer.o src/Buffers.o src/String.o src/Hash.o src/Error.o src/craftd.o src/Dynamic.o src/Logger.o src/utils.o src/Client.o src/Map.o src/SystemLogger.o src/HTTPd.o src/Regexp.o src/Config.o src/Workers.o third-party/bstring/bstrlib.o third-party/bstring/bstraux.o -o craftd -lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl -export-dynamic $(LDFLAGS)
 
 craftd.conf.dist.in: 
 
@@ -308,6 +308,13 @@ plugins/protocol/beta/include/PacketLength.h:
 plugins/protocol/beta/src/PacketLength.o: plugins/protocol/beta/src/PacketLength.c plugins/protocol/beta/include/PacketLength.h
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/protocol/beta/src/PacketLength.o -c plugins/protocol/beta/src/PacketLength.c
 
+plugins/protocol/beta/src/Region.c: 
+
+plugins/protocol/beta/include/Region.h: 
+
+plugins/protocol/beta/src/Region.o: plugins/protocol/beta/src/Region.c plugins/protocol/beta/include/Region.h
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/protocol/beta/src/Region.o -c plugins/protocol/beta/src/Region.c
+
 plugins/protocol/beta/src/Packet.c: 
 
 plugins/protocol/beta/include/Packet.h: 
@@ -322,8 +329,8 @@ plugins/protocol/beta/include/Player.h:
 plugins/protocol/beta/src/Player.o: plugins/protocol/beta/src/Player.c plugins/protocol/beta/include/Player.h
 	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) -Iinclude -Iplugins/protocol/beta/include -Iplugins/persistence/nbt/include -Iplugins/mapgen/include -o plugins/protocol/beta/src/Player.o -c plugins/protocol/beta/src/Player.c
 
-plugins/protocol.beta.so: plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o
-	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o -shared -Wl,-soname,protocol.beta.so -o plugins/protocol.beta.so  -export-dynamic $(LDFLAGS)
+plugins/protocol.beta.so: plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Region.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o
+	$(CC) -Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='"0.1a"' -DNDEBUG -Os $(CFLAGS) plugins/protocol/beta/main.o plugins/protocol/beta/src/minecraft.o plugins/protocol/beta/src/Buffer.o plugins/protocol/beta/src/World.o plugins/protocol/beta/src/PacketLength.o plugins/protocol/beta/src/Region.o plugins/protocol/beta/src/Packet.o plugins/protocol/beta/src/Player.o -shared -Wl,-soname,protocol.beta.so -o plugins/protocol.beta.so  -export-dynamic $(LDFLAGS)
 
 craftd_plugin_protocol_beta_build: plugins/protocol.beta.so
 
@@ -350,12 +357,15 @@ craftd_plugins: craftd_plugin_protocol_build craftd_plugin_persistence_build cra
 
 default: craftd_build craftd_plugins
 
+dependencies_libevent_fetch: 
+
+dependencies_libevent_build: dependencies_libevent_fetch
+
 install: craftd_install
 
 clean:
 	rm -rf src/Set.o
 	rm -rf src/TimeLoop.o
-	rm -rf src/memory.o
 	rm -rf src/List.o
 	rm -rf src/Worker.o
 	rm -rf src/Server.o
@@ -377,6 +387,7 @@ clean:
 	rm -rf src/Client.o
 	rm -rf src/Map.o
 	rm -rf src/SystemLogger.o
+	rm -rf src/HTTPd.o
 	rm -rf src/Regexp.o
 	rm -rf src/Config.o
 	rm -rf src/Workers.o
@@ -387,6 +398,7 @@ clean:
 	rm -rf plugins/protocol/beta/src/Buffer.o
 	rm -rf plugins/protocol/beta/src/World.o
 	rm -rf plugins/protocol/beta/src/PacketLength.o
+	rm -rf plugins/protocol/beta/src/Region.o
 	rm -rf plugins/protocol/beta/src/Packet.o
 	rm -rf plugins/protocol/beta/src/Player.o
 	rm -rf plugins/persistence/nbt/main.o
@@ -407,7 +419,6 @@ clean:
 clobber:
 	rm -rf src/Set.o
 	rm -rf src/TimeLoop.o
-	rm -rf src/memory.o
 	rm -rf src/List.o
 	rm -rf src/Worker.o
 	rm -rf src/Server.o
@@ -429,6 +440,7 @@ clobber:
 	rm -rf src/Client.o
 	rm -rf src/Map.o
 	rm -rf src/SystemLogger.o
+	rm -rf src/HTTPd.o
 	rm -rf src/Regexp.o
 	rm -rf src/Config.o
 	rm -rf src/Workers.o
@@ -439,6 +451,7 @@ clobber:
 	rm -rf plugins/protocol/beta/src/Buffer.o
 	rm -rf plugins/protocol/beta/src/World.o
 	rm -rf plugins/protocol/beta/src/PacketLength.o
+	rm -rf plugins/protocol/beta/src/Region.o
 	rm -rf plugins/protocol/beta/src/Packet.o
 	rm -rf plugins/protocol/beta/src/Player.o
 	rm -rf plugins/persistence/nbt/main.o
