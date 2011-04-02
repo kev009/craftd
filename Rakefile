@@ -2,9 +2,9 @@ require 'mkmf'
 require 'rake'
 require 'rake/clean'
 
-load 'rake/variables.rb'
-load 'rake/configure.rb'
-load 'rake/misc.rb'
+load 'build/rake/variables.rb'
+load 'build/rake/configure.rb'
+load 'build/rake/misc.rb'
 
 begin
   require 'rake/convert'
