@@ -91,22 +91,18 @@ main (int argc, char** argv)
             snprintf(path, FILENAME_MAX, *current, getenv("HOME"));
 
             current++;
-        } while (*current != NULL && access(path, R_OK) != 0);
+        } while (*current != NULL && !CD_PathExists(path));
 
-        if (access(path, R_OK) != 0) {
-            ERR("The config file could not be found");
-
-            exit(EXIT_FAILURE);
+        if (!CD_PathExists(path)) {
+            CD_abort("The config file could not be found");
         }
         else {
             config = path;
         }
     }
-    else {
-        if (access(config, R_OK) != 0) {
-            ERR("%s could not be read", config);
-            exit(EXIT_FAILURE);
-        }
+
+    if (!CD_IsReadable(config)) {
+        CD_abort("%s could not be read", config);
     }
 
     #ifdef WIN32
@@ -122,10 +118,8 @@ main (int argc, char** argv)
     CDMainServer = server = CD_CreateServer(config);
 
     if (!server) {
-        ERR("Server couldn't be instantiated");
-        exit(EXIT_FAILURE);
+        CD_abort("Server couldn't be instantiated");
     }
-
 
     /* By default, mask debugging messages */
     if (!debugging) {

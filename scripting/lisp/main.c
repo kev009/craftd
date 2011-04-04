@@ -23,69 +23,65 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_COMMON_H
-#define CRAFTD_COMMON_H
+#include <craftd/Server.h>
+#include <craftd/Plugin.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <string.h>
-#include <limits.h>
+#include <ecl/ecl.h>
 
-#include <assert.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
+static inline
+cl_object
+str_intern (const char* string)
+{
+    return cl_intern(1, make_simple_base_string((char*) string));
+}
 
-#include <pthread.h>
+bool
+cdlisp_EventDispatcher (CDServer* server, const char* event, va_list args)
+{
+    return true;
+}
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
+extern
+bool
+CD_ScriptingEngineInitialize (CDScriptingEngine* self)
+{
+    self->description = CD_CreateStringFromCString("Common Lisp scripting");
 
-#define DO \
-    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
+    int          argc = 1;
+    const char** argv = CD_malloc(sizeof(char*));
 
-#include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <event2/listener.h>
-#include <event2/thread.h>
+    argv[0] = "craftd";
 
-#include <craftd/config.h>
+    J_DO {
+        J_FOREACH(arg, self->config, "options") {
+            argv           = CD_realloc(argv, argc * sizeof(char*));
+            argv[argc - 1] = J_STRING_CAST(arg);
 
-#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
-    typedef int32_t CDPointer;
-#else
-    typedef int64_t CDPointer;
-#endif
+            argc++;
+        }
+    }
 
-#ifdef __cplusplus
-#   define PUBLIC extern "C"
-#else
-#   define PUBLIC extern
-#endif
+    ecl_set_option(ECL_OPT_TRAP_INTERRUPT_SIGNAL, FALSE);
+    ecl_set_option(ECL_OPT_TRAP_SIGINT, FALSE);
 
-#define CDNull (0)
+    cl_boot(argc, (char**) argv);
 
-#include <craftd/utils.h>
-#include <craftd/memory.h>
+    CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
-#include <craftd/Error.h>
-#include <craftd/Arithmetic.h>
-#include <craftd/List.h>
-#include <craftd/Map.h>
-#include <craftd/Hash.h>
-#include <craftd/Set.h>
-#include <craftd/String.h>
-#include <craftd/Regexp.h>
-#include <craftd/Dynamic.h>
+    J_DO {
+//        si_safe_eval(3, c_string_to_object(code), Cnil, OBJNULL);
+    }
 
-#include <craftd/javaendian.h>
+    return true;
+}
 
-#include <craftd/Buffer.h>
-#include <craftd/Buffers.h>
+extern
+bool
+CD_ScriptingEngineFinalize (CDScriptingEngine* self)
+{
+    CD_EventUnregister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
-#endif
+    cl_shutdown();
+
+    return true;
+}

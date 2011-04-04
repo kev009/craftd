@@ -66,19 +66,6 @@ typedef struct _CDConfig {
         } httpd;
 
         struct {
-            short sunrise;
-            short day;
-            short sunset;
-            short night;
-        } rate;
-
-        struct {
-            int x;
-            int y;
-            int z;
-        } spawn;
-
-        struct {
             const char* motd;
         } files;
 

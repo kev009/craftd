@@ -28,6 +28,8 @@
 
 #include <craftd/common.h>
 
+void CD_abort (const char* error, ...);
+
 int CD_mkdir (const char* path, mode_t mode);
 
 size_t CD_FileSize (const char* path);

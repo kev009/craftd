@@ -7,7 +7,3 @@ def c_file (path)
 
   result
 end
-
-def die (text)
-  fail text
-end

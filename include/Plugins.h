@@ -26,6 +26,8 @@
 #ifndef CRAFTD_PLUGINS_H
 #define CRAFTD_PLUGINS_H
 
+#include <ltdl.h>
+
 #include <craftd/Plugin.h>
 
 struct _CDServer;

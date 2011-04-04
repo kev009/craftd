@@ -23,69 +23,60 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_COMMON_H
-#define CRAFTD_COMMON_H
+#ifndef CRAFTD_SCRIPTINGENGINE_H
+#define CRAFTD_SCRIPTINGENGINE_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <string.h>
-#include <limits.h>
+#include <ltdl.h>
 
-#include <assert.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
+#include <craftd/common.h>
+#include <craftd/Config.h>
 
-#include <pthread.h>
+struct _CDScriptingEngine;
+struct _CDServer;
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
+/**
+ * Callback type to initialize the ScriptingEngine
+ */
+typedef bool (*CDScriptingEngineInitializer)(struct _CDScriptingEngine*);
 
-#define DO \
-    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
+/**
+ * Callback type to finalize the ScriptingEngine
+ */
+typedef bool (*CDScriptingEngineFinalizer)(struct _CDScriptingEngine*);
 
-#include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <event2/listener.h>
-#include <event2/thread.h>
+/**
+ * The ScriptingEngine class.
+ */
+typedef struct _CDScriptingEngine {
+    struct _CDServer* server;
 
-#include <craftd/config.h>
+    CDString* name;
+    CDString* description;
 
-#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
-    typedef int32_t CDPointer;
-#else
-    typedef int64_t CDPointer;
-#endif
+    lt_dlhandle handle;
 
-#ifdef __cplusplus
-#   define PUBLIC extern "C"
-#else
-#   define PUBLIC extern
-#endif
+    CDScriptingEngineInitializer initialize;
+    CDScriptingEngineFinalizer   finalize;
 
-#define CDNull (0)
+    CDRawConfig config;
 
-#include <craftd/utils.h>
-#include <craftd/memory.h>
+    CD_DEFINE_DYNAMIC;
+    CD_DEFINE_ERROR;
+} CDScriptingEngine;
 
-#include <craftd/Error.h>
-#include <craftd/Arithmetic.h>
-#include <craftd/List.h>
-#include <craftd/Map.h>
-#include <craftd/Hash.h>
-#include <craftd/Set.h>
-#include <craftd/String.h>
-#include <craftd/Regexp.h>
-#include <craftd/Dynamic.h>
+/**
+ * Create a ScriptingEngine from a given path.
+ *
+ * @param server The Server the scripting engine will run on
+ * @param name The name of the scripting engine
+ *
+ * @return The instantiated ScriptingEngine object
+ */
+CDScriptingEngine* CD_CreateScriptingEngine (struct _CDServer* server, const char* name);
 
-#include <craftd/javaendian.h>
-
-#include <craftd/Buffer.h>
-#include <craftd/Buffers.h>
+/**
+ * Destroy a ScriptingEngine object
+ */
+void CD_DestroyScriptingEngine (CDScriptingEngine* self);
 
 #endif

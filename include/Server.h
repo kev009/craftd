@@ -32,6 +32,7 @@
 #include <craftd/TimeLoop.h>
 #include <craftd/Workers.h>
 #include <craftd/Plugins.h>
+#include <craftd/ScriptingEngines.h>
 #include <craftd/Client.h>
 
 /**
@@ -47,11 +48,12 @@ typedef struct _CDServer {
 
     CDHTTPd* httpd;
 
-    CDTimeLoop* timeloop;
-    CDWorkers*  workers;
-    CDConfig*   config;
-    CDPlugins*  plugins;
-    CDLogger    logger;
+    CDTimeLoop*         timeloop;
+    CDWorkers*          workers;
+    CDConfig*           config;
+    CDPlugins*          plugins;
+    CDScriptingEngines* scriptingEngines;
+    CDLogger            logger;
 
     CDList* clients;
     CDList* disconnecting;
@@ -93,22 +95,6 @@ void CD_DestroyServer (CDServer* self);
  * @return The name of the Server or "craftd"
  */
 const char* CD_ServerToString (CDServer* self);
-
-/**
- * Get the current Server time in ticks.
- *
- * @return The current time in ticks
- */
-uint16_t CD_ServerGetTime (CDServer* self);
-
-/**
- * Set the current Server time in ticks.
- *
- * @param time The new time
- *
- * @return The set time
- */
-uint16_t CD_ServerSetTime (CDServer* self, uint16_t time);
 
 /**
  * Run a Server instance.

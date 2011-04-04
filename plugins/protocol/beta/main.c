@@ -37,6 +37,13 @@ static struct {
 
 static struct {
     const char* commandChar;
+
+    struct {
+        short sunrise;
+        short day;
+        short sunset;
+        short night;
+    } rate;
 } _config;
 
 #include "callbacks.c"
@@ -53,16 +60,16 @@ cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
         uint16_t current = CD_WorldGetTime(world);
 
         if (current >= 0 && current <= 11999) {
-            CD_WorldSetTime(world, current += server->config->cache.rate.day);
+            CD_WorldSetTime(world, current += _config.rate.day);
         }
         else if (current >= 12000 && current <= 13799) {
-            CD_WorldSetTime(world, current += server->config->cache.rate.sunset);
+            CD_WorldSetTime(world, current += _config.rate.sunset);
         }
         else if (current >= 13800 && current <= 22199) {
-            CD_WorldSetTime(world, current += server->config->cache.rate.night);
+            CD_WorldSetTime(world, current += _config.rate.night);
         }
         else if (current >= 22200 && current <= 23999) {
-            CD_WorldSetTime(world, current += server->config->cache.rate.sunrise);
+            CD_WorldSetTime(world, current += _config.rate.sunrise);
         }
 
         if (current >= 24000) {
@@ -189,8 +196,20 @@ CD_PluginInitialize (CDPlugin* self)
     DO { // Initiailize config cache
         _config.commandChar = "/";
 
+        _config.rate.sunrise = 20;
+        _config.rate.day     = 20;
+        _config.rate.sunset  = 20;
+        _config.rate.night   = 20;
+
         J_DO {
             J_STRING(self->config, "commandChar", _config.commandChar);
+
+            J_IN(rate, self->config, "rate") {
+                J_INT(rate, "sunrise", _config.rate.sunrise);
+                J_INT(rate, "day",     _config.rate.day);
+                J_INT(rate, "sunset",  _config.rate.sunset);
+                J_INT(rate, "night",   _config.rate.night);
+            }
         }
     }
 

@@ -25,6 +25,18 @@
 
 #include <craftd/common.h>
 
+void
+CD_abort (const char* error, ...)
+{
+    va_list ap;
+    
+    va_start(ap, error);
+    vfprintf(stderr, error, ap);
+    va_end(ap);
+
+    abort();
+}
+
 int
 CD_mkdir (const char* path, mode_t mode)
 {

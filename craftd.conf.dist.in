@@ -17,13 +17,6 @@
 
     "workers": 2,
 
-    "rate": {
-        "sunrise": 20,
-        "day": 20,
-        "sunset": 20,
-        "night": 20
-    },
-
     "files": {
         "motd": "@sysconfdir@/craftd/motd.conf.dist"
     },
@@ -48,6 +41,13 @@
         "plugins": [
             { "name": "protocol.beta",
                 "commandChar": "/",
+
+                "rate": {
+                    "sunrise": 20,
+                    "day": 20,
+                    "sunset": 20,
+                    "night": 20
+                },
 
                 "worlds": [
                     { "name": "world", "default": true }
@@ -76,6 +76,19 @@
             },
 
             { "name": "tests" }
+        ]
+    },
+
+    "scripting": {
+        "paths": [
+            "scripting",
+            "@libdir@/craftd/scripting"
+        ],
+
+        "engines": [
+            { "name": "lisp",
+                "options": []
+            }
         ]
     }
   },

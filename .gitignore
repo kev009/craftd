@@ -163,3 +163,4 @@ test
 mkmf.log
 config.h
 conftest*
+*.fas

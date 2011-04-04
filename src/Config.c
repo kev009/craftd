@@ -35,7 +35,7 @@ CD_ParseConfig (const char* path)
     self->data = json_load_file(path, 0, &self->error);
 
     if (!self->data) {
-        ERR("[Config.parse] error on line %d: %s", self->error.line, self->error.text);
+        ERR("error on line %d while parsing %s: %s", self->error.line, path, self->error.text);
 
         CD_DestroyConfig(self);
 
@@ -62,15 +62,6 @@ CD_ParseConfig (const char* path)
     self->cache.httpd.connection.bind.ipv4 = "0.0.0.0";
     self->cache.httpd.connection.bind.ipv6 = "::";
 
-    self->cache.rate.sunrise = 20;
-    self->cache.rate.day     = 20;
-    self->cache.rate.sunset  = 20;
-    self->cache.rate.night   = 20;
-
-    self->cache.spawn.x = 0;
-    self->cache.spawn.y = 0;
-    self->cache.spawn.z = 0;
-
     self->cache.files.motd = "/etc/craftd/motd.conf";
 
     self->cache.workers = 2;
@@ -92,19 +83,6 @@ CD_ParseConfig (const char* path)
 
             J_IN(files, server, "files") {
                 J_STRING(files, "motd",  self->cache.files.motd);
-            }
-
-            J_IN(rate, server, "rate") {
-                J_INT(rate, "sunrise", self->cache.rate.sunrise);
-                J_INT(rate, "day",     self->cache.rate.day);
-                J_INT(rate, "sunset",  self->cache.rate.sunset);
-                J_INT(rate, "night",   self->cache.rate.night);
-            }
-
-            J_IN(spawn, server, "spawn") {
-                J_INT(spawn, "x", self->cache.spawn.x);
-                J_INT(spawn, "y", self->cache.spawn.y);
-                J_INT(spawn, "z", self->cache.spawn.z);
             }
 
             J_IN(connection, server, "connection") {

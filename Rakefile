@@ -6,11 +6,6 @@ load 'build/rake/variables.rb'
 load 'build/rake/configure.rb'
 load 'build/rake/misc.rb'
 
-begin
-  require 'rake/convert'
-rescue LoadError
-end
-
 VERSION = '0.1a'
 
 PREFIX         = (ENV['PREFIX']         ||= '/usr')
@@ -34,7 +29,9 @@ else
 end
 
 # Stuff building
-task :default => ['craftd:build', 'craftd:plugins']
+task :default => ['craftd:build', 'craftd:plugins:build']
+
+task :all => ['craftd:build', 'craftd:plugins:build', 'craftd:scripting:build']
 
 # Stuff installation
 task :install => ['craftd:install']
@@ -74,34 +71,34 @@ namespace :craftd do |craftd|
   task :requirements => 'include/config.h'
   
   file 'include/config.h' do
-    have_library 'ltdl', 'lt_dlopen' or die 'libtool not found'
+    have_library 'ltdl', 'lt_dlopen' or fail 'libtool not found'
 
     # check thread stuff
-    have_header 'pthread.h' or die 'pthread-dev not found'
-    have_library 'pthread' or die 'pthread not found'
+    have_header 'pthread.h' or fail 'pthread-dev not found'
+    have_library 'pthread' or fail 'pthread not found'
     have_func 'pthread_spin_init', 'pthread.h'
 
     # check for libevent 2
-    have_library 'event' or die 'libevent2 not found'
-    have_library 'event_pthreads' or die 'libevent2 with pthreads not found'
+    have_library 'event' or fail 'libevent2 not found'
+    have_library 'event_pthreads' or fail 'libevent2 with pthreads not found'
     have_macro '((_EVENT_NUMERIC_VERSION >> 24) == 2)', 'event2/event.h' do |c|
       c.sub('ifndef', 'if !')
     end
 
     # check for libjansson 2
-    have_header 'jansson.h' or die 'jansson-dev not found'
-    have_library 'jansson' or die 'jansson not found'
+    have_header 'jansson.h' or fail 'jansson-dev not found'
+    have_library 'jansson' or fail 'jansson not found'
     have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c|
       c.sub('ifndef', 'if !')
     end
 
     # zlib checks
-    have_header 'zlib.h' or die 'zlib-dev not found'
-    have_library 'z' or die 'zlib not found'
+    have_header 'zlib.h' or fail 'zlib-dev not found'
+    have_library 'z' or fail 'zlib not found'
 
     # pcre checks
-    have_header 'pcre.h' or die 'libpcre-dev not found'
-    have_library 'pcre' or die 'libpcre not found'
+    have_header 'pcre.h' or fail 'libpcre-dev not found'
+    have_library 'pcre' or fail 'libpcre not found'
 
     # endianness stuff
     have_header 'endian.h'
@@ -139,11 +136,11 @@ namespace :craftd do |craftd|
 
   task :install => :build
 
-  desc 'Build all plugins'
-  task :plugins => ['plugin:protocol:build', 'plugin:persistence:build', 'plugin:mapgen:build',
-    'plugin:commands:build', 'plugin:tests:build']
+  namespace :plugins do |plugin|
+    desc 'Build all plugins'
+    task :build => ['protocol:build', 'persistence:build', 'mapgen:build',
+      'commands:build', 'tests:build']
 
-  namespace :plugin do |plugin|
     plugin.names = ['protocol/beta', 'persistence/nbt', 'mapgen']
 
     class << plugin
@@ -288,7 +285,7 @@ namespace :craftd do |craftd|
         end
 
         desc 'Build admin plugin'
-        task :build => [:requirements, "plugins/#{plugin.file('commands.admin')}"]
+        task :build => "plugins/#{plugin.file('commands.admin')}"
       end
     end
 
@@ -310,6 +307,66 @@ namespace :craftd do |craftd|
 
       desc 'Build tests plugin'
       task :build => "plugins/#{plugin.file('tests')}"
+    end
+  end
+
+  namespace :scripting do |scripting|
+    desc 'Build all scripting support'
+    task :build => ['craftd:build', 'lisp:build']
+
+    scripting.plugins = ['protocol/beta', 'persistence/nbt', 'mapgen']
+
+    class << scripting
+      def file (name)
+        "#{name}.#{CONFIG['DLEXT']}"
+      end
+
+      def includes
+        self.plugins.map {|p|
+          "-Iplugins/#{p}/include"
+        }.join(' ')
+      end
+    end
+
+    namespace :lisp do |lisp|
+      ENV['ECL'] ||= 'ecl'
+
+      lisp.sources = FileList['scripting/lisp/main.c']
+      lisp.lib     = FileList['scripting/lisp/lib/**.lsp']
+
+      CLEAN.include lisp.sources.ext('o'), lisp.lib.ext('fas')
+      CLOBBER.include "plugis/#{scripting.file('lisp')}"
+
+      lisp.sources.each {|f|
+        file f.ext('o') => c_file(f) do
+          sh "${CC} #{CFLAGS} $(ecl-config --cflags) ${CFLAGS} -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
+        end
+      }
+
+      lisp.lib.each {|f|
+        file f.ext('fas') => f do
+          sh "${ECL} -compile #{f}"
+
+          fail "could not compile #{f}" unless File.exists?(f.ext('fas'))
+        end
+      }
+
+      file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') + lisp.lib.ext('fas') do
+        sh "${CC} #{CFLAGS} ${CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags) ${LDFLAGS}"
+      end
+
+      desc 'Check for LISP requirements'
+      task :requirements => 'scripting/lisp/include/config.h'
+
+      file 'scripting/lisp/include/config.h' do
+        have_header 'ecl/ecl.h' or fail 'ecl-dev not found'
+        have_library 'ecl' or fail 'ecl not found'
+
+        create_config 'scripting/lisp/include/config.h'
+      end
+
+      desc 'Build common lisp scripting'
+      task :build => [:requirements, "scripting/#{scripting.file('lisp')}"]
     end
   end
 end

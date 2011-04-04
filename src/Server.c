@@ -56,9 +56,10 @@ CD_CreateServer (const char* path)
         return NULL;
     }
 
-    self->timeloop = CD_CreateTimeLoop(self);
-    self->workers  = CD_CreateWorkers(self);
-    self->plugins  = CD_CreatePlugins(self);
+    self->timeloop         = CD_CreateTimeLoop(self);
+    self->workers          = CD_CreateWorkers(self);
+    self->plugins          = CD_CreatePlugins(self);
+    self->scriptingEngines = CD_CreateScriptingEngines(self);
 
     if (self->config->cache.httpd.enabled) {
         self->httpd = CD_CreateHTTPd(self);
@@ -99,6 +100,10 @@ CD_DestroyServer (CDServer* self)
 
     if (self->plugins) {
         CD_DestroyPlugins(self->plugins);
+    }
+
+    if (self->scriptingEngines) {
+        CD_DestroyScriptingEngines(self->scriptingEngines);
     }
 
     CD_DestroyTimeLoop(self->timeloop);
@@ -371,6 +376,7 @@ CD_RunServer (CDServer* self)
     event_add(self->event.listener, NULL);
 
     CD_LoadPlugins(self->plugins);
+    CD_LoadScriptingEngines(self->scriptingEngines);
 
     CD_EventDispatch(self, "Server.start!");
 
