@@ -93,10 +93,6 @@ CD_LoadScriptingEngine (CDScriptingEngines* self, const char* name)
     CDScriptingEngine* engine = CD_CreateScriptingEngine(self->server, name);
 
     if (!engine) {
-        if (errno == ENOENT) {
-            SERR(self->server, "%s could not be found", name);
-        }
-
         return NULL;
     }
 

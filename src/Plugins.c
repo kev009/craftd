@@ -93,10 +93,6 @@ CD_LoadPlugin (CDPlugins* self, const char* name)
     CDPlugin* plugin = CD_CreatePlugin(self->server, name);
 
     if (!plugin) {
-        if (errno == ENOENT) {
-            SERR(self->server, "%s could not be found", name);
-        }
-
         return NULL;
     }
 

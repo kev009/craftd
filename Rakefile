@@ -8,19 +8,19 @@ load 'build/rake/misc.rb'
 
 VERSION = '0.1a'
 
-PREFIX         = (ENV['PREFIX']         ||= '/usr')
-LIBDIR         = (ENV['LIBDIR']         ||= "#{PREFIX}/lib")
-LOCALESTATEDIR = (ENV['LOCALESTATEDIR'] ||= '/var')
-DATADIR        = (ENV['DATADIR']        ||= "#{PREFIX}/share")
-SYSCONFDIR     = (ENV['SYSCONFDIR']     ||= '/etc')
+PREFIX         = ENV['PREFIX']         or '/usr'
+LIBDIR         = ENV['LIBDIR']         or "#{PREFIX}/lib"
+LOCALESTATEDIR = ENV['LOCALESTATEDIR'] or '/var'
+DATADIR        = ENV['DATADIR']        or "#{PREFIX}/share"
+SYSCONFDIR     = ENV['SYSCONFDIR']     or '/etc'
 
-if defined?(EXPORT)
-  EXPORT << [:PREFIX, :LIBDIR, :LOCALESTATEDIR, :DATADIR, :SYSCONFDIR]
-end
+$CFLAGS   << ' ${CFLAGS}'
+$INCFLAGS << ' ${CFLAGS}'
+$LDFLAGS  << ' ${LDFLAGS}'
 
-CC      = (ENV['CC'] ||= 'gcc')
-CFLAGS  = "-Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"'"
-LDFLAGS = "-export-dynamic"
+CC      = ENV['CC'] || 'gcc'
+CFLAGS  = "-Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"' #{ENV['CFLAGS']}"
+LDFLAGS = "-export-dynamic #{ENV['LDFLAGS']}"
 
 if ENV['DEBUG']
   CFLAGS << ' -g3 -O0 -DCRAFTD_DEBUG'
@@ -63,7 +63,7 @@ namespace :craftd do |craftd|
 
   craftd.sources.each {|f|
     file f.ext('o') => c_file(f) do
-      sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+      sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
     end
   }
 
@@ -121,7 +121,7 @@ namespace :craftd do |craftd|
   end
 
   file 'craftd' => craftd.sources.ext('o') do
-    sh "${CC} #{CFLAGS} ${CFLAGS} #{craftd.sources.ext('o')} -o craftd #{craftd.libraries} #{LDFLAGS} ${LDFLAGS}"
+    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd #{craftd.libraries} #{LDFLAGS}"
   end
 
   file 'craftd.conf.dist' => 'craftd.conf.dist.in' do
@@ -169,17 +169,17 @@ namespace :craftd do |craftd|
         beta.sources.each {|f|
           if f.end_with?('main.c')
             file f.ext('o') => [f, "#{File.dirname(f)}/callbacks.c"] do
-              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
             end
           else
             file f.ext('o') => c_file(f) do
-              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
             end
           end
         }
 
         file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries} #{LDFLAGS} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries} #{LDFLAGS}"
         end
 
         desc 'Build beta plugin'
@@ -200,12 +200,12 @@ namespace :craftd do |craftd|
 
         nbt.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/persistence/nbt -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/persistence/nbt -o #{f.ext('o')} -c #{f}"
           end
         }
 
         file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries} #{LDFLAGS} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries} #{LDFLAGS}"
         end
 
         desc 'Build nbt plugin'
@@ -226,18 +226,18 @@ namespace :craftd do |craftd|
         classic.sources.each {|f|
           if f.end_with?('main.c')
             file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
-              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
             end
           else
             file f.ext('o') => c_file(f) do
-              sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
+              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
             end
           end
 
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.libraries} #{LDFLAGS} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.libraries} #{LDFLAGS}"
         end
 
         desc 'Build classic mapgen'
@@ -252,12 +252,12 @@ namespace :craftd do |craftd|
 
         trivial.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
           end
         }
 
         file "plugins/#{plugin.file('mapgen.trivial')}" => trivial.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS}"
         end
 
         desc 'Build trivial mapgen'
@@ -276,12 +276,12 @@ namespace :craftd do |craftd|
 
         admin.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "${CC} #{CFLAGS} ${CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
+            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
           end
         }
 
         file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
-          sh "${CC} #{CFLAGS} ${CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries}"
         end
 
         desc 'Build admin plugin'
@@ -297,12 +297,12 @@ namespace :craftd do |craftd|
 
       tests.sources.each {|f|
         file f.ext('o') => c_file(f) do
-          sh "${CC} #{CFLAGS} -Wno-extra ${CFLAGS} -Iinclude -Iplugins/tests #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          sh "#{CC} #{CFLAGS} -Wno-extra -Iinclude -Iplugins/tests #{plugin.includes} -o #{f.ext('o')} -c #{f}"
         end
       }
 
       file "plugins/#{plugin.file('tests')}" => tests.sources.ext('o') do
-        sh "${CC} #{CFLAGS} ${CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{LDFLAGS} ${LDFLAGS}"
+        sh "#{CC} #{CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{LDFLAGS}"
       end
 
       desc 'Build tests plugin'
@@ -335,11 +335,11 @@ namespace :craftd do |craftd|
       lisp.lib     = FileList['scripting/lisp/lib/**.lisp']
 
       CLEAN.include lisp.sources.ext('o'), lisp.lib.ext('fas')
-      CLOBBER.include "scripting/#{scripting.file('lisp')}"
+      CLOBBER.include "scripting/#{scripting.file('lisp')}", 'scripting/lisp/include/config.h'
 
       lisp.sources.each {|f|
         file f.ext('o') => c_file(f) do
-          sh "${CC} #{CFLAGS} $(ecl-config --cflags) ${CFLAGS} -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f} ${LDFLAGS}"
+          sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
         end
       }
 
@@ -352,7 +352,7 @@ namespace :craftd do |craftd|
       }
 
       file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') + lisp.lib.ext('fas') do
-        sh "${CC} #{CFLAGS} ${CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags) ${LDFLAGS}"
+        sh "#{CC} #{CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags)"
       end
 
       desc 'Check for LISP requirements'
