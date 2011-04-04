@@ -332,7 +332,7 @@ namespace :craftd do |craftd|
       ENV['ECL'] ||= 'ecl'
 
       lisp.sources = FileList['scripting/lisp/main.c']
-      lisp.lib     = FileList['scripting/lisp/lib/**.lsp']
+      lisp.lib     = FileList['scripting/lisp/lib/**.lisp']
 
       CLEAN.include lisp.sources.ext('o'), lisp.lib.ext('fas')
       CLOBBER.include "plugis/#{scripting.file('lisp')}"
