@@ -40,6 +40,9 @@ CD_CreatePlugin (CDServer* server, const char* name)
     self->finalize   = NULL;
     self->handle     = lt_dlopenadvise(name, server->plugins->advise);
 
+    DYNAMIC(self) = CD_CreateDynamic();
+    ERROR(self)   = CDNull;
+
     if (!self->handle) {
         CDString* tmp = CD_CreateStringFromFormat("libcd%s", name);
         self->handle = lt_dlopenext(CD_StringContent(tmp));
@@ -79,9 +82,6 @@ CD_CreatePlugin (CDServer* server, const char* name)
             }
         }
     }
-
-    DYNAMIC(self) = CD_CreateDynamic();
-    ERROR(self)   = CDNull;
 
     if (self->initialize) {
         self->initialize(self);

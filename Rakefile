@@ -335,7 +335,7 @@ namespace :craftd do |craftd|
       lisp.lib     = FileList['scripting/lisp/lib/**.lisp']
 
       CLEAN.include lisp.sources.ext('o'), lisp.lib.ext('fas')
-      CLOBBER.include "plugis/#{scripting.file('lisp')}"
+      CLOBBER.include "scripting/#{scripting.file('lisp')}"
 
       lisp.sources.each {|f|
         file f.ext('o') => c_file(f) do
