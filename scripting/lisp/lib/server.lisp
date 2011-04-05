@@ -1,8 +1,6 @@
-(defpackage :craftd
-  (:use :common-lisp)
-  (:export 
-    :server-name
-    :kick))
+(defpackage #:craftd
+  (:use #:common-lisp)
+  (:export #:server-name #:kick))
 
 (in-package craftd)
 
@@ -16,7 +14,7 @@
     (config (:pointer)))
 
 (uffi:def-function ("CD_ServerName" c-server-name) ((self :pointer))
-                   :returning (* :char))
+                   :returning :cstring)
 
 (uffi:def-function ("CD_ServerKick" c-server-kick) ((self :pointer) (client :pointer) (reason :pointer)))
 

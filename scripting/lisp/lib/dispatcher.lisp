@@ -1,6 +1,6 @@
-(defpackage :craftd
-  (:use :common-lisp)
-  (:export :register :unregister))
+(defpackage #:craftd
+  (:use    #:common-lisp)
+  (:export #:register #:unregister))
 
 (in-package craftd)
 
@@ -10,22 +10,24 @@
   (cond
     ((= (second a) (second b)) 0)
     ((< (second a) (second b)) 1)
-    (t                        -1)))
+    (t                    -1)))
+
+(defmacro with-callbacks ((callbacks name) &body body)
+  `(let ((,callbacks (gethash ,name *event-callbacks*)))
+     (if (not ,callbacks)
+         (setf ,callbacks nil))
+     ,@body))
 
 (defun register (name callback &optional priority)
-  (let ((callbacks (gethash name *event-callbacks*)))
-    (if (not callbacks)
-        (setf callbacks (list)))
-
+  (with-callbacks (callbacks name)
     (setf (gethash name *event-callbacks*)
           (append (list callback priority) callbacks))))
 
 (defun unregister (name &optional callback)
-  (let ((callbacks (gethash name *event-callbacks*)))
-    (if (not callbacks)
-        (setf callbacks (list)))
-
+  (with-callbacks (callbacks name)
     (setf (gethash name *event-callbacks*)
           (if callback
-            (remove-if #'(lambda (element) (= (first element) callback)) callbacks)
-            (list)))))
+            (remove-if #'(lambda (element) (equal (first element) callback)) callbacks)
+            nil))))
+
+
