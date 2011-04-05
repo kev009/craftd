@@ -27,26 +27,31 @@
 
 #include <craftd/common.h>
 
-static
-inline
+static inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {
+    if (data == 0x00) {
+      return 0;
+    }
+
     if ((data & 0x80) == 0x00) {
         return 1;
     }
-    else if ((data & 0xE0) == 0xC0) {
+    
+    if ((data & 0xE0) == 0xC0) {
         return 2;
     }
-    else if ((data & 0xF0) == 0xE0) {
+    
+    if ((data & 0xF0) == 0xE0) {
         return 3;
     }
-    else if ((data & 0xF8) == 0xF0) {
+    
+    if ((data & 0xF8) == 0xF0) {
         return 4;
     }
-    else {
-        return 0;
-    }
+    
+    return 0;
 }
 
 size_t
@@ -195,8 +200,6 @@ CD_CreateStringFromFormat (const char* format, ...)
 
     va_end(ap);
 
-    self->length = CD_UTF8_strlen(CD_StringContent(self));
-
     return self;
 }
 
@@ -275,6 +278,7 @@ CD_DestroyStringKeepData (CDString* self)
     return result;
 }
 
+inline
 CDString*
 CD_CharAt (CDString* self, size_t index)
 {
@@ -373,6 +377,7 @@ CD_AppendCString (CDString* self, const char* append)
     return self;
 }
 
+inline
 const char*
 CD_StringContent (CDString* self)
 {
@@ -384,6 +389,7 @@ CD_StringContent (CDString* self)
     }
 }
 
+inline
 size_t
 CD_StringLength (CDString* self)
 {
@@ -395,6 +401,7 @@ CD_StringLength (CDString* self)
     }
 }
 
+inline
 size_t
 CD_StringSize (CDString* self)
 {
@@ -406,6 +413,7 @@ CD_StringSize (CDString* self)
     }
 }
 
+inline
 bool
 CD_StringEmpty (CDString* self)
 {
@@ -424,24 +432,28 @@ CD_StringBlank (CDString* self)
     return true;
 }
 
+inline
 bool
 CD_StringStartWith (CDString* self, const char* check)
 {
     return strncmp(CD_StringContent(self), check, strlen(check)) == 0;
 }
 
+inline
 bool
 CD_StringEndWith (CDString* self, const char* check)
 {
     return strncmp(CD_StringContent(self) + strlen(check), check, strlen(check));
 }
 
+inline
 bool
 CD_StringIsEqual (CDString* a, const char* b)
 {
     return strcmp(CD_StringContent(a), b) == 0;
 }
 
+inline
 bool
 CD_CStringIsEqual (const char* a, const char* b)
 {
