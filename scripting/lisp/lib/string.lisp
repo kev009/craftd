@@ -1,6 +1,6 @@
 (in-package :craftd)
 
-(export '(#:create-string #:destroy-string #:string-content))
+(export '(create-string destroy-string string-content))
 
 (uffi:def-struct string (length :int))
 

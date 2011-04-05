@@ -164,7 +164,6 @@ namespace :craftd do |craftd|
       task :build => ['beta:build']
 
       namespace :beta do |beta|
-        beta.libraries = ''
         beta.headers   = FileList['plugins/protocol/beta/include/*.h']
         beta.sources   = FileList['plugins/protocol/beta/**/*.c'].exclude('callbacks.c')
 
@@ -184,7 +183,7 @@ namespace :craftd do |craftd|
         }
 
         file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{beta.libraries} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{LDFLAGS}"
         end
 
         desc 'Build beta plugin'
@@ -210,7 +209,7 @@ namespace :craftd do |craftd|
         }
 
         file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{nbt.libraries} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{LDFLAGS}"
         end
 
         desc 'Build nbt plugin'
@@ -286,7 +285,7 @@ namespace :craftd do |craftd|
         }
 
         file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')} #{admin.libraries}"
+          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')}"
         end
 
         desc 'Build admin plugin'

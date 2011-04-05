@@ -46,7 +46,7 @@ cdlisp_eval (const char* code)
     CL_CATCH_ALL_BEGIN(ecl_process_env()) {
         result = cl_eval(ecl_read_from_cstring((char*) code));
     } CL_CATCH_ALL_IF_CAUGHT {
-        return Cnil;
+        errno = EILSEQ;
     } CL_CATCH_ALL_END;
 
     return result;

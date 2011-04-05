@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(#:register #:unregister))
+(export '(register unregister))
 
 (defparameter *event-callbacks* (make-hash-table))
 

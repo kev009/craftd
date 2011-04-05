@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(#:player-ip))
+(export '(player-ip))
 
 (uffi:def-struct entity)
 

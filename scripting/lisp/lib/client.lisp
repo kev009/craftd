@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(#:client-ip))
+(export '(client-ip))
 
 (uffi:def-struct client
     (server  :pointer)

@@ -67,11 +67,10 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
+    cdlisp_eval("(setf *break-on-signals* 'error)");
+    cdlisp_eval("(require :asdf)");
+
     J_DO {
-        J_STRING(self->config, "kernel", _config.kernel);
-
-        cdlisp_eval("(require :asdf)");
-
         J_FOREACH(j_path, self->config, "paths") {
             CDString* path = CD_CreateStringFromCString(J_STRING_CAST(j_path));
 
@@ -106,9 +105,29 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
             CD_DestroyString(code);
             CD_DestroyString(path);
         }
-
-        cdlisp_eval("(asdf:load-system :craftd)");
     }
+
+    cdlisp_eval("(asdf:load-system :craftd)");
+
+    if (errno == EILSEQ) {
+        SERR(self->server, "Failed to load the core LISP stuff");
+
+        return false;
+    }
+
+    DO {
+        CDString* code = CD_CreateStringFromFormat("(progn  \
+            (in-package :craftd)                            \
+            (defparameter *server* %d) (export '*server*)   \
+            (in-package :cl-user))",
+        (CDPointer) self->server);
+
+        cdlisp_eval(CD_StringContent(code));
+
+        CD_DestroyString(code);
+    }
+
+    cdlisp_eval("(format t \"~d~%\" craftd:*server*)");
 
     return true;
 }

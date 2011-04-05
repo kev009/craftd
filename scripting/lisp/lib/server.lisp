@@ -1,6 +1,6 @@
 (in-package :craftd)
 
-(export '(#:server-name #:kick))
+(export '(server-name kick))
 
 (uffi:def-struct timeloop)
 (uffi:def-struct config)
@@ -11,7 +11,7 @@
     (timeloop (:pointer))
     (config (:pointer)))
 
-(uffi:def-function ("CD_ServerName" c-server-name) ((self :pointer))
+(uffi:def-function ("CD_ServerToString" c-server-name) ((self :pointer))
                    :returning :cstring)
 
 (uffi:def-function ("CD_ServerKick" c-server-kick) ((self :pointer) (client :pointer) (reason :pointer)))
