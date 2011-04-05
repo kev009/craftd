@@ -1,8 +1,6 @@
-(defpackage #:craftd
-  (:use #:common-lisp)
-  (:export #:server-name #:kick))
+(in-package :craftd)
 
-(in-package craftd)
+(export '(#:server-name #:kick))
 
 (uffi:def-struct timeloop)
 (uffi:def-struct config)

@@ -28,12 +28,11 @@
 
 #include <ecl/ecl.h>
 
-static inline
-cl_object
-str_intern (const char* string)
-{
-    return cl_intern(1, make_simple_base_string((char*) string));
-}
+static struct {
+    const char* kernel;
+} _config;
+
+#include "helpers.c"
 
 bool
 cdlisp_EventDispatcher (CDServer* server, const char* event, va_list args)
@@ -69,7 +68,46 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
     J_DO {
-//        si_safe_eval(3, c_string_to_object(code), Cnil, OBJNULL);
+        J_STRING(self->config, "kernel", _config.kernel);
+
+        cdlisp_eval("(require :asdf)");
+
+        J_FOREACH(j_path, self->config, "paths") {
+            CDString* path = CD_CreateStringFromCString(J_STRING_CAST(j_path));
+
+            if (CD_StringContent(path)[0] == '/') {
+                if (!CD_IsDirectory(CD_StringContent(path))) {
+                    CD_DestroyString(path);
+                    continue;
+                }
+            }
+            else {
+                char tmp[FILENAME_MAX];
+                
+                if (getcwd(tmp, FILENAME_MAX)) {
+                    path = CD_PrependCString(path, "/");
+                    path = CD_PrependCString(path, tmp);
+                }
+
+                if (!CD_IsDirectory(CD_StringContent(path))) {
+                    CD_DestroyString(path);
+                    continue;
+                }
+            }
+
+            if (!CD_StringEndWith(path, "/")) {
+                path = CD_AppendCString(path, "/");
+            }
+
+            CDString* code = CD_CreateStringFromFormat("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
+
+            cdlisp_eval(CD_StringContent(code));
+
+            CD_DestroyString(code);
+            CD_DestroyString(path);
+        }
+
+        cdlisp_eval("(asdf:load-system :craftd)");
     }
 
     return true;

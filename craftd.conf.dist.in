@@ -87,7 +87,16 @@
 
         "engines": [
             { "name": "lisp",
-                "options": []
+                "paths": [
+                    "scripting/lisp/lib",
+                    "scripting/lisp/examples",
+                    "@libdir@/craftd/scripting/lisp",
+                    "@libdir@/craftd/scripting/lisp/lib"
+                ],
+
+                "options": [],
+
+                "scripts": []
             }
         ]
     }

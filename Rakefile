@@ -2,17 +2,17 @@ require 'mkmf'
 require 'rake'
 require 'rake/clean'
 
-load 'build/rake/variables.rb'
-load 'build/rake/configure.rb'
-load 'build/rake/misc.rb'
+FileList['build/rake/**.rb'].each {|f|
+  load f
+}
 
 VERSION = '0.1a'
 
-PREFIX         = ENV['PREFIX']         or '/usr'
-LIBDIR         = ENV['LIBDIR']         or "#{PREFIX}/lib"
-LOCALESTATEDIR = ENV['LOCALESTATEDIR'] or '/var'
-DATADIR        = ENV['DATADIR']        or "#{PREFIX}/share"
-SYSCONFDIR     = ENV['SYSCONFDIR']     or '/etc'
+PREFIX         = ENV['PREFIX']         || '/usr'
+LIBDIR         = ENV['LIBDIR']         || "#{PREFIX}/lib"
+LOCALESTATEDIR = ENV['LOCALESTATEDIR'] || '/var'
+DATADIR        = ENV['DATADIR']        || "#{PREFIX}/share"
+SYSCONFDIR     = ENV['SYSCONFDIR']     || '/etc'
 
 $CFLAGS   << ' ${CFLAGS}'
 $INCFLAGS << ' ${CFLAGS}'
@@ -128,7 +128,12 @@ namespace :craftd do |craftd|
     sh %{rm -f craftd.conf.dist craftd.conf.dist.tmp}
     sh %{srcdir=''}
     sh %{test -f ./craftd.conf.dist.in || srcdir=./;}
-    sh %{sed -e "s|@localstatedir[@]|${LOCALESTATEDIR}|g" -e "s|@datadir[@]|${DATADIR}|g" -e "s|@sysconfdir[@]|${SYSCONFDIR}|g" -e "s|@libdir[@]|${LIBDIR}|g" craftd.conf.dist.in > craftd.conf.dist.tmp}
+    sh %{sed \
+      -e "s|@localstatedir[@]|#{Regexp.escape(LOCALESTATEDIR)}|g" \
+      -e "s|@datadir[@]|#{Regexp.escape(DATADIR)}|g" \
+      -e "s|@sysconfdir[@]|#{Regexp.escape(SYSCONFDIR)}|g" \
+      -e "s|@libdir[@]|#{Regexp.escape(LIBDIR)}|g" \
+      craftd.conf.dist.in > craftd.conf.dist.tmp}
     sh %{mv craftd.conf.dist.tmp craftd.conf.dist}
   end
 
@@ -332,26 +337,23 @@ namespace :craftd do |craftd|
       ENV['ECL'] ||= 'ecl'
 
       lisp.sources = FileList['scripting/lisp/main.c']
-      lisp.lib     = FileList['scripting/lisp/lib/**.lisp']
 
-      CLEAN.include lisp.sources.ext('o'), lisp.lib.ext('fas')
+      CLEAN.include lisp.sources.ext('o')
       CLOBBER.include "scripting/#{scripting.file('lisp')}", 'scripting/lisp/include/config.h'
 
       lisp.sources.each {|f|
-        file f.ext('o') => c_file(f) do
-          sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
+        if f.end_with?('main.c')
+          file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
+            sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
+          end
+        else
+          file f.ext('o') => c_file(f) do
+            sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
+          end
         end
       }
 
-      lisp.lib.each {|f|
-        file f.ext('fas') => f do
-          sh "${ECL} -compile #{f}"
-
-          fail "could not compile #{f}" unless File.exists?(f.ext('fas'))
-        end
-      }
-
-      file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') + lisp.lib.ext('fas') do
+      file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') do
         sh "#{CC} #{CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags)"
       end
 

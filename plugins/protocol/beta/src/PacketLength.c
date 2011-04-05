@@ -199,6 +199,8 @@ CD_PacketParsable (CDBuffers* buffers)
 
             goto check;
         }
+
+        default: return true;
     }
 
     check: {

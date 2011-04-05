@@ -373,6 +373,51 @@ CD_AppendCString (CDString* self, const char* append)
     return self;
 }
 
+CDString*
+CD_PrependString (CDString* self, CDString* append)
+{
+    assert(self);
+    assert(append);
+
+    if (self->external) {
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
+    }
+
+    if (binsert(self->raw, 0, append->raw, '\0') == BSTR_OK) {
+        cd_UpdateLength(self);
+    }
+    else {
+        self = NULL;
+    }
+
+    return self;
+}
+
+CDString*
+CD_PrependCString (CDString* self, const char* append)
+{
+    assert(self);
+    assert(append);
+
+    if (self->external) {
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
+    }
+
+    CDString* tmp = CD_CreateStringFromCString(append);
+
+    if (!CD_PrependString(self, tmp)) {
+        self = NULL;
+    }
+
+    CD_DestroyString(tmp);
+
+    return self;
+}
+
 inline
 const char*
 CD_StringContent (CDString* self)
@@ -439,7 +484,9 @@ inline
 bool
 CD_StringEndWith (CDString* self, const char* check)
 {
-    return strncmp(CD_StringContent(self) + strlen(check), check, strlen(check));
+    size_t length = strlen(check);
+
+    return strncmp(CD_StringContent(self) + CD_StringSize(self) - length, check, length) == 0;
 }
 
 inline

@@ -1,8 +1,6 @@
-(defpackage #:craftd
-  (:use    #:common-lisp)
-  (:export #:register #:unregister))
-
 (in-package craftd)
+
+(export '(#:register #:unregister))
 
 (defparameter *event-callbacks* (make-hash-table))
 
@@ -29,5 +27,3 @@
           (if callback
             (remove-if #'(lambda (element) (equal (first element) callback)) callbacks)
             nil))))
-
-

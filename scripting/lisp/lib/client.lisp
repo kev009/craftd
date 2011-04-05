@@ -1,8 +1,6 @@
-(defpackage :craftd
-  (:use :common-lisp)
-  (:export :register :unregister))
-
 (in-package craftd)
+
+(export '(#:client-ip))
 
 (uffi:def-struct client
     (server  :pointer)

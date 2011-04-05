@@ -1,8 +1,6 @@
-(defpackage :craftd
-  (:use :common-lisp)
-  (:export :string :create-string :destroy-string :string-content))
+(in-package :craftd)
 
-(in-package craftd)
+(export '(#:create-string #:destroy-string #:string-content))
 
 (uffi:def-struct string (length :int))
 
