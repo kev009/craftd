@@ -31,10 +31,6 @@ static inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {
-    if (data == 0x00) {
-      return 0;
-    }
-
     if ((data & 0x80) == 0x00) {
         return 1;
     }
