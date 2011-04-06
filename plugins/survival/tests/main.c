@@ -28,8 +28,8 @@
 
 #include <craftd/protocols/survival.h>
 
-#include <tinytest/tinytest.h>
-#include <tinytest/tinytest_macros.h>
+#include "tinytest/tinytest.h"
+#include "tinytest/tinytest_macros.h"
 
 void
 cdtest_String_fromBuffer (void* data)

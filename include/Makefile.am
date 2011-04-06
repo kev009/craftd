@@ -24,6 +24,7 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/memory.h \
 		     craftd/Plugin.h \
 		     craftd/Plugins.h \
+		     craftd/Protocol.h \
 		     craftd/Regexp.h \
 		     craftd/ScriptingEngine.h \
 		     craftd/ScriptingEngines.h \
@@ -35,6 +36,19 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/version.h \
 		     craftd/Worker.h \
 		     craftd/Workers.h
+
+# Modular protocol headers
+survivaldir = $(pkgincludedir)/protocols/
+survival_HEADERS = craftd/protocols/survival.h \
+		    craftd/protocols/survival/Buffer.h \
+		    craftd/protocols/survival/common.h \
+		    craftd/protocols/survival/Logger.h \
+		    craftd/protocols/survival/minecraft.h \
+		    craftd/protocols/survival/Packet.h \
+		    craftd/protocols/survival/PacketLength.h \
+		    craftd/protocols/survival/Player.h \
+		    craftd/protocols/survival/Region.h \
+		    craftd/protocols/survival/World.h
 
 # bstring headers
 bstringdir = $(pkgincludedir)/bstring

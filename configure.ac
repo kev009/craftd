@@ -4,7 +4,7 @@ AC_PREREQ([2.64])
 AC_INIT([craftd], [0.2-pre], [kevin.bowling@kev009.com])
 
 AC_CONFIG_AUX_DIR([build/auto/aux])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects dist-bzip2])
 AC_CONFIG_MACRO_DIR([build/auto/m4])
 
 # Don't look for C++ or Fortran compilers
@@ -14,6 +14,7 @@ m4_undefine([AC_PROG_F77])
 m4_defun([AC_PROG_F77],[])
 
 AC_PROG_CC_C99
+AM_PROG_CC_C_O
 AC_USE_SYSTEM_EXTENSIONS
 LT_PREREQ([2.2])
 AM_PROG_LIBTOOL
@@ -27,19 +28,8 @@ AC_CONFIG_FILES([
                  src/Makefile 
                  include/Makefile
                  htdocs/Makefile
-                 
+                 third-party/Makefile
                  plugins/Makefile
-                 
-                 plugins/commands/Makefile
-
-                 plugins/mapgen/Makefile
-
-                 plugins/persistence/Makefile
-
-                 plugins/protocol/Makefile
-
-                 plugins/tests/Makefile
-                 
                  ])
 
 AC_CONFIG_SRCDIR([src/craftd.c])

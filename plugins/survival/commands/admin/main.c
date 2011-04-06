@@ -26,7 +26,7 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <beta/Player.h>
+#include <craftd/protocols/survival/Player.h>
 
 static struct {
     struct {

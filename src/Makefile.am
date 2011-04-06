@@ -36,10 +36,16 @@ craftd_SOURCES =  Buffer.c \
 		  Worker.c \
 		  Workers.c
 
-craftd_SOURCES += $(bstringdir)/bstrlib.c $(bstringdir)/bstrlib.h
-craftd_SOURCES += $(bstringdir)/bstraux.c $(bstringdir)/bstraux.h
+# Modular protocol dependant srcs
+craftd_SOURCES += protocols/survival/Buffer.c \
+		 protocols/survival/minecraft.c \
+		 protocols/survival/Packet.c \
+		 protocols/survival/PacketLength.c \
+		 protocols/survival/Player.c \
+		 protocols/survival/Region.c \
+		 protocols/survival/World.c
 
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) -export-dynamic
-craftd_LDADD = $(PTHREAD_LIBS)
+craftd_LDADD = $(PTHREAD_LIBS) $(top_builddir)/third-party/libbstring.la
 
 include $(top_srcdir)/build/auto/build.mk

@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I build/auto/m4
 
-SUBDIRS = include src plugins htdocs
+SUBDIRS = include third-party src plugins htdocs
 
 EXTRA_DIST = craftd.conf.dist.in motd.conf.dist
 
@@ -24,14 +24,7 @@ DISTCLEANFILES = craftd.conf.dist
 craftdconfdir = ${sysconfdir}/craftd/
 craftdconf_DATA = craftd.conf.dist motd.conf.dist
 
-# bstring extas
-bstrdir = third-party/bstring
-EXTRA_DIST += $(bstrdir)/license.txt $(bstrdir)/security.txt \
-	      $(bstrdir)/bstrlib.txt $(bstrdir)/porting.txt
-
-# klib extras
-klibdir = third-party/klib
-EXTRA_DIST += $(klibdir)
-
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(localstatedir)/craftd/world
+
+include $(top_srcdir)/build/auto/build.mk

@@ -6,4 +6,3 @@ AM_CPPFLAGS += -I$(top_srcdir)/include -I$(top_builddir)/include
 
 bstringdir = $(top_srcdir)/third-party/bstring
 plugindir = $(top_srcdir)/plugins
-
