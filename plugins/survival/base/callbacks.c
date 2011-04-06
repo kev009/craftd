@@ -27,31 +27,31 @@
 
 #include <craftd/Logger.h>
 
-#include <beta/World.h>
-#include <beta/Region.h>
-#include <beta/Player.h>
+#include <craftd/protocols/survival/World.h>
+#include <craftd/protocols/survival/Region.h>
+#include <craftd/protocols/survival/Player.h>
 
 static
 bool
-cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
+cdbeta_SendChunk (CDServer* server, SVPlayer* player, SVChunkPosition* coord)
 {
     DO {
-        CDPacketPreChunk pkt = {
+        SVPacketPreChunk pkt = {
             .response = {
                 .position = *coord,
                 .mode     = true
             }
         };
 
-        CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVPreChunk, (CDPointer) &pkt };
 
-        CD_PlayerSendPacketAndCleanData(player, &response);
+        SV_PlayerSendPacketAndCleanData(player, &response);
     }
 
     DO {
         SDEBUG(server, "sending chunk (%d, %d)", coord->x, coord->z);
 
-        MCChunk* chunk = CD_malloc(sizeof(MCChunk));
+        SVChunk* chunk = CD_malloc(sizeof(SVChunk));
         CDError  status;
 
         CD_EventDispatchWithError(status, server, "World.chunk", player->world, coord->x, coord->z, chunk);
@@ -66,7 +66,7 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
         Bytef* buffer  = CD_malloc(written);
         Bytef* data    = CD_malloc(81920);
             
-        MC_ChunkToByteArray(chunk, data);
+        SV_ChunkToByteArray(chunk, data);
 
         if (compress(buffer, &written, (Bytef*) data, 81920) != Z_OK) {
             SERR(server, "zlib compress failure");
@@ -82,9 +82,9 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
         CD_free(chunk);
         CD_free(data);
 
-        CDPacketMapChunk pkt = {
+        SVPacketMapChunk pkt = {
             .response = {
-                .position = MC_ChunkPositionToBlockPosition(*coord),
+                .position = SV_ChunkPositionToBlockPosition(*coord),
 
                 .size = {
                     .x = 16,
@@ -93,13 +93,13 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
                 },
 
                 .length = written,
-                .item   = (MCByte*) buffer
+                .item   = (SVByte*) buffer
             }
         };
 
-        CDPacket response = { CDResponse, CDMapChunk, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVMapChunk, (CDPointer) &pkt };
 
-        CD_PlayerSendPacketAndCleanData(player, &response);
+        SV_PlayerSendPacketAndCleanData(player, &response);
     }
 
     return true;
@@ -107,23 +107,23 @@ cdbeta_SendChunk (CDServer* server, CDPlayer* player, MCChunkPosition* coord)
 
 static
 void
-cdbeta_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
+cdbeta_ChunkRadiusUnload (CDSet* self, SVChunkPosition* coord, SVPlayer* player)
 {
     assert(self);
     assert(coord);
     assert(player);
 
     DO {
-        CDPacketPreChunk pkt = {
+        SVPacketPreChunk pkt = {
             .response = {
                 .position = *coord,
                 .mode = false
             }
         };
 
-        CDPacket response = { CDResponse, CDPreChunk, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVPreChunk, (CDPointer) &pkt };
 
-        CD_PlayerSendPacketAndCleanData(player, &response);
+        SV_PlayerSendPacketAndCleanData(player, &response);
     }
 
     CD_free(coord);
@@ -131,7 +131,7 @@ cdbeta_ChunkRadiusUnload (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 
 static
 void
-cdbeta_ChunkMemberFree (CDSet* self, MCChunkPosition* coord, void* _)
+cdbeta_ChunkMemberFree (CDSet* self, SVChunkPosition* coord, void* _)
 {
     assert(self);
     assert(coord);
@@ -141,7 +141,7 @@ cdbeta_ChunkMemberFree (CDSet* self, MCChunkPosition* coord, void* _)
 
 static
 void
-cdbeta_ChunkRadiusLoad (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
+cdbeta_ChunkRadiusLoad (CDSet* self, SVChunkPosition* coord, SVPlayer* player)
 {
     assert(self);
     assert(coord);
@@ -152,16 +152,16 @@ cdbeta_ChunkRadiusLoad (CDSet* self, MCChunkPosition* coord, CDPlayer* player)
 
 static
 void
-cdbeta_SendChunkRadius (CDPlayer* player, MCChunkPosition* area, int radius)
+cdbeta_SendChunkRadius (SVPlayer* player, SVChunkPosition* area, int radius)
 {
     CDSet* loadedChunks = (CDSet*) CD_DynamicGet(player, "Player.loadedChunks");
     CDSet* oldChunks    = loadedChunks;
-    CDSet* newChunks    = CD_CreateSetWith(400, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition);
+    CDSet* newChunks    = CD_CreateSetWith(400, (CDSetCompare) SV_CompareChunkPosition, (CDSetHash) SV_HashChunkPosition);
 
     for (int x = -radius; x < radius; x++) {
         for (int z = -radius; z < radius; z++) {
             if ((x * x + z * z) <= (radius * radius)) {
-                MCChunkPosition* coord = CD_malloc(sizeof(MCChunkPosition));
+                SVChunkPosition* coord = CD_malloc(sizeof(SVChunkPosition));
                 coord->x          = x + area->x;
                 coord->z          = z + area->z;
 
@@ -185,7 +185,7 @@ cdbeta_SendChunkRadius (CDPlayer* player, MCChunkPosition* area, int radius)
 
 static
 bool
-cdbeta_CoordInRadius(MCChunkPosition *coord, MCChunkPosition *centerCoord, int radius)
+cdbeta_CoordInRadius(SVChunkPosition *coord, SVChunkPosition *centerCoord, int radius)
 {
     if (coord->x >= centerCoord->x - radius &&
         coord->x <= centerCoord->x + radius &&
@@ -200,7 +200,7 @@ cdbeta_CoordInRadius(MCChunkPosition *coord, MCChunkPosition *centerCoord, int r
 
 static
 bool
-cdbeta_DistanceGreater (MCPrecisePosition a, MCPrecisePosition b, int maxDistance)
+cdbeta_DistanceGreater (SVPrecisePosition a, SVPrecisePosition b, int maxDistance)
 {
     return (abs( a.x - b.x ) > maxDistance ||
             abs( a.y - b.y ) > maxDistance ||
@@ -208,13 +208,13 @@ cdbeta_DistanceGreater (MCPrecisePosition a, MCPrecisePosition b, int maxDistanc
 }
 
 static
-MCRelativePosition
-cdbeta_RelativeMove (MCPrecisePosition* a, MCPrecisePosition* b)
+SVRelativePosition
+cdbeta_RelativeMove (SVPrecisePosition* a, SVPrecisePosition* b)
 {
-    MCAbsolutePosition absoluteA = MC_PrecisePositionToAbsolutePosition(*a);
-    MCAbsolutePosition absoluteB = MC_PrecisePositionToAbsolutePosition(*b);
+    SVAbsolutePosition absoluteA = SV_PrecisePositionToAbsolutePosition(*a);
+    SVAbsolutePosition absoluteB = SV_PrecisePositionToAbsolutePosition(*b);
 
-    return (MCRelativePosition) {
+    return (SVRelativePosition) {
         .x = absoluteA.x - absoluteB.x,
         .y = absoluteA.y - absoluteB.y,
         .z = absoluteA.z - absoluteB.z
@@ -223,14 +223,14 @@ cdbeta_RelativeMove (MCPrecisePosition* a, MCPrecisePosition* b)
 
 static
 void
-cdbeta_SendPacketToAllInRegion(CDPlayer *player, CDPacket *pkt)
+cdbeta_SendPacketToAllInRegion(SVPlayer *player, SVPacket *pkt)
 {
   CDList *seenPlayers = (CDList *) CD_DynamicGet(player, "Player.seenPlayers");
 
   CD_LIST_FOREACH(seenPlayers, it)
   {
-    if ( player != (CDPlayer *) CD_ListIteratorValue(it) )
-      CD_PlayerSendPacket( (CDPlayer *) CD_ListIteratorValue(it), pkt );
+    if ( player != (SVPlayer *) CD_ListIteratorValue(it) )
+      SV_PlayerSendPacket( (SVPlayer *) CD_ListIteratorValue(it), pkt );
     else
       CERR("We have a player with himself in the List????");
   }
@@ -238,14 +238,14 @@ cdbeta_SendPacketToAllInRegion(CDPlayer *player, CDPacket *pkt)
 
 static
 void
-cdbeta_SendUpdatePos(CDPlayer* player, MCPrecisePosition* newPosition, bool andLook, MCFloat pitch, MCFloat yaw)
+cdbeta_SendUpdatePos(SVPlayer* player, SVPrecisePosition* newPosition, bool andLook, SVFloat pitch, SVFloat yaw)
 {
     if (cdbeta_DistanceGreater(player->entity.position, *newPosition, 2) || true) {
         DO {
-            CDPacketEntityTeleport pkt;
+            SVPacketEntityTeleport pkt;
 
             pkt.response.entity   = player->entity;
-            pkt.response.position = MC_PrecisePositionToAbsolutePosition(*newPosition);
+            pkt.response.position = SV_PrecisePositionToAbsolutePosition(*newPosition);
 
             if (andLook) {
                 pkt.response.pitch = pitch;
@@ -256,48 +256,48 @@ cdbeta_SendUpdatePos(CDPlayer* player, MCPrecisePosition* newPosition, bool andL
                 pkt.response.rotation = player->yaw;
             }
             
-            CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer)  &pkt };
+            SVPacket response = { SVResponse, SVEntityTeleport, (CDPointer)  &pkt };
             
             cdbeta_SendPacketToAllInRegion(player, &response);
         }
     }
     else {
         if (andLook) {
-            CDPacketEntityLookMove pkt = {
+            SVPacketEntityLookMove pkt = {
                 .response = {
                     .entity   = player->entity,
-                    .position = CD_RelativeMove(&player->entity.position, newPosition),
+                    .position = SV_RelativeMove(&player->entity.position, newPosition),
                     .yaw      = yaw,
                     .pitch    = pitch
                 }
             };
 
 
-            CDPacket response = { CDResponse, CDEntityLookMove, (CDPointer) &pkt };
+            SVPacket response = { SVResponse, SVEntityLookMove, (CDPointer) &pkt };
 
-            CD_RegionBroadcastPacket(player, &response);
+            SV_RegionBroadcastPacket(player, &response);
         }
         else {
-            CDPacketEntityRelativeMove pkt = {
+            SVPacketEntityRelativeMove pkt = {
                 .response = {
                     .entity   = player->entity,
-                    .position = CD_RelativeMove(&player->entity.position, newPosition)
+                    .position = SV_RelativeMove(&player->entity.position, newPosition)
                 }
             };
 
-            CDPacket response = { CDResponse, CDEntityRelativeMove, (CDPointer) &pkt };
+            SVPacket response = { SVResponse, SVEntityRelativeMove, (CDPointer) &pkt };
 
-            CD_RegionBroadcastPacket(player, &response);
+            SV_RegionBroadcastPacket(player, &response);
         }
     }
 }
 
 static
 void
-cdbeta_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
+cdbeta_SendNamedPlayerSpawn(SVPlayer *player, SVPlayer *other)
 {
     DO {
-        CDPacketNamedEntitySpawn pkt = {
+        SVPacketNamedEntitySpawn pkt = {
             .response = {
                 .entity   = other->entity,
                 .name     = other->username,
@@ -308,18 +308,18 @@ cdbeta_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
                     .id = 0
                 },
 
-                .position = MC_PrecisePositionToAbsolutePosition(other->entity.position)
+                .position = SV_PrecisePositionToAbsolutePosition(other->entity.position)
             }
         };
 
-        CDPacket response = { CDResponse, CDNamedEntitySpawn, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVNamedEntitySpawn, (CDPointer) &pkt };
 
-        CD_PlayerSendPacket(player, &response);
+        SV_PlayerSendPacket(player, &response);
     }
 
     for (int i = 0; i < 5; i++) {
         DO {
-            CDPacketEntityEquipment pkt = {
+            SVPacketEntityEquipment pkt = {
                 .response = {
                     .entity = other->entity,
 
@@ -329,62 +329,62 @@ cdbeta_SendNamedPlayerSpawn(CDPlayer *player, CDPlayer *other)
                 }
             };
 
-            CDPacket response = { CDResponse, CDEntityEquipment, (CDPointer) &pkt };
+            SVPacket response = { SVResponse, SVEntityEquipment, (CDPointer) &pkt };
 
-            CD_PlayerSendPacket(player, &response);
+            SV_PlayerSendPacket(player, &response);
         }
     }
 
     DO {
-        CDPacketEntityTeleport pkt = {
+        SVPacketEntityTeleport pkt = {
             .response = {
                 .entity   = other->entity,
                 .pitch    = other->pitch,
                 .rotation = 0,
-                .position = MC_PrecisePositionToAbsolutePosition(other->entity.position)
+                .position = SV_PrecisePositionToAbsolutePosition(other->entity.position)
             }
         };
 
-        CDPacket response = { CDResponse, CDEntityTeleport, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVEntityTeleport, (CDPointer) &pkt };
 
-        CD_PlayerSendPacket(player, &response);
+        SV_PlayerSendPacket(player, &response);
     }
 
-    CD_PlayerSendMessage(player, CD_CreateStringFromFormat("You should now see %s", CD_StringContent(other->username)));
+    SV_PlayerSendMessage(player, CD_CreateStringFromFormat("You should now see %s", CD_StringContent(other->username)));
 }
 
 static
 void
-cdbeta_SendDestroyEntity (CDPlayer* player, MCEntity* entity)
+cdbeta_SendDestroyEntity (SVPlayer* player, SVEntity* entity)
 {
     DO {
-        CDPacketEntityDestroy pkt = {
+        SVPacketEntityDestroy pkt = {
             .response = {
                 .entity = *entity
             }
         };
 
-        CDPacket response = { CDResponse, CDEntityDestroy, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVEntityDestroy, (CDPointer) &pkt };
 
-        CD_PlayerSendPacket(player, &response);
+        SV_PlayerSendPacket(player, &response);
     }
 }
 
 static
 void
-cdbeta_CheckPlayersInRegion (CDServer* server, CDPlayer* player, MCChunkPosition *coord, int radius)
+cdbeta_CheckPlayersInRegion (CDServer* server, SVPlayer* player, SVChunkPosition *coord, int radius)
 {
     CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");;
 
     CD_HASH_FOREACH(player->world->players, it) {
-        CDPlayer* otherPlayer = (CDPlayer *) CD_HashIteratorValue(it);
+        SVPlayer* otherPlayer = (SVPlayer *) CD_HashIteratorValue(it);
 
         // If we are the player to check just skip
         if (otherPlayer == player) {
             continue;
         }
 
-        MCChunkPosition chunkPos = MC_PrecisePositionToChunkPosition(otherPlayer->entity.position);
+        SVChunkPosition chunkPos = SV_PrecisePositionToChunkPosition(otherPlayer->entity.position);
 
         if (cdbeta_CoordInRadius(&chunkPos, coord, radius)) {
             /* If the player is in range, but not in the list. */
@@ -415,25 +415,25 @@ cdbeta_CheckPlayersInRegion (CDServer* server, CDPlayer* player, MCChunkPosition
 
 static
 bool
-cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
+cdbeta_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
 {
-    CDWorld*  world;
-    CDPlayer* player = (CDPlayer*) CD_DynamicGet(client, "Client.player");
+    SVWorld*  world;
+    SVPlayer* player = (SVPlayer*) CD_DynamicGet(client, "Client.player");
 
     if (player && player->world) {
         world = player->world;
     }
     else {
-        world = (CDWorld*) CD_DynamicGet(server, "World.default");
+        world = (SVWorld*) CD_DynamicGet(server, "World.default");
     }
 
     switch (packet->type) {
-        case CDKeepAlive: {
+        case SVKeepAlive: {
             SDEBUG(server, "%s is still alive", player ? CD_StringContent(player->username) : client->ip);
         } break;
 
-        case CDLogin: {
-            CDPacketLogin* data = (CDPacketLogin*) packet->data;
+        case SVLogin: {
+            SVPacketLogin* data = (SVPacketLogin*) packet->data;
 
             pthread_mutex_lock(&_lock.login);
 
@@ -450,7 +450,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             if (CD_HashHasKey(world->players, CD_StringContent(data->request.username))) {
                 SLOG(server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(data->request.username));
 
-                if (server->config->cache.game.standard) {
+                if (server->config->cache.game.protocol.standard) {
                     CD_ServerKick(server, client, CD_CreateStringFromFormat("%s nick already exists",
                         CD_StringContent(data->request.username)));
 
@@ -474,7 +474,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             pthread_mutex_unlock(&_lock.login);
 
             DO {
-                CDPacketLogin pkt = {
+                SVPacketLogin pkt = {
                     .response = {
                         .id         = player->entity.id,
                         .serverName = CD_CreateStringFromCString(""),
@@ -484,17 +484,17 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
                     }
                 };
 
-                CDPacket response = { CDResponse, CDLogin, (CDPointer) &pkt };
+                SVPacket response = { SVResponse, SVLogin, (CDPointer) &pkt };
 
-                CD_PlayerSendPacketAndCleanData(player, &response);
+                SV_PlayerSendPacketAndCleanData(player, &response);
             }
 
-            MCChunkPosition spawnChunk = MC_BlockPositionToChunkPosition(world->spawnPosition);
+            SVChunkPosition spawnChunk = SV_BlockPositionToChunkPosition(world->spawnPosition);
 
             // Hack in a square send for login
             for (int i = -7; i < 8; i++) {
                 for ( int j = -7; j < 8; j++) {
-                    MCChunkPosition coords = {
+                    SVChunkPosition coords = {
                         .x = spawnChunk.x + i,
                         .z = spawnChunk.z + j
                     };
@@ -507,20 +507,20 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 
             /* Send Spawn Position to initialize compass */
             DO {
-                CDPacketSpawnPosition pkt = {
+                SVPacketSpawnPosition pkt = {
                     .response = {
                         .position = world->spawnPosition
                     }
                 };
 
-                CDPacket response = { CDResponse, CDSpawnPosition, (CDPointer) &pkt };
+                SVPacket response = { SVResponse, SVSpawnPosition, (CDPointer) &pkt };
 
-                CD_PlayerSendPacketAndCleanData(player, &response);
+                SV_PlayerSendPacketAndCleanData(player, &response);
             }
 
             DO {
-                MCPrecisePosition pos = MC_BlockPositionToPrecisePosition(world->spawnPosition);
-                CDPacketPlayerMoveLook pkt = {
+                SVPrecisePosition pos = SV_BlockPositionToPrecisePosition(world->spawnPosition);
+                SVPacketPlayerMoveLook pkt = {
                     .response = {
                         .position = {
                             .x = pos.x,
@@ -538,36 +538,36 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
                     }
                 };
 
-                CDPacket response = { CDResponse, CDPlayerMoveLook, (CDPointer) &pkt };
+                SVPacket response = { SVResponse, SVPlayerMoveLook, (CDPointer) &pkt };
 
-                CD_PlayerSendPacketAndCleanData(player, &response);
+                SV_PlayerSendPacketAndCleanData(player, &response);
             }
 
             CD_EventDispatch(server, "Player.login", player, true);
         } break;
 
-        case CDHandshake: {
-            CDPacketHandshake* data = (CDPacketHandshake*) packet->data;
+        case SVHandshake: {
+            SVPacketHandshake* data = (SVPacketHandshake*) packet->data;
 
             SLOG(server, LOG_NOTICE, "%s tried handshake", CD_StringContent(data->request.username));
 
-            CDPacketHandshake pkt = {
+            SVPacketHandshake pkt = {
                 .response = {
                     .hash = CD_CreateStringFromCString("-")
                 }
             };
 
-            player = CD_CreatePlayer(client);
+            player = SV_CreatePlayer(client);
 
             CD_DynamicPut(client, "Client.player", (CDPointer) player);
 
-            CDPacket response = { CDResponse, CDHandshake, (CDPointer) &pkt };
+            SVPacket response = { SVResponse, SVHandshake, (CDPointer) &pkt };
 
-            CD_PlayerSendPacketAndCleanData(player, &response);
+            SV_PlayerSendPacketAndCleanData(player, &response);
         } break;
 
-        case CDChat: {
-            CDPacketChat* data = (CDPacketChat*) packet->data;
+        case SVChat: {
+            SVPacketChat* data = (SVPacketChat*) packet->data;
 
             if (CD_StringEmpty(player->username)) {
                 break;
@@ -576,27 +576,27 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             if (CD_StringStartWith(data->request.message, _config.commandChar)) {
                 CDString* commandString = CD_CreateStringFromOffset(data->request.message, 1, 0);
                 CD_EventDispatch(server, "Player.command", player, commandString);
-                CD_DestroyString(commandString);
+                SV_DestroyString(commandString);
             }
             else {
                 CD_EventDispatch(server, "Player.chat", player, data->request.message);
             }
         } break;
 
-        case CDOnGround: {
+        case SVOnGround: {
             // Stub.  Probably not needed
         } break;
 
-        case CDPlayerPosition: {
+        case SVPlayerPosition: {
             // Stub.  Do dead reckoning or some other sanity check for data
             // and send CD_SetDifference of chunks on boundary change.
 
-            CDPacketPlayerPosition* data = (CDPacketPlayerPosition*) packet->data;
+            SVPacketPlayerPosition* data = (SVPacketPlayerPosition*) packet->data;
 
-            MCChunkPosition newChunk = MC_PrecisePositionToChunkPosition(data->request.position);
-            MCChunkPosition curChunk = MC_PrecisePositionToChunkPosition(player->entity.position);
+            SVChunkPosition newChunk = SV_PrecisePositionToChunkPosition(data->request.position);
+            SVChunkPosition curChunk = SV_PrecisePositionToChunkPosition(player->entity.position);
 
-            if (!MC_ChunkPositionEqual(newChunk, curChunk)) {
+            if (!SV_ChunkPositionEqual(newChunk, curChunk)) {
                 cdbeta_SendChunkRadius(player, &newChunk, 10);
 
                 cdbeta_CheckPlayersInRegion(server, player, &newChunk, 5);
@@ -607,37 +607,37 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             player->entity.position = data->request.position;
         } break;
 
-        case CDPlayerLook: {
+        case SVPlayerLook: {
             // Stub.  Add input validation and sanity checks.
 
-            CDPacketPlayerLook* data = (CDPacketPlayerLook*) packet->data;
+            SVPacketPlayerLook* data = (SVPacketPlayerLook*) packet->data;
 
             player->yaw   = data->request.yaw;
             player->pitch = data->request.pitch;
 
             DO {
-              CDPacketEntityLook pkt;
+              SVPacketEntityLook pkt;
 
               pkt.response.entity = player->entity;
               pkt.response.pitch = player->pitch;
               pkt.response.yaw = player->yaw;
 
-              CDPacket response = { CDResponse, CDEntityLook, (CDPointer) &pkt };
+              SVPacket response = { SVResponse, SVEntityLook, (CDPointer) &pkt };
 
               cdbeta_SendPacketToAllInRegion(player, &response);
             }
         } break;
 
-        case CDPlayerMoveLook: {
+        case SVPlayerMoveLook: {
             // Stub.  Do dead reckoning or some other sanity check for data
             // and send CD_SetDifference of chunks on boundary change.
 
-            CDPacketPlayerMoveLook* data = (CDPacketPlayerMoveLook*) packet->data;
+            SVPacketPlayerMoveLook* data = (SVPacketPlayerMoveLook*) packet->data;
 
-            MCChunkPosition oldChunk = MC_PrecisePositionToChunkPosition(player->entity.position);
-            MCChunkPosition newChunk = MC_PrecisePositionToChunkPosition(data->request.position);
+            SVChunkPosition oldChunk = SV_PrecisePositionToChunkPosition(player->entity.position);
+            SVChunkPosition newChunk = SV_PrecisePositionToChunkPosition(data->request.position);
 
-            if (!MC_ChunkPositionEqual(oldChunk, newChunk)) {
+            if (!SV_ChunkPositionEqual(oldChunk, newChunk)) {
                 cdbeta_SendChunkRadius(player, &newChunk, 10);
 
                 cdbeta_CheckPlayersInRegion(server, player, &newChunk, 5);
@@ -650,8 +650,8 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
             player->pitch           = data->request.pitch;
         } break;
 
-        case CDDisconnect: {
-            CDPacketDisconnect* data = (CDPacketDisconnect*) packet->data;
+        case SVDisconnect: {
+            SVPacketDisconnect* data = (SVPacketDisconnect*) packet->data;
 
             CD_ServerKick(server, client, CD_CloneString(data->request.reason));
         } break;
@@ -672,7 +672,7 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, CDPacket* packet)
 
 static
 bool
-cdbeta_ClientProcessed (CDServer* server, CDClient* client, CDPacket* packet)
+cdbeta_ClientProcessed (CDServer* server, CDClient* client, SVPacket* packet)
 {
     return true;
 }
@@ -686,34 +686,34 @@ cdbeta_ClientConnect (CDServer* server, CDClient* client)
 
 static
 bool
-cdbeta_PlayerLogin (CDServer* server, CDPlayer* player, int status)
+cdbeta_PlayerLogin (CDServer* server, SVPlayer* player, int status)
 {
     if (!status) {
         return true;
     }
 
     DO {
-        CDPacketTimeUpdate pkt = {
+        SVPacketTimeUpdate pkt = {
             .response = {
-                .time = CD_WorldGetTime(player->world)
+                .time = SV_WorldGetTime(player->world)
             }
         };
 
-        CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
+        SVPacket packet = { SVResponse, SVTimeUpdate, (CDPointer) &pkt };
 
-        CD_PlayerSendPacket(player, &packet);
+        SV_PlayerSendPacket(player, &packet);
     }
 
-    CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has joined the game",
-                CD_StringContent(player->username)), MCColorYellow));
+    SV_WorldBroadcastMessage(player->world, SV_StringColor(CD_CreateStringFromFormat("%s has joined the game",
+                CD_StringContent(player->username)), SVColorYellow));
 
 
     CD_DynamicPut(player, "Player.loadedChunks", (CDPointer) CD_CreateSetWith(
-        400, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition));
+        400, (CDSetCompare) SV_CompareChunkPosition, (CDSetHash) SV_HashChunkPosition));
 
     CD_DynamicPut(player, "Player.seenPlayers", (CDPointer) CD_CreateList());
 
-    MCChunkPosition playerChunk = MC_PrecisePositionToChunkPosition(player->entity.position);
+    SVChunkPosition playerChunk = SV_PrecisePositionToChunkPosition(player->entity.position);
 
     cdbeta_CheckPlayersInRegion(server, player, &playerChunk, 5);
 
@@ -722,15 +722,15 @@ cdbeta_PlayerLogin (CDServer* server, CDPlayer* player, int status)
 
 static
 bool
-cdbeta_PlayerLogout (CDServer* server, CDPlayer* player)
+cdbeta_PlayerLogout (CDServer* server, SVPlayer* player)
 {
-    CD_WorldBroadcastMessage(player->world, MC_StringColor(CD_CreateStringFromFormat("%s has left the game",
-        CD_StringContent(player->username)), MCColorYellow));
+    SV_WorldBroadcastMessage(player->world, SV_StringColor(CD_CreateStringFromFormat("%s has left the game",
+        CD_StringContent(player->username)), SVColorYellow));
 
     CDList* seenPlayers = (CDList*) CD_DynamicDelete(player, "Player.seenPlayers");
 
     CD_LIST_FOREACH(seenPlayers, it) {
-        CDPlayer* other            = (CDPlayer*) CD_ListIteratorValue(it);
+        SVPlayer* other            = (SVPlayer*) CD_ListIteratorValue(it);
         CDList*   otherSeenPlayers = (CDList*) CD_DynamicGet(other, "Player.seenPlayers");
 
         cdbeta_SendDestroyEntity(other, &player->entity);
@@ -756,7 +756,7 @@ static
 bool
 cdbeta_ClientDisconnect (CDServer* server, CDClient* client, bool status)
 {
-    CDPlayer* player = (CDPlayer*) CD_DynamicGet(client, "Client.player");
+    SVPlayer* player = (SVPlayer*) CD_DynamicGet(client, "Client.player");
 
     if (player->world) {
         CD_EventDispatch(server, "Player.logout", player, status);
@@ -770,14 +770,14 @@ bool
 cdbeta_ClientKick (CDServer* server, CDClient* client, CDString* reason)
 {
     DO {
-        CDPacketDisconnect pkt = {
+        SVPacketDisconnect pkt = {
             .response = {
                 .reason = reason
             }
         };
 
-        CDPacket  packet = { CDResponse, CDDisconnect, (CDPointer) &pkt };
-        CDBuffer* buffer = CD_PacketToBuffer(&packet);
+        SVPacket  packet = { SVResponse, SVDisconnect, (CDPointer) &pkt };
+        CDBuffer* buffer = SV_PacketToBuffer(&packet);
 
         CD_ClientSendBuffer(client, buffer);
 
@@ -789,13 +789,13 @@ cdbeta_ClientKick (CDServer* server, CDClient* client, CDString* reason)
 
 static
 bool
-cdbeta_PlayerCommand (CDServer* server, CDPlayer* player, CDString* command)
+cdbeta_PlayerCommand (CDServer* server, SVPlayer* player, CDString* command)
 {
     CDRegexpMatches* matches = CD_RegexpMatchString("^(\\w+)(?:\\s+(.*?))?$", CDRegexpNone, command);
 
     if (matches) {
-        CD_PlayerSendMessage(player, MC_StringColor(CD_CreateStringFromFormat("%s: unknown command",
-            CD_StringContent(matches->item[1])), MCColorRed));
+        SV_PlayerSendMessage(player, SV_StringColor(CD_CreateStringFromFormat("%s: unknown command",
+            CD_StringContent(matches->item[1])), SVColorRed));
     }
 
     return false;
@@ -803,7 +803,7 @@ cdbeta_PlayerCommand (CDServer* server, CDPlayer* player, CDString* command)
 
 static
 bool
-cdbeta_PlayerChat (CDServer* server, CDPlayer* player, CDString* message)
+cdbeta_PlayerChat (CDServer* server, SVPlayer* player, CDString* message)
 {
     SLOG(server, LOG_NOTICE, "<%s> %s", CD_StringContent(player->username),
             CD_StringContent(message));
@@ -817,7 +817,7 @@ cdbeta_PlayerChat (CDServer* server, CDPlayer* player, CDString* message)
 
 static
 bool
-cdbeta_PlayerDestroy (CDServer* server, CDPlayer* player)
+cdbeta_PlayerDestroy (CDServer* server, SVPlayer* player)
 {
     return true;
 }

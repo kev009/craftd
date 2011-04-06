@@ -26,8 +26,7 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <beta/Player.h>
-#include <beta/minecraft.h>
+#include <craftd/protocols/survival.h>
 
 #include <tinytest/tinytest.h>
 #include <tinytest/tinytest_macros.h>
@@ -90,7 +89,7 @@ void
 cdtest_String_Minecraft_sanitize (void* data)
 {
     CDString* string    = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
-    CDString* sanitized = MC_StringSanitize(string);
+    CDString* sanitized = SV_StringSanitize(string);
 
     tt_assert(CD_StringIsEqual(sanitized, "æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?"));
 
@@ -106,8 +105,8 @@ cdtest_String_Minecraft_valid (void* data)
     CDString* invalid = CD_CreateStringFromCString("æßðđ¼½¬²³æðđ]}»”¢“}¹²³þæßł@»ł”##æðþŋŋŋ§2ŋŋŋł€¶®ÐJª§&<©>‘ŁØ&ØΩ§3");
     CDString* valid   = CD_CreateStringFromCString("æ???¼½¬??æ??]}»???}????æ??@»??##æ?????§2??????®?Jª§&<?>??Ø&Ø?");
 
-    tt_assert(MC_StringIsValid(invalid) == false);
-    tt_assert(MC_StringIsValid(valid) == true);
+    tt_assert(SV_StringIsValid(invalid) == false);
+    tt_assert(SV_StringIsValid(valid) == true);
 
     end: {
         CD_DestroyString(invalid);

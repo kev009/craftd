@@ -26,10 +26,7 @@
 #include <craftd/Plugin.h>
 #include <craftd/Server.h>
 
-#include <beta/common.h>
-#include <beta/Packet.h>
-#include <beta/PacketLength.h>
-#include <beta/World.h>
+#include <craftd/protocols/survival.h>
 
 static struct {
     pthread_mutex_t login;
@@ -55,25 +52,25 @@ cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
     CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
     CD_LIST_FOREACH(worlds, it) {
-        CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
+        SVWorld* world = (SVWorld*) CD_ListIteratorValue(it);
 
-        uint16_t current = CD_WorldGetTime(world);
+        uint16_t current = SV_WorldGetTime(world);
 
         if (current >= 0 && current <= 11999) {
-            CD_WorldSetTime(world, current += _config.rate.day);
+            SV_WorldSetTime(world, current += _config.rate.day);
         }
         else if (current >= 12000 && current <= 13799) {
-            CD_WorldSetTime(world, current += _config.rate.sunset);
+            SV_WorldSetTime(world, current += _config.rate.sunset);
         }
         else if (current >= 13800 && current <= 22199) {
-            CD_WorldSetTime(world, current += _config.rate.night);
+            SV_WorldSetTime(world, current += _config.rate.night);
         }
         else if (current >= 22200 && current <= 23999) {
-            CD_WorldSetTime(world, current += _config.rate.sunrise);
+            SV_WorldSetTime(world, current += _config.rate.sunrise);
         }
 
         if (current >= 24000) {
-            CD_WorldSetTime(world, current - 24000);
+            SV_WorldSetTime(world, current - 24000);
         }
     }
 }
@@ -85,17 +82,17 @@ cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
     CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
     CD_LIST_FOREACH(worlds, it) {
-        CDWorld* world = (CDWorld*) CD_ListIteratorValue(it);
+        SVWorld* world = (SVWorld*) CD_ListIteratorValue(it);
 
-        CDPacketTimeUpdate pkt = {
+        SVPacketTimeUpdate pkt = {
             .response = {
-                .time = CD_WorldGetTime(world)
+                .time = SV_WorldGetTime(world)
             }
         };
 
-        CDPacket packet = { CDResponse, CDTimeUpdate, (CDPointer) &pkt };
+        SVPacket packet = { SVResponse, SVTimeUpdate, (CDPointer) &pkt };
 
-        CD_WorldBroadcastPacket(world, &packet);
+        SV_WorldBroadcastPacket(world, &packet);
     }
 }
 
@@ -103,8 +100,8 @@ static
 void
 cdbeta_KeepAlive (void* _, void* __, CDServer* server)
 {
-    CDPacket  packet = { CDResponse, CDKeepAlive, CDNull };
-    CDBuffer* buffer = CD_PacketToBuffer(&packet);
+    SVPacket  packet = { SVResponse, SVKeepAlive, CDNull };
+    CDBuffer* buffer = SV_PacketToBuffer(&packet);
 
     CD_LIST_FOREACH(server->clients, it) {
         CD_ClientSendBuffer((CDClient*) CD_ListIteratorValue(it), buffer);
@@ -117,17 +114,17 @@ static
 bool
 cdbeta_ServerStart (CDServer* server)
 {
-    CDPlugin* self = CD_GetPlugin(server->plugins, "protocol.beta");
+    CDPlugin* self = CD_GetPlugin(server->plugins, "survival.base");
 
     CDList*  worlds       = CD_CreateList();
-    CDWorld* defaultWorld = NULL;
+    SVWorld* defaultWorld = NULL;
 
     J_DO {
         J_FOREACH(world, self->config, "worlds") {
             J_IF_BOOL(world, "default") {
                 if (J_BOOL_VALUE) {
                     J_IF_STRING(world, "name") {
-                        defaultWorld = CD_CreateWorld(self->server, J_STRING_VALUE);
+                        defaultWorld = SV_CreateWorld(self->server, J_STRING_VALUE);
                     }
 
                     break;
@@ -137,7 +134,7 @@ cdbeta_ServerStart (CDServer* server)
     }
 
     if (!defaultWorld) {
-        defaultWorld = CD_CreateWorld(self->server, "default");
+        defaultWorld = SV_CreateWorld(self->server, "default");
     }
 
     CD_ListPush(worlds, (CDPointer) defaultWorld);
@@ -147,7 +144,7 @@ cdbeta_ServerStart (CDServer* server)
             J_IF_BOOL(world, "default") {
                 if (!J_BOOL_VALUE) {
                     J_IF_STRING(world, "name") {
-                        CD_ListPush(worlds, (CDPointer) CD_CreateWorld(self->server, J_STRING_VALUE));
+                        CD_ListPush(worlds, (CDPointer) SV_CreateWorld(self->server, J_STRING_VALUE));
                     }
                 }
             }
@@ -169,7 +166,7 @@ cdbeta_ServerStop (CDServer* server)
     CDList* worlds = (CDList*) CD_DynamicDelete(server, "World.list");
 
     CD_LIST_FOREACH(worlds, it) {
-        CD_DestroyWorld((CDWorld*) CD_ListIteratorValue(it));
+        SV_DestroyWorld((SVWorld*) CD_ListIteratorValue(it));
     }
 
     return true;
@@ -191,7 +188,7 @@ extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->description = CD_CreateStringFromCString("Beta 1.3");
+    self->description = CD_CreateStringFromCString("Minecraft Beta 1.4");
 
     DO { // Initiailize config cache
         _config.commandChar = "/";
@@ -213,8 +210,7 @@ CD_PluginInitialize (CDPlugin* self)
         }
     }
 
-    self->server->packet.parsable = CD_PacketParsable;
-    self->server->packet.parse    = (void* (*)(CDBuffers *)) CD_PacketFromBuffers;
+    self->server->protocol = CD_CreateProtocol("survival", SV_PacketParsable, (CDProtocolPacketParse) SV_PacketFromBuffers);
 
     pthread_mutex_init(&_lock.login, NULL);
 

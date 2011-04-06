@@ -127,17 +127,17 @@ namespace :plugins do |plugin|
   desc 'Build all plugins'
   task :build => ['survival:build']
 
-  class << plugin
-    def file (name, protocol=:survival)
-      "#{protocol ? "#{protocol}." : ''}#{name}.#{CONFIG['DLEXT']}"
+  namespace :survival do |plugin|
+    class << plugin
+      def file (name)
+        "survival.#{name}.#{CONFIG['DLEXT']}"
+      end
     end
-  end
 
-  namespace :survival do |survival|
     task :build => ['base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
 
     namespace :base do |base|
-      base.sources = FileList['plugins/survival/base/**.c']
+      base.sources = FileList['plugins/survival/base/main.c']
 
       CLEAN.include base.sources.ext('o')
       CLOBBER.include "plugins/#{plugin.file('base')}"
@@ -155,162 +155,130 @@ namespace :plugins do |plugin|
       desc 'Build SMP base plugin'
       task :build => "plugins/#{plugin.file('base')}"
     end
-  end
 
-=begin
-  namespace :protocol do |protocol|
-    task :build => ['beta:build']
+    namespace :persistence do |persistence|
+      task :build => ['nbt:build']
 
-    namespace :beta do |beta|
-      beta.headers   = FileList['plugins/protocol/beta/include/*.h']
-      beta.sources   = FileList['plugins/protocol/beta/**/*.c'].exclude('callbacks.c')
+      namespace :nbt do |nbt|
+        nbt.cflags = '-Iplugins/survival/persistence/nbt -Iplugins/survival/persistence/nbt/include'
 
-      CLEAN.include beta.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file('protocol.beta')}"
+        nbt.sources = FileList[
+          'plugins/survival/persistence/nbt/main.c',
+          'plugins/survival/persistence/nbt/src/*.c',
+          'plugins/survival/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c',
+          'plugins/survival/persistence/nbt/cNBT/{buffer}.c']
 
-      beta.sources.each {|f|
-        if f.end_with?('main.c')
-          file f.ext('o') => [f, "#{File.dirname(f)}/callbacks.c"] do
-            sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+        CLEAN.include nbt.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}"
+
+        nbt.sources.each {|f|
+          file f.ext('o') => c_file(f) do
+            sh "#{CC} #{CFLAGS} -Iinclude #{nbt.cflags} -o #{f.ext('o')} -c #{f}"
           end
-        else
+        }
+
+        file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{LDFLAGS}"
+        end
+
+        desc 'Build nbt plugin'
+        task :build => "plugins/#{plugin.file('persistence.nbt')}"
+      end
+    end
+
+    namespace :mapgen do |mapgen|
+      task :build => ['classic:build', 'trivial:build']
+
+      namespace :classic do |classic|
+        classic.cflags  = '-Iplugins/survival/mapgen'
+        classic.ldflags = '-lm'
+
+        classic.sources = FileList['plugins/survival/mapgen/classic/main.c', 'plugins/survival/mapgen/noise/simplexnoise1234.c']
+
+        CLEAN.include classic.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
+
+        classic.sources.each {|f|
+          file f.ext('o') => c_file(f) do
+            sh "#{CC} #{CFLAGS} -Iinclude #{classic.cflags} -o #{f.ext('o')} -c #{f}"
+          end
+        }
+
+        file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.ldflags} #{LDFLAGS}"
+        end
+
+        desc 'Build classic mapgen'
+        task :build => "plugins/#{plugin.file('mapgen.classic')}"
+      end
+
+      namespace :trivial do |trivial|
+        trivial.sources = FileList['plugins/survival/mapgen/trivial/main.c']
+
+        CLEAN.include trivial.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('mapgen.trivial')}"
+
+        trivial.sources.each {|f|
           file f.ext('o') => c_file(f) do
             sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
           end
+        }
+
+        file "plugins/#{plugin.file('mapgen.trivial')}" => trivial.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS}"
         end
-      }
 
-      file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{LDFLAGS}"
+        desc 'Build trivial mapgen'
+        task :build => "plugins/#{plugin.file('mapgen.trivial')}"
       end
-
-      desc 'Build beta plugin'
-      task :build => ["plugins/#{plugin.file('protocol.beta')}"]
     end
-  end
 
-  namespace :persistence do |persistence|
-    task :build => ['nbt:build']
+    namespace :commands do |commands|
+      task :build => []#'admin:build']
 
-    namespace :nbt do |nbt|
-      nbt.headers = FileList['plugins/persistence/nbt/include/*.h']
-      nbt.sources = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
-        'plugins/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c', 'plugins/persistence/nbt/cNBT/{buffer}.c']
+      namespace :admin do |admin|
+        admin.sources = FileList['plugins/commands/admin/main.c']
 
-      CLEAN.include nbt.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}"
+        CLEAN.include admin.sources.ext('o')
+        CLOBBER.include "plugins/#{plugin.file('commands.admin')}"
 
-      nbt.sources.each {|f|
-        file f.ext('o') => c_file(f) do
-          sh "#{CC} #{CFLAGS} -Iinclude -Iplugins/persistence/nbt -o #{f.ext('o')} -c #{f}"
-        end
-      }
-
-      file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{LDFLAGS}"
-      end
-
-      desc 'Build nbt plugin'
-      task :build => ["plugins/#{plugin.file('persistence.nbt')}"]
-    end
-  end
-
-  namespace :mapgen do |mapgen|
-    task :build => ['classic:build', 'trivial:build']
-
-    namespace :classic do |classic|
-      classic.libraries = '-lm'
-      classic.sources   = FileList['plugins/mapgen/classic/main.c', 'plugins/mapgen/noise/simplexnoise1234.c']
-
-      CLEAN.include classic.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
-
-      classic.sources.each {|f|
-        if f.end_with?('main.c')
-          file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
-            sh "#{CC} #{CFLAGS} -Iinclude -Iplugins/survival/mapgen -o #{f.ext('o')} -c #{f}"
-          end
-        else
+        admin.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "#{CC} #{CFLAGS} -Iinclude -Iplugins/survival/mapgen -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
           end
+        }
+
+        file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
+          sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')}"
         end
 
-      }
-
-      file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.libraries} #{LDFLAGS}"
+        desc 'Build admin plugin'
+        task :build => "plugins/#{plugin.file('commands.admin')}"
       end
-
-      desc 'Build classic mapgen'
-      task :build => "plugins/#{plugin.file('mapgen.classic')}"
     end
 
-    namespace :trivial do |trivial|
-      trivial.sources = FileList['plugins/mapgen/trivial/main.c']
+    namespace :tests do |tests|
+      tests.cflags = '-Iplugins/survival/tests'
 
-      CLEAN.include trivial.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file('mapgen.trivial')}"
+      tests.sources = FileList['plugins/survival/tests/main.c', 'plugins/survival/tests/tinytest/tinytest.c']
 
-      trivial.sources.each {|f|
+      CLEAN.include tests.sources.ext('o')
+      CLOBBER.include "plugins/#{plugin.file('tests')}"
+
+      tests.sources.each {|f|
         file f.ext('o') => c_file(f) do
-          sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+          sh "#{CC} #{CFLAGS} -Iinclude #{tests.cflags} -o #{f.ext('o')} -c #{f}"
         end
       }
 
-      file "plugins/#{plugin.file('mapgen.trivial')}" => trivial.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS}"
+      file "plugins/#{plugin.file('tests')}" => tests.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{LDFLAGS}"
       end
 
-      desc 'Build trivial mapgen'
-      task :build => "plugins/#{plugin.file('mapgen.trivial')}"
+      desc 'Build tests plugin'
+      task :build => "plugins/#{plugin.file('tests')}"
     end
   end
-
-  namespace :commands do |commands|
-    task :build => ['admin:build']
-
-    namespace :admin do |admin|
-      admin.sources = FileList['plugins/commands/admin/main.c']
-
-      CLEAN.include admin.sources.ext('o')
-      CLOBBER.include "plugins/#{plugin.file('commands.admin')}"
-
-      admin.sources.each {|f|
-        file f.ext('o') => c_file(f) do
-          sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
-        end
-      }
-
-      file "plugins/#{plugin.file('commands.admin')}" => admin.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{admin.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('commands.admin')} -o plugins/#{plugin.file('commands.admin')}"
-      end
-
-      desc 'Build admin plugin'
-      task :build => "plugins/#{plugin.file('commands.admin')}"
-    end
-  end
-
-  namespace :tests do |tests|
-    tests.sources = FileList['plugins/tests/main.c', 'plugins/tests/tinytest/tinytest.c']
-
-    CLEAN.include tests.sources.ext('o')
-    CLOBBER.include "plugins/#{plugin.file('tests')}"
-
-    tests.sources.each {|f|
-      file f.ext('o') => c_file(f) do
-        sh "#{CC} #{CFLAGS} -Wno-extra -Iinclude -Iplugins/survival/tests -o #{f.ext('o')} -c #{f}"
-      end
-    }
-
-    file "plugins/#{plugin.file('tests')}" => tests.sources.ext('o') do
-      sh "#{CC} #{CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{LDFLAGS}"
-    end
-
-    desc 'Build tests plugin'
-    task :build => "plugins/#{plugin.file('tests')}"
-  end
-=end
 end
 
 namespace :scripting do |scripting|

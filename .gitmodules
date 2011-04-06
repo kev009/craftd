@@ -1,9 +1,9 @@
 [submodule "third-party/klib"]
 	path = third-party/klib
 	url = git://github.com/attractivechaos/klib.git
-[submodule "plugins/tests/tinytest"]
-	path = plugins/tests/tinytest
+[submodule "plugins/survival/tests/tinytest"]
+	path = plugins/survival/tests/tinytest
 	url = git://github.com/nmathewson/tinytest.git
-[submodule "plugins/persistence/nbt/cNBT"]
-	path = plugins/persistence/nbt/cNBT
+[submodule "plugins/survival/persistence/nbt/cNBT"]
+	path = plugins/survival/persistence/nbt/cNBT
 	url = git://github.com/FliPPeh/cNBT.git

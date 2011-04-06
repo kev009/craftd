@@ -28,7 +28,6 @@
 #undef CRAFTD_SERVER_IGNORE_EXTERN
 
 #include <craftd/common.h>
-#include <craftd/protocols.h>
 #include <signal.h>
 
 CDServer* CDMainServer = NULL;
@@ -366,14 +365,6 @@ CD_RunServer (CDServer* self)
     }
 
     CD_free(CD_SpawnWorkers(self->workers, self->config->cache.workers));
-
-    // Initialize protocol object
-    if (CD_CStringIsEqual(self->config->cache.game.protocol.name, "survival")) {
-        self->protocol = CD_CreateProtocol("survival", SV_PacketParsable, (CDProtocolPacketParse) SV_PacketFromBuffers);
-    }
-    else {
-        CD_abort("%s unknown protocol", self->config->cache.game.protocol.name);
-    }
 
     // Start the TimeLoop for timed events
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);

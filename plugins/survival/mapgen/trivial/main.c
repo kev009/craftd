@@ -26,14 +26,13 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <beta/minecraft.h>
-#include <beta/World.h>
+#include <craftd/protocols/survival.h>
 
 static
 bool
-cdtrivial_GenerateLevel (CDServer* server, CDWorld* world)
+cdtrivial_GenerateLevel (CDServer* server, SVWorld* world)
 {
-    world->spawnPosition = (MCBlockPosition) {
+    world->spawnPosition = (SVBlockPosition) {
         .x = 0,
         .y = 120,
         .z = 0
@@ -44,14 +43,14 @@ cdtrivial_GenerateLevel (CDServer* server, CDWorld* world)
 
 static
 bool
-cdtrivial_GenerateChunk (CDServer* server, int x, int z, MCChunk* data, const char* seed)
+cdtrivial_GenerateChunk (CDServer* server, int x, int z, SVChunk* data, const char* seed)
 {
     int lightValue = CD_Max(0x0F - ABS(x) - ABS(z), 0);
 
     // this should only put 1 layer of bedrock
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
-            data->blocks[(z * 128) + (x * 128 * 16)] = MCBedrock; // one layer bedrock
+            data->blocks[(z * 128) + (x * 128 * 16)] = SVBedrock; // one layer bedrock
             data->heightMap[x + (z * 16)] = 1; // max height is 1
 
             for (int y = 1; y < 128; y++) {

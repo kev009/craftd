@@ -83,7 +83,7 @@ SV_WorldSave (SVWorld* self)
 }
 
 void
-CD_DestroyWorld (SVWorld* self)
+SV_DestroyWorld (SVWorld* self)
 {
     assert(self);
 

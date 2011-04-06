@@ -26,8 +26,7 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <beta/minecraft.h>
-#include <beta/World.h>
+#include <craftd/protocols/survival.h>
 
 static struct {
     const char* seed;
@@ -37,13 +36,13 @@ static struct {
 
 static
 bool
-cdclassic_GenerateLevel (CDServer* server, CDWorld* world, const char* seed)
+cdclassic_GenerateLevel (CDServer* server, SVWorld* world, const char* seed)
 {
     if (seed == NULL) {
         seed = _config.seed;
     }
 
-    world->spawnPosition = (MCBlockPosition) {
+    world->spawnPosition = (SVBlockPosition) {
         .x = 0,
         .y = 120,
         .z = 0
@@ -54,7 +53,7 @@ cdclassic_GenerateLevel (CDServer* server, CDWorld* world, const char* seed)
 
 static
 bool
-cdclassic_GenerateChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* data, const char* seed)
+cdclassic_GenerateChunk (CDServer* server, SVWorld* world, int x, int z, SVChunk* data, const char* seed)
 {
     memset(data, 0, sizeof(*data));
 
@@ -63,7 +62,7 @@ cdclassic_GenerateChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk
     }
 
     cdclassic_GenerateHeightMap(data, x, z);
-    cdclassic_GenerateFilledChunk(data, x, z, MCStone);
+    cdclassic_GenerateFilledChunk(data, x, z, SVStone);
     cdclassic_DigCaves(data, x, z);
     cdclassic_ErodeLandscape(data, x, z);
     cdclassic_AddMinerals(data, x, z);

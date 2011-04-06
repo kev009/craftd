@@ -95,7 +95,7 @@ cdclassic_Multifractal3d (float x, float y, float z, float lacunarity, int octav
 
 static
 void
-cdclassic_GenerateHeightMap (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_GenerateHeightMap (SVChunk* chunk, int chunkX, int chunkZ)
 {
     // step 1: generate the height map
     for (int x = 0; x < 16; x++) {
@@ -110,12 +110,12 @@ cdclassic_GenerateHeightMap (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_GenerateFilledChunk (MCChunk* chunk, int chunkX, int chunkZ, MCBlockType blockType)
+cdclassic_GenerateFilledChunk (SVChunk* chunk, int chunkX, int chunkZ, SVBlockType blockType)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
             for (int y = 0; y < chunk->heightMap[x + (z * 16)] && y < 128; y++) {
-                // stone is the basis of MC worlds
+                // stone is the basis of SV worlds
                 chunk->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
             }
         }
@@ -124,7 +124,7 @@ cdclassic_GenerateFilledChunk (MCChunk* chunk, int chunkX, int chunkZ, MCBlockTy
 
 static
 void
-cdclassic_GenerateSkyLight (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_GenerateSkyLight (SVChunk* chunk, int chunkX, int chunkZ)
 {
     int lightValue = 0x0F;
 
@@ -144,7 +144,7 @@ cdclassic_GenerateSkyLight (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_DigCaves (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_DigCaves (SVChunk* chunk, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -157,10 +157,10 @@ cdclassic_DigCaves (MCChunk* chunk, int chunkX, int chunkZ)
 
                 if (result > 0.35) {
                     if (y < 16) {
-                        chunk->blocks[y + (z * 128) + (x * 128 * 16)] = MCLava;
+                        chunk->blocks[y + (z * 128) + (x * 128 * 16)] = SVLava;
                     }
                     else {
-                        chunk->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                        chunk->blocks[y + (z * 128) + (x * 128 * 16)] = SVAir;
                     }
                 }
             }
@@ -170,12 +170,12 @@ cdclassic_DigCaves (MCChunk* chunk, int chunkX, int chunkZ)
                     + (0.5 * snoise3(totalX / 24.0, y / 24.0, totalZ / 24.0))) / 1.5;
 
                 if (result > 0.45) {
-                    chunk->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                    chunk->blocks[y + (z * 128) + (x * 128 * 16)] = SVAir;
                 }
             }
 
             // update height map
-            for (int y = chunk->heightMap[x + (z * 16)]; y > 0 && chunk->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
+            for (int y = chunk->heightMap[x + (z * 16)]; y > 0 && chunk->blocks[y + (z * 128) + (x * 128 * 16)] == SVAir; y--) {
                 chunk->heightMap[x + (z * 16)] = y;
             }
         }
@@ -184,7 +184,7 @@ cdclassic_DigCaves (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_ErodeLandscape (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_ErodeLandscape (SVChunk* chunk, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -198,13 +198,13 @@ cdclassic_ErodeLandscape (MCChunk* chunk, int chunkX, int chunkZ)
 
                 if (result > 0.50) {
                     // cave
-                    chunk->blocks[y + (z * 128) + (x * 128 * 16)] = MCAir;
+                    chunk->blocks[y + (z * 128) + (x * 128 * 16)] = SVAir;
                 }
             }
 
             // update height map
             int y = chunk->heightMap[x + (z * 16)];
-            while (y > 0 && chunk->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
+            while (y > 0 && chunk->blocks[y + (z * 128) + (x * 128 * 16)] == SVAir) {
                 chunk->heightMap[x + (z * 16)] = y--;
             }
         }
@@ -213,7 +213,7 @@ cdclassic_ErodeLandscape (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_AddSediments (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_AddSediments (SVChunk* chunk, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
@@ -225,15 +225,15 @@ cdclassic_AddSediments (MCChunk* chunk, int chunkX, int chunkZ)
             if (y < 64) {
                 for (int i = 0; i < sedimentHeight; i++) {
                     // sand underwater
-                    chunk->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCSand;
+                    chunk->blocks[y + (z * 128) + (x * 128 * 16) + i] = SVSand;
                 }
             }
             else if (y >= 64 && sedimentHeight > 0) {
                 for (int i = 0; i < sedimentHeight - 1; i++, sedimentHeight--) {
-                    chunk->blocks[y + (z * 128) + (x * 128 * 16) + i] = MCDirt;
+                    chunk->blocks[y + (z * 128) + (x * 128 * 16) + i] = SVDirt;
                 }
 
-                chunk->blocks[y + (z * 128) + (x * 128 * 16) + sedimentHeight - 1] = MCGrass;
+                chunk->blocks[y + (z * 128) + (x * 128 * 16) + sedimentHeight - 1] = SVGrass;
             }
 
             chunk->heightMap[x + (z * 16)] += sedimentHeight;
@@ -243,13 +243,13 @@ cdclassic_AddSediments (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_FloodWithWater (MCChunk* chunk, int chunkX, int chunkZ, int8_t waterLevel)
+cdclassic_FloodWithWater (SVChunk* chunk, int chunkX, int chunkZ, int8_t waterLevel)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
             // step 4: flood with water at level 64
-            for (int y = waterLevel; chunk->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir; y--) {
-                chunk->blocks[y + (z * 128) + (x * 128 * 16)] = MCWater;
+            for (int y = waterLevel; chunk->blocks[y + (z * 128) + (x * 128 * 16)] == SVAir; y--) {
+                chunk->blocks[y + (z * 128) + (x * 128 * 16)] = SVWater;
             }
         }
     }
@@ -257,12 +257,12 @@ cdclassic_FloodWithWater (MCChunk* chunk, int chunkX, int chunkZ, int8_t waterLe
 
 static
 void
-cdclassic_BedrockGround (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_BedrockGround (SVChunk* chunk, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         for (int z = 0; z < 16; z++) {
-            chunk->blocks[0 + (z * 128) + (x*128*16)] = MCBedrock;
-            chunk->blocks[1 + (z * 128) + (x*128*16)] = MCBedrock;
+            chunk->blocks[0 + (z * 128) + (x*128*16)] = SVBedrock;
+            chunk->blocks[1 + (z * 128) + (x*128*16)] = SVBedrock;
             chunk->heightMap[x+(z * 16)]              = CD_Max(chunk->heightMap[x + (z * 16)], 2);
         }
     }
@@ -270,7 +270,7 @@ cdclassic_BedrockGround (MCChunk* chunk, int chunkX, int chunkZ)
 
 static
 void
-cdclassic_AddMineral (MCChunk* chunk, int x, int z, int y, float totalX, float totalZ, float totalY, MCBlockType blockType, float probability)
+cdclassic_AddMineral (SVChunk* chunk, int x, int z, int y, float totalX, float totalZ, float totalY, SVBlockType blockType, float probability)
 {
     if (snoise4(totalX, totalY, totalZ, blockType) + 1.0 <= (0.25 * probability)) {
         chunk->blocks[y + (z * 128) + (x * 128 * 16)] = blockType;
@@ -279,7 +279,7 @@ cdclassic_AddMineral (MCChunk* chunk, int x, int z, int y, float totalX, float t
 
 static
 void
-cdclassic_AddMinerals (MCChunk* chunk, int chunkX, int chunkZ)
+cdclassic_AddMinerals (SVChunk* chunk, int chunkX, int chunkZ)
 {
     for (int x = 0; x < 16; x++) {
         float totalX = ((((float) chunkX) * 16.0) + ((float) x)) * 0.075;
@@ -288,29 +288,29 @@ cdclassic_AddMinerals (MCChunk* chunk, int chunkX, int chunkZ)
             float totalZ = ((((float) chunkZ) * 16.0) + ((float) z)) * 0.075;
 
             for (int y = 2; y < chunk->heightMap[x + (z * 16)]; y++) {
-                if (chunk->blocks[y + (z * 128) + (x * 128 * 16)] == MCAir) {
+                if (chunk->blocks[y + (z * 128) + (x * 128 * 16)] == SVAir) {
                     continue;
                 }
 
                 float totalY = (((float) y)) * 0.075;
 
-                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCCoalOre, 1.3);
-                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCDirt, 2.5);
-                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCGravel, 2.5);
+                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVCoalOre, 1.3);
+                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVDirt, 2.5);
+                cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVGravel, 2.5);
 
                 // 5 blocks under the surface
                 if (y < chunk->heightMap[x + (z * 16)] - 5) {
-                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCIronOre, 1.15);
+                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVIronOre, 1.15);
                 }
 
                 if (y < 40) {
-                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCLapisLazuliOre, 0.80);
-                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCGoldOre, 0.85);
+                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVLapisLazuliOre, 0.80);
+                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVGoldOre, 0.85);
                 }
 
                 if (y < 20) {
-                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCDiamondOre, 0.80);
-                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, MCRedstoneOre, 1.2);
+                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVDiamondOre, 0.80);
+                    cdclassic_AddMineral(chunk, x, z, y, totalX, totalZ, totalY, SVRedstoneOre, 1.2);
                 }
             }
         }

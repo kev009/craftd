@@ -52,8 +52,7 @@
                     "day": 20,
                     "sunset": 20,
                     "night": 20
-                },
-
+                }
             },
 
             { "name": "survival.persistence.nbt",

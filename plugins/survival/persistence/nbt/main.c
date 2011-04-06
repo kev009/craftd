@@ -29,12 +29,10 @@
 #include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <beta/minecraft.h>
-#include <beta/World.h>
-#include <beta/Logger.h>
+#include <craftd/protocols/survival.h>
 
-#include <nbt/nbt.h>
-#include <nbt/itoa.h>
+#include "nbt.h"
+#include "itoa.h"
 
 static struct {
     const char* path;
@@ -80,7 +78,7 @@ cdnbt_ValidChunk (nbt_node* root)
 
 static
 CDString*
-cdnbt_ChunkPath (CDWorld* world, int x, int z)
+cdnbt_ChunkPath (SVWorld* world, int x, int z)
 {
     // Chunk directory and subdir location
     char directory1[8];
@@ -105,7 +103,7 @@ cdnbt_ChunkPath (CDWorld* world, int x, int z)
 
 static
 CDError
-cdnbt_GenerateChunk (CDWorld* world, int x, int z, MCChunk* chunk, const char* seed)
+cdnbt_GenerateChunk (SVWorld* world, int x, int z, SVChunk* chunk, const char* seed)
 {
     CDError   status;
     CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
@@ -127,7 +125,7 @@ cdnbt_GenerateChunk (CDWorld* world, int x, int z, MCChunk* chunk, const char* s
 
 static
 bool
-cdnbt_WorldCreate (CDServer* server, CDWorld* world)
+cdnbt_WorldCreate (CDServer* server, SVWorld* world)
 {
     int       error = CDNull;
     CDString* path  = CD_CreateStringFromFormat("%s/%s/level.dat", _config.path, CD_StringContent(world->name));
@@ -137,7 +135,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         goto error;
     }
 
-    world->spawnPosition = (MCBlockPosition) {
+    world->spawnPosition = (SVBlockPosition) {
         .x = nbt_find_by_path(root, ".Data.SpawnX")->payload.tag_int,
         .y = nbt_find_by_path(root, ".Data.SpawnY")->payload.tag_int,
         .z = nbt_find_by_path(root, ".Data.SpawnZ")->payload.tag_int
@@ -148,7 +146,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
         world->spawnPosition.y,
         world->spawnPosition.z);
 
-    CD_WorldSetTime(world, nbt_find_by_path(root, ".Data.Time")->payload.tag_long);
+    SV_WorldSetTime(world, nbt_find_by_path(root, ".Data.Time")->payload.tag_long);
 
     done: {
         if (root) {
@@ -184,7 +182,7 @@ cdnbt_WorldCreate (CDServer* server, CDWorld* world)
 
 static
 bool
-cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk, CDError* error)
+cdnbt_WorldGetChunk (CDServer* server, SVWorld* world, int x, int z, SVChunk* chunk, CDError* error)
 {
     CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
 
@@ -245,21 +243,21 @@ cdnbt_WorldGetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* ch
 
 static
 bool
-cdnbt_WorldSetChunk (CDServer* server, CDWorld* world, int x, int z, MCChunk* chunk)
+cdnbt_WorldSetChunk (CDServer* server, SVWorld* world, int x, int z, SVChunk* chunk)
 {
     return true;
 }
 
 static
 bool
-cdnbt_WorldSave (CDServer* server, CDWorld* world)
+cdnbt_WorldSave (CDServer* server, SVWorld* world)
 {
     return true;
 }
 
 static
 bool
-cdnbt_WorldDestroy (CDServer* server, CDWorld* world)
+cdnbt_WorldDestroy (CDServer* server, SVWorld* world)
 {
     return true;
 }
