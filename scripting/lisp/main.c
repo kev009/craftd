@@ -28,10 +28,6 @@
 
 #include <ecl/ecl.h>
 
-static struct {
-    const char* kernel;
-} _config;
-
 #include "helpers.c"
 
 bool

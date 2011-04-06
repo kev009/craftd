@@ -6,10 +6,10 @@
 ###
 
 ## Binaries and generated
-craftd
-craftd-proxy
+/craftd
+/craftd-proxy
 third-party/jansson/src/jansson_config.h
-craftd.conf.dist
+/craftd.conf.dist
 
 ## C
 # Compiled Object files
@@ -47,7 +47,7 @@ Makefile.in
 /config.log
 /config.status
 /config.sub
-*/include/config.h
+config.h
 
 # libtool
 build-aux/ltmain.sh
