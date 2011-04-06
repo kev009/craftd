@@ -38,9 +38,12 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/Workers.h
 
 # Modular protocol headers
-survivaldir = $(pkgincludedir)/protocols/
-survival_HEADERS = craftd/protocols/survival.h \
-		    craftd/protocols/survival/Buffer.h \
+protocoldir = $(pkgincludedir)/protocols
+protocol_HEADERS = craftd/protocols/survival.h
+
+# Survival protocol headers
+survivaldir = $(pkgincludedir)/protocols/survival
+survival_HEADERS =  craftd/protocols/survival/Buffer.h \
 		    craftd/protocols/survival/common.h \
 		    craftd/protocols/survival/Logger.h \
 		    craftd/protocols/survival/minecraft.h \
