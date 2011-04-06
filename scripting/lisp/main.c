@@ -68,7 +68,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
     cdlisp_eval("(setf *break-on-signals* 'error)");
-    cdlisp_eval("(require :asdf)");
+    cdlisp_eval("(require 'asdf)");
 
     J_DO {
         J_FOREACH(j_path, self->config, "paths") {
@@ -121,6 +121,16 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         cdlisp_eval(CD_StringContent(code));
 
         CD_DestroyString(code);
+    }
+
+    J_DO {
+        J_FOREACH(script, self->config, "scripts") {
+            CDString* code = CD_CreateStringFromFormat("(asdf:load-system \"%s\")", J_STRING_CAST(script));
+
+            cdlisp_eval(CD_StringContent(code));
+
+            CD_DestroyString(code);
+        }
     }
 
     return true;

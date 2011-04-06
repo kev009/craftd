@@ -17,4 +17,6 @@
   :components (
     (:file "string")
     (:file "dispatcher")
-    (:file "server")))
+    (:file "server")
+    (:file "client")
+    (:file "player")))

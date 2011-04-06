@@ -89,14 +89,14 @@
             { "name": "lisp",
                 "paths": [
                     "scripting/lisp/lib",
-                    "scripting/lisp/examples",
+                    "scripting/lisp/scripts",
                     "@libdir@/craftd/scripting/lisp",
                     "@libdir@/craftd/scripting/lisp/lib"
                 ],
 
                 "options": [],
 
-                "scripts": []
+                "scripts": ["joined"]
             }
         ]
     }
@@ -114,7 +114,7 @@
         "port": 25566
     },
 
-    "root": "@datadir@/craftd/htdocs/"
+    "root": "@datadir@/craftd/htdocs"
   }
 }
 

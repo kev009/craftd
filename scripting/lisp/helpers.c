@@ -38,6 +38,13 @@ cdlisp_str_intern (const char* string)
 }
 
 static inline
+bool
+cdlisp_to_bool (cl_object self)
+{
+    return self != Cnil;
+}
+
+static inline
 cl_object
 cdlisp_eval (const char* code)
 {
