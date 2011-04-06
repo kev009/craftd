@@ -8,7 +8,6 @@
 ## Binaries and generated
 /craftd
 /src/craftd
-third-party/jansson/src/jansson_config.h
 craftd.conf.dist
 
 ## C
@@ -46,6 +45,7 @@ Makefile.in
 /config.status
 /config.sub
 */include/config.h
+/include/craftd/config.h.in
 stamp-h1
 Makefile
 

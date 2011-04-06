@@ -22,8 +22,26 @@ AC_SUBST(LIBTOOL_DEPS)
 LT_INIT([dlopen])
 
 AC_CONFIG_HEADERS([include/craftd/config.h])
-AC_CONFIG_FILES([Makefile src/Makefile include/Makefile \
-                 htdocs/Makefile])
+AC_CONFIG_FILES([
+                 Makefile
+                 src/Makefile 
+                 include/Makefile
+                 htdocs/Makefile
+                 
+                 plugins/Makefile
+                 
+                 plugins/commands/Makefile
+
+                 plugins/mapgen/Makefile
+
+                 plugins/persistence/Makefile
+
+                 plugins/protocol/Makefile
+
+                 plugins/tests/Makefile
+                 
+                 ])
+
 AC_CONFIG_SRCDIR([src/craftd.c])
 
 # Checks for libraries.
