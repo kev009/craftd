@@ -116,18 +116,12 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     }
 
     DO {
-        CDString* code = CD_CreateStringFromFormat("(progn  \
-            (in-package :craftd)                            \
-            (defparameter *server* %d) (export '*server*)   \
-            (in-package :cl-user))",
-        (CDPointer) self->server);
+        CDString* code = CD_CreateStringFromFormat("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
 
         cdlisp_eval(CD_StringContent(code));
 
         CD_DestroyString(code);
     }
-
-    cdlisp_eval("(format t \"~d~%\" craftd:*server*)");
 
     return true;
 }

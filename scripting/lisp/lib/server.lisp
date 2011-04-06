@@ -8,16 +8,16 @@
 (uffi:def-struct logger)
 
 (uffi:def-struct server
-    (timeloop (:pointer))
-    (config (:pointer)))
+    (timeloop (:pointer-void))
+    (config (:pointer-void)))
 
-(uffi:def-function ("CD_ServerToString" c-server-name) ((self :pointer))
+(uffi:def-function ("CD_ServerToString" c-server-name) ((self :pointer-void))
                    :returning :cstring)
 
-(uffi:def-function ("CD_ServerKick" c-server-kick) ((self :pointer) (client :pointer) (reason :pointer)))
+(uffi:def-function ("CD_ServerKick" c-server-kick) ((self :pointer-void) (client :pointer-void) (reason :pointer-void)))
 
 (defun server-name ()
-  (c-server-name *server*))
+  (uffi:convert-from-cstring (c-server-name *server*)))
 
 (defun kick (client reason)
   (let ((reason (create-string reason)))
