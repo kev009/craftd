@@ -23,45 +23,50 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static inline
-cl_object
-cdlisp_str (const char* string)
-{
-    return make_simple_base_string((char*) string);
-}
+#include <craftd/protocols/survival/Region.h>
 
-static inline
-cl_object
-cdlisp_str_intern (const char* string)
-{
-    return cl_intern(1, cdlisp_str(string));
-}
-
-static inline
 bool
-cdlisp_to_bool (cl_object self)
+SV_IsCoordInRadius (SVChunkPosition* coord, SVChunkPosition* centerCoord, int radius)
 {
-    return self != Cnil;
+    return (coord->x >= centerCoord->x - radius &&
+            coord->x <= centerCoord->x + radius &&
+            coord->z >= centerCoord->z - radius &&
+            coord->z <= centerCoord->z + radius);
 }
 
-static inline
-cl_object
-cdlisp_eval (const char* code)
+bool
+SV_IsDistanceGreater (SVPrecisePosition a, SVPrecisePosition b, int maxDistance)
 {
-    cl_object result = Cnil;
-
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
-    } CL_CATCH_ALL_IF_CAUGHT {
-        errno = EILSEQ;
-    } CL_CATCH_ALL_END;
-
-    return result;
+    return (abs( a.x - b.x ) > maxDistance ||
+            abs( a.y - b.y ) > maxDistance ||
+            abs( a.z - b.z ) > maxDistance);
 }
 
-static inline
+SVRelativePosition
+SV_RelativeMove (SVPrecisePosition* a, SVPrecisePosition* b)
+{
+    SVAbsolutePosition absoluteA = SV_PrecisePositionToAbsolutePosition(*a);
+    SVAbsolutePosition absoluteB = SV_PrecisePositionToAbsolutePosition(*b);
+
+    return (SVRelativePosition) {
+        .x = absoluteA.x - absoluteB.x,
+        .y = absoluteA.y - absoluteB.y,
+        .z = absoluteA.z - absoluteB.z
+    };
+}
+
 void
-cdlisp_in_package (const char* name)
+SV_RegionBroadcastPacket (SVPlayer* player, SVPacket* packet)
 {
-    si_select_package(cdlisp_str(name));
+    CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");
+
+    CD_LIST_FOREACH(seenPlayers, it) {
+        if (player == (SVPlayer*) CD_ListIteratorValue(it)) {
+            continue;
+        }
+
+        SV_PlayerSendPacket((SVPlayer*) CD_ListIteratorValue(it), packet);
+    }
 }
+
+

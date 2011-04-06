@@ -23,45 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static inline
-cl_object
-cdlisp_str (const char* string)
-{
-    return make_simple_base_string((char*) string);
-}
+#ifndef CRAFTD_PROTOCOLS_H
+#define CRAFTD_PROTOCOLS_H
 
-static inline
-cl_object
-cdlisp_str_intern (const char* string)
-{
-    return cl_intern(1, cdlisp_str(string));
-}
+#include <craftd/protocols/survival.h>
 
-static inline
-bool
-cdlisp_to_bool (cl_object self)
-{
-    return self != Cnil;
-}
-
-static inline
-cl_object
-cdlisp_eval (const char* code)
-{
-    cl_object result = Cnil;
-
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
-    } CL_CATCH_ALL_IF_CAUGHT {
-        errno = EILSEQ;
-    } CL_CATCH_ALL_END;
-
-    return result;
-}
-
-static inline
-void
-cdlisp_in_package (const char* name)
-{
-    si_select_package(cdlisp_str(name));
-}
+#endif

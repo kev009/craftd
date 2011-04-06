@@ -23,45 +23,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static inline
-cl_object
-cdlisp_str (const char* string)
-{
-    return make_simple_base_string((char*) string);
-}
+#ifndef CRAFTD_PROTOCOL_H
+#define CRAFTD_PROTOCOL_H
 
-static inline
-cl_object
-cdlisp_str_intern (const char* string)
-{
-    return cl_intern(1, cdlisp_str(string));
-}
+#include <craftd/common.h>
 
-static inline
-bool
-cdlisp_to_bool (cl_object self)
-{
-    return self != Cnil;
-}
+typedef bool  (*CDProtocolPacketParsable) (CDBuffers* buffers);
+typedef void* (*CDProtocolPacketParse)    (CDBuffers* buffers);
 
-static inline
-cl_object
-cdlisp_eval (const char* code)
-{
-    cl_object result = Cnil;
+typedef struct _CDProtocol {
+    CDString* name;
 
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
-    } CL_CATCH_ALL_IF_CAUGHT {
-        errno = EILSEQ;
-    } CL_CATCH_ALL_END;
+    CDProtocolPacketParsable parsable;
+    CDProtocolPacketParse    parse;
+} CDProtocol;
 
-    return result;
-}
+CDProtocol* CD_CreateProtocol (const char* name, CDProtocolPacketParsable parsable, CDProtocolPacketParse parse);
 
-static inline
-void
-cdlisp_in_package (const char* name)
-{
-    si_select_package(cdlisp_str(name));
-}
+void CD_DestroyProtocol (CDProtocol* self);
+
+#endif

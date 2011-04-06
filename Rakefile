@@ -2,9 +2,7 @@ require 'mkmf'
 require 'rake'
 require 'rake/clean'
 
-FileList['build/rake/**.rb'].each {|f|
-  load f
-}
+FileList['build/rake/**.rb'].each do |f| load f end
 
 VERSION = '0.1a'
 
@@ -29,29 +27,12 @@ else
 end
 
 # Stuff building
-task :default => ['craftd:build', 'craftd:plugins:build']
+task :default => ['craftd:build', 'plugins:build']
 
-task :all => ['craftd:build', 'craftd:plugins:build', 'craftd:scripting:build']
+task :all => ['craftd:build', 'plugins:build', 'scripting:build']
 
 # Stuff installation
 task :install => ['craftd:install']
-
-namespace :dependencies do
-  namespace :libevent do |libevent|
-    task :fetch do
-
-    end
-
-    desc 'Build libevent 2'
-    task :build => :fetch do
-
-    end
-  end
-
-  namespace :jansson do |jansson|
-
-  end
-end
 
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
@@ -59,7 +40,7 @@ namespace :craftd do |craftd|
   craftd.libraries = '-lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl'
 
   CLEAN.include craftd.sources.ext('o')
-  CLOBBER.include 'craftd', 'include/config.h', 'craftd.conf.dist'
+  CLOBBER.include 'craftd', 'include/craftd/config.h', 'craftd.conf.dist'
 
   craftd.sources.each {|f|
     file f.ext('o') => c_file(f) do
@@ -68,9 +49,9 @@ namespace :craftd do |craftd|
   }
 
   desc 'Check for craftd requirements'
-  task :requirements => 'include/config.h'
+  task :requirements => 'include/craftd/config.h'
   
-  file 'include/config.h' do
+  file 'include/craftd/config.h' do
     have_library 'ltdl', 'lt_dlopen' or fail 'libtool not found'
 
     # check thread stuff
@@ -117,7 +98,7 @@ namespace :craftd do |craftd|
        "typedef void* POINTER;\n" + c
     end
 
-    create_config 'include/config.h'
+    create_config 'include/craftd/config.h'
   end
 
   file 'craftd' => craftd.sources.ext('o') do
@@ -140,71 +121,59 @@ namespace :craftd do |craftd|
   task :build => [:requirements, 'craftd', 'craftd.conf.dist']
 
   task :install => :build
+end
 
-  namespace :plugins do |plugin|
-    desc 'Build all plugins'
-    task :build => ['protocol:build', 'persistence:build', 'mapgen:build',
-      'commands:build', 'tests:build']
+namespace :plugins do |plugin|
+  desc 'Build all plugins'
+  task :build => ['survival:build']
 
-    plugin.names = ['protocol/beta', 'persistence/nbt', 'mapgen']
-
+  namespace :survival do |plugin|
     class << plugin
       def file (name)
-        "#{name}.#{CONFIG['DLEXT']}"
-      end
-
-      def includes
-        self.names.map {|p|
-          "-Iplugins/#{p}/include"
-        }.join(' ')
+        "survival.#{name}.#{CONFIG['DLEXT']}"
       end
     end
 
-    namespace :protocol do |protocol|
-      task :build => ['beta:build']
+    task :build => ['base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
 
-      namespace :beta do |beta|
-        beta.headers   = FileList['plugins/protocol/beta/include/*.h']
-        beta.sources   = FileList['plugins/protocol/beta/**/*.c'].exclude('callbacks.c')
+    namespace :base do |base|
+      base.sources = FileList['plugins/survival/base/main.c']
 
-        CLEAN.include beta.sources.ext('o')
-        CLOBBER.include "plugins/#{plugin.file('protocol.beta')}"
+      CLEAN.include base.sources.ext('o')
+      CLOBBER.include "plugins/#{plugin.file('base')}"
 
-        beta.sources.each {|f|
-          if f.end_with?('main.c')
-            file f.ext('o') => [f, "#{File.dirname(f)}/callbacks.c"] do
-              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
-            end
-          else
-            file f.ext('o') => c_file(f) do
-              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
-            end
-          end
-        }
-
-        file "plugins/#{plugin.file('protocol.beta')}" => beta.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{beta.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('protocol.beta')} -o plugins/#{plugin.file('protocol.beta')} #{LDFLAGS}"
+      base.sources.each {|f|
+        file f.ext('o') => c_file(f) do
+          sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
         end
+      }
 
-        desc 'Build beta plugin'
-        task :build => ["plugins/#{plugin.file('protocol.beta')}"]
+      file "plugins/#{plugin.file('base')}" => base.sources.ext('o') do
+        sh "#{CC} #{CFLAGS} #{base.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('base')} -o plugins/#{plugin.file('base')} #{LDFLAGS}"
       end
+
+      desc 'Build SMP base plugin'
+      task :build => "plugins/#{plugin.file('base')}"
     end
 
     namespace :persistence do |persistence|
       task :build => ['nbt:build']
 
       namespace :nbt do |nbt|
-        nbt.headers = FileList['plugins/persistence/nbt/include/*.h']
-        nbt.sources = FileList['plugins/persistence/nbt/main.c', 'plugins/persistence/nbt/src/*.c',
-          'plugins/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c', 'plugins/persistence/nbt/cNBT/{buffer}.c']
+        nbt.cflags = '-Iplugins/survival/persistence/nbt -Iplugins/survival/persistence/nbt/include'
+
+        nbt.sources = FileList[
+          'plugins/survival/persistence/nbt/main.c',
+          'plugins/survival/persistence/nbt/src/*.c',
+          'plugins/survival/persistence/nbt/cNBT/nbt_{loading,parsing,treeops,util}.c',
+          'plugins/survival/persistence/nbt/cNBT/{buffer}.c']
 
         CLEAN.include nbt.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('persistence.nbt')}"
 
         nbt.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/persistence/nbt -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude #{nbt.cflags} -o #{f.ext('o')} -c #{f}"
           end
         }
 
@@ -213,7 +182,7 @@ namespace :craftd do |craftd|
         end
 
         desc 'Build nbt plugin'
-        task :build => ["plugins/#{plugin.file('persistence.nbt')}"]
+        task :build => "plugins/#{plugin.file('persistence.nbt')}"
       end
     end
 
@@ -221,27 +190,22 @@ namespace :craftd do |craftd|
       task :build => ['classic:build', 'trivial:build']
 
       namespace :classic do |classic|
-        classic.libraries = '-lm'
-        classic.sources   = FileList['plugins/mapgen/classic/main.c', 'plugins/mapgen/noise/simplexnoise1234.c']
+        classic.cflags  = '-Iplugins/survival/mapgen'
+        classic.ldflags = '-lm'
+
+        classic.sources = FileList['plugins/survival/mapgen/classic/main.c', 'plugins/survival/mapgen/noise/simplexnoise1234.c']
 
         CLEAN.include classic.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
 
         classic.sources.each {|f|
-          if f.end_with?('main.c')
-            file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
-              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
-            end
-          else
-            file f.ext('o') => c_file(f) do
-              sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -Iplugins/mapgen -o #{f.ext('o')} -c #{f}"
-            end
+          file f.ext('o') => c_file(f) do
+            sh "#{CC} #{CFLAGS} -Iinclude #{classic.cflags} -o #{f.ext('o')} -c #{f}"
           end
-
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.libraries} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.ldflags} #{LDFLAGS}"
         end
 
         desc 'Build classic mapgen'
@@ -249,14 +213,14 @@ namespace :craftd do |craftd|
       end
 
       namespace :trivial do |trivial|
-        trivial.sources = FileList['plugins/mapgen/trivial/main.c']
+        trivial.sources = FileList['plugins/survival/mapgen/trivial/main.c']
 
         CLEAN.include trivial.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('mapgen.trivial')}"
 
         trivial.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
           end
         }
 
@@ -270,7 +234,7 @@ namespace :craftd do |craftd|
     end
 
     namespace :commands do |commands|
-      task :build => ['admin:build']
+      task :build => []#'admin:build']
 
       namespace :admin do |admin|
         admin.sources = FileList['plugins/commands/admin/main.c']
@@ -280,7 +244,7 @@ namespace :craftd do |craftd|
 
         admin.sources.each {|f|
           file f.ext('o') => c_file(f) do
-            sh "#{CC} #{CFLAGS} -Iinclude #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+            sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
           end
         }
 
@@ -294,14 +258,16 @@ namespace :craftd do |craftd|
     end
 
     namespace :tests do |tests|
-      tests.sources = FileList['plugins/tests/main.c', 'plugins/tests/tinytest/tinytest.c']
+      tests.cflags = '-Iplugins/survival/tests'
+
+      tests.sources = FileList['plugins/survival/tests/main.c', 'plugins/survival/tests/tinytest/tinytest.c']
 
       CLEAN.include tests.sources.ext('o')
       CLOBBER.include "plugins/#{plugin.file('tests')}"
 
       tests.sources.each {|f|
         file f.ext('o') => c_file(f) do
-          sh "#{CC} #{CFLAGS} -Wno-extra -Iinclude -Iplugins/tests #{plugin.includes} -o #{f.ext('o')} -c #{f}"
+          sh "#{CC} #{CFLAGS} -Iinclude #{tests.cflags} -o #{f.ext('o')} -c #{f}"
         end
       }
 
@@ -313,61 +279,45 @@ namespace :craftd do |craftd|
       task :build => "plugins/#{plugin.file('tests')}"
     end
   end
+end
 
-  namespace :scripting do |scripting|
-    desc 'Build all scripting support'
-    task :build => ['craftd:build', 'lisp:build']
+namespace :scripting do |scripting|
+  desc 'Build all scripting support'
+  task :build => ['craftd:build', 'lisp:build']
 
-    scripting.plugins = ['protocol/beta', 'persistence/nbt', 'mapgen']
-
-    class << scripting
-      def file (name)
-        "#{name}.#{CONFIG['DLEXT']}"
-      end
-
-      def includes
-        self.plugins.map {|p|
-          "-Iplugins/#{p}/include"
-        }.join(' ')
-      end
-    end
-
-    namespace :lisp do |lisp|
-      ENV['ECL'] ||= 'ecl'
-
-      lisp.sources = FileList['scripting/lisp/main.c']
-
-      CLEAN.include lisp.sources.ext('o')
-      CLOBBER.include "scripting/#{scripting.file('lisp')}", 'scripting/lisp/include/config.h'
-
-      lisp.sources.each {|f|
-        if f.end_with?('main.c')
-          file f.ext('o') => [f, "#{File.dirname(f)}/helpers.c"] do
-            sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
-          end
-        else
-          file f.ext('o') => c_file(f) do
-            sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude #{scripting.includes} -o #{f.ext('o')} -c #{f}"
-          end
-        end
-      }
-
-      file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags)"
-      end
-
-      desc 'Check for LISP requirements'
-      task :requirements => 'scripting/lisp/include/config.h'
-
-      file 'scripting/lisp/include/config.h' do
-        have_header 'ecl/ecl.h' or fail 'ecl-dev not found'
-        have_library 'ecl' or fail 'ecl not found'
-
-        create_config 'scripting/lisp/include/config.h'
-      end
-
-      desc 'Build common lisp scripting'
-      task :build => [:requirements, "scripting/#{scripting.file('lisp')}"]
+  class << scripting
+    def file (name)
+      "#{name}.#{CONFIG['DLEXT']}"
     end
   end
+
+  namespace :lisp do |lisp|
+    lisp.sources = FileList['scripting/lisp/main.c']
+
+    CLEAN.include lisp.sources.ext('o')
+    CLOBBER.include "scripting/#{scripting.file('lisp')}", 'scripting/lisp/include/config.h'
+
+    lisp.sources.each {|f|
+      file f.ext('o') => c_file(f) do
+        sh "#{CC} #{CFLAGS} $(ecl-config --cflags) -Iinclude -o #{f.ext('o')} -c #{f}"
+      end
+    }
+
+    file "scripting/#{scripting.file('lisp')}" => lisp.sources.ext('o') do
+      sh "#{CC} #{CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags)"
+    end
+
+    desc 'Check for LISP requirements'
+    task :requirements => 'scripting/lisp/include/config.h'
+
+    file 'scripting/lisp/include/config.h' do
+      find_executable('ecl-config') or fail 'ecl-config not found'
+
+      create_config 'scripting/lisp/include/config.h'
+    end
+
+    desc 'Build common lisp scripting'
+    task :build => [:requirements, "scripting/#{scripting.file('lisp')}"]
+  end
 end
+

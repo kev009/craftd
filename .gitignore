@@ -8,7 +8,7 @@
 ## Binaries and generated
 /craftd
 /src/craftd
-craftd.conf.dist
+/craftd.conf.dist
 
 ## C
 # Compiled Object files
@@ -44,7 +44,7 @@ Makefile.in
 /config.log
 /config.status
 /config.sub
-*/include/config.h
+config.h
 /include/craftd/config.h.in
 stamp-h1
 Makefile

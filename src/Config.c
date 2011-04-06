@@ -46,7 +46,6 @@ CD_ParseConfig (const char* path)
 
     self->cache.connection.port         = 25565;
     self->cache.connection.backlog      = 16;
-    self->cache.connection.simultaneous = 3;
 
     self->cache.connection.bind.ipv4.sin_family      = AF_INET;
     self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
@@ -66,19 +65,25 @@ CD_ParseConfig (const char* path)
 
     self->cache.workers = 2;
 
-    self->cache.game.players.max = 0;
+    self->cache.game.protocol.standard    = true;
+    self->cache.game.clients.max          = 0;
+    self->cache.game.clients.simultaneous = 3;
 
     J_DO {
         J_IN(server, self->data, "server") {
-            J_BOOL(server, "daemonize",   self->cache.daemonize);
-            J_INT(server,  "workers",     self->cache.workers);
+            J_BOOL(server, "daemonize", self->cache.daemonize);
+            J_INT(server,  "workers",   self->cache.workers);
 
             J_IN(game, server, "game") {
-                J_IN(players, game, "players") {
-                    J_INT(players, "max", self->cache.game.players.max);
+                J_IN(clients, game, "clients") {
+                    J_INT(clients, "max",          self->cache.game.clients.max);
+                    J_INT(clients, "simultaneous", self->cache.game.clients.simultaneous);
                 }
 
-                J_BOOL(game, "standard", self->cache.game.standard);
+                J_IN(protocol, game, "protocol") {
+                    J_BOOL(game, "standard", self->cache.game.protocol.standard);
+                    J_STRING(game, "name",   self->cache.game.protocol.name);
+                }
             }
 
             J_IN(files, server, "files") {
@@ -86,9 +91,8 @@ CD_ParseConfig (const char* path)
             }
 
             J_IN(connection, server, "connection") {
-                J_INT(connection, "port",         self->cache.connection.port);
-                J_INT(connection, "backlog",      self->cache.connection.backlog);
-                J_INT(connection, "simultaneous", self->cache.connection.simultaneous);
+                J_INT(connection, "port",    self->cache.connection.port);
+                J_INT(connection, "backlog", self->cache.connection.backlog);
 
                 self->cache.connection.bind.ipv4.sin_port  = htons(self->cache.connection.port);
                 self->cache.connection.bind.ipv6.sin6_port = htons(self->cache.connection.port);

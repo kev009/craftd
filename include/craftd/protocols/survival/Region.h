@@ -23,45 +23,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static inline
-cl_object
-cdlisp_str (const char* string)
-{
-    return make_simple_base_string((char*) string);
-}
+#ifndef CRAFTD_BETA_REGION_H
+#define CRAFTD_BETA_REGION_H
 
-static inline
-cl_object
-cdlisp_str_intern (const char* string)
-{
-    return cl_intern(1, cdlisp_str(string));
-}
+#include <craftd/protocols/survival/minecraft.h>
+#include <craftd/protocols/survival/Player.h>
 
-static inline
-bool
-cdlisp_to_bool (cl_object self)
-{
-    return self != Cnil;
-}
+bool SV_IsCoordInRadius (SVChunkPosition* coord, SVChunkPosition* centerCoord, int radius);
 
-static inline
-cl_object
-cdlisp_eval (const char* code)
-{
-    cl_object result = Cnil;
+bool SV_IsDistanceGreater (SVPrecisePosition a, SVPrecisePosition b, int maxDistance);
 
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
-    } CL_CATCH_ALL_IF_CAUGHT {
-        errno = EILSEQ;
-    } CL_CATCH_ALL_END;
+SVRelativePosition SV_RelativeMove (SVPrecisePosition* a, SVPrecisePosition* b);
 
-    return result;
-}
+void SV_RegionBroadcastPacket (SVPlayer* player, SVPacket* packet);
 
-static inline
-void
-cdlisp_in_package (const char* name)
-{
-    si_select_package(cdlisp_str(name));
-}
+
+#endif

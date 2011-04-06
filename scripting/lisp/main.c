@@ -28,10 +28,6 @@
 
 #include <ecl/ecl.h>
 
-static struct {
-    const char* kernel;
-} _config;
-
 #include "helpers.c"
 
 bool
@@ -68,7 +64,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
     cdlisp_eval("(setf *break-on-signals* 'error)");
-    cdlisp_eval("(require :asdf)");
+    cdlisp_eval("(require 'asdf)");
 
     J_DO {
         J_FOREACH(j_path, self->config, "paths") {
@@ -116,18 +112,22 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     }
 
     DO {
-        CDString* code = CD_CreateStringFromFormat("(progn  \
-            (in-package :craftd)                            \
-            (defparameter *server* %d) (export '*server*)   \
-            (in-package :cl-user))",
-        (CDPointer) self->server);
+        CDString* code = CD_CreateStringFromFormat("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
 
         cdlisp_eval(CD_StringContent(code));
 
         CD_DestroyString(code);
     }
 
-    cdlisp_eval("(format t \"~d~%\" craftd:*server*)");
+    J_DO {
+        J_FOREACH(script, self->config, "scripts") {
+            CDString* code = CD_CreateStringFromFormat("(asdf:load-system \"%s\")", J_STRING_CAST(script));
+
+            cdlisp_eval(CD_StringContent(code));
+
+            CD_DestroyString(code);
+        }
+    }
 
     return true;
 }

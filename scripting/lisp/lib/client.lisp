@@ -3,10 +3,10 @@
 (export '(client-ip))
 
 (uffi:def-struct client
-    (server  :pointer)
+    (server  (* :void))
     (ip      (:array :char 128))
     (socket  :int)
-    (buffers :pointer)
+    (buffers (* :void))
     (status  :int)
     (jobs    :char))
 

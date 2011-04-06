@@ -23,45 +23,65 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static inline
-cl_object
-cdlisp_str (const char* string)
-{
-    return make_simple_base_string((char*) string);
-}
+#ifndef CRAFTD_BETA_WORLD_H
+#define CRAFTD_BETA_WORLD_H
 
-static inline
-cl_object
-cdlisp_str_intern (const char* string)
-{
-    return cl_intern(1, cdlisp_str(string));
-}
+#include <craftd/Server.h>
 
-static inline
-bool
-cdlisp_to_bool (cl_object self)
-{
-    return self != Cnil;
-}
+#include <craftd/protocols/survival/Player.h>
 
-static inline
-cl_object
-cdlisp_eval (const char* code)
-{
-    cl_object result = Cnil;
+typedef enum _SVWorldDimension {
+    SVWorldHell   = -1,
+    SVWorldNormal =  0
+} SVWorldDimension;
 
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
-    } CL_CATCH_ALL_IF_CAUGHT {
-        errno = EILSEQ;
-    } CL_CATCH_ALL_END;
+typedef struct _SVWorld {
+    CDServer* server;
 
-    return result;
-}
+    CDRawConfig config;
 
-static inline
-void
-cdlisp_in_package (const char* name)
-{
-    si_select_package(cdlisp_str(name));
-}
+    CDString*        name;
+    SVWorldDimension dimension;
+    uint16_t         time;
+
+    struct {
+        pthread_spinlock_t time;
+    } lock;
+
+    CDHash* players;
+    CDMap*  entities;
+
+    SVBlockPosition spawnPosition;
+    CDSet*          chunks;
+
+    CD_DEFINE_DYNAMIC;
+    CD_DEFINE_ERROR;
+} SVWorld;
+
+SVWorld* SV_CreateWorld (CDServer* server, const char* name);
+
+bool SV_WorldSave (SVWorld* self);
+
+void SV_DestroyWorld (SVWorld* self);
+
+void SV_WorldLoad (SVWorld* self);
+
+SVEntityId SV_WorldGenerateEntityId (SVWorld* self);
+
+void SV_WorldAddPlayer (SVWorld* self, SVPlayer* player);
+
+void SV_WorldBroadcastBuffer (SVWorld* self, CDBuffer* buffer);
+
+void SV_WorldBroadcastPacket (SVWorld* self, SVPacket* packet);
+
+void SV_WorldBroadcastMessage (SVWorld* self, CDString* message);
+
+uint16_t SV_WorldGetTime (SVWorld* self);
+
+uint16_t SV_WorldSetTime (SVWorld* self, uint16_t time);
+
+SVChunk* SV_WorldGetChunk (SVWorld* self, int x, int z);
+
+void SV_WorldSetChunk (SVWorld* self, SVChunk* chunk);
+
+#endif

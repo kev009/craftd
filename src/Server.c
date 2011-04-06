@@ -46,15 +46,14 @@ CD_CreateServer (const char* path)
 
     self->name = NULL;
 
-    self->packet.parsable = NULL;
-    self->packet.parse    = NULL;
-
     self->logger = CDConsoleLogger;
     self->config = CD_ParseConfig(path);
 
     if (!self->config) {
         return NULL;
     }
+
+    self->protocol = NULL;
 
     self->timeloop         = CD_CreateTimeLoop(self);
     self->workers          = CD_CreateWorkers(self);
@@ -158,6 +157,10 @@ cd_ReadCallback (struct bufferevent* event, CDClient* client)
 
     CDServer* self = client->server;
 
+    if (!self->protocol) {
+      return;
+    }
+
     pthread_rwlock_wrlock(&client->lock.status);
 
     SDEBUG(self, "read data from %s, %d byte/s available", client->ip, CD_BufferLength(client->buffers->input));
@@ -165,8 +168,8 @@ cd_ReadCallback (struct bufferevent* event, CDClient* client)
     if (client->status == CDClientIdle) {
         void* packet;
 
-        if (!self->packet.parsable || self->packet.parsable(client->buffers)) {
-            if (self->packet.parse && (packet = self->packet.parse(client->buffers))) {
+        if (self->protocol->parsable(client->buffers)) {
+            if ((packet = self->protocol->parse(client->buffers))) {
                 CD_BufferReadIn(client->buffers, CDNull, CDNull);
 
                 client->status = CDClientProcess;
@@ -270,8 +273,8 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
         CD_DestroyClient(client);
     }
 
-    if (self->config->cache.game.players.max > 0) {
-        if (CD_ListLength(self->clients) >= self->config->cache.game.players.max) {
+    if (self->config->cache.game.clients.max > 0) {
+        if (CD_ListLength(self->clients) >= self->config->cache.game.clients.max) {
             SERR(self, "too many clients");
             close(fd);
             CD_DestroyClient(client);
@@ -279,7 +282,7 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
         }
     }
 
-    if (self->config->cache.connection.simultaneous > 0) {
+    if (self->config->cache.game.clients.simultaneous > 0) {
         size_t same = 0;
 
         CD_LIST_FOREACH(self->clients, it) {
@@ -289,12 +292,12 @@ cd_Accept (evutil_socket_t listener, short event, CDServer* self)
                 same++;
             }
 
-            if (same >= self->config->cache.connection.simultaneous) {
+            if (same >= self->config->cache.game.clients.simultaneous) {
                 CD_LIST_BREAK(self->clients);
             }
         }
 
-        if (same >= self->config->cache.connection.simultaneous) {
+        if (same >= self->config->cache.game.clients.simultaneous) {
             SERR(self, "too many connections from %s", client->ip);
             close(fd);
             CD_DestroyClient(client);
@@ -355,10 +358,10 @@ CD_RunServer (CDServer* self)
     }
 
     SLOG(self, LOG_INFO, "server listening on port %d (%s gameplay)", self->config->cache.connection.port,
-        self->config->cache.game.standard ? "standard" : "custom");
+        self->config->cache.game.protocol.standard ? "standard" : "custom");
 
-    if (self->config->cache.game.players.max > 0) {
-        SLOG(self, LOG_INFO, "server can host max %d clients", self->config->cache.game.players.max);
+    if (self->config->cache.game.clients.max > 0) {
+        SLOG(self, LOG_INFO, "server can host max %d clients", self->config->cache.game.clients.max);
     }
 
     CD_free(CD_SpawnWorkers(self->workers, self->config->cache.workers));

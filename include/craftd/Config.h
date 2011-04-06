@@ -47,7 +47,6 @@ typedef struct _CDConfig {
 
             uint16_t port;
             int      backlog;
-            uint8_t  simultaneous;
         } connection;
 
         struct {
@@ -72,11 +71,15 @@ typedef struct _CDConfig {
         int workers;
 
         struct {
-            bool standard;
+            struct {
+                bool        standard;
+                const char* name;
+            } protocol;
 
             struct {
-                int max;
-            } players;
+                int     max;
+                uint8_t simultaneous;
+            } clients;
         } game;
     } cache;
 } CDConfig;
