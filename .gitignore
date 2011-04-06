@@ -6,8 +6,8 @@
 ###
 
 ## Binaries and generated
-craftd
-craftd-proxy
+/craftd
+/src/craftd
 third-party/jansson/src/jansson_config.h
 craftd.conf.dist
 
@@ -39,15 +39,15 @@ Makefile.in
 # Check build-aux/.gitignore for the commented stuff
 /autom4te.cache
 /aclocal.m4
-#/compile
-#/depcomp
-#/install-sh
-#/missing
+/build/auto/aux/
+/configure
 /config.guess
 /config.log
 /config.status
 /config.sub
 */include/config.h
+stamp-h1
+Makefile
 
 # libtool
 build-aux/ltmain.sh
