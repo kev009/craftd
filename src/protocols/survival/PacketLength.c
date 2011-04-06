@@ -23,18 +23,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <beta/PacketLength.h>
-#include <beta/Packet.h>
+#include <craftd/protocols/survival/PacketLength.h>
+#include <craftd/protocols/survival/Packet.h>
 
-#define CHECK (length < (CDPacketLength[type] + variable))
+#define CHECK (length < (SVPacketLength[type] + variable))
 
 bool
-CD_PacketParsable (CDBuffers* buffers)
+SV_PacketParsable (CDBuffers* buffers)
 {
     size_t       length   = evbuffer_get_length(buffers->input->raw);
-    CDPacketType type     = 0;
+    SVPacketType type     = 0;
     size_t       variable = 0;
-    size_t       offset   = MCByteSize;
+    size_t       offset   = SVByteSize;
                  errno    = 0;
 
     if (length < 1) {
@@ -43,102 +43,102 @@ CD_PacketParsable (CDBuffers* buffers)
 
     evbuffer_copyout(buffers->input->raw, &type, 1);
 
-    if (length < CDPacketLength[type]) {
+    if (length < SVPacketLength[type]) {
         goto error;
     }
 
     unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
 
     switch (type) {
-        case CDKeepAlive: {
+        case SVKeepAlive: {
             goto done;
         }
 
-        case CDLogin: {
-            variable += ntohs(*((MCShort*) (data + (offset += MCIntegerSize))));
+        case SVLogin: {
+            variable += ntohs(*((SVShort*) (data + (offset += SVIntegerSize))));
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
 
             goto check;
         }
 
-        case CDHandshake: {
-            variable += ntohs(*((MCShort*) (data + offset)));
+        case SVHandshake: {
+            variable += ntohs(*((SVShort*) (data + offset)));
 
             goto check;
         }
 
-        case CDChat: {
-            variable += ntohs(*((MCShort*) (data + offset)));
+        case SVChat: {
+            variable += ntohs(*((SVShort*) (data + offset)));
 
             goto check;
         }
 
-        case CDUseEntity: {
+        case SVUseEntity: {
             goto done;
         }
 
-        case CDRespawn: {
+        case SVRespawn: {
             goto done;
         }
 
-        case CDOnGround: {
+        case SVOnGround: {
             goto done;
         }
 
-        case CDPlayerPosition: {
+        case SVPlayerPosition: {
             goto done;
         }
 
-        case CDPlayerLook: {
+        case SVPlayerLook: {
             goto done;
         }
 
-        case CDPlayerMoveLook: {
+        case SVPlayerMoveLook: {
             goto done;
         }
 
-        case CDPlayerDigging: {
+        case SVPlayerDigging: {
             goto done;
         }
 
-        case CDPlayerBlockPlacement: {
-            offset += MCIntegerSize + MCByteSize + MCIntegerSize + MCByteSize;
+        case SVPlayerBlockPlacement: {
+            offset += SVIntegerSize + SVByteSize + SVIntegerSize + SVByteSize;
 
-            if (ntohs(*((MCShort*) (data + offset))) != -1) {
+            if (ntohs(*((SVShort*) (data + offset))) != -1) {
                 variable += 3;
             }
 
             goto check;
         }
 
-        case CDHoldChange: {
+        case SVHoldChange: {
             goto done;
         }
 
-        case CDAnimation: {
+        case SVAnimation: {
             goto done;
         }
 
-        case CDEntityAction: {
+        case SVEntityAction: {
             goto done;
         }
 
-        case CDEntityMetadata: {
-            offset += MCIntegerSize;
+        case SVEntityMetadata: {
+            offset += SVIntegerSize;
 
-            while (length > offset && *((MCByte*) data + offset) != 127) {
-                switch (*((MCByte*) (data + offset)) >> 5) {
-                    case MCTypeByte:           offset += MCByteSize;                                break;
-                    case MCTypeShort:          offset += MCShortSize;                               break;
-                    case MCTypeInteger:        offset += MCIntegerSize;                             break;
-                    case MCTypeFloat:          offset += MCFloatSize;                               break;
-                    case MCTypeString:         offset += *((MCShort*) (data + offset)) + MCShortSize; break;
-                    case MCTypeShortByteShort: offset += MCByteSize + MCShortSize + MCByteSize;     break;
+            while (length > offset && *((SVByte*) data + offset) != 127) {
+                switch (*((SVByte*) (data + offset)) >> 5) {
+                    case SVTypeByte:           offset += SVByteSize;                                break;
+                    case SVTypeShort:          offset += SVShortSize;                               break;
+                    case SVTypeInteger:        offset += SVIntegerSize;                             break;
+                    case SVTypeFloat:          offset += SVFloatSize;                               break;
+                    case SVTypeString:         offset += *((SVShort*) (data + offset)) + SVShortSize; break;
+                    case SVTypeShortByteShort: offset += SVByteSize + SVShortSize + SVByteSize;     break;
                 }
             }
 
@@ -150,52 +150,52 @@ CD_PacketParsable (CDBuffers* buffers)
             }
         }
 
-        case CDCloseWindow: {
+        case SVCloseWindow: {
             goto done;
         }
 
-        case CDWindowClick: {
-            offset += MCByteSize + MCShortSize + MCByteSize + MCShortSize;
+        case SVWindowClick: {
+            offset += SVByteSize + SVShortSize + SVByteSize + SVShortSize;
 
-            if (ntohs(*((MCShort*) (data + offset))) != -1) {
+            if (ntohs(*((SVShort*) (data + offset))) != -1) {
                 variable += 3;
             }
 
             goto check;
         }
 
-        case CDTransaction: {
+        case SVTransaction: {
             goto done;
         }
 
-        case CDUpdateSign: {
-            offset += MCIntegerSize + MCShortSize + MCIntegerSize;
+        case SVUpdateSign: {
+            offset += SVIntegerSize + SVShortSize + SVIntegerSize;
 
-            variable += ntohs(*((MCShort*) (data + offset)));
-
-            if (CHECK) {
-                goto error;
-            }
-
-            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + offset)));
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((MCShort*) (data + (offset += MCShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
+
+            if (CHECK) {
+                goto error;
+            }
+
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
 
             goto check;
         }
 
-        case CDDisconnect: {
-            variable += ntohs(*((MCShort*) (data + offset)));
+        case SVDisconnect: {
+            variable += ntohs(*((SVShort*) (data + offset)));
 
             goto check;
         }
@@ -217,7 +217,7 @@ CD_PacketParsable (CDBuffers* buffers)
         if (errno != EILSEQ) {
             errno = EAGAIN;
 
-            CD_BufferReadIn(buffers, CDPacketLength[type] + variable, CDNull);
+            CD_BufferReadIn(buffers, SVPacketLength[type] + variable, CDNull);
         }
 
         return false;

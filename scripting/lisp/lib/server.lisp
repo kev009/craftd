@@ -9,7 +9,7 @@
 
 (uffi:def-struct server
     (timeloop (* :void))
-    (config (* :void)))
+    (config   (* :void)))
 
 (uffi:def-function ("CD_ServerToString" c-server-name) ((self (* :void)))
                    :returning :cstring)

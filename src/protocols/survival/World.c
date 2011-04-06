@@ -23,12 +23,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <beta/World.h>
+#include <craftd/protocols/survival/World.h>
 
-CDWorld*
-CD_CreateWorld (CDServer* server, const char* name)
+SVWorld*
+SV_CreateWorld (CDServer* server, const char* name)
 {
-    CDWorld* self = CD_malloc(sizeof(CDWorld));
+    SVWorld* self = CD_malloc(sizeof(SVWorld));
 
     assert(name);
 
@@ -39,24 +39,30 @@ CD_CreateWorld (CDServer* server, const char* name)
     self->server = server;
 
     J_DO { self->config = NULL;
-        J_FOREACH(world, CD_GetPlugin(server->plugins, "protocol.beta")->config, "worlds") {
-            J_IF_STRING(world, "name") {
-                if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                    self->config = (CDRawConfig) world;
-                    break;
+        J_IN(data, server->config->data, "server") {
+            J_IN(game, data, "game") {
+                J_IN(protocol, game, "protocol") {
+                    J_FOREACH(world, protocol, "worlds") {
+                        J_IF_STRING(world, "name") {
+                            if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
+                                self->config = (CDRawConfig) world;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
     self->name      = CD_CreateStringFromCStringCopy(name);
-    self->dimension = CDWorldNormal;
+    self->dimension = SVWorldNormal;
     self->time      = 0;
 
     self->players  = CD_CreateHash();
     self->entities = CD_CreateMap();
 
-    self->chunks = CD_CreateSetWith(2000, (CDSetCompare) MC_CompareChunkPosition, (CDSetHash) MC_HashChunkPosition);
+    self->chunks = CD_CreateSetWith(2000, (CDSetCompare) SV_CompareChunkPosition, (CDSetHash) SV_HashChunkPosition);
 
     DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
@@ -67,7 +73,7 @@ CD_CreateWorld (CDServer* server, const char* name)
 }
 
 bool
-CD_WorldSave (CDWorld* self)
+SV_WorldSave (SVWorld* self)
 {
     bool status;
 
@@ -77,14 +83,14 @@ CD_WorldSave (CDWorld* self)
 }
 
 void
-CD_DestroyWorld (CDWorld* self)
+CD_DestroyWorld (SVWorld* self)
 {
     assert(self);
 
     CD_EventDispatch(self->server, "World.destroy", self);
 
     CD_HASH_FOREACH(self->players, it) {
-        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
+        SVPlayer* player = (SVPlayer*) CD_HashIteratorValue(it);
 
         if (player->client->status != CDClientDisconnect) {
             CD_ServerKick(self->server, player->client, NULL);
@@ -106,15 +112,15 @@ CD_DestroyWorld (CDWorld* self)
 }
 
 // FIXME: This is just a dummy function
-MCEntityId
-CD_WorldGenerateEntityId (CDWorld* self)
+SVEntityId
+SV_WorldGenerateEntityId (SVWorld* self)
 {
-    MCEntityId result;
+    SVEntityId result;
 
     assert(self);
 
     if (CD_MapLength(self->entities) != 0) {
-        result = ((MCEntity*) CD_MapLast(self->entities))->id + 1;
+        result = ((SVEntity*) CD_MapLast(self->entities))->id + 1;
     }
     else {
         result = 10;
@@ -124,17 +130,17 @@ CD_WorldGenerateEntityId (CDWorld* self)
 }
 
 void
-CD_WorldAddPlayer (CDWorld* self, CDPlayer* player)
+SV_WorldAddPlayer (SVWorld* self, SVPlayer* player)
 {
 }
 
 void
-CD_WorldBroadcastBuffer (CDWorld* self, CDBuffer* buffer)
+SV_WorldBroadcastBuffer (SVWorld* self, CDBuffer* buffer)
 {
     assert(self);
 
     CD_HASH_FOREACH(self->players, it) {
-        CDPlayer* player = (CDPlayer*) CD_HashIteratorValue(it);
+        SVPlayer* player = (SVPlayer*) CD_HashIteratorValue(it);
 
         pthread_rwlock_rdlock(&player->client->lock.status);
         if (player->client->status != CDClientDisconnect) {
@@ -145,37 +151,37 @@ CD_WorldBroadcastBuffer (CDWorld* self, CDBuffer* buffer)
 }
 
 void
-CD_WorldBroadcastPacket (CDWorld* self, CDPacket* packet)
+SV_WorldBroadcastPacket (SVWorld* self, SVPacket* packet)
 {
     assert(self);
 
-    CDBuffer* buffer = CD_PacketToBuffer(packet);
+    CDBuffer* buffer = SV_PacketToBuffer(packet);
 
-    CD_WorldBroadcastBuffer(self, buffer);
+    SV_WorldBroadcastBuffer(self, buffer);
 
     CD_DestroyBuffer(buffer);
 }
 
 void
-CD_WorldBroadcastMessage (CDWorld* self, CDString* message)
+SV_WorldBroadcastMessage (SVWorld* self, CDString* message)
 {
     assert(self);
 
-    CDPacketChat pkt = {
+    SVPacketChat pkt = {
         .response = {
             .message = message
         }
     };
 
-    CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+    SVPacket response = { SVResponse, SVChat, (CDPointer) &pkt };
 
-    CD_WorldBroadcastPacket(self, &response);
+    SV_WorldBroadcastPacket(self, &response);
 
-    CD_DestroyPacketData(&response);
+    SV_DestroyPacketData(&response);
 }
 
 uint16_t
-CD_WorldGetTime (CDWorld* self)
+SV_WorldGetTime (SVWorld* self)
 {
     uint16_t result;
 
@@ -189,7 +195,7 @@ CD_WorldGetTime (CDWorld* self)
 }
 
 uint16_t
-CD_WorldSetTime (CDWorld* self, uint16_t time)
+SV_WorldSetTime (SVWorld* self, uint16_t time)
 {
     assert(self);
 
@@ -200,10 +206,10 @@ CD_WorldSetTime (CDWorld* self, uint16_t time)
     return time;
 }
 
-MCChunk*
-CD_WorldGetChunk (CDWorld* self, int x, int z)
+SVChunk*
+SV_WorldGetChunk (SVWorld* self, int x, int z)
 {
-    MCChunk* result = CD_alloc(sizeof(MCChunk));
+    SVChunk* result = CD_alloc(sizeof(SVChunk));
     CDError  status;
 
     CD_EventDispatchWithError(status, self->server, "World.chunk", self, x, z, result);
@@ -221,7 +227,7 @@ CD_WorldGetChunk (CDWorld* self, int x, int z)
 }
 
 void
-CD_WorldSetChunk (CDWorld* self, MCChunk* chunk)
+SV_WorldSetChunk (SVWorld* self, SVChunk* chunk)
 {
     CD_EventDispatch(self->server, "World.chunk=", self, chunk->position.x, chunk->position.z, chunk);
 }

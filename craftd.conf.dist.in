@@ -22,6 +22,14 @@
     },
 
     "game": {
+        "protocol": {
+            "name": "survival",
+
+            "worlds": [
+                { "name": "world", "default": true }
+            ]
+        },
+
         "players": {
             "max": 0
         },
@@ -32,14 +40,11 @@
     "plugin": {
         "paths": [
             "plugins",
-            "plugins/mapgen",
-            "@libdir@/craftd/",
-            "@libdir@/craftd/plugins",
-            "@libdir@/craftd/plugins/mapgen"
+            "@libdir@/craftd/plugins"
         ],
 
         "plugins": [
-            { "name": "protocol.beta",
+            { "name": "survival.base",
                 "commandChar": "/",
 
                 "rate": {
@@ -49,20 +54,17 @@
                     "night": 20
                 },
 
-                "worlds": [
-                    { "name": "world", "default": true }
-                ]
             },
 
-            { "name": "persistence.nbt",
+            { "name": "survival.persistence.nbt",
                 "path": "@datadir@/craftd/worlds"
             },
 
-            { "name": "mapgen.classic",
+            { "name": "survival.mapgen.classic",
                 "seed": "trolololol"
             },
 
-            { "name": "commands.admin",
+            { "name": "survival.commands.admin",
                 "authorizations": [
                     { "name": "Notch",
                         "password": "faggotree",
@@ -75,7 +77,7 @@
                 }
             },
 
-            { "name": "tests" }
+            { "name": "survival.tests" }
         ]
     },
 

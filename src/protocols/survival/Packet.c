@@ -25,23 +25,23 @@
 
 #include <craftd/Logger.h>
 
-#include <beta/Packet.h>
+#include <craftd/protocols/survival/Packet.h>
 
-CDPacket*
-CD_PacketFromBuffers (CDBuffers* buffers)
+SVPacket*
+SV_PacketFromBuffers (CDBuffers* buffers)
 {
-    CDPacket* self = CD_malloc(sizeof(CDPacket));
+    SVPacket* self = CD_malloc(sizeof(SVPacket));
 
     assert(self);
 
-    self->chain = CDRequest;
-    self->type  = (uint32_t) (uint8_t) CD_BufferRemoveByte(buffers->input);
-    self->data  = CD_GetPacketDataFromBuffer(self, buffers->input);
+    self->chain = SVRequest;
+    self->type  = (uint32_t) (uint8_t) SV_BufferRemoveByte(buffers->input);
+    self->data  = SV_GetPacketDataFromBuffer(self, buffers->input);
 
     if (!self->data) {
         ERR("unparsable packet 0x%.2X", self->type);
 
-        CD_DestroyPacket(self);
+        SV_DestroyPacket(self);
 
         errno = EILSEQ;
 
@@ -52,151 +52,151 @@ CD_PacketFromBuffers (CDBuffers* buffers)
 }
 
 void
-CD_DestroyPacket (CDPacket* self)
+SV_DestroyPacket (SVPacket* self)
 {
     assert(self);
 
-    CD_DestroyPacketData(self);
+    SV_DestroyPacketData(self);
 
     CD_free((void*) self->data);
     CD_free(self);
 }
 
 void
-CD_DestroyPacketData (CDPacket* self)
+SV_DestroyPacketData (SVPacket* self)
 {
     if (!self->data) {
         return;
     }
 
     switch (self->chain) {
-        case CDRequest: {
+        case SVRequest: {
             switch (self->type) {
-                case CDLogin: {
-                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+                case SVLogin: {
+                    SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
-                    MC_DestroyString(packet->request.username);
-                    MC_DestroyString(packet->request.password);
+                    SV_DestroyString(packet->request.username);
+                    SV_DestroyString(packet->request.password);
                 } break;
 
-                case CDHandshake: {
-                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
+                case SVHandshake: {
+                    SVPacketHandshake* packet = (SVPacketHandshake*) self->data;
 
-                    MC_DestroyString(packet->request.username);
+                    SV_DestroyString(packet->request.username);
                 } break;
 
-                case CDChat: {
-                    CDPacketChat* packet = (CDPacketChat*) self->data;
+                case SVChat: {
+                    SVPacketChat* packet = (SVPacketChat*) self->data;
 
-                    MC_DestroyString(packet->request.message);
+                    SV_DestroyString(packet->request.message);
                 } break;
 
-                case CDEntityMetadata: {
-                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+                case SVEntityMetadata: {
+                    SVPacketEntityMetadata* packet = (SVPacketEntityMetadata*) self->data;
 
-                    MC_DestroyMetadata(packet->request.metadata);
+                    SV_DestroyMetadata(packet->request.metadata);
                 } break;
 
-                case CDUpdateSign: {
-                    CDPacketUpdateSign* packet = (CDPacketUpdateSign*) self->data;
+                case SVUpdateSign: {
+                    SVPacketUpdateSign* packet = (SVPacketUpdateSign*) self->data;
 
-                    MC_DestroyString(packet->request.first);
-                    MC_DestroyString(packet->request.second);
-                    MC_DestroyString(packet->request.third);
-                    MC_DestroyString(packet->request.fourth);
+                    SV_DestroyString(packet->request.first);
+                    SV_DestroyString(packet->request.second);
+                    SV_DestroyString(packet->request.third);
+                    SV_DestroyString(packet->request.fourth);
                 } break;
 
-                case CDDisconnect: {
-                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
+                case SVDisconnect: {
+                    SVPacketDisconnect* packet = (SVPacketDisconnect*) self->data;
 
-                    MC_DestroyString(packet->request.reason);
+                    SV_DestroyString(packet->request.reason);
                 }
 
                 default: break;
             }
         } break;
 
-        case CDResponse: {
+        case SVResponse: {
             switch (self->type) {
-                case CDLogin: {
-                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+                case SVLogin: {
+                    SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
-                    MC_DestroyString(packet->response.serverName);
-                    MC_DestroyString(packet->response.motd);
+                    SV_DestroyString(packet->response.serverName);
+                    SV_DestroyString(packet->response.motd);
                 } break;
 
-                case CDHandshake: {
-                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
+                case SVHandshake: {
+                    SVPacketHandshake* packet = (SVPacketHandshake*) self->data;
 
-                    MC_DestroyString(packet->response.hash);
+                    SV_DestroyString(packet->response.hash);
                 } break;
 
-                case CDChat: {
-                    CDPacketChat* packet = (CDPacketChat*) self->data;
+                case SVChat: {
+                    SVPacketChat* packet = (SVPacketChat*) self->data;
 
-                    MC_DestroyString(packet->request.message);
+                    SV_DestroyString(packet->request.message);
                 } break;
 
-                case CDNamedEntitySpawn: {
-                    CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
+                case SVNamedEntitySpawn: {
+                    SVPacketNamedEntitySpawn* packet = (SVPacketNamedEntitySpawn*) self->data;
 
-                    MC_DestroyString(packet->response.name);
+                    SV_DestroyString(packet->response.name);
                 } break;
 
-                case CDSpawnMob: {
-                    CDPacketSpawnMob* packet = (CDPacketSpawnMob*) self->data;
+                case SVSpawnMob: {
+                    SVPacketSpawnMob* packet = (SVPacketSpawnMob*) self->data;
 
-                    MC_DestroyMetadata(packet->response.metadata);
+                    SV_DestroyMetadata(packet->response.metadata);
                 } break;
 
-                case CDPainting: {
-                    CDPacketPainting* packet = (CDPacketPainting*) self->data;
+                case SVPainting: {
+                    SVPacketPainting* packet = (SVPacketPainting*) self->data;
 
-                    MC_DestroyString(packet->response.title);
+                    SV_DestroyString(packet->response.title);
                 } break;
 
-                case CDEntityMetadata: {
-                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+                case SVEntityMetadata: {
+                    SVPacketEntityMetadata* packet = (SVPacketEntityMetadata*) self->data;
 
-                    MC_DestroyMetadata(packet->response.metadata);
+                    SV_DestroyMetadata(packet->response.metadata);
                 } break;
 
-                case CDMapChunk: {
-                    CDPacketMapChunk* packet = (CDPacketMapChunk*) self->data;
+                case SVMapChunk: {
+                    SVPacketMapChunk* packet = (SVPacketMapChunk*) self->data;
 
                     CD_free(packet->response.item);
                 } break;
 
-                case CDMultiBlockChange: {
-                    CDPacketMultiBlockChange* packet = (CDPacketMultiBlockChange*) self->data;
+                case SVMultiBlockChange: {
+                    SVPacketMultiBlockChange* packet = (SVPacketMultiBlockChange*) self->data;
 
                     CD_free(packet->response.coordinate);
                     CD_free(packet->response.type);
                     CD_free(packet->response.metadata);
                 } break;
 
-                case CDExplosion: {
-                    CDPacketExplosion* packet = (CDPacketExplosion*) self->data;
+                case SVExplosion: {
+                    SVPacketExplosion* packet = (SVPacketExplosion*) self->data;
 
                     CD_free(packet->response.item);
                 } break;
 
-                case CDOpenWindow: {
-                    CDPacketOpenWindow* packet = (CDPacketOpenWindow*) self->data;
+                case SVOpenWindow: {
+                    SVPacketOpenWindow* packet = (SVPacketOpenWindow*) self->data;
 
-                    MC_DestroyString(packet->response.title);
+                    SV_DestroyString(packet->response.title);
                 } break;
 
-                case CDWindowItems: {
-                    CDPacketWindowItems* packet = (CDPacketWindowItems*) self->data;
+                case SVWindowItems: {
+                    SVPacketWindowItems* packet = (SVPacketWindowItems*) self->data;
 
                     CD_free(packet->response.item);
                 } break;
 
-                case CDDisconnect: {
-                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
+                case SVDisconnect: {
+                    SVPacketDisconnect* packet = (SVPacketDisconnect*) self->data;
 
-                    MC_DestroyString(packet->response.reason);
+                    SV_DestroyString(packet->response.reason);
                 } break;
 
                 default: break;
@@ -206,20 +206,20 @@ CD_DestroyPacketData (CDPacket* self)
 }
 
 CDPointer
-CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
+SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
 {
     assert(self);
     assert(input);
 
     switch (self->type) {
-        case CDKeepAlive: {
-            return (CDPointer) CD_malloc(sizeof(CDPacketKeepAlive));
+        case SVKeepAlive: {
+            return (CDPointer) CD_malloc(sizeof(SVPacketKeepAlive));
         }
 
-        case CDLogin: {
-            CDPacketLogin* packet = (CDPacketLogin*) CD_malloc(sizeof(CDPacketLogin));
+        case SVLogin: {
+            SVPacketLogin* packet = (SVPacketLogin*) CD_malloc(sizeof(SVPacketLogin));
 
-            CD_BufferRemoveFormat(input, "iSSlb",
+            SV_BufferRemoveFormat(input, "iSSlb",
                 &packet->request.version,
                 &packet->request.username,
                 &packet->request.password,
@@ -230,26 +230,26 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDHandshake: {
-            CDPacketHandshake* packet = (CDPacketHandshake*) CD_malloc(sizeof(CDPacketHandshake));
+        case SVHandshake: {
+            SVPacketHandshake* packet = (SVPacketHandshake*) CD_malloc(sizeof(SVPacketHandshake));
 
-            packet->request.username = CD_BufferRemoveString(input);
-
-            return (CDPointer) packet;
-        }
-
-        case CDChat: {
-            CDPacketChat* packet = (CDPacketChat*) CD_malloc(sizeof(CDPacketChat));
-
-            packet->request.message = CD_BufferRemoveString(input);
+            packet->request.username = SV_BufferRemoveString(input);
 
             return (CDPointer) packet;
         }
 
-        case CDUseEntity: {
-            CDPacketUseEntity* packet = (CDPacketUseEntity*) CD_malloc(sizeof(CDPacketUseEntity));
+        case SVChat: {
+            SVPacketChat* packet = (SVPacketChat*) CD_malloc(sizeof(SVPacketChat));
 
-            CD_BufferRemoveFormat(input, "iib",
+            packet->request.message = SV_BufferRemoveString(input);
+
+            return (CDPointer) packet;
+        }
+
+        case SVUseEntity: {
+            SVPacketUseEntity* packet = (SVPacketUseEntity*) CD_malloc(sizeof(SVPacketUseEntity));
+
+            SV_BufferRemoveFormat(input, "iib",
                 &packet->request.user,
                 &packet->request.target,
                 &packet->request.leftClick
@@ -258,22 +258,22 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDRespawn: {
-            return (CDPointer) CD_malloc(sizeof(CDPacketRespawn));
+        case SVRespawn: {
+            return (CDPointer) CD_malloc(sizeof(SVPacketRespawn));
         }
 
-        case CDOnGround: {
-            CDPacketOnGround* packet = (CDPacketOnGround*) CD_malloc(sizeof(CDPacketOnGround));
+        case SVOnGround: {
+            SVPacketOnGround* packet = (SVPacketOnGround*) CD_malloc(sizeof(SVPacketOnGround));
 
-            packet->request.onGround = CD_BufferRemoveBoolean(input);
+            packet->request.onGround = SV_BufferRemoveBoolean(input);
 
             return (CDPointer) packet;
         }
 
-        case CDPlayerPosition: {
-            CDPacketPlayerPosition* packet = (CDPacketPlayerPosition*) CD_malloc(sizeof(CDPacketPlayerPosition));
+        case SVPlayerPosition: {
+            SVPacketPlayerPosition* packet = (SVPacketPlayerPosition*) CD_malloc(sizeof(SVPacketPlayerPosition));
 
-            CD_BufferRemoveFormat(input, "ddddb",
+            SV_BufferRemoveFormat(input, "ddddb",
                 &packet->request.position.x,
                 &packet->request.position.y,
                 &packet->request.stance,
@@ -284,10 +284,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDPlayerLook: {
-            CDPacketPlayerLook* packet = (CDPacketPlayerLook*) CD_malloc(sizeof(CDPacketPlayerLook));
+        case SVPlayerLook: {
+            SVPacketPlayerLook* packet = (SVPacketPlayerLook*) CD_malloc(sizeof(SVPacketPlayerLook));
 
-            CD_BufferRemoveFormat(input, "ffb",
+            SV_BufferRemoveFormat(input, "ffb",
                 &packet->request.yaw,
                 &packet->request.pitch,
                 &packet->request.is.onGround
@@ -296,10 +296,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDPlayerMoveLook: {
-            CDPacketPlayerMoveLook* packet = (CDPacketPlayerMoveLook*) CD_malloc(sizeof(CDPacketPlayerMoveLook));
+        case SVPlayerMoveLook: {
+            SVPacketPlayerMoveLook* packet = (SVPacketPlayerMoveLook*) CD_malloc(sizeof(SVPacketPlayerMoveLook));
 
-            CD_BufferRemoveFormat(input, "ddddffb",
+            SV_BufferRemoveFormat(input, "ddddffb",
                 &packet->request.position.x,
                 &packet->request.stance,
                 &packet->request.position.y,
@@ -312,10 +312,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDPlayerDigging: {
-            CDPacketPlayerDigging* packet = (CDPacketPlayerDigging*) CD_malloc(sizeof(CDPacketPlayerDigging));
+        case SVPlayerDigging: {
+            SVPacketPlayerDigging* packet = (SVPacketPlayerDigging*) CD_malloc(sizeof(SVPacketPlayerDigging));
 
-            CD_BufferRemoveFormat(input, "bibib",
+            SV_BufferRemoveFormat(input, "bibib",
                 &packet->request.status,
                 &packet->request.position.x,
                 &packet->request.position.y,
@@ -326,10 +326,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDPlayerBlockPlacement: {
-            CDPacketPlayerBlockPlacement* packet = (CDPacketPlayerBlockPlacement*) CD_malloc(sizeof(CDPacketPlayerBlockPlacement));
+        case SVPlayerBlockPlacement: {
+            SVPacketPlayerBlockPlacement* packet = (SVPacketPlayerBlockPlacement*) CD_malloc(sizeof(SVPacketPlayerBlockPlacement));
 
-            CD_BufferRemoveFormat(input, "ibibs",
+            SV_BufferRemoveFormat(input, "ibibs",
                 &packet->request.position.x,
                 &packet->request.position.y,
                 &packet->request.position.z,
@@ -339,7 +339,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             );
 
             if (packet->request.item.id != -1) {
-                CD_BufferRemoveFormat(input, "bs",
+                SV_BufferRemoveFormat(input, "bs",
                     &packet->request.item.count,
                     &packet->request.item.uses
                 );
@@ -348,18 +348,18 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDHoldChange: {
-            CDPacketHoldChange* packet = (CDPacketHoldChange*) CD_malloc(sizeof(CDPacketHoldChange));
+        case SVHoldChange: {
+            SVPacketHoldChange* packet = (SVPacketHoldChange*) CD_malloc(sizeof(SVPacketHoldChange));
 
-            packet->request.item.id = CD_BufferRemoveShort(input);
+            packet->request.item.id = SV_BufferRemoveShort(input);
 
             return (CDPointer) packet;
         }
 
-        case CDAnimation: {
-            CDPacketAnimation* packet = (CDPacketAnimation*) CD_malloc(sizeof(CDPacketAnimation));
+        case SVAnimation: {
+            SVPacketAnimation* packet = (SVPacketAnimation*) CD_malloc(sizeof(SVPacketAnimation));
 
-            CD_BufferRemoveFormat(input, "ib",
+            SV_BufferRemoveFormat(input, "ib",
                 &packet->request.entity.id,
                 &packet->request.type
             );
@@ -367,10 +367,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDEntityAction: {
-            CDPacketEntityAction* packet = (CDPacketEntityAction*) CD_malloc(sizeof(CDPacketEntityAction));
+        case SVEntityAction: {
+            SVPacketEntityAction* packet = (SVPacketEntityAction*) CD_malloc(sizeof(SVPacketEntityAction));
 
-            CD_BufferRemoveFormat(input, "ib",
+            SV_BufferRemoveFormat(input, "ib",
                 &packet->request.entity.id,
                 &packet->request.action
             );
@@ -378,10 +378,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDEntityMetadata: {
-            CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) CD_malloc(sizeof(CDPacketEntityMetadata));
+        case SVEntityMetadata: {
+            SVPacketEntityMetadata* packet = (SVPacketEntityMetadata*) CD_malloc(sizeof(SVPacketEntityMetadata));
 
-            CD_BufferRemoveFormat(input, "iM",
+            SV_BufferRemoveFormat(input, "iM",
                 &packet->request.entity.id,
                 &packet->request.metadata
             );
@@ -389,18 +389,18 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDCloseWindow: {
-            CDPacketCloseWindow* packet = (CDPacketCloseWindow*) CD_malloc(sizeof(CDPacketCloseWindow));
+        case SVCloseWindow: {
+            SVPacketCloseWindow* packet = (SVPacketCloseWindow*) CD_malloc(sizeof(SVPacketCloseWindow));
 
-            packet->request.id = CD_BufferRemoveByte(input);
+            packet->request.id = SV_BufferRemoveByte(input);
 
             return (CDPointer) packet;
         }
 
-        case CDWindowClick: {
-            CDPacketWindowClick* packet = (CDPacketWindowClick*) CD_malloc(sizeof(CDPacketWindowClick));
+        case SVWindowClick: {
+            SVPacketWindowClick* packet = (SVPacketWindowClick*) CD_malloc(sizeof(SVPacketWindowClick));
 
-            CD_BufferRemoveFormat(input, "bsBss",
+            SV_BufferRemoveFormat(input, "bsBss",
                 &packet->request.id,
                 &packet->request.slot,
                 &packet->request.rightClick,
@@ -409,7 +409,7 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             );
 
             if (packet->request.item.id != -1) {
-                CD_BufferRemoveFormat(input, "bs",
+                SV_BufferRemoveFormat(input, "bs",
                     &packet->request.item.count,
                     &packet->request.item.uses
                 );
@@ -418,10 +418,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDTransaction: {
-            CDPacketTransaction* packet = (CDPacketTransaction*) CD_malloc(sizeof(CDPacketTransaction));
+        case SVTransaction: {
+            SVPacketTransaction* packet = (SVPacketTransaction*) CD_malloc(sizeof(SVPacketTransaction));
 
-            CD_BufferRemoveFormat(input, "bsB",
+            SV_BufferRemoveFormat(input, "bsB",
                 &packet->request.id,
                 &packet->request.action,
                 &packet->request.accepted
@@ -430,10 +430,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDUpdateSign: {
-            CDPacketUpdateSign* packet = (CDPacketUpdateSign*) CD_malloc(sizeof(CDPacketUpdateSign));
+        case SVUpdateSign: {
+            SVPacketUpdateSign* packet = (SVPacketUpdateSign*) CD_malloc(sizeof(SVPacketUpdateSign));
 
-            CD_BufferRemoveFormat(input, "iisiSSSS",
+            SV_BufferRemoveFormat(input, "iisiSSSS",
                 &packet->request.position.x,
                 &packet->request.position.y,
                 &packet->request.position.z,
@@ -447,10 +447,10 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
-        case CDDisconnect: {
-            CDPacketDisconnect* packet = (CDPacketDisconnect*) CD_malloc(sizeof(CDPacketDisconnect));
+        case SVDisconnect: {
+            SVPacketDisconnect* packet = (SVPacketDisconnect*) CD_malloc(sizeof(SVPacketDisconnect));
 
-            packet->request.reason = CD_BufferRemoveString(input);
+            packet->request.reason = SV_BufferRemoveString(input);
 
             return (CDPointer) packet;
         }
@@ -462,27 +462,27 @@ CD_GetPacketDataFromBuffer (CDPacket* self, CDBuffer* input)
 }
 
 CDBuffer*
-CD_PacketToBuffer (CDPacket* self)
+SV_PacketToBuffer (SVPacket* self)
 {
     CDBuffer* data = CD_CreateBuffer();
 
     assert(self);
 
-    CD_BufferAddByte(data, self->type);
+    SV_BufferAddByte(data, self->type);
 
     switch (self->chain) {
-        case CDRequest: {
+        case SVRequest: {
             switch (self->type) {
                 default: break;
             }
         } break;
 
-        case CDResponse: {
+        case SVResponse: {
             switch (self->type) {
-                case CDLogin: {
-                    CDPacketLogin* packet = (CDPacketLogin*) self->data;
+                case SVLogin: {
+                    SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
-                    CD_BufferAddFormat(data, "iSSlb",
+                    SV_BufferAddFormat(data, "iSSlb",
                         packet->response.id,
                         packet->response.serverName,
                         packet->response.motd,
@@ -491,28 +491,28 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDHandshake: {
-                    CDPacketHandshake* packet = (CDPacketHandshake*) self->data;
+                case SVHandshake: {
+                    SVPacketHandshake* packet = (SVPacketHandshake*) self->data;
 
-                    CD_BufferAddString(data, packet->response.hash);
+                    SV_BufferAddString(data, packet->response.hash);
                 } break;
 
-                case CDChat: {
-                    CDPacketChat* packet = (CDPacketChat*) self->data;
+                case SVChat: {
+                    SVPacketChat* packet = (SVPacketChat*) self->data;
 
-                    CD_BufferAddString(data, packet->response.message);
+                    SV_BufferAddString(data, packet->response.message);
                 } break;
 
-                case CDTimeUpdate: {
-                    CDPacketTimeUpdate* packet = (CDPacketTimeUpdate*) self->data;
+                case SVTimeUpdate: {
+                    SVPacketTimeUpdate* packet = (SVPacketTimeUpdate*) self->data;
 
-                    CD_BufferAddLong(data, packet->response.time);
+                    SV_BufferAddLong(data, packet->response.time);
                 } break;
 
-                case CDEntityEquipment: {
-                    CDPacketEntityEquipment* packet = (CDPacketEntityEquipment*) self->data;
+                case SVEntityEquipment: {
+                    SVPacketEntityEquipment* packet = (SVPacketEntityEquipment*) self->data;
 
-                    CD_BufferAddFormat(data, "isss",
+                    SV_BufferAddFormat(data, "isss",
                         packet->response.entity.id,
                         packet->response.slot,
                         packet->response.item,
@@ -520,26 +520,26 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDSpawnPosition: {
-                    CDPacketSpawnPosition* packet = (CDPacketSpawnPosition*) self->data;
+                case SVSpawnPosition: {
+                    SVPacketSpawnPosition* packet = (SVPacketSpawnPosition*) self->data;
 
-                    CD_BufferAddFormat(data, "iii",
+                    SV_BufferAddFormat(data, "iii",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z
                     );
                 } break;
 
-                case CDUpdateHealth: {
-                    CDPacketUpdateHealth* packet = (CDPacketUpdateHealth*) self->data;
+                case SVUpdateHealth: {
+                    SVPacketUpdateHealth* packet = (SVPacketUpdateHealth*) self->data;
 
-                    CD_BufferAddShort(data, packet->response.health);
+                    SV_BufferAddShort(data, packet->response.health);
                 } break;
 
-                case CDPlayerMoveLook: {
-                    CDPacketPlayerMoveLook* packet = (CDPacketPlayerMoveLook*) self->data;
+                case SVPlayerMoveLook: {
+                    SVPacketPlayerMoveLook* packet = (SVPacketPlayerMoveLook*) self->data;
 
-                    CD_BufferAddFormat(data, "ddddffB",
+                    SV_BufferAddFormat(data, "ddddffB",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.stance,
@@ -550,10 +550,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDUseBed: {
-                    CDPacketUseBed* packet = (CDPacketUseBed*) self->data;
+                case SVUseBed: {
+                    SVPacketUseBed* packet = (SVPacketUseBed*) self->data;
 
-                    CD_BufferAddFormat(data, "ibibi",
+                    SV_BufferAddFormat(data, "ibibi",
                         packet->response.entity.id,
                         packet->response.inBed,
                         packet->response.position.x,
@@ -562,19 +562,19 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDAnimation: {
-                    CDPacketAnimation* packet = (CDPacketAnimation*) self->data;
+                case SVAnimation: {
+                    SVPacketAnimation* packet = (SVPacketAnimation*) self->data;
 
-                    CD_BufferAddFormat(data, "ib",
+                    SV_BufferAddFormat(data, "ib",
                         packet->response.entity.id,
                         packet->response.type
                     );
                 } break;
 
-                case CDNamedEntitySpawn: {
-                    CDPacketNamedEntitySpawn* packet = (CDPacketNamedEntitySpawn*) self->data;
+                case SVNamedEntitySpawn: {
+                    SVPacketNamedEntitySpawn* packet = (SVPacketNamedEntitySpawn*) self->data;
 
-                    CD_BufferAddFormat(data, "iSiiibbs",
+                    SV_BufferAddFormat(data, "iSiiibbs",
                         packet->response.entity.id,
                         packet->response.name,
                         packet->response.position.x,
@@ -586,10 +586,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDPickupSpawn: {
-                    CDPacketPickupSpawn* packet = (CDPacketPickupSpawn*) self->data;
+                case SVPickupSpawn: {
+                    SVPacketPickupSpawn* packet = (SVPacketPickupSpawn*) self->data;
 
-                    CD_BufferAddFormat(data, "isbsiiibbb",
+                    SV_BufferAddFormat(data, "isbsiiibbb",
                         packet->response.entity.id,
                         packet->response.item.id,
                         packet->response.item.count,
@@ -603,19 +603,19 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDCollectItem: {
-                    CDPacketCollectItem* packet = (CDPacketCollectItem*) self->data;
+                case SVCollectItem: {
+                    SVPacketCollectItem* packet = (SVPacketCollectItem*) self->data;
 
-                    CD_BufferAddFormat(data, "ii",
+                    SV_BufferAddFormat(data, "ii",
                         packet->response.collected,
                         packet->response.collector
                     );
                 } break;
 
-                case CDSpawnObject: {
-                    CDPacketSpawnObject* packet = (CDPacketSpawnObject*) self->data;
+                case SVSpawnObject: {
+                    SVPacketSpawnObject* packet = (SVPacketSpawnObject*) self->data;
 
-                    CD_BufferAddFormat(data, "ibiii",
+                    SV_BufferAddFormat(data, "ibiii",
                         packet->response.entity.id,
                         packet->response.type,
                         packet->response.position.x,
@@ -624,10 +624,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDSpawnMob: {
-                    CDPacketSpawnMob* packet = (CDPacketSpawnMob*) self->data;
+                case SVSpawnMob: {
+                    SVPacketSpawnMob* packet = (SVPacketSpawnMob*) self->data;
 
-                    CD_BufferAddFormat(data, "ibiiibbM",
+                    SV_BufferAddFormat(data, "ibiiibbM",
                         packet->response.id,
                         packet->response.type,
                         packet->response.position.x,
@@ -639,10 +639,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDPainting: {
-                    CDPacketPainting* packet = (CDPacketPainting*) self->data;
+                case SVPainting: {
+                    SVPacketPainting* packet = (SVPacketPainting*) self->data;
 
-                    CD_BufferAddFormat(data, "iSiiii",
+                    SV_BufferAddFormat(data, "iSiiii",
                         packet->response.entity.id,
                         packet->response.title,
                         packet->response.position.x,
@@ -652,10 +652,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDEntityVelocity: {
-                    CDPacketEntityVelocity* packet = (CDPacketEntityVelocity*) self->data;
+                case SVEntityVelocity: {
+                    SVPacketEntityVelocity* packet = (SVPacketEntityVelocity*) self->data;
 
-                    CD_BufferAddFormat(data, "isss",
+                    SV_BufferAddFormat(data, "isss",
                         packet->response.entity.id,
                         packet->response.velocity.x,
                         packet->response.velocity.y,
@@ -663,22 +663,22 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDEntityDestroy: {
-                    CDPacketEntityDestroy* packet = (CDPacketEntityDestroy*) self->data;
+                case SVEntityDestroy: {
+                    SVPacketEntityDestroy* packet = (SVPacketEntityDestroy*) self->data;
 
-                    CD_BufferAddInteger(data, packet->response.entity.id);
+                    SV_BufferAddInteger(data, packet->response.entity.id);
                 } break;
 
-                case CDEntityCreate: {
-                    CDPacketEntityCreate* packet = (CDPacketEntityCreate*) self->data;
+                case SVEntityCreate: {
+                    SVPacketEntityCreate* packet = (SVPacketEntityCreate*) self->data;
 
-                    CD_BufferAddInteger(data, packet->response.entity.id);
+                    SV_BufferAddInteger(data, packet->response.entity.id);
                 } break;
 
-                case CDEntityRelativeMove: {
-                    CDPacketEntityRelativeMove* packet = (CDPacketEntityRelativeMove*) self->data;
+                case SVEntityRelativeMove: {
+                    SVPacketEntityRelativeMove* packet = (SVPacketEntityRelativeMove*) self->data;
 
-                    CD_BufferAddFormat(data, "ibbb",
+                    SV_BufferAddFormat(data, "ibbb",
                         packet->response.entity.id,
                         packet->response.position.x,
                         packet->response.position.y,
@@ -686,20 +686,20 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDEntityLook: {
-                    CDPacketEntityLook* packet = (CDPacketEntityLook*) self->data;
+                case SVEntityLook: {
+                    SVPacketEntityLook* packet = (SVPacketEntityLook*) self->data;
 
-                    CD_BufferAddFormat(data, "ibb",
+                    SV_BufferAddFormat(data, "ibb",
                         packet->response.entity.id,
                         packet->response.yaw,
                         packet->response.pitch
                     );
                 } break;
 
-                case CDEntityLookMove: {
-                    CDPacketEntityLookMove* packet = (CDPacketEntityLookMove*) self->data;
+                case SVEntityLookMove: {
+                    SVPacketEntityLookMove* packet = (SVPacketEntityLookMove*) self->data;
 
-                    CD_BufferAddFormat(data, "ibbbbb",
+                    SV_BufferAddFormat(data, "ibbbbb",
                         packet->response.entity.id,
                         packet->response.position.x,
                         packet->response.position.y,
@@ -709,10 +709,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDEntityTeleport: {
-                    CDPacketEntityTeleport* packet = (CDPacketEntityTeleport*) self->data;
+                case SVEntityTeleport: {
+                    SVPacketEntityTeleport* packet = (SVPacketEntityTeleport*) self->data;
 
-                    CD_BufferAddFormat(data, "iiiibb",
+                    SV_BufferAddFormat(data, "iiiibb",
                         packet->response.entity.id,
                         packet->response.position.x,
                         packet->response.position.y,
@@ -722,47 +722,47 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDEntityStatus: {
-                    CDPacketEntityStatus* packet = (CDPacketEntityStatus*) self->data;
+                case SVEntityStatus: {
+                    SVPacketEntityStatus* packet = (SVPacketEntityStatus*) self->data;
 
-                    CD_BufferAddFormat(data, "ib",
+                    SV_BufferAddFormat(data, "ib",
                         packet->response.entity.id,
                         packet->response.status
                     );
                 } break;
 
-                case CDEntityAttach: {
-                    CDPacketEntityAttach* packet = (CDPacketEntityAttach*) self->data;
+                case SVEntityAttach: {
+                    SVPacketEntityAttach* packet = (SVPacketEntityAttach*) self->data;
 
-                    CD_BufferAddFormat(data, "ii",
+                    SV_BufferAddFormat(data, "ii",
                         packet->response.entity.id,
                         packet->response.vehicle.id
                     );
                 } break;
 
-                case CDEntityMetadata: {
-                    CDPacketEntityMetadata* packet = (CDPacketEntityMetadata*) self->data;
+                case SVEntityMetadata: {
+                    SVPacketEntityMetadata* packet = (SVPacketEntityMetadata*) self->data;
 
-                    CD_BufferAddFormat(data, "iM",
+                    SV_BufferAddFormat(data, "iM",
                         packet->response.entity.id,
                         packet->response.metadata
                     );
                 } break;
 
-                case CDPreChunk: {
-                    CDPacketPreChunk* packet = (CDPacketPreChunk*) self->data;
+                case SVPreChunk: {
+                    SVPacketPreChunk* packet = (SVPacketPreChunk*) self->data;
 
-                    CD_BufferAddFormat(data, "iiB",
+                    SV_BufferAddFormat(data, "iiB",
                         packet->response.position.x,
                         packet->response.position.z,
                         packet->response.mode
                     );
                 } break;
 
-                case CDMapChunk: {
-                    CDPacketMapChunk* packet = (CDPacketMapChunk*) self->data;
+                case SVMapChunk: {
+                    SVPacketMapChunk* packet = (SVPacketMapChunk*) self->data;
 
-                    CD_BufferAddFormat(data, "isibbb",
+                    SV_BufferAddFormat(data, "isibbb",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -772,30 +772,30 @@ CD_PacketToBuffer (CDPacket* self)
                         packet->response.size.z - 1
                     );
 
-                    CD_BufferAddInteger(data, packet->response.length);
+                    SV_BufferAddInteger(data, packet->response.length);
 
-                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * MCByteSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * SVByteSize);
                 } break;
 
-                case CDMultiBlockChange: {
-                    CDPacketMultiBlockChange* packet = (CDPacketMultiBlockChange*) self->data;
+                case SVMultiBlockChange: {
+                    SVPacketMultiBlockChange* packet = (SVPacketMultiBlockChange*) self->data;
 
-                    CD_BufferAddFormat(data, "ii",
+                    SV_BufferAddFormat(data, "ii",
                         packet->response.position.x,
                         packet->response.position.z
                     );
 
-                    CD_BufferAddShort(data, packet->response.length);
+                    SV_BufferAddShort(data, packet->response.length);
 
-                    CD_BufferAdd(data, (CDPointer) packet->response.coordinate, packet->response.length * MCShortSize);
-                    CD_BufferAdd(data, (CDPointer) packet->response.type,       packet->response.length * MCByteSize);
-                    CD_BufferAdd(data, (CDPointer) packet->response.metadata,   packet->response.length * MCByteSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.coordinate, packet->response.length * SVShortSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.type,       packet->response.length * SVByteSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.metadata,   packet->response.length * SVByteSize);
                 } break;
 
-                case CDBlockChange: {
-                    CDPacketBlockChange* packet = (CDPacketBlockChange*) self->data;
+                case SVBlockChange: {
+                    SVPacketBlockChange* packet = (SVPacketBlockChange*) self->data;
 
-                    CD_BufferAddFormat(data, "ibibb",
+                    SV_BufferAddFormat(data, "ibibb",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -805,10 +805,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDPlayNoteBlock: {
-                    CDPacketPlayNoteBlock* packet = (CDPacketPlayNoteBlock*) self->data;
+                case SVPlayNoteBlock: {
+                    SVPacketPlayNoteBlock* packet = (SVPacketPlayNoteBlock*) self->data;
 
-                    CD_BufferAddFormat(data, "isibb",
+                    SV_BufferAddFormat(data, "isibb",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -818,10 +818,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDExplosion: {
-                    CDPacketExplosion* packet = (CDPacketExplosion*) self->data;
+                case SVExplosion: {
+                    SVPacketExplosion* packet = (SVPacketExplosion*) self->data;
 
-                    CD_BufferAddFormat(data, "dddf",
+                    SV_BufferAddFormat(data, "dddf",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -829,15 +829,15 @@ CD_PacketToBuffer (CDPacket* self)
                         packet->response.radius
                     );
 
-                    CD_BufferAddInteger(data, packet->response.length);
+                    SV_BufferAddInteger(data, packet->response.length);
 
-                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * 3 * MCByteSize);
+                    CD_BufferAdd(data, (CDPointer) packet->response.item, packet->response.length * 3 * SVByteSize);
                 } break;
 
-                case CDOpenWindow: {
-                    CDPacketOpenWindow* packet = (CDPacketOpenWindow*) self->data;
+                case SVOpenWindow: {
+                    SVPacketOpenWindow* packet = (SVPacketOpenWindow*) self->data;
 
-                    CD_BufferAddFormat(data, "bbSb",
+                    SV_BufferAddFormat(data, "bbSb",
                         packet->response.id,
                         packet->response.type,
                         packet->response.title,
@@ -845,41 +845,41 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDCloseWindow: {
-                    CDPacketCloseWindow* packet = (CDPacketCloseWindow*) self->data;
+                case SVCloseWindow: {
+                    SVPacketCloseWindow* packet = (SVPacketCloseWindow*) self->data;
 
-                    CD_BufferAddByte(data, packet->response.id);
+                    SV_BufferAddByte(data, packet->response.id);
                 } break;
 
-                case CDSetSlot: {
-                    CDPacketSetSlot* packet = (CDPacketSetSlot*) self->data;
+                case SVSetSlot: {
+                    SVPacketSetSlot* packet = (SVPacketSetSlot*) self->data;
 
-                    CD_BufferAddFormat(data, "bss",
+                    SV_BufferAddFormat(data, "bss",
                         packet->response.id,
                         packet->response.slot,
                         packet->response.item.id
                     );
 
                     if (packet->response.item.id != -1) {
-                        CD_BufferAddFormat(data, "bs",
+                        SV_BufferAddFormat(data, "bs",
                             packet->response.item.count,
                             packet->response.item.uses
                         );
                     }
                 } break;
 
-                case CDWindowItems: {
-                    CDPacketWindowItems* packet = (CDPacketWindowItems*) self->data;
+                case SVWindowItems: {
+                    SVPacketWindowItems* packet = (SVPacketWindowItems*) self->data;
 
-                    CD_BufferAddByte(data, packet->response.id);
-                    CD_BufferAddShort(data, packet->response.length);
+                    SV_BufferAddByte(data, packet->response.id);
+                    SV_BufferAddShort(data, packet->response.length);
 
                     for (size_t i = 0; i < packet->response.length; i++) {
                         if (packet->response.item[i].id == -1) {
-                            CD_BufferAddShort(data, -1);
+                            SV_BufferAddShort(data, -1);
                         }
                         else {
-                            CD_BufferAddFormat(data, "sbs",
+                            SV_BufferAddFormat(data, "sbs",
                                 packet->response.item[i].id,
                                 packet->response.item[i].count,
                                 packet->response.item[i].uses
@@ -888,30 +888,30 @@ CD_PacketToBuffer (CDPacket* self)
                     }
                 } break;
 
-                case CDUpdateProgressBar: {
-                    CDPacketUpdateProgressBar* packet = (CDPacketUpdateProgressBar*) self->data;
+                case SVUpdateProgressBar: {
+                    SVPacketUpdateProgressBar* packet = (SVPacketUpdateProgressBar*) self->data;
 
-                    CD_BufferAddFormat(data, "bss",
+                    SV_BufferAddFormat(data, "bss",
                         packet->response.id,
                         packet->response.bar,
                         packet->response.value
                     );
                 } break;
 
-                case CDTransaction: {
-                    CDPacketTransaction* packet = (CDPacketTransaction*) self->data;
+                case SVTransaction: {
+                    SVPacketTransaction* packet = (SVPacketTransaction*) self->data;
 
-                    CD_BufferAddFormat(data, "bsB",
+                    SV_BufferAddFormat(data, "bsB",
                         packet->response.id,
                         packet->response.action,
                         packet->response.accepted
                     );
                 } break;
 
-                case CDUpdateSign: {
-                    CDPacketUpdateSign* packet = (CDPacketUpdateSign*) self->data;
+                case SVUpdateSign: {
+                    SVPacketUpdateSign* packet = (SVPacketUpdateSign*) self->data;
 
-                    CD_BufferAddFormat(data, "isiSSSS",
+                    SV_BufferAddFormat(data, "isiSSSS",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -923,10 +923,10 @@ CD_PacketToBuffer (CDPacket* self)
                     );
                 } break;
 
-                case CDDisconnect: {
-                    CDPacketDisconnect* packet = (CDPacketDisconnect*) self->data;
+                case SVDisconnect: {
+                    SVPacketDisconnect* packet = (SVPacketDisconnect*) self->data;
 
-                    CD_BufferAddString(data, packet->response.reason);
+                    SV_BufferAddString(data, packet->response.reason);
                 } break;
 
                 default: break;

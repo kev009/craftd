@@ -23,69 +23,50 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_COMMON_H
-#define CRAFTD_COMMON_H
+#include <craftd/protocols/survival/Region.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <string.h>
-#include <limits.h>
+bool
+SV_IsCoordInRadius (SVChunkPosition* coord, SVChunkPosition* centerCoord, int radius)
+{
+    return (coord->x >= centerCoord->x - radius &&
+            coord->x <= centerCoord->x + radius &&
+            coord->z >= centerCoord->z - radius &&
+            coord->z <= centerCoord->z + radius);
+}
 
-#include <assert.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
+bool
+SV_IsDistanceGreater (SVPrecisePosition a, SVPrecisePosition b, int maxDistance)
+{
+    return (abs( a.x - b.x ) > maxDistance ||
+            abs( a.y - b.y ) > maxDistance ||
+            abs( a.z - b.z ) > maxDistance);
+}
 
-#include <pthread.h>
+SVRelativePosition
+SV_RelativeMove (SVPrecisePosition* a, SVPrecisePosition* b)
+{
+    SVAbsolutePosition absoluteA = SV_PrecisePositionToAbsolutePosition(*a);
+    SVAbsolutePosition absoluteB = SV_PrecisePositionToAbsolutePosition(*b);
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
+    return (SVRelativePosition) {
+        .x = absoluteA.x - absoluteB.x,
+        .y = absoluteA.y - absoluteB.y,
+        .z = absoluteA.z - absoluteB.z
+    };
+}
 
-#define DO \
-    for (char __cddo_tmp__ = 0; __cddo_tmp__ == 0; __cddo_tmp__++)
+void
+SV_RegionBroadcastPacket (SVPlayer* player, SVPacket* packet)
+{
+    CDList* seenPlayers = (CDList*) CD_DynamicGet(player, "Player.seenPlayers");
 
-#include <event2/event.h>
-#include <event2/buffer.h>
-#include <event2/bufferevent.h>
-#include <event2/listener.h>
-#include <event2/thread.h>
+    CD_LIST_FOREACH(seenPlayers, it) {
+        if (player == (SVPlayer*) CD_ListIteratorValue(it)) {
+            continue;
+        }
 
-#include <craftd/config.h>
+        SV_PlayerSendPacket((SVPlayer*) CD_ListIteratorValue(it), packet);
+    }
+}
 
-#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
-    typedef int32_t CDPointer;
-#else
-    typedef int64_t CDPointer;
-#endif
 
-#ifdef __cplusplus
-#   define PUBLIC extern "C"
-#else
-#   define PUBLIC extern
-#endif
-
-#define CDNull (0)
-
-#include <craftd/utils.h>
-#include <craftd/memory.h>
-
-#include <craftd/Error.h>
-#include <craftd/Arithmetic.h>
-#include <craftd/List.h>
-#include <craftd/Map.h>
-#include <craftd/Hash.h>
-#include <craftd/Set.h>
-#include <craftd/String.h>
-#include <craftd/Regexp.h>
-#include <craftd/Dynamic.h>
-
-#include <craftd/javaendian.h>
-
-#include <craftd/Buffer.h>
-#include <craftd/Buffers.h>
-
-#endif

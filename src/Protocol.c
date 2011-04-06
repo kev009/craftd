@@ -23,47 +23,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_WORKER_H
-#define CRAFTD_WORKER_H
+#include <craftd/Protocol.h>
 
-#include <craftd/common.h>
-#include <craftd/Job.h>
+CDProtocol*
+CD_CreateProtocol (const char* name, CDProtocolPacketParsable parsable, CDProtocolPacketParse parse)
+{
+    CDProtocol* self = CD_malloc(sizeof(CDProtocol));
 
-struct _CDWorkers;
-struct _CDServer;
+    assert(name);
+    assert(parsable);
+    assert(parse);
 
-typedef struct _CDWorker {
-    struct _CDServer* server;
+    self->name     = CD_CreateStringFromCStringCopy(name);
+    self->parsable = parsable;
+    self->parse    = parse;
 
-    int       id;
-    pthread_t thread;
+    return self;
+}
 
-    struct _CDWorkers* workers;
+void CD_DestroyProtocol (CDProtocol* self);
 
-    CDJob* job;
-    bool   working;
-} CDWorker;
-
-/**
- * Create a Worker object
- */
-CDWorker* CD_CreateWorker (struct _CDServer* server);
-
-/**
- * Destroy a Worker object and its eventual working Job
- *
- * @param worker The worker object to destroy
- */
-void CD_DestroyWorker (CDWorker* self);
-
-/**
- * Main thread function, pass the result of CD_CreateWorker as argument.
- */
-bool CD_RunWorker (CDWorker* self);
-
-/**
- * Stop a worker
- */
-bool CD_StopWorker (CDWorker* self);
-
-#endif

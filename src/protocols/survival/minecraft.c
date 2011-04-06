@@ -23,33 +23,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CRAFTD_MINECRAFT_IGNORE_EXTERN
-#include <beta/common.h>
-#undef CRAFTD_MINECRAFT_IGNORE_EXTERN
+#define CRAFTD_SURVIVAL_MINECRAFT_IGNORE_EXTERN
+#include <craftd/protocols/survival/common.h>
+#undef CRAFTD_SURVIVAL_MINECRAFT_IGNORE_EXTERN
 
-const char* MCCharset =
+const char* SVCharset =
     " #$%&\"()*+,-./:;<=>!?@[\\]^_'{|}~⌂ªº¿®¬½¼¡«»£×ƒ"
     "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
     "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜøØáíóúñÑ";
 
-const char MCCharsetPixel[] = {
+const char SVCharsetPixel[] = {
     4, 5, 5, 5, 5, 4, 4, 4, 4, 5, 1, 5, 1, 5, 1, 1, 4, 5, 4, 1, 5, 6, 3, 5, 3, 5
 };
 
-const MCEntityId MCMaxEntityId = INT_MAX;
+const SVEntityId SVMaxEntityId = INT_MAX;
 
 void
-MC_DestroyString (MCString self)
+SV_DestroyString (SVString self)
 {
     CD_DestroyString(self);
 }
 
-MCMetadata*
-MC_CreateMetadata (void)
+SVMetadata*
+SV_CreateMetadata (void)
 {
-    MCMetadata* self = CD_malloc(sizeof(MCMetadata));
+    SVMetadata* self = CD_malloc(sizeof(SVMetadata));
 
     if (!self) {
         return NULL;
@@ -59,20 +59,20 @@ MC_CreateMetadata (void)
 }
 
 void
-MC_DestroyMetadata (MCMetadata* self)
+SV_DestroyMetadata (SVMetadata* self)
 {
     for (size_t i = 0; i < self->length; i++) {
-        MC_DestroyData(self->item[i]);
+        SV_DestroyData(self->item[i]);
     }
 
     CD_free(self->item);
     CD_free(self);
 }
 
-MCData*
-MC_CreateData (void)
+SVData*
+SV_CreateData (void)
 {
-    MCData* self = CD_malloc(sizeof(MCData));
+    SVData* self = CD_malloc(sizeof(SVData));
 
     if (!self) {
         return NULL;
@@ -82,30 +82,30 @@ MC_CreateData (void)
 }
 
 void
-MC_DestroyData (MCData* self)
+SV_DestroyData (SVData* self)
 {
     // Destroy the bstring, the other types lay on the stack
-    if (self->type == MCTypeString) {
+    if (self->type == SVTypeString) {
         CD_DestroyString(self->data.S);
     }
 
     CD_free(self);
 }
 
-MCMetadata*
-MC_ConcatDatas (MCMetadata* metadata, MCData** items, size_t length)
+SVMetadata*
+SV_ConcatDatas (SVMetadata* metadata, SVData** items, size_t length)
 {
     for (size_t i = 0; i < length; i++) {
-        MC_AppendData(metadata, items[i]);
+        SV_AppendData(metadata, items[i]);
     }
 
     return metadata;
 }
 
-MCMetadata*
-MC_AppendData (MCMetadata* metadata, MCData* data)
+SVMetadata*
+SV_AppendData (SVMetadata* metadata, SVData* data)
 {
-    metadata->item = CD_realloc(metadata->item, sizeof(MCData*) * ++metadata->length);
+    metadata->item = CD_realloc(metadata->item, sizeof(SVData*) * ++metadata->length);
 
     metadata->item[metadata->length - 1] = data;
 
@@ -113,7 +113,7 @@ MC_AppendData (MCMetadata* metadata, MCData* data)
 }
 
 bool
-MC_StringIsValid (MCString self)
+SV_StringIsValid (SVString self)
 {
     assert(self);
 
@@ -121,8 +121,8 @@ MC_StringIsValid (MCString self)
         bool      has = false;
         CDString* ch  = CD_CharAt(self, i);
 
-        for (size_t h = 0, he = CD_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[CD_UTF8_offset(MCCharset, h)];
+        for (size_t h = 0, he = CD_UTF8_strlen(SVCharset); h < he; h++) {
+            const char* che = &SVCharset[CD_UTF8_offset(SVCharset, h)];
 
             if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
@@ -141,8 +141,8 @@ MC_StringIsValid (MCString self)
     return true;
 }
 
-MCString
-MC_StringSanitize (MCString self)
+SVString
+SV_StringSanitize (SVString self)
 {
     CDString* result = CD_CreateString();
 
@@ -152,8 +152,8 @@ MC_StringSanitize (MCString self)
         bool      has = false;
         CDString* ch  = CD_CharAt(self, i);
 
-        for (size_t h = 0, he = CD_UTF8_strlen(MCCharset); h < he; h++) {
-            const char* che = &MCCharset[CD_UTF8_offset(MCCharset, h)];
+        for (size_t h = 0, he = CD_UTF8_strlen(SVCharset); h < he; h++) {
+            const char* che = &SVCharset[CD_UTF8_offset(SVCharset, h)];
 
             if (strncmp(CD_StringContent(ch), che, CD_StringSize(ch)) == 0) {
                 has = true;
@@ -181,8 +181,8 @@ MC_StringSanitize (MCString self)
     return result;
 }
 
-MCString
-MC_StringColorRange (MCString self, MCStringColor color, size_t a, size_t b)
+SVString
+SV_StringColorRange (SVString self, SVStringColor color, size_t a, size_t b)
 {
     if (self->external) {
         CDString* tmp = self;
@@ -191,7 +191,7 @@ MC_StringColorRange (MCString self, MCStringColor color, size_t a, size_t b)
     }
 
     CDString* start = CD_CreateStringFromFormat("§%x", color);
-    CDString* end   = CD_CreateStringFromCString(MC_COLOR_WHITE);
+    CDString* end   = CD_CreateStringFromCString(SV_COLOR_WHITE);
 
     assert(self);
     assert(a < b);
@@ -206,13 +206,13 @@ MC_StringColorRange (MCString self, MCStringColor color, size_t a, size_t b)
     return self;
 }
 
-MCString
-MC_StringColor (MCString self, MCStringColor color)
+SVString
+SV_StringColor (SVString self, SVStringColor color)
 {
     assert(self);
 
     if (CD_StringLength(self) > 0) {
-        return MC_StringColorRange(self, color, 0, CD_StringLength(self));
+        return SV_StringColorRange(self, color, 0, CD_StringLength(self));
     }
     else {
         return self;
@@ -220,7 +220,7 @@ MC_StringColor (MCString self, MCStringColor color)
 }
 
 bool
-MC_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
+SV_CompareChunkPosition (CDSet* self, SVChunkPosition* a, SVChunkPosition* b)
 {
     assert(self);
 
@@ -228,7 +228,7 @@ MC_CompareChunkPosition (CDSet* self, MCChunkPosition* a, MCChunkPosition* b)
 }
 
 unsigned int
-MC_HashChunkPosition (CDSet* self, MCChunkPosition* position)
+SV_HashChunkPosition (CDSet* self, SVChunkPosition* position)
 {
     const int HASHMULTIPLIER = 31;
     const int CHUNKBUCKETS   = 401; // Max chunks to the nearest prime
@@ -239,7 +239,7 @@ MC_HashChunkPosition (CDSet* self, MCChunkPosition* position)
 }
 
 void
-MC_ChunkToByteArray (MCChunk* chunk, uint8_t* array)
+SV_ChunkToByteArray (SVChunk* chunk, uint8_t* array)
 {
     size_t offset = 0;
 

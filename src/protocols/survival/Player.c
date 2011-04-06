@@ -25,19 +25,19 @@
 
 #include <craftd/Server.h>
 
-#include <beta/Player.h>
+#include <craftd/protocols/survival/Player.h>
 
-CDPlayer*
-CD_CreatePlayer (CDClient* client)
+SVPlayer*
+SV_CreatePlayer (CDClient* client)
 {
-    CDPlayer* self = CD_malloc(sizeof(CDPlayer));
+    SVPlayer* self = CD_malloc(sizeof(SVPlayer));
 
     assert(self);
 
     self->client = client;
 
     self->entity.id         = 0;
-    self->entity.type       = MCEntityPlayer;
+    self->entity.type       = SVEntityPlayer;
     self->entity.position.x = 0;
     self->entity.position.y = 0;
     self->entity.position.z = 0;
@@ -52,7 +52,7 @@ CD_CreatePlayer (CDClient* client)
 }
 
 void
-CD_DestroyPlayer (CDPlayer* self)
+SV_DestroyPlayer (SVPlayer* self)
 {
     CD_EventDispatch(self->client->server, "Player.destroy", self);
 
@@ -66,29 +66,29 @@ CD_DestroyPlayer (CDPlayer* self)
 }
 
 void
-CD_PlayerSendMessage (CDPlayer* self, CDString* message)
+SV_PlayerSendMessage (SVPlayer* self, CDString* message)
 {
     DO {
-        CDPacketChat pkt = {
+        SVPacketChat pkt = {
             .response = {
                 .message = message
             }
         };
 
-        CDPacket response = { CDResponse, CDChat, (CDPointer) &pkt };
+        SVPacket response = { SVResponse, SVChat, (CDPointer) &pkt };
 
-        CD_PlayerSendPacketAndCleanData(self, &response);
+        SV_PlayerSendPacketAndCleanData(self, &response);
     }
 }
 
 void
-CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
+SV_PlayerSendPacket (SVPlayer* self, SVPacket* packet)
 {
     if (!self || !self->client || !self->client->buffers) {
         return;
     }
 
-    CDBuffer* data = CD_PacketToBuffer(packet);
+    CDBuffer* data = SV_PacketToBuffer(packet);
 
     CD_ClientSendBuffer(self->client, data);
 
@@ -96,31 +96,31 @@ CD_PlayerSendPacket (CDPlayer* self, CDPacket* packet)
 }
 
 void
-CD_PlayerSendPacketAndClean (CDPlayer* self, CDPacket* packet)
+SV_PlayerSendPacketAndClean (SVPlayer* self, SVPacket* packet)
 {
     if (!self || !self->client || !self->client->buffers) {
         return;
     }
 
-    CDBuffer* data = CD_PacketToBuffer(packet);
+    CDBuffer* data = SV_PacketToBuffer(packet);
 
     CD_ClientSendBuffer(self->client, data);
 
     CD_DestroyBuffer(data);
-    CD_DestroyPacket(packet);
+    SV_DestroyPacket(packet);
 }
 
 void
-CD_PlayerSendPacketAndCleanData (CDPlayer* self, CDPacket* packet)
+SV_PlayerSendPacketAndCleanData (SVPlayer* self, SVPacket* packet)
 {
     if (!self || !self->client || !self->client->buffers) {
         return;
     }
 
-    CDBuffer* data = CD_PacketToBuffer(packet);
+    CDBuffer* data = SV_PacketToBuffer(packet);
 
     CD_ClientSendBuffer(self->client, data);
 
     CD_DestroyBuffer(data);
-    CD_DestroyPacketData(packet);
+    SV_DestroyPacketData(packet);
 }
