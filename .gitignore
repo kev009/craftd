@@ -7,8 +7,7 @@
 
 ## Binaries and generated
 /craftd
-/craftd-proxy
-third-party/jansson/src/jansson_config.h
+/src/craftd
 /craftd.conf.dist
 
 ## C
@@ -39,24 +38,24 @@ Makefile.in
 # Check build-aux/.gitignore for the commented stuff
 /autom4te.cache
 /aclocal.m4
-#/compile
-#/depcomp
-#/install-sh
-#/missing
+/build/auto/aux/
+/configure
 /config.guess
 /config.log
 /config.status
 /config.sub
 config.h
+/include/craftd/config.h.in
+stamp-h1
+Makefile
 
 # libtool
-build-aux/ltmain.sh
 /libtool
-m4/libtool.m4
-m4/ltoptions.m4
-m4/ltsugar.m4
-m4/ltversion.m4
-m4/lt~obsolete.m4
+/build/auto/m4/libtool.m4
+/build/auto/m4/ltoptions.m4
+/build/auto/m4/ltsugar.m4
+/build/auto/m4/ltversion.m4
+/build/auto/m4/lt~obsolete.m4
 
 ## Editors
 # Eclipse
