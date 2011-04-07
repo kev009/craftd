@@ -30,6 +30,7 @@ AC_CONFIG_FILES([
                  htdocs/Makefile
                  third-party/Makefile
                  plugins/Makefile
+                 plugins/survival/mapgen/noise/Makefile
                  ])
 
 AC_CONFIG_SRCDIR([src/craftd.c])
