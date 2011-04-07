@@ -30,6 +30,11 @@
 
 #include <craftd/protocols/survival/Player.h>
 
+typedef enum _SVWorldError {
+    SVWorldErrUnknown = 1,
+    SVWorldErrUsernameTaken = 2
+} SVWorldError;
+
 typedef enum _SVWorldDimension {
     SVWorldHell   = -1,
     SVWorldNormal =  0
@@ -48,11 +53,16 @@ typedef struct _SVWorld {
         pthread_spinlock_t time;
     } lock;
 
+    /// The currently connected players
     CDHash* players;
+
+    /// All world entities (including players)
     CDMap*  entities;
 
     SVBlockPosition spawnPosition;
     CDSet*          chunks;
+
+    SVEntityId lastGeneratedEntityId;
 
     CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;
@@ -68,7 +78,19 @@ void SV_WorldLoad (SVWorld* self);
 
 SVEntityId SV_WorldGenerateEntityId (SVWorld* self);
 
-void SV_WorldAddPlayer (SVWorld* self, SVPlayer* player);
+/**
+ * Adds a player to the given world instance. If a player
+ * with the same username exists, this may fail.
+ *
+ * @returns true if the player was successfully added; false otherwise.
+ *          use ERROR(self) to get the error code.
+ */
+bool SV_WorldAddPlayer (SVWorld* self, SVPlayer* player);
+
+/**
+ * Removes the instance of the player from the world.
+ */
+void SV_WorldRemovePlayer (SVWorld* self, SVPlayer* player);
 
 void SV_WorldBroadcastBuffer (SVWorld* self, CDBuffer* buffer);
 

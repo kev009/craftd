@@ -22,7 +22,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/**
+ * All of the event callbacks for the survival plugin are implemented
+ * here.
+ * @inmodule Survival
+ */
 #include <zlib.h>
 
 #include <craftd/Logger.h>
@@ -435,7 +439,6 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
         case SVLogin: {
             SVPacketLogin* data = (SVPacketLogin*) packet->data;
 
-            pthread_mutex_lock(&_lock.login);
 
             SLOG(server, LOG_NOTICE, "%s tried login with client version %d", CD_StringContent(data->request.username), data->request.version);
 
@@ -447,31 +450,23 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
                 return false;
             }
 
-            if (CD_HashHasKey(world->players, CD_StringContent(data->request.username))) {
-                SLOG(server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(data->request.username));
-
-                if (server->config->cache.game.protocol.standard) {
-                    CD_ServerKick(server, client, CD_CreateStringFromFormat("%s nick already exists",
-                        CD_StringContent(data->request.username)));
-
-                    CD_EventDispatch(server, "Player.login", player, false);
-
-                    return false;
-                }
-                else {
-                    player->username = CD_CreateStringFromFormat("Player_%d", player->entity.id);
-                }
-            }
-            else {
-                player->username = CD_CloneString(data->request.username);
+            if (data->request.username->length < 1) {
+                CD_ServerKick(server, client, CD_CreateStringFromCString(
+                    "Invalid username"));
+                return false;
             }
 
-            player->world = world;
+            player->username = CD_CloneString(data->request.username);
 
-            CD_HashPut(world->players, CD_StringContent(player->username), (CDPointer) player);
-            CD_MapPut(world->entities, player->entity.id, (CDPointer) player);
 
-            pthread_mutex_unlock(&_lock.login);
+            if (!SV_WorldAddPlayer(world, player)) {
+                CD_ServerKick(server, client, CD_CreateStringFromFormat(
+                    "Login failed: %d", ERROR(world)));
+                CD_EventDispatch(server, "Player.login", player, false);
+                return false;
+            }
+
+            // The player is now added to the world and logged-in.
 
             DO {
                 SVPacketLogin pkt = {
@@ -486,7 +481,9 @@ cdbeta_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
 
                 SVPacket response = { SVResponse, SVLogin, (CDPointer) &pkt };
 
-                SV_PlayerSendPacketAndCleanData(player, &response);
+                SLOG(server, LOG_INFO, "%s responding with entity id %d", CD_StringContent(player->username), player->entity.id);
+
+               SV_PlayerSendPacketAndCleanData(player, &response);
             }
 
             SVChunkPosition spawnChunk = SV_BlockPositionToChunkPosition(world->spawnPosition);
@@ -724,6 +721,9 @@ static
 bool
 cdbeta_PlayerLogout (CDServer* server, SVPlayer* player)
 {
+    assert(player);
+
+
     SV_WorldBroadcastMessage(player->world, SV_StringColor(CD_CreateStringFromFormat("%s has left the game",
         CD_StringContent(player->username)), SVColorYellow));
 

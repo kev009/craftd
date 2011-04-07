@@ -214,7 +214,7 @@ cd_ErrorCallback (struct bufferevent* event, short error, CDClient* client)
 
     ERROR(client) = error;
 
-    SLOG(self, LOG_INFO, "%s disconnected", client->ip);
+    SLOG(self, LOG_INFO, "%s[%p] errored/disconnected", client->ip, client);
 
     CD_AddJob(client->server->workers, CD_CreateExternalJob(CDClientDisconnectJob, (CDPointer) client));
 
@@ -428,7 +428,11 @@ CD_ServerCleanDisconnects (CDServer* self)
 {
     if (CD_ListLength(self->disconnecting) > 0) {
         CD_LIST_FOREACH(self->disconnecting, it) {
-            CD_DestroyClient((CDClient*) CD_ListDelete(self->clients, CD_ListIteratorValue(it)));
+            CDClient* client = (CDClient*) CD_ListDelete(self->clients, CD_ListIteratorValue(it));
+
+            if (client) {
+                CD_DestroyClient(client);
+            }
         }
 
         CD_free(CD_ListClear(self->disconnecting));
