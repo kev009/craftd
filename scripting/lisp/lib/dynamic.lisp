@@ -10,3 +10,15 @@
 
 (uffi:def-function ("CD_HashDelete" c-hash-delete) ((self (* :void)) (name :cstring))
                    :returning (+ :void))
+
+(defun dynamic-get (object name)
+  (uffi:with-cstring (c-name name)
+    (c-hash-get (get-wrapped-slot object 'dynamic) name)))
+
+(defun dynamic-set (object name value)
+  (uffi:with-cstring (c-name name)
+    (c-hash-set (get-wrapped-slot object 'dynamic) name value)))
+
+(defun dynamic-delete (object name)
+  (uffi:with-cstring (c-name name)
+    (c-hash-delete (get-wrapped-slot object 'dynamic) name)))

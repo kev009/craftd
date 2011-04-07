@@ -12,12 +12,10 @@
 
 (defun register (name callback &optional priority)
   (let ((callbacks (gethash name *event-callbacks*)))
-    (setf (gethash name *event-callbacks*)
-      (append callbacks (list (list callback priority)) callbacks))))
+    (push (list callback priority) callbacks)))
 
 (defun unregister (name &optional callback)
   (let ((callbacks (gethash name *event-callbacks*)))
-    (setf (gethash name *event-callbacks*)
-          (if callback
-            (remove-if #'(lambda (element) (equal (first element) callback)) callbacks)
-            nil))))
+    (if callback
+      (clrhash callbacks)
+      (remhash callback callbacks))))
