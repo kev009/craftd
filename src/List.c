@@ -142,13 +142,13 @@ cd_ListDelete (CDList* self, CDPointer data, CDListCompareCallback callback)
         CD_free(item);
     }
     else {
-        CDListItem *item = self->head;
+        CDListItem* item = self->head;
 
         while (item->next) {
             if (callback(data, item->next->value) == 0) {
-               CDListItem*  toDelete   = item->next;
-                            item->next = toDelete->next;
-                            result     = toDelete->value;
+               CDListItem* toDelete   = item->next;
+                           item->next = toDelete->next;
+                           result     = toDelete->value;
  
                 if (item->next) {
                     item->next->prev = item;
@@ -174,8 +174,8 @@ CD_CreateList (void)
 {
     CDList* self = CD_malloc(sizeof(CDList));
 
-    self->head    = NULL;
-    self->tail    = NULL;
+    self->head = NULL;
+    self->tail = NULL;
 
     self->changed = false;
     self->length  = 0;
@@ -206,9 +206,8 @@ CD_DestroyList (CDList* self)
 {
     assert(self);
 
-    /* Is this neccesary, only when somebody is still
-       reading/writing but that should already be
-       stopped before you call this. */
+    // Is this neccesary, only when somebody is still reading/writing but that should already
+    // be stopped before you call this.
     pthread_rwlock_wrlock(&self->lock);
 
     while (self->head) {
