@@ -106,7 +106,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     cdlisp_eval("(asdf:load-system :craftd)");
 
     if (errno == EILSEQ) {
-        SERR(self->server, "Failed to load the core LISP stuff");
+        SERR(self->server, "Failed to load the core LISP");
 
         return false;
     }
