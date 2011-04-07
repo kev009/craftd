@@ -24,6 +24,7 @@ craftd_SOURCES =  Buffer.c \
 		  Map.c \
 		  Plugin.c \
 		  Plugins.c \
+		  Protocol.c \
 		  Regexp.c \
 		  ScriptingEngine.c \
 		  ScriptingEngines.c \
