@@ -10,19 +10,13 @@
     ((< (second a) (second b)) 1)
     (t                    -1)))
 
-(defmacro with-callbacks ((callbacks name) &body body)
-  `(let ((,callbacks (gethash ,name *event-callbacks*)))
-     (if (not ,callbacks)
-         (setf ,callbacks nil))
-     ,@body))
-
 (defun register (name callback &optional priority)
-  (with-callbacks (callbacks name)
+  (let ((callbacks (gethash name *event-callbacks*)))
     (setf (gethash name *event-callbacks*)
-          (append (list callback priority) callbacks))))
+      (append callbacks (list (list callback priority)) callbacks))))
 
 (defun unregister (name &optional callback)
-  (with-callbacks (callbacks name)
+  (let ((callbacks (gethash name *event-callbacks*)))
     (setf (gethash name *event-callbacks*)
           (if callback
             (remove-if #'(lambda (element) (equal (first element) callback)) callbacks)

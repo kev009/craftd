@@ -2,9 +2,11 @@
 
 (export '(player-ip))
 
-(uffi:def-struct entity)
-
-(uffi:def-struct player)
+(uffi:def-struct player
+    (entity entity)
+    (client (* :void))
+    (world  (* :void)))
 
 (defun player-ip (player)
-  (client-ip (get-slot-value player 'player 'client)))
+  (let ((player (wrap player 'player)))
+      (client-ip (get-wrapped-slot player 'client))))

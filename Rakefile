@@ -310,7 +310,7 @@ namespace :scripting do |scripting|
     desc 'Check for LISP requirements'
     task :requirements => 'scripting/lisp/include/config.h'
 
-    file 'scripting/lisp/include/config.h' do
+    file 'scripting/lisp/config.h' do
       find_executable('ecl-config') or fail 'ecl-config not found'
 
       create_config 'scripting/lisp/include/config.h'

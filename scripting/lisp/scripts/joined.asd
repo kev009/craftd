@@ -4,4 +4,5 @@
 (format t "Server: ~a~%" (craftd:server-name))
 
 (craftd:register "Client.connect" (lambda (client)
-    (format t "~a" (craftd:client-ip client))))
+    (let ((client (craftd:wrap-client client)))
+        (format t "~a~%" (craftd:client-ip client)))))
