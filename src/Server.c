@@ -449,6 +449,14 @@ CD_ServerKick (CDServer* self, CDClient* client, CDString* reason)
     assert(self);
     assert(client);
 
+    pthread_rwlock_wrlock(&client->lock.status);
+
+    if (client->status == CDClientDisconnect) {
+        pthread_rwlock_unlock(&client->lock.status);
+
+        return;
+    }
+
     if (reason == NULL) {
         reason = CD_CreateStringFromCString("No reason");
     }
@@ -456,8 +464,6 @@ CD_ServerKick (CDServer* self, CDClient* client, CDString* reason)
     SLOG(self, LOG_INFO, "%s kicked: %s", client->ip, CD_StringContent(reason));
 
     CD_EventDispatch(self, "Client.kick", client, reason);
-
-    pthread_rwlock_wrlock(&client->lock.status);
 
     client->status = CDClientDisconnect;
 

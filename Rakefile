@@ -4,7 +4,7 @@ require 'rake/clean'
 
 FileList['build/rake/**.rb'].each do |f| load f end
 
-VERSION = '0.1a'
+VERSION = '0.2pre'
 
 PREFIX         = ENV['PREFIX']         || '/usr'
 LIBDIR         = ENV['LIBDIR']         || "#{PREFIX}/lib"
@@ -17,7 +17,7 @@ $INCFLAGS << ' ${CFLAGS}'
 $LDFLAGS  << ' ${LDFLAGS}'
 
 CC      = ENV['CC'] || 'gcc'
-CFLAGS  = "-Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"' #{ENV['CFLAGS']}"
+CFLAGS  = "-Wall -Wno-unused -std=gnu99 -fPIC -DCRAFTD_VERSION='\"#{VERSION}\"' -DPACKAGE_STRING='\"craftd #{VERSION}\"' #{ENV['CFLAGS']}"
 LDFLAGS = "-export-dynamic #{ENV['LDFLAGS']}"
 
 if ENV['DEBUG']
@@ -310,7 +310,7 @@ namespace :scripting do |scripting|
     desc 'Check for LISP requirements'
     task :requirements => 'scripting/lisp/include/config.h'
 
-    file 'scripting/lisp/config.h' do
+    file 'scripting/lisp/include/config.h' do
       find_executable('ecl-config') or fail 'ecl-config not found'
 
       create_config 'scripting/lisp/include/config.h'

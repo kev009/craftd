@@ -51,6 +51,8 @@ CD_CreateClient (CDServer* server)
 void
 CD_DestroyClient (CDClient* self)
 {
+    assert(self);
+
     CD_EventDispatch(self->server, "Client.destroy", self);
 
     if (self->buffers) {
@@ -71,6 +73,9 @@ CD_DestroyClient (CDClient* self)
 void
 CD_ClientSendBuffer (CDClient* self, CDBuffer* buffer)
 {
+    assert(self);
+    assert(buffer);
+
     if (!self->buffers) {
         return;
     }
