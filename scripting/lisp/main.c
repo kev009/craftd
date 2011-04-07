@@ -33,6 +33,16 @@
 bool
 cdlisp_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
+    cl_object callbacks = cdlisp_eval("(craftd::get-callbacks '%s)", event);
+
+    printf("%s\n", event);
+
+    if (callbacks == Cnil) {
+        return true;
+    }
+
+    puts(":>");
+
     return true;
 }
 
@@ -60,8 +70,6 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     ecl_set_option(ECL_OPT_TRAP_SIGINT, FALSE);
 
     cl_boot(argc, (char**) argv);
-
-    CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
     cdlisp_eval("(setf *break-on-signals* 'error)");
     cdlisp_eval("(require 'asdf)");
@@ -94,11 +102,8 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
                 path = CD_AppendCString(path, "/");
             }
 
-            CDString* code = CD_CreateStringFromFormat("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
+            cdlisp_eval("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
 
-            cdlisp_eval(CD_StringContent(code));
-
-            CD_DestroyString(code);
             CD_DestroyString(path);
         }
     }
@@ -111,23 +116,15 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         return false;
     }
 
-    DO {
-        CDString* code = CD_CreateStringFromFormat("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
-
-        cdlisp_eval(CD_StringContent(code));
-
-        CD_DestroyString(code);
-    }
+    cdlisp_eval("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
 
     J_DO {
         J_FOREACH(script, self->config, "scripts") {
-            CDString* code = CD_CreateStringFromFormat("(asdf:load-system \"%s\")", J_STRING_CAST(script));
-
-            cdlisp_eval(CD_StringContent(code));
-
-            CD_DestroyString(code);
+            cdlisp_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
         }
     }
+
+    CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
 
     return true;
 }

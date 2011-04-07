@@ -46,15 +46,24 @@ cdlisp_to_bool (cl_object self)
 
 static inline
 cl_object
-cdlisp_eval (const char* code)
+cdlisp_eval (const char* format, ...)
 {
+    va_list ap;
+
+    va_start(ap, format);
+
+    CDString* code   = CD_CreateStringFromFormatList(format, ap);
     cl_object result = Cnil;
 
     CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) code));
+        result = cl_eval(ecl_read_from_cstring((char*) CD_StringContent(code)));
     } CL_CATCH_ALL_IF_CAUGHT {
         errno = EILSEQ;
     } CL_CATCH_ALL_END;
+
+    va_end(ap);
+
+    CD_DestroyString(code);
 
     return result;
 }
