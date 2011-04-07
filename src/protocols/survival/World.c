@@ -64,6 +64,8 @@ SV_CreateWorld (CDServer* server, const char* name)
 
     self->chunks = CD_CreateSetWith(2000, (CDSetCompare) SV_CompareChunkPosition, (CDSetHash) SV_HashChunkPosition);
 
+    self->lastGeneratedEntityId = 0;
+
     DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
@@ -115,23 +117,69 @@ SV_DestroyWorld (SVWorld* self)
 SVEntityId
 SV_WorldGenerateEntityId (SVWorld* self)
 {
-    SVEntityId result;
-
     assert(self);
 
-    if (CD_MapLength(self->entities) != 0) {
-        result = ((SVEntity*) CD_MapLast(self->entities))->id + 1;
-    }
-    else {
-        result = 10;
+    if (self->lastGeneratedEntityId != 0) {
+        self->lastGeneratedEntityId++;
+    } else {
+        self->lastGeneratedEntityId = 10;
     }
 
-    return result;
+    return self->lastGeneratedEntityId;
 }
 
-void
+bool
 SV_WorldAddPlayer (SVWorld* self, SVPlayer* player)
 {
+    bool ret = true;
+
+    assert(self);
+    assert(player);
+    assert(player->entity.id == 0);
+
+    // Check to see if the player is already logged-in.
+    if (CD_HashHasKey(self->players, CD_StringContent(player->username))) {
+        SLOG(self->server, LOG_NOTICE, "%s: nick exists on the server", CD_StringContent(player->username));
+
+        if (self->server->config->cache.game.protocol.standard) {
+            // The standard action is to reject the new login attempt 
+            // if already logged-in
+
+            ERROR(self) = SVWorldErrUsernameTaken;
+            ret = false;
+            goto done;
+
+        } else {
+            //craftd will let you login multiple times with the same login!
+
+            SLOG(self->server, LOG_INFO, "%s: generating unique username", CD_StringContent(player->username));
+            CDString *baseUsername = CD_CloneString(player->username);
+
+            int count = 1;
+
+            // A simple loop adding an increment on the given username
+            do {
+                CD_DestroyString(player->username);
+                player->username = 
+                    CD_CreateStringFromFormat("%s^%d",
+                        CD_StringContent(baseUsername), count++);
+
+            } while (CD_HashHasKey(self->players, CD_StringContent(player->username)));
+
+            CD_DestroyString(baseUsername);
+        }
+    }
+
+    player->world = self;
+    player->entity.id = SV_WorldGenerateEntityId(self);
+
+    CD_HashPut(self->players, CD_StringContent(player->username),
+                (CDPointer) player);
+    CD_MapPut(self->entities, player->entity.id, (CDPointer) player);
+
+    done: {
+        return ret;
+    }
 }
 
 void
