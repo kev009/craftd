@@ -16,6 +16,8 @@
 
   :components (
     (:file "string")
+    (:file "minecraft")
+    (:file "wrap")
     (:file "dispatcher")
     (:file "server")
     (:file "client")
