@@ -17,7 +17,7 @@ EXTRA_DIST = survival/base/callbacks.c
 #libsvcmdadmin_la_LDFLAGS = -version-info=0:0:0
 #EXTRA_DIST += survival/commands/admin/src
 
-libsurvival_persistence_nbt_la_SOURCES = survival/persistence/nbt/main.c
+libsurvival_persistence_nbt_la_SOURCES = survival/persistence/nbt/main.c survival/persistence/nbt/src/itoa.c survival/persistence/nbt/include/itoa.h survival/persistence/nbt/include/nbt.h survival/persistence/nbt/cNBT/nbt_loading.c survival/persistence/nbt/cNBT/nbt.h
 libsurvival_persistence_nbt_la_CPPFLAGS = -Isurvival/persistence/nbt/include -Isurvival/persistence/nbt/ -I$(top_srcdir)/include -I$(top_builddir)/include
 
 # Classic map generator

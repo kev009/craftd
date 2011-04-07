@@ -31,8 +31,8 @@
 
 #include <craftd/protocols/survival.h>
 
-#include "nbt.h"
-#include "itoa.h"
+#include "include/nbt.h"
+#include "include/itoa.h"
 
 static struct {
     const char* path;
