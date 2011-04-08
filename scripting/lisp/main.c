@@ -30,6 +30,25 @@
 
 #include "helpers.c"
 
+static
+bool
+cdcl_WorkerStart (CDServer* server, CDWorker* worker)
+{
+    ecl_import_current_thread(Cnil, Cnil);
+    
+    return true;
+}
+
+static
+bool
+cdcl_WorkerStop (CDServer* server, CDWorker* worker)
+{
+    ecl_release_current_thread();
+
+    return true;
+}
+
+static
 bool
 cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
@@ -38,6 +57,10 @@ cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
     }
 
     CDString* parameters = cdcl_MakeParameters((CDList*) CD_HashGet(server->event.provided, event), args);
+
+    if (!parameters) {
+        return true;
+    }
 
     cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
 
@@ -127,6 +150,9 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     }
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
+
+    CD_EventRegister(self->server, "Worker.start!", cdcl_WorkerStart);
+    CD_EventRegister(self->server, "Worker.stop!", cdcl_WorkerStop);
 
     return true;
 }
