@@ -5,4 +5,4 @@
   (format t "Server ~a started ;)~%" (craftd:server-name))))
 
 (craftd:register :Client.connect #'(lambda (client)
-  (format t "~a~%" (craftd:client-ip client))))
+  (format t "Client ~a connected :>~%" (craftd:client-ip client))))

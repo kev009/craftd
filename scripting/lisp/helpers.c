@@ -52,14 +52,24 @@ cdcl_eval (const char* format, ...)
 
     va_start(ap, format);
 
+    ecl_import_current_thread(Cnil, Cnil);
+
     CDString* code   = CD_CreateStringFromFormatList(format, ap);
+    cl_object form   = c_string_to_object((char*) CD_StringContent(code));
     cl_object result = Cnil;
 
-    CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-        result = cl_eval(ecl_read_from_cstring((char*) CD_StringContent(code)));
-    } CL_CATCH_ALL_IF_CAUGHT {
+    if (form == OBJNULL) {
         errno = EILSEQ;
-    } CL_CATCH_ALL_END;
+    }
+    else {
+        CL_CATCH_ALL_BEGIN(ecl_process_env()) {
+            result = cl_safe_eval(form, Cnil, Cnil);
+        } CL_CATCH_ALL_IF_CAUGHT {
+            errno = EILSEQ;
+        } CL_CATCH_ALL_END;
+    }
+
+    ecl_release_current_thread();
 
     va_end(ap);
 

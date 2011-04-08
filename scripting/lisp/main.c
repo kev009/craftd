@@ -33,12 +33,6 @@
 bool
 cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
-    cl_object callbacks = cdcl_eval("(craftd::get-callbacks :%s)", event);
-
-    if (callbacks == Cnil) {
-        return true;
-    }
-
     if (!CD_HashHasKey(server->event.provided, event)) {
         return true;
     }
