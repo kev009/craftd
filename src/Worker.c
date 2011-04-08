@@ -65,6 +65,8 @@ CD_RunWorker (CDWorker* self)
 {
     assert(self);
 
+    CD_EventDispatch(self->server, "Worker.start!", self);
+
     SLOG(self->server, LOG_INFO, "worker %d started", self->id);
 
     while (self->working) {
@@ -197,6 +199,8 @@ bool
 CD_StopWorker (CDWorker* self)
 {
     assert(self);
+
+    CD_EventDispatch(self->server, "Worker.stop!", self);
 
     self->working = false;
 

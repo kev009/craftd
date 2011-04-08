@@ -456,8 +456,8 @@ CD_ListIsEqual (CDList* a, CDList* b, CDListCompareCallback callback)
     }
 
     end: {
-        pthread_rwlock_unlock(&a->lock);
         pthread_rwlock_unlock(&b->lock);
+        pthread_rwlock_unlock(&a->lock);
 
         return result;
     }

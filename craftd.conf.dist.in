@@ -87,7 +87,7 @@
         ],
 
         "engines": [
-            { "name": "lisp",
+            [ { "name": "lisp",
                 "paths": [
                     "scripting/lisp/lib",
                     "scripting/lisp/scripts",
@@ -98,7 +98,7 @@
                 "options": [],
 
                 "scripts": ["joined"]
-            },
+            } ],
 
             { "name": "javascript",
                 "paths": [

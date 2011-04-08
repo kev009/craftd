@@ -52,8 +52,6 @@ cdcl_eval (const char* format, ...)
 
     va_start(ap, format);
 
-    ecl_import_current_thread(Cnil, Cnil);
-
     CDString* code   = CD_CreateStringFromFormatList(format, ap);
     cl_object form   = c_string_to_object((char*) CD_StringContent(code));
     cl_object result = Cnil;
@@ -68,8 +66,6 @@ cdcl_eval (const char* format, ...)
             errno = EILSEQ;
         } CL_CATCH_ALL_END;
     }
-
-    ecl_release_current_thread();
 
     va_end(ap);
 
@@ -97,6 +93,12 @@ cdcl_MakeParameters (CDList* parameters, va_list args)
         if (CD_CStringIsEqual(type, "CDClient")) {
             code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
                 "(craftd:wrap (uffi:make-pointer %ld :void) 'client) ", (CDPointer) va_arg(args, void*)));
+        }
+        else {
+            CD_DestroyString(code);
+            code = NULL;
+
+            CD_LIST_BREAK(parameters);
         }
     }
 
