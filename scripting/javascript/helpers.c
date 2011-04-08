@@ -23,17 +23,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_SURVIVAL_H
-#define CRAFTD_SURVIVAL_H
+void
+cdjs_ReportError (JSContext* cx, const char* message, JSErrorReport* report)
+{
+    ERR("%s:%u > %s\n",
+        report->filename ? report->filename : "craftd",
+        (unsigned int) report->lineno,
+        message
+    );
+}
 
-#include <craftd/protocols/survival/minecraft.h>
+JSObject*
+cdjs_InitializeGlobal (CDServer* server)
+{
+    JSContext* context = CD_DynamicGet(server, "JavaScript.context");
+    JSObject*  global  = NULL;
 
-#include <craftd/protocols/survival/World.h>
-#include <craftd/protocols/survival/Player.h>
-#include <craftd/protocols/survival/Packet.h>
-#include <craftd/protocols/survival/PacketLength.h>
-#include <craftd/protocols/survival/Logger.h>
-
-CDProtocol* CD_InitializeSurvivalProtocol (CDServer* server);
-
-#endif
+    JS_InitCTypesClass(context, global);
+}

@@ -148,6 +148,8 @@ CDRawString CD_DestroyStringKeepData (CDString* self);
 
 CDString* CD_AppendString (CDString* self, CDString* append);
 
+CDString* CD_AppendStringAndClean (CDString* self, CDString* append);
+
 CDString* CD_AppendCString (CDString* self, const char* append);
 
 CDString* CD_PrependString (CDString* self, CDString* append);

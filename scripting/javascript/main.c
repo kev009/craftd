@@ -23,17 +23,48 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_SURVIVAL_H
-#define CRAFTD_SURVIVAL_H
+#include <craftd/Server.h>
+#include <craftd/Plugin.h>
 
-#include <craftd/protocols/survival/minecraft.h>
+#include <jsapi.h>
 
-#include <craftd/protocols/survival/World.h>
-#include <craftd/protocols/survival/Player.h>
-#include <craftd/protocols/survival/Packet.h>
-#include <craftd/protocols/survival/PacketLength.h>
-#include <craftd/protocols/survival/Logger.h>
+#include "helpers.c"
 
-CDProtocol* CD_InitializeSurvivalProtocol (CDServer* server);
+bool
+cdjs_EventDispatcher (CDServer* server, const char* event, va_list args)
+{
+    return true;
+}
 
-#endif
+extern
+bool
+CD_ScriptingEngineInitialize (CDScriptingEngine* self)
+{
+    self->description = CD_CreateStringFromCString("JavaScript scripting");
+
+    JS_SetCStringsAreUTF8();
+
+    JSRuntime* runtime = JS_NewRuntime(8L * 1024L * 1024L);
+    JSContext* context = JS_NewContext(runtime, 8192);;
+
+    JS_SetErrorReporter(context, cdjs_ReportError);
+
+    JSObject* global = cdjs_InitializeGlobal(self->server);
+
+    CD_DynamicPut(self->server, "JavaScript.runtime", (CDPointer) runtime);
+    CD_DynamicPut(self->server, "JavaScript.context", (CDPointer) context);
+    CD_DynamicPut(self->server, "JavaScript.global",  (CDPointer) global);
+
+    CD_EventRegister(self->server, "Event.dispatch:before", cdjs_EventDispatcher);
+
+    return true;
+}
+
+extern
+bool
+CD_ScriptingEngineFinalize (CDScriptingEngine* self)
+{
+    CD_EventUnregister(self->server, "Event.dispatch:before", cdjs_EventDispatcher);
+
+    return true;
+}

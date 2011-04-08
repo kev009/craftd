@@ -171,6 +171,8 @@ CDList* CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback c
  */
 CDList* CD_ListSort (CDList* self, CDListSortAlgorithm algorithm, CDListCompareCallback callback);
 
+bool CD_ListIsEqual (CDList* a, CDList* b, CDListCompareCallback callback);
+
 /**
  * Delete the first value matching the passed one from the List.
  *

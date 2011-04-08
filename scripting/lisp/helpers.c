@@ -25,28 +25,28 @@
 
 static inline
 cl_object
-cdlisp_str (const char* string)
+cdcl_str (const char* string)
 {
     return make_simple_base_string((char*) string);
 }
 
 static inline
 cl_object
-cdlisp_str_intern (const char* string)
+cdcl_str_intern (const char* string)
 {
-    return cl_intern(1, cdlisp_str(string));
+    return cl_intern(1, cdcl_str(string));
 }
 
 static inline
 bool
-cdlisp_to_bool (cl_object self)
+cdcl_to_bool (cl_object self)
 {
     return self != Cnil;
 }
 
 static inline
 cl_object
-cdlisp_eval (const char* format, ...)
+cdcl_eval (const char* format, ...)
 {
     va_list ap;
 
@@ -70,7 +70,25 @@ cdlisp_eval (const char* format, ...)
 
 static inline
 void
-cdlisp_in_package (const char* name)
+cdcl_in_package (const char* name)
 {
-    si_select_package(cdlisp_str(name));
+    si_select_package(cdcl_str(name));
+}
+
+static
+CDString*
+cdcl_MakeParameters (CDList* parameters, va_list args)
+{
+    CDString* code = CD_CreateString();
+
+    CD_LIST_FOREACH(parameters, it) {
+        const char* type = (const char*) CD_ListIteratorValue(it);
+
+        if (CD_CStringIsEqual(type, "CDClient")) {
+            code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
+                "(craftd:wrap (uffi:make-pointer %p) 'client) ", va_arg(args, void*)));
+        }
+    }
+
+    return code;
 }

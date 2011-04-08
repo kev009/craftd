@@ -39,6 +39,21 @@ CDEventCallback* CD_CreateEventCallback (CDEventCallbackFunction function, int p
 
 void CD_DestroyEventCallback (CDEventCallback* self);
 
+CDList* CD_CreateEventParameters (const char* first, ...);
+
+void CD_DestroyEventParameters (CDList* parameters);
+
+/**
+ * Tell the system that an event is being provided.
+ *
+ * @param server The server where the event can be dispatched
+ * @param eventName The event name
+ * @param parameters A list with the parameters types
+ *
+ * @return true if the event can be provided, false otherwise
+ */
+bool CD_EventProvides (CDServer* server, const char* eventName, CDList* parameters);
+
 bool cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...);
 
 bool cd_EventAfterDispatch (CDServer* self, const char* eventName, bool interrupted, ...);

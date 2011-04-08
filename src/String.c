@@ -351,6 +351,31 @@ CD_AppendString (CDString* self, CDString* append)
 }
 
 CDString*
+CD_AppendStringAndClean (CDString* self, CDString* append)
+{
+    assert(self);
+    assert(append);
+
+    if (self->external) {
+        CDString* tmp = self;
+        self          = CD_CloneString(tmp);
+        CD_DestroyString(tmp);
+    }
+
+    if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
+        cd_UpdateLength(self);
+    }
+    else {
+        self = NULL;
+    }
+
+    CD_DestroyString(append);
+
+    return self;
+}
+
+
+CDString*
 CD_AppendCString (CDString* self, const char* append)
 {
     assert(self);
@@ -364,11 +389,9 @@ CD_AppendCString (CDString* self, const char* append)
 
     CDString* tmp = CD_CreateStringFromCString(append);
 
-    if (!CD_AppendString(self, tmp)) {
+    if (!CD_AppendStringAndClean(self, tmp)) {
         self = NULL;
     }
-
-    CD_DestroyString(tmp);
 
     return self;
 }

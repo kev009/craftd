@@ -67,6 +67,67 @@ CD_DestroyEventCallback (CDEventCallback* self)
     CD_free(self);
 }
 
+CDList*
+CD_CreateEventParameters (const char* first, ...)
+{
+    va_list ap;
+    CDList* self    = CD_CreateList();
+    char*   current = NULL;
+
+    if (first) {
+        va_start(ap, first);
+
+        CD_ListPush(self, (CDPointer) strdup(first));
+
+        while ((current = va_arg(ap, char*))) {
+            CD_ListPush(self, (CDPointer) strdup(current));
+        }
+
+        va_end(ap);
+    }
+
+    return self;
+}
+
+void
+CD_DestroyEventParameters (CDList* parameters)
+{
+    CD_LIST_FOREACH(parameters, it) {
+        CD_free((char*) CD_ListIteratorValue(it));
+    }
+
+    CD_DestroyList(parameters);
+}
+
+static
+int
+cd_EventParameterCompare (char* a, char* b)
+{
+    if (CD_CStringIsEqual(a, b)) {
+        return 0;
+    }
+    
+    return 1;
+}
+
+bool
+CD_EventProvides (CDServer* server, const char* eventName, CDList* parameters)
+{
+    CDList* params = (CDList*) CD_HashGet(server->event.provided, eventName);
+
+    if (params && !CD_ListIsEqual(params, parameters, (CDListCompareCallback) cd_EventParameterCompare)) {
+        SERR(server, "Event %s signature mismatch", eventName);
+
+        CD_DestroyList(parameters);
+        
+        return false;
+    }
+
+    CD_HashPut(server->event.provided, eventName, (CDPointer) parameters);
+
+    return true;
+}
+
 bool
 cd_EventBeforeDispatch (CDServer* self, const char* eventName, ...)
 {

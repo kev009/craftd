@@ -198,6 +198,8 @@ CD_CreateHTTPd (CDServer* server)
     evhttp_set_cb(self->event.httpd, "/rpc/json", (void (*)(struct evhttp_request*, void*)) cd_JSONRequest, server);
     evhttp_set_gencb(self->event.httpd, (void (*)(struct evhttp_request*, void*)) cd_StaticRequest, server);
 
+    CD_EventProvides(server, "RPC.JSON", CD_CreateEventParameters("json_t", "json_t", NULL));
+
     return self;
 }
 

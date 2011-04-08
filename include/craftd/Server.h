@@ -63,6 +63,7 @@ typedef struct _CDServer {
         struct event*      listener;
 
         CDHash* callbacks;
+        CDHash* provided;
     } event;
 
     evutil_socket_t socket;

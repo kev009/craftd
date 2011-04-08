@@ -58,7 +58,7 @@ CD_CreatePlugin (CDServer* server, const char* name)
     if (!self->handle) {
         CD_DestroyPlugin(self);
 
-        SERR(server, "Couldn't load plugin %s", name);
+        SWARN(server, "Couldn't load plugin %s", name);
 
         errno = ENOENT;
 
