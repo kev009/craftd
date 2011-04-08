@@ -31,6 +31,8 @@
 #include "tinytest/tinytest.h"
 #include "tinytest/tinytest_macros.h"
 
+CDServer* _server = NULL;
+
 void
 cdtest_String_fromBuffer (void* data)
 {
@@ -456,6 +458,47 @@ struct testcase_t cd_utils_Regexp_tests[] = {
     END_OF_TESTCASES
 };
 
+void
+cdtest_events_provided (void* data)
+{
+    puts("\n---");
+
+    CD_HASH_FOREACH(_server->event.provided, it) {
+        CDString* output  = CD_CreateStringFromFormat("%s (", (char*) CD_HashIteratorKey(it));
+        CDList*   params  = (CDList*) CD_HashIteratorValue(it);
+        int       length  = CD_ListLength(params);
+        int       current = 1;
+        
+        CD_LIST_FOREACH(params, it) {
+            output = CD_AppendCString(output, (char*) CD_ListIteratorValue(it));
+
+            if (current < length) {
+                output = CD_AppendCString(output, ", ");
+            }
+
+            current++;
+        }
+
+        output = CD_AppendCString(output, ")");
+
+        puts(CD_StringContent(output));
+
+        CD_DestroyString(output);
+    }
+
+    puts("---");
+
+    end: {
+
+    }
+}
+
+struct testcase_t cd_events_tests[] = {
+    { "provided", cdtest_events_provided, },
+
+    END_OF_TESTCASES
+};
+
 struct testgroup_t cd_groups[] = {
     { "utils/String/",           cd_utils_String_tests },
     { "utils/String/UTF8/",      cd_utils_String_UTF8_tests },
@@ -466,6 +509,8 @@ struct testgroup_t cd_groups[] = {
     { "utils/Set/",              cd_utils_Set_tests },
     { "utils/Regexp/",           cd_utils_Regexp_tests },
 
+    { "events/", cd_events_tests },
+
     END_OF_GROUPS
 };
 
@@ -473,6 +518,7 @@ bool
 CD_PluginInitialize (CDPlugin* self)
 {
     puts("");
+    _server = self->server;
     tinytest_main(0, NULL, cd_groups);
     puts("");
 

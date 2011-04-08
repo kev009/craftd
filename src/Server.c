@@ -50,8 +50,13 @@ CD_CreateServer (const char* path)
     self->config = CD_ParseConfig(path);
 
     if (!self->config) {
+        CD_free(self);
+
         return NULL;
     }
+
+    self->event.callbacks = CD_CreateHash();
+    self->event.provided  = CD_CreateHash();
 
     self->protocol = NULL;
 
@@ -70,12 +75,17 @@ CD_CreateServer (const char* path)
     self->clients       = CD_CreateList();
     self->disconnecting = CD_CreateList();
 
-    self->event.callbacks = CD_CreateHash();
-
     self->running = false;
 
     DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
+
+    CD_EventProvides(self, "Server.start!",  CD_CreateEventParameters(NULL));
+    CD_EventProvides(self, "Client.connect", CD_CreateEventParameters("CDClient", NULL));
+    CD_EventProvides(self, "Client.kick",       CD_CreateEventParameters("CDClient", "CDString", NULL));
+    CD_EventProvides(self, "Client.disconnect", CD_CreateEventParameters("CDClient", "bool", NULL));
+    CD_EventProvides(self, "Client.destroy",    CD_CreateEventParameters("CDClient", NULL));
+    CD_EventProvides(self, "Server.stop!",   CD_CreateEventParameters(NULL));
 
     return self;
 }
@@ -121,9 +131,13 @@ CD_DestroyServer (CDServer* self)
         CD_DestroyConfig(self->config);
     }
 
-    if (self->event.callbacks) {
-        CD_DestroyHash(self->event.callbacks);
+    CD_DestroyHash(self->event.callbacks);
+
+    CD_HASH_FOREACH(self->event.provided, it) {
+        CD_DestroyEventParameters((CDList*) CD_HashIteratorValue(it));
     }
+
+    CD_DestroyHash(self->event.provided);
 
     if (DYNAMIC(self)) {
         CD_DestroyDynamic(DYNAMIC(self));

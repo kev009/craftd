@@ -427,6 +427,41 @@ CD_ListSort (CDList* self, CDListSortAlgorithm algorithm, CDListCompareCallback 
     return self;
 }
 
+bool
+CD_ListIsEqual (CDList* a, CDList* b, CDListCompareCallback callback)
+{
+    if (CD_ListLength(a) != CD_ListLength(b)) {
+        return false;
+    }
+
+    bool result = true;
+
+    pthread_rwlock_rdlock(&a->lock);
+    pthread_rwlock_rdlock(&b->lock);
+
+    CDListIterator aIterator = CD_ListBegin(a);
+    CDListIterator aEnd      = CD_ListEnd(a);
+
+    CDListIterator bIterator = CD_ListBegin(b);
+    CDListIterator bEnd      = CD_ListEnd(b);
+
+    while (!CD_ListIteratorIsEqual(aIterator, aEnd) && !CD_ListIteratorIsEqual(bIterator, bEnd)) {
+        if (callback(CD_ListIteratorValue(aIterator), CD_ListIteratorValue(bIterator)) != 0) {
+            result = false;
+            goto end;
+        }
+
+        aIterator = CD_ListNext(aIterator);
+        bIterator = CD_ListNext(bIterator);
+    }
+
+    end: {
+        pthread_rwlock_unlock(&a->lock);
+        pthread_rwlock_unlock(&b->lock);
+
+        return result;
+    }
+}
 
 CDPointer
 CD_ListDelete (CDList* self, CDPointer data)

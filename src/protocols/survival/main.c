@@ -23,17 +23,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_SURVIVAL_H
-#define CRAFTD_SURVIVAL_H
+#include <craftd/protocols/survival.h>
 
-#include <craftd/protocols/survival/minecraft.h>
+CDProtocol*
+CD_InitializeSurvivalProtocol (CDServer* server)
+{
+    server->protocol = CD_CreateProtocol("survival", SV_PacketParsable, (CDProtocolPacketParse) SV_PacketFromBuffers);
 
-#include <craftd/protocols/survival/World.h>
-#include <craftd/protocols/survival/Player.h>
-#include <craftd/protocols/survival/Packet.h>
-#include <craftd/protocols/survival/PacketLength.h>
-#include <craftd/protocols/survival/Logger.h>
+    CD_EventProvides(server, "Client.process",   CD_CreateEventParameters("CDClient", "SVPacket", NULL));
+    CD_EventProvides(server, "Client.processed", CD_CreateEventParameters("CDClient", "SVPacket", NULL));
 
-CDProtocol* CD_InitializeSurvivalProtocol (CDServer* server);
+    CD_EventProvides(server, "Player.destroy", CD_CreateEventParameters("SVPlayer", NULL));
 
-#endif
+    CD_EventProvides(server, "World.create",  CD_CreateEventParameters("SVWorld", NULL));
+    CD_EventProvides(server, "World.save",    CD_CreateEventParameters("SVWorld", NULL));
+    CD_EventProvides(server, "World.chunk",   CD_CreateEventParameters("SVWorld", "int", "int", "SVChunk", NULL));
+    CD_EventProvides(server, "World.chunk=",  CD_CreateEventParameters("SVWorld", "int", "int", "SVChunk", NULL));
+    CD_EventProvides(server, "World.destroy", CD_CreateEventParameters("SVWorld", NULL));
+
+    return server->protocol;
+}
+

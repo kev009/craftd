@@ -31,17 +31,25 @@
 #include "helpers.c"
 
 bool
-cdlisp_EventDispatcher (CDServer* server, const char* event, va_list args)
+cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
-    cl_object callbacks = cdlisp_eval("(craftd::get-callbacks '%s)", event);
-
-    printf("%s\n", event);
+    cl_object callbacks = cdcl_eval("(craftd::get-callbacks :%s)", event);
 
     if (callbacks == Cnil) {
         return true;
     }
 
-    puts(":>");
+    if (!CD_HashHasKey(server->event.provided, event)) {
+        return true;
+    }
+
+    CDString* parameters = cdcl_MakeParameters((CDList*) CD_HashGet(server->event.provided, event), args);
+
+    printf("%s\n", CD_StringContent(parameters));
+
+    cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
+
+    CD_DestroyString(parameters);
 
     return true;
 }
@@ -50,7 +58,7 @@ extern
 bool
 CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 {
-    self->description = CD_CreateStringFromCString("Common Lisp scripting");
+    self->description = CD_CreateStringFromCString("Common LISP scripting");
 
     int          argc = 1;
     const char** argv = CD_malloc(sizeof(char*));
@@ -71,8 +79,8 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     cl_boot(argc, (char**) argv);
 
-    cdlisp_eval("(setf *break-on-signals* 'error)");
-    cdlisp_eval("(require 'asdf)");
+    cdcl_eval("(setf *break-on-signals* 'error)");
+    cdcl_eval("(require 'asdf)");
 
     J_DO {
         J_FOREACH(j_path, self->config, "paths") {
@@ -102,13 +110,13 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
                 path = CD_AppendCString(path, "/");
             }
 
-            cdlisp_eval("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
+            cdcl_eval("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
 
             CD_DestroyString(path);
         }
     }
 
-    cdlisp_eval("(asdf:load-system :craftd)");
+    cdcl_eval("(asdf:load-system :craftd)");
 
     if (errno == EILSEQ) {
         SERR(self->server, "Failed to load the core LISP");
@@ -116,15 +124,15 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         return false;
     }
 
-    cdlisp_eval("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
+    cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
 
     J_DO {
         J_FOREACH(script, self->config, "scripts") {
-            cdlisp_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
+            cdcl_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
         }
     }
 
-    CD_EventRegister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
+//    CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
 
     return true;
 }
@@ -133,7 +141,7 @@ extern
 bool
 CD_ScriptingEngineFinalize (CDScriptingEngine* self)
 {
-    CD_EventUnregister(self->server, "Event.dispatch:before", cdlisp_EventDispatcher);
+    CD_EventUnregister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
 
     cl_shutdown();
 

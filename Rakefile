@@ -283,7 +283,7 @@ end
 
 namespace :scripting do |scripting|
   desc 'Build all scripting support'
-  task :build => ['craftd:build', 'lisp:build']
+  task :build => ['craftd:build', 'lisp:build', 'javascript:build']
 
   class << scripting
     def file (name)
@@ -307,7 +307,7 @@ namespace :scripting do |scripting|
       sh "#{CC} #{CFLAGS} #{lisp.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('lisp')} -o scripting/#{scripting.file('lisp')} $(ecl-config --ldflags)"
     end
 
-    desc 'Check for LISP requirements'
+    desc 'Check for Common LISP requirements'
     task :requirements => 'scripting/lisp/include/config.h'
 
     file 'scripting/lisp/include/config.h' do
@@ -316,8 +316,39 @@ namespace :scripting do |scripting|
       create_config 'scripting/lisp/include/config.h'
     end
 
-    desc 'Build common lisp scripting'
+    desc 'Build Common LISP scripting'
     task :build => [:requirements, "scripting/#{scripting.file('lisp')}"]
+  end
+
+  namespace :javascript do |javascript|
+    javascript.sources = FileList['scripting/javascript/main.c', 'scripting/javascript/src/**.c']
+
+    CLEAN.include javascript.sources.ext('o')
+    CLOBBER.include "scripting/#{scripting.file('javascript')}", 'scripting/javascript/include/config.h'
+
+    javascript.sources.each {|f|
+      file f.ext('o') => c_file(f) do
+        sh "#{CC} #{CFLAGS} $(js-config --cflags) -Iinclude -o #{f.ext('o')} -c #{f}"
+      end
+    }
+
+    file "scripting/#{scripting.file('javascript')}" => javascript.sources.ext('o') do
+      sh "#{CC} #{CFLAGS} #{javascript.sources.ext('o')} -shared -Wl,-soname,#{scripting.file('javascript')} -o scripting/#{scripting.file('javascript')} $(js-config --libs)"
+    end
+
+    desc 'Check for JavaScript requirements'
+    task :requirements => 'scripting/javascript/include/config.h'
+
+    file 'scripting/javascript/include/config.h' do
+      find_executable('js-config') or fail 'js-config not found'
+
+      have_macro 'JS_HAS_CTYPES', 'js/js-config.h' or fail 'You have to configure spidermonkey with ctypes support'
+
+      create_config 'scripting/javascript/include/config.h'
+    end
+
+    desc 'Build JavaScript scripting'
+    task :build => [:requirements, "scripting/#{scripting.file('javascript')}"]
   end
 end
 

@@ -210,7 +210,7 @@ CD_PluginInitialize (CDPlugin* self)
         }
     }
 
-    self->server->protocol = CD_CreateProtocol("survival", SV_PacketParsable, (CDProtocolPacketParse) SV_PacketFromBuffers);
+    CD_InitializeSurvivalProtocol(self->server);
 
     pthread_mutex_init(&_lock.login, NULL);
 

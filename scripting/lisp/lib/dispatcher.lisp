@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(register unregister))
+(export '(register unregister fire))
 
 (defparameter *event-callbacks* (make-hash-table))
 
@@ -25,3 +25,7 @@
     (set-callbacks name (if callback
       (remove-if #'(lambda (element) (equal (first element) callback)) callbacks)
       nil))))
+
+(defun fire (name &rest rest)
+  (dolist (callback (get-callbacks name))
+    (apply (first callback) rest)))

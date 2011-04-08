@@ -98,6 +98,15 @@
                 "options": [],
 
                 "scripts": ["joined"]
+            },
+
+            { "name": "javascript",
+                "paths": [
+                    "scripting/javascript/lib",
+                    "scripting/javascript/scripts",
+                    "@libdir@/craftd/scripting/javascript",
+                    "@libdir@/craftd/scripting/javascript/lib"
+                ]
             }
         ]
     }

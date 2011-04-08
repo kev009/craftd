@@ -49,7 +49,9 @@ extern CDLogger CDDefaultLogger;
 
 #define DEBUG(format, ...) LOG(LOG_DEBUG, format, ##__VA_ARGS__)
 
-#define ERR(format, ...) LOG(LOG_CRIT, format, ##__VA_ARGS__)
+#define ERR(format, ...) LOG(LOG_ERR, format, ##__VA_ARGS__)
+
+#define WARN(format, ...) LOG(LOG_WARNING, format, ##__VA_ARGS__)
 
 #define LOG_CLOSE() do { \
     if (CDMainServer) CDMainServer->logger.closelog(); \
@@ -60,14 +62,18 @@ extern CDLogger CDDefaultLogger;
 
 #define CDEBUG(format, ...) CLOG(LOG_DEBUG, format, ##__VA_ARGS__)
 
-#define CERR(format, ...) CLOG(LOG_CRIT, format, ##__VA_ARGS__)
+#define CERR(format, ...) CLOG(LOG_ERR, format, ##__VA_ARGS__)
+
+#define CWARN(format, ...) CLOG(LOG_WARNING, format, ##__VA_ARGS__)
 
 #define SLOG(server, priority, format, ...) \
     server->logger.log(priority, "%s> " format, CD_ServerToString(server), ##__VA_ARGS__)
 
 #define SDEBUG(server, format, ...) SLOG(server, LOG_DEBUG, format, ##__VA_ARGS__)
 
-#define SERR(server, format, ...) SLOG(server, LOG_CRIT, format, ##__VA_ARGS__)
+#define SERR(server, format, ...) SLOG(server, LOG_ERR, format, ##__VA_ARGS__)
+
+#define SWARN(server, format, ...) SLOG(server, LOG_WARNING, format, ##__VA_ARGS__)
 
 #define SLOG_CLOSE(server) server->logger.close()
 
