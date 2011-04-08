@@ -494,7 +494,7 @@ cdtest_events_provided (void* data)
 }
 
 struct testcase_t cd_events_tests[] = {
-    { "provided", cdtest_events_provided, },
+//    { "provided", cdtest_events_provided, },
 
     END_OF_TESTCASES
 };

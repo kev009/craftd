@@ -39,5 +39,7 @@ cdjs_InitializeGlobal (CDServer* server)
     JSContext* context = CD_DynamicGet(server, "JavaScript.context");
     JSObject*  global  = NULL;
 
-    JS_InitCTypesClass(context, global);
+//    JS_InitCTypesClass(context, global);
+
+    return NULL;
 }

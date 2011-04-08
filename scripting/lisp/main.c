@@ -45,8 +45,6 @@ cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
 
     CDString* parameters = cdcl_MakeParameters((CDList*) CD_HashGet(server->event.provided, event), args);
 
-    printf("%s\n", CD_StringContent(parameters));
-
     cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
 
     CD_DestroyString(parameters);
@@ -76,10 +74,12 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     ecl_set_option(ECL_OPT_TRAP_INTERRUPT_SIGNAL, FALSE);
     ecl_set_option(ECL_OPT_TRAP_SIGINT, FALSE);
+    ecl_set_option(ECL_OPT_TRAP_SIGFPE, FALSE);
+    ecl_set_option(ECL_OPT_TRAP_SIGSEGV, FALSE);
+    ecl_set_option(ECL_OPT_TRAP_SIGILL, FALSE);
 
     cl_boot(argc, (char**) argv);
 
-    cdcl_eval("(setf *break-on-signals* 'error)");
     cdcl_eval("(require 'asdf)");
 
     J_DO {
@@ -124,7 +124,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         return false;
     }
 
-    cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %d :void))", (CDPointer) self->server);
+    cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %ld :void))", (CDPointer) self->server);
 
     J_DO {
         J_FOREACH(script, self->config, "scripts") {
@@ -132,7 +132,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         }
     }
 
-//    CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
+    CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
 
     return true;
 }

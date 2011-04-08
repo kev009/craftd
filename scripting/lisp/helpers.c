@@ -86,7 +86,7 @@ cdcl_MakeParameters (CDList* parameters, va_list args)
 
         if (CD_CStringIsEqual(type, "CDClient")) {
             code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
-                "(craftd:wrap (uffi:make-pointer %p) 'client) ", va_arg(args, void*)));
+                "(craftd:wrap (uffi:make-pointer %ld :void) 'client) ", (CDPointer) va_arg(args, void*)));
         }
     }
 
