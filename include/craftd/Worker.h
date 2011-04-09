@@ -42,6 +42,7 @@ typedef struct _CDWorker {
 
     CDJob* job;
     bool   working;
+    bool   stopped;
 } CDWorker;
 
 /**

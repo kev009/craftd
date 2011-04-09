@@ -214,7 +214,21 @@ CD_RunHTTPd (CDHTTPd* self)
         self->server->config->cache.httpd.connection.bind.ipv4,
         self->server->config->cache.httpd.connection.port);
 
-    event_base_dispatch(self->event.base);
+    CD_EventDispatch(self->server, "HTTPd.start!", self);
+
+    event_base_loop(self->event.base, 0);
+
+    CD_EventDispatch(self->server, "HTTPd.stopped", self);
 
     return NULL;
+}
+
+bool
+CD_StopHTTPd (CDHTTPd* self)
+{
+    struct timeval interval = { 0, 0 };
+
+    CD_EventDispatch(self->server, "HTTPd.stop!", self);
+
+    return event_base_loopexit(self->event.base, &interval);
 }

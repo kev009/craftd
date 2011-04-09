@@ -96,16 +96,11 @@ CD_DestroyServer (CDServer* self)
     assert(self);
 
     CD_StopTimeLoop(self->timeloop);
+    CD_StopHTTPd(self->httpd);
 
     CD_LIST_FOREACH(self->clients, it) {
         CD_ServerKick(self, (CDClient*) CD_ListIteratorValue(it), CD_CreateStringFromCString("shutting down"));
     }
-
-    if (self->workers) {
-        CD_DestroyWorkers(self->workers);
-    }
-
-    CD_StopServer(self);
 
     if (self->plugins) {
         CD_DestroyPlugins(self->plugins);
@@ -116,6 +111,12 @@ CD_DestroyServer (CDServer* self)
     }
 
     CD_DestroyTimeLoop(self->timeloop);
+
+    CD_StopServer(self);
+
+    if (self->workers) {
+        CD_DestroyWorkers(self->workers);
+    }
 
     if (self->event.listener) {
         event_free(self->event.listener);
@@ -420,6 +421,8 @@ CD_StopServer (CDServer* self)
     CD_ServerFlush(self, true);
 
     CD_EventDispatch(self, "Server.stop!");
+
+    CD_StopWorkers(self->workers);
 
     return true;
 }

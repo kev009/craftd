@@ -38,6 +38,7 @@ CD_CreateWorker (CDServer* server)
     self->thread  = 0;
     self->id      = 0;
     self->working = false;
+    self->stopped = true;
     self->job     = NULL;
 
     return self;
@@ -64,6 +65,8 @@ bool
 CD_RunWorker (CDWorker* self)
 {
     assert(self);
+
+    self->stopped = false;
 
     CD_EventDispatch(self->server, "Worker.start!", self);
 
@@ -192,6 +195,10 @@ CD_RunWorker (CDWorker* self)
         self->job = NULL;
     }
 
+    CD_EventDispatch(self->server, "Worker.stopped", self);
+
+    self->stopped = true;
+
     return true;
 }
 
@@ -204,7 +211,12 @@ CD_StopWorker (CDWorker* self)
 
     self->working = false;
 
-    while (self->job) {
+    pthread_mutex_lock(&self->workers->lock.mutex);
+    pthread_cond_broadcast(&self->workers->lock.condition);
+    pthread_mutex_unlock(&self->workers->lock.mutex);
+
+    while (!self->stopped) {
+        usleep(1000);
         continue;
     }
 
