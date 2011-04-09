@@ -89,9 +89,10 @@ CD_StopWorkers (CDWorkers* self)
         CD_DestroyWorker(self->item[i]);
     }
 
-    self->length = 0;
-
     CD_free(self->item);
+
+    self->length = 0;
+    self->item   = NULL;
 }
 
 CDWorker**
