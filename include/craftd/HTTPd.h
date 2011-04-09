@@ -71,4 +71,6 @@ CDHTTPd* CD_CreateHTTPd (struct _CDServer* server);
 
 void* CD_RunHTTPd (CDHTTPd* self);
 
+bool CD_StopHTTPd (CDHTTPd* self);
+
 #endif

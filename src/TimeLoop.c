@@ -78,13 +78,21 @@ CD_DestroyTimeLoop (CDTimeLoop* self)
 bool
 CD_RunTimeLoop (CDTimeLoop* self)
 {
-    return event_base_loop(self->event.base, 0);
+    CD_EventDispatch(self->server, "TimeLoop.start!", self);
+
+    bool result = event_base_loop(self->event.base, 0);
+
+    CD_EventDispatch(self->server, "TimeLoop.stopped", self);
+
+    return result;
 }
 
 bool
 CD_StopTimeLoop (CDTimeLoop* self)
 {
     struct timeval interval = { 0, 0 };
+
+    CD_EventDispatch(self->server, "TimeLoop.stop!", self);
 
     return event_base_loopexit(self->event.base, &interval);
 }

@@ -55,6 +55,8 @@ CDWorkers* CD_CreateWorkers (struct _CDServer* server);
 
 void CD_DestroyWorkers (CDWorkers* self);
 
+void CD_StopWorkers (CDWorkers* self);
+
 CDWorker** CD_SpawnWorkers (CDWorkers* self, size_t number);
 
 void CD_KillWorkers (CDWorkers* self, size_t number);

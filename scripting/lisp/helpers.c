@@ -75,6 +75,44 @@ cdcl_eval (const char* format, ...)
 }
 
 static inline
+cl_object
+cdcl_safe_eval (const char* format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+
+    CDString* code      = CD_CreateStringFromFormatList(format, ap);
+    cl_object result    = Cnil;
+    cl_object error     = Cnil;
+    cl_object form      = c_string_to_object((char*) CD_StringContent(code));
+    cl_object safe_eval = cl_eval(c_string_to_object("(defun my-safe-eval (form env) \
+        (handler-case (values (eval-with-env form env) nil)                             \
+            (error (c) (return-from my-safe-eval (values nil c)))))"));
+
+    if (form == OBJNULL) {
+        errno = EILSEQ;
+    }
+    else {
+        result = cl_funcall(3, safe_eval, form, Cnil);
+        error  = VALUES(1);
+
+        if (cdcl_to_bool(error)) {
+            cl_pprint(1, error);
+            puts("");
+
+            errno = EILSEQ;
+        }
+    }
+
+    va_end(ap);
+
+    CD_DestroyString(code);
+
+    return result;
+}
+
+static inline
 void
 cdcl_in_package (const char* name)
 {

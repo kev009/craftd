@@ -32,24 +32,6 @@
 
 static
 bool
-cdcl_WorkerStart (CDServer* server, CDWorker* worker)
-{
-    ecl_import_current_thread(Cnil, Cnil);
-    
-    return true;
-}
-
-static
-bool
-cdcl_WorkerStop (CDServer* server, CDWorker* worker)
-{
-    ecl_release_current_thread();
-
-    return true;
-}
-
-static
-bool
 cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
     if (!CD_HashHasKey(server->event.provided, event)) {
@@ -62,7 +44,10 @@ cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
         return true;
     }
 
+
+    ecl_import_current_thread(Cnil, Cnil);
     cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
+    ecl_release_current_thread();
 
     CD_DestroyString(parameters);
 
@@ -133,7 +118,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         }
     }
 
-    cdcl_eval("(asdf:load-system :craftd)");
+    cdcl_safe_eval("(asdf:load-system :craftd)");
 
     if (errno == EILSEQ) {
         SERR(self->server, "Failed to load the core LISP");
@@ -145,14 +130,11 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     J_DO {
         J_FOREACH(script, self->config, "scripts") {
-            cdcl_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
+            cdcl_safe_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
         }
     }
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
-
-    CD_EventRegister(self->server, "Worker.start!", cdcl_WorkerStart);
-    CD_EventRegister(self->server, "Worker.stop!", cdcl_WorkerStop);
 
     return true;
 }
