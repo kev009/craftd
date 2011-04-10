@@ -23,16 +23,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/Server.h>
 #include <craftd/Plugin.h>
 
-#include <jsapi.h>
-
+#include "include/common.h"
 #include "helpers.c"
 
 bool
 cdjs_EventDispatcher (CDServer* server, const char* event, va_list args)
 {
+    if (!CD_HashHasKey(server->event.provided, event)) {
+        return true;
+    }
+
+    JSRuntime* runtime   = (JSRuntime*) CD_DynamicGet(server, "JavaScript.runtime");
+    CDMap*     contextes = (CDMap*) CD_DynamicGet(server, "JavaScript.contextes");
+    JSContext* context   = (JSContext*) CD_MapGet(contextes, pthread_self());
+    
+    if (!context) {
+        CD_MapPut(contextes, pthread_self(), (CDPointer) (context = cdjs_CreateContext(server, runtime)));
+    }
+
+    JS_BeginRequest(context);
+
+    JS_EndRequest(context);
+
     return true;
 }
 
@@ -44,16 +58,13 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     JS_SetCStringsAreUTF8();
 
-    JSRuntime* runtime = JS_NewRuntime(8L * 1024L * 1024L);
-    JSContext* context = JS_NewContext(runtime, 8192);;
+    JSRuntime* runtime   = JS_NewRuntime(8L * 1024L * 1024L);
+    JSContext* context   = cdjs_CreateContext(self->server, runtime);
+    CDMap*     contextes = CD_CreateMap();
 
-    JS_SetErrorReporter(context, cdjs_ReportError);
-
-    JSObject* global = cdjs_InitializeGlobal(self->server);
-
-    CD_DynamicPut(self->server, "JavaScript.runtime", (CDPointer) runtime);
-    CD_DynamicPut(self->server, "JavaScript.context", (CDPointer) context);
-    CD_DynamicPut(self->server, "JavaScript.global",  (CDPointer) global);
+    CD_DynamicPut(self->server, "JavaScript.runtime",   (CDPointer) runtime);
+    CD_DynamicPut(self->server, "JavaScript.contextes", (CDPointer) contextes);
+    CD_DynamicPut(self->server, "JavaScript.context",   (CDPointer) context);
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdjs_EventDispatcher);
 
@@ -65,6 +76,20 @@ bool
 CD_ScriptingEngineFinalize (CDScriptingEngine* self)
 {
     CD_EventUnregister(self->server, "Event.dispatch:before", cdjs_EventDispatcher);
+
+    CDMap* contextes = (CDMap*) CD_DynamicDelete(self->server, "JavaScript.contextes");
+
+    CD_MAP_FOREACH(contextes, it) {
+        JS_DestroyContext((JSContext*) CD_MapIteratorValue(it));
+    }
+
+    CD_DestroyMap(contextes);
+
+    JS_DestroyContext((JSContext*) CD_DynamicDelete(self->server, "JavaScript.context"));
+
+    JS_DestroyRuntime((JSRuntime*) CD_DynamicDelete(self->server, "JavaScript.runtime"));
+
+    JS_ShutDown();
 
     return true;
 }

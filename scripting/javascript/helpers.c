@@ -23,6 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "include/Global.h"
+
 void
 cdjs_ReportError (JSContext* cx, const char* message, JSErrorReport* report)
 {
@@ -33,13 +35,81 @@ cdjs_ReportError (JSContext* cx, const char* message, JSErrorReport* report)
     );
 }
 
-JSObject*
-cdjs_InitializeGlobal (CDServer* server)
+jsval
+cdjs_EvaluateFile (JSContext* context, const char* path)
 {
-    JSContext* context = CD_DynamicGet(server, "JavaScript.context");
-    JSObject*  global  = NULL;
+    JS_BeginRequest(context);
 
-//    JS_InitCTypesClass(context, global);
+    JSObject* script = JS_CompileFile(context, JS_GetGlobalObject(context), path);
+    jsval     result;
 
-    return NULL;
+    if (script == NULL) {
+        result = JSVAL_FALSE;
+    }
+    else {
+        if (!JS_ExecuteScript(context, JS_GetGlobalObject(context), script, &result)) {
+            result = JSVAL_FALSE;
+        }
+        else {
+            JS_MaybeGC(context);
+        }
+    }
+
+    JS_EndRequest(context);
+
+    return result;
+}
+
+jsval
+cdjs_Evaluate (JSContext* context, const char* format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+
+    CDString* code = CD_CreateStringFromFormatList(format, ap);
+    jsval     result;
+
+    JS_EvaluateUCScript(context, JS_GetGlobalObject(context),
+        (const jschar*) CD_StringContent(code), CD_StringSize(code),
+        "craftd", 0, &result);
+
+
+    if (JS_IsExceptionPending(context)) {
+        JS_ClearPendingException(context);
+        
+        result = JSVAL_VOID;
+    }   
+        
+
+    CD_DestroyString(code);
+
+    va_end(ap);
+
+    return result;
+}
+
+JSContext*
+cdjs_CreateContext (CDServer* server, JSRuntime* runtime)
+{
+    JSContext* self = JS_NewContext(runtime, 8192);
+
+    JS_SetOptions(self,
+        JSOPTION_VAROBJFIX |
+        JSOPTION_JIT       |
+        JSOPTION_METHODJIT |
+        JSOPTION_XML       |
+        JSOPTION_COMPILE_N_GO);
+
+    JS_SetVersion(self, JSVERSION_LATEST);
+
+    JS_SetErrorReporter(self, cdjs_ReportError);
+
+    if (!cdjs_InitializeGlobal(server, self)) {
+        JS_DestroyContext(self);
+
+        return NULL;
+    }
+
+    return self;
 }

@@ -321,6 +321,7 @@ namespace :scripting do |scripting|
   end
 
   namespace :javascript do |javascript|
+    javascript.cflags  = '-DXP_UNIX'
     javascript.sources = FileList['scripting/javascript/main.c', 'scripting/javascript/src/**.c']
 
     CLEAN.include javascript.sources.ext('o')
@@ -328,7 +329,7 @@ namespace :scripting do |scripting|
 
     javascript.sources.each {|f|
       file f.ext('o') => c_file(f) do
-        sh "#{CC} #{CFLAGS} $(js-config --cflags) -Iinclude -o #{f.ext('o')} -c #{f}"
+        sh "#{CC} #{CFLAGS} #{javascript.cflags} $(js-config --cflags) -Iinclude -o #{f.ext('o')} -c #{f}"
       end
     }
 
@@ -342,7 +343,7 @@ namespace :scripting do |scripting|
     file 'scripting/javascript/include/config.h' do
       find_executable('js-config') or fail 'js-config not found'
 
-      have_macro 'JS_HAS_CTYPES', 'js/js-config.h' or fail 'You have to configure spidermonkey with ctypes support'
+      have_const 'JS_HAS_CTYPES', 'js-config.h', `js-config --cflags`.strip
 
       create_config 'scripting/javascript/include/config.h'
     end
