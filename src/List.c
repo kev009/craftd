@@ -346,7 +346,7 @@ CD_ListPushIf (CDList* self, CDPointer data, CDListCompareCallback callback)
     assert(self);
     assert(callback);
 
-    if (callback(self, data) != 0) {
+    if (callback((CDPointer) self, data) != 0) {
         return NULL;
     }
 

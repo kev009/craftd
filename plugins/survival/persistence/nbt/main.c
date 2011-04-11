@@ -281,8 +281,11 @@ CD_PluginInitialize (CDPlugin* self)
 
     CD_EventRegister(self->server, "Server.destroy", cdnbt_ServerDestroy);
 
-    CD_EventProvides(self->server, "Persistence.observe", CD_CreateEventParameters("char*", "char*", NULL));
-    CD_EventProvides(self->server, "Persistence.watch",   CD_CreateEventParameters("char*", "CDPointer", NULL));
+    CD_EventProvides(self->server, "Persistence.initialized", CD_CreateEventParameters("CDPlugin", NULL));
+    CD_EventProvides(self->server, "Persistence.observe",     CD_CreateEventParameters("char*", "char*", NULL));
+    CD_EventProvides(self->server, "Persistence.watch",       CD_CreateEventParameters("char*", "CDPointer", NULL));
+
+    CD_EventDispatch(self->server, "Persistence.initialized", self);
 
     return true;
 }

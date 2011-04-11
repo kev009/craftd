@@ -29,7 +29,7 @@ end
 # Stuff building
 task :default => ['craftd:build', 'plugins:build']
 
-task :all => ['craftd:build', 'plugins:build', 'scripting:build']
+task :all => ['craftd:build', 'plugins:build', 'plugins:rpc:build', 'scripting:build']
 
 # Stuff installation
 task :install => ['craftd:install']
@@ -37,7 +37,7 @@ task :install => ['craftd:install']
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
   craftd.sources   = FileList['src/**/*.c', 'third-party/bstring/{bstrlib,bstraux}.c']
-  craftd.libraries = '-lpthread -lz -ljansson -levent -levent_pthreads -lpcre -lltdl'
+  craftd.libraries = %w(pthread z event event_pthreads pcre ltdl)
 
   CLEAN.include craftd.sources.ext('o')
   CLOBBER.include 'craftd', 'include/craftd/config.h', 'craftd.conf.dist'
@@ -66,13 +66,6 @@ namespace :craftd do |craftd|
       c.sub('ifndef', 'if !')
     end
 
-    # check for libjansson 2
-    have_header 'jansson.h' or fail 'jansson-dev not found'
-    have_library 'jansson' or fail 'jansson not found'
-    have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c|
-      c.sub('ifndef', 'if !')
-    end
-
     # zlib checks
     have_header 'zlib.h' or fail 'zlib-dev not found'
     have_library 'z' or fail 'zlib not found'
@@ -98,11 +91,25 @@ namespace :craftd do |craftd|
        "typedef void* POINTER;\n" + c
     end
 
+    # check for libjansson2 for RPC.JSON
+    if have_header 'jansson.h' and have_library 'jansson' and have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c| c.sub('ifndef', 'if !') end
+      craftd.libraries << 'jansson'
+
+      $defs << '-DHAVE_JSON'
+    end
+
+    # check for libxml2 for RPC.XML
+    if have_library 'xml2'
+      craftd.libraries << 'xml2'
+
+      $defs << '-DHAVE_XML'
+    end
+
     create_config 'include/craftd/config.h'
   end
 
   file 'craftd' => craftd.sources.ext('o') do
-    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd #{craftd.libraries} #{LDFLAGS}"
+    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd #{craftd.libraries.map { |l| "-l#{l}" }.join(' ')} #{LDFLAGS}"
   end
 
   file 'craftd.conf.dist' => 'craftd.conf.dist.in' do
@@ -126,6 +133,12 @@ end
 namespace :plugins do |plugin|
   desc 'Build all plugins'
   task :build => ['survival:build']
+
+  class << plugin
+    def file (name)
+      "#{name}.#{CONFIG['DLEXT']}"
+    end
+  end
 
   namespace :survival do |plugin|
     class << plugin
@@ -278,6 +291,48 @@ namespace :plugins do |plugin|
       desc 'Build tests plugin'
       task :build => "plugins/#{plugin.file('tests')}"
     end
+  end
+
+  namespace :rpc do |rpc|
+    rpc.sources   = FileList['plugins/rpc/main.c']
+    rpc.libraries = []
+
+    CLEAN.include rpc.sources.ext('o')
+    CLOBBER.include "plugins/#{plugin.file('rpc')}"
+
+    rpc.sources.each {|f|
+      file f.ext('o') => c_file(f) do
+        sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+      end
+    }
+
+    file "plugins/#{plugin.file('rpc')}" => rpc.sources.ext('o') do
+      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{rpc.libraries.map { |l| "-l#{l}" }.join(' ')} #{LDFLAGS}"
+    end
+
+    desc 'check for RPC daemon requirements'
+    task :requirements => 'plugins/rpc/config.h'
+
+    file 'plugins/rpc/config.h' do
+      # check for libjansson2 for RPC.JSON
+      if have_header 'jansson.h' and have_library 'jansson' and have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c| c.sub('ifndef', 'if !') end
+        rpc.libraries << 'jansson'
+
+        $defs << '-DHAVE_JSON'
+      end
+
+      # check for libxml2 for RPC.XML
+      if have_library 'xml2'
+        rpc.libraries << 'xml2'
+
+        $defs << '-DHAVE_XML'
+      end
+
+      create_config 'plugins/rpc/config.h'
+    end
+
+    desc 'Build RPC daemon'
+    task :build => [:requirements, "plugins/#{plugin.file('rpc')}"]
   end
 end
 

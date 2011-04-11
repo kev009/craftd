@@ -47,7 +47,7 @@ static struct {
 
 static
 void
-cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
+cdsurvival_TimeIncrease (void* _, void* __, CDServer* server)
 {
     CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
@@ -77,7 +77,7 @@ cdbeta_TimeIncrease (void* _, void* __, CDServer* server)
 
 static
 void
-cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
+cdsurvival_TimeUpdate (void* _, void* __, CDServer* server)
 {
     CDList* worlds = (CDList*) CD_DynamicGet(server, "World.list");
 
@@ -98,7 +98,7 @@ cdbeta_TimeUpdate (void* _, void* __, CDServer* server)
 
 static
 void
-cdbeta_KeepAlive (void* _, void* __, CDServer* server)
+cdsurvival_KeepAlive (void* _, void* __, CDServer* server)
 {
     SVPacket  packet = { SVResponse, SVKeepAlive, CDNull };
     CDBuffer* buffer = SV_PacketToBuffer(&packet);
@@ -112,7 +112,7 @@ cdbeta_KeepAlive (void* _, void* __, CDServer* server)
 
 static
 bool
-cdbeta_ServerStart (CDServer* server)
+cdsurvival_ServerStart (CDServer* server)
 {
     CDPlugin* self = CD_GetPlugin(server->plugins, "survival.base");
 
@@ -159,7 +159,7 @@ cdbeta_ServerStart (CDServer* server)
 
 static
 bool
-cdbeta_ServerStop (CDServer* server)
+cdsurvival_ServerStop (CDServer* server)
 {
     CD_DynamicDelete(server, "World.default");
 
@@ -172,8 +172,9 @@ cdbeta_ServerStop (CDServer* server)
     return true;
 }
 
+static
 bool
-cdbeta_JSON (CDServer* server, json_t* input, json_t* output)
+cdsurvival_JSON (CDServer* server, json_t* input, json_t* output)
 {
     char* text = json_dumps(input, JSON_INDENT(2));
 
@@ -181,6 +182,13 @@ cdbeta_JSON (CDServer* server, json_t* input, json_t* output)
 
     free(text);
 
+    return true;
+}
+
+static
+bool
+cdsurvival_PersistenceInitialized (CDServer* server, CDPlugin* persistence)
+{
     return true;
 }
 
@@ -214,29 +222,26 @@ CD_PluginInitialize (CDPlugin* self)
 
     pthread_mutex_init(&_lock.login, NULL);
 
-    CD_DynamicPut(self, "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdbeta_TimeIncrease, CDNull));
-    CD_DynamicPut(self, "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdbeta_TimeUpdate, CDNull));
-    CD_DynamicPut(self, "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdbeta_KeepAlive, CDNull));
+    CD_DynamicPut(self, "Event.timeIncrease", CD_SetInterval(self->server->timeloop, 1,  (event_callback_fn) cdsurvival_TimeIncrease, CDNull));
+    CD_DynamicPut(self, "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdsurvival_TimeUpdate, CDNull));
+    CD_DynamicPut(self, "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdsurvival_KeepAlive, CDNull));
 
-    CD_EventRegister(self->server, "RPC.JSON", cdbeta_JSON);
+    CD_EventRegister(self->server, "RPC.JSON", cdsurvival_JSON);
 
-    CD_EventRegister(self->server, "Server.start!", cdbeta_ServerStart);
-    CD_EventRegister(self->server, "Server.stop!", cdbeta_ServerStop);
+    CD_EventRegister(self->server, "Server.start!", cdsurvival_ServerStart);
+    CD_EventRegister(self->server, "Server.stop!", cdsurvival_ServerStop);
 
-    CD_EventRegister(self->server, "Client.process", cdbeta_ClientProcess);
-    CD_EventRegister(self->server, "Client.processed", cdbeta_ClientProcessed);
+    CD_EventRegister(self->server, "Persistence.initialized", cdsurvival_PersistenceInitialized);
 
-    CD_EventRegister(self->server, "Client.connect", cdbeta_ClientConnect);
-    CD_EventRegister(self->server, "Player.login", cdbeta_PlayerLogin);
-    CD_EventRegister(self->server, "Player.logout", cdbeta_PlayerLogout);
-    CD_EventRegister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdbeta_ClientDisconnect);
-
-    CD_EventRegister(self->server, "Client.kick", cdbeta_ClientKick);
-
-    CD_EventRegister(self->server, "Player.command", cdbeta_PlayerCommand);
-    CD_EventRegister(self->server, "Player.chat", cdbeta_PlayerChat);
-
-    CD_EventRegister(self->server, "Player.destroy", cdbeta_PlayerDestroy);
+    CD_EventRegister(self->server, "Client.connect", cdsurvival_ClientConnect);
+    CD_EventRegister(self->server, "Client.process", cdsurvival_ClientProcess);
+    CD_EventRegister(self->server, "Client.processed", cdsurvival_ClientProcessed);
+    CD_EventRegister(self->server, "Player.command", cdsurvival_PlayerCommand);
+    CD_EventRegister(self->server, "Player.chat", cdsurvival_PlayerChat);
+    CD_EventRegister(self->server, "Player.logout", cdsurvival_PlayerLogout);
+    CD_EventRegister(self->server, "Player.destroy", cdsurvival_PlayerDestroy);
+    CD_EventRegister(self->server, "Client.kick", cdsurvival_ClientKick);
+    CD_EventRegister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdsurvival_ClientDisconnect);
 
     return true;
 }
@@ -249,25 +254,22 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.keepAlive"));
 
-    CD_EventUnregister(self->server, "RPC.JSON", cdbeta_JSON);
+    CD_EventUnregister(self->server, "RPC.JSON", cdsurvival_JSON);
 
-    CD_EventUnregister(self->server, "Server.start!", cdbeta_ServerStart);
-    CD_EventUnregister(self->server, "Server.stop!", cdbeta_ServerStop);
+    CD_EventUnregister(self->server, "Server.start!", cdsurvival_ServerStart);
+    CD_EventUnregister(self->server, "Server.stop!", cdsurvival_ServerStop);
 
-    CD_EventUnregister(self->server, "Client.process", cdbeta_ClientProcess);
-    CD_EventUnregister(self->server, "Client.processed", cdbeta_ClientProcessed);
+    CD_EventUnregister(self->server, "Persistence.initialized", cdsurvival_PersistenceInitialized);
 
-    CD_EventUnregister(self->server, "Client.connect", cdbeta_ClientConnect);
-    CD_EventUnregister(self->server, "Player.login", cdbeta_PlayerLogin);
-    CD_EventUnregister(self->server, "Player.logout", cdbeta_PlayerLogout);
-    CD_EventUnregister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdbeta_ClientDisconnect);
-
-    CD_EventUnregister(self->server, "Client.kick", cdbeta_ClientKick);
-
-    CD_EventUnregister(self->server, "Player.command", cdbeta_PlayerCommand);
-    CD_EventUnregister(self->server, "Player.chat", cdbeta_PlayerChat);
-
-    CD_EventUnregister(self->server, "Player.destroy", cdbeta_PlayerDestroy);
+    CD_EventUnregister(self->server, "Client.connect", cdsurvival_ClientConnect);
+    CD_EventUnregister(self->server, "Client.process", cdsurvival_ClientProcess);
+    CD_EventUnregister(self->server, "Client.processed", cdsurvival_ClientProcessed);
+    CD_EventUnregister(self->server, "Player.command", cdsurvival_PlayerCommand);
+    CD_EventUnregister(self->server, "Player.chat", cdsurvival_PlayerChat);
+    CD_EventUnregister(self->server, "Player.logout", cdsurvival_PlayerLogout);
+    CD_EventUnregister(self->server, "Player.destroy", cdsurvival_PlayerDestroy);
+    CD_EventUnregister(self->server, "Client.kick", cdsurvival_ClientKick);
+    CD_EventUnregister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdsurvival_ClientDisconnect);
 
     pthread_mutex_destroy(&_lock.login);
 
