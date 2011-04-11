@@ -314,11 +314,10 @@ CDList*
 CD_ListPush (CDList* self, CDPointer data)
 {
     assert(self);
-    assert(data);
 
     pthread_rwlock_wrlock(&self->lock);
 
-    CDListItem* item = (CDListItem *) CD_malloc(sizeof(CDListItem));
+    CDListItem* item = (CDListItem*) CD_malloc(sizeof(CDListItem));
 
     item->next  = NULL;
     item->prev  = NULL;
@@ -335,6 +334,34 @@ CD_ListPush (CDList* self, CDPointer data)
     }
 
     self->changed  = true;
+
+    pthread_rwlock_unlock(&self->lock);
+
+    return self;
+}
+
+CDList*
+CD_ListPushIf (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    assert(self);
+    assert(callback);
+
+    if (callback(self, data) != 0) {
+        return NULL;
+    }
+
+    return CD_ListPush(self, data);
+}
+
+CDList*
+CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback callback)
+{
+    assert(self);
+    assert(callback);
+
+    pthread_rwlock_wrlock(&self->lock);
+
+    cd_ListInsertSorted(self, data, callback);
 
     pthread_rwlock_unlock(&self->lock);
 
@@ -397,18 +424,6 @@ CD_ListLast (CDList* self)
     pthread_rwlock_unlock(&self->lock);
 
     return result;
-}
-
-CDList *
-CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback callback)
-{
-    pthread_rwlock_wrlock(&self->lock);
-
-    cd_ListInsertSorted(self, data, callback);
-
-    pthread_rwlock_unlock(&self->lock);
-
-    return self;
 }
 
 CDList *

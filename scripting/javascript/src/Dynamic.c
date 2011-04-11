@@ -23,42 +23,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/Global.h"
 #include "../include/Dynamic.h"
-#include "../include/Client.h"
 
 JSBool
-cdjs_InitializeGlobal (CDServer* server, JSContext* context)
+cdjs_InitializeDynamic (CDServer* server, JSContext* context)
 {
-    JSObject* self = JS_NewCompartmentAndGlobalObject(context, &Global_class, NULL);
-
-    if (!JS_InitStandardClasses(context, self)) {
-        return JS_FALSE;
-    }
-
-    #ifdef HAVE_CONST_JS_HAS_CTYPES
-    JS_InitCTypesClass(context, self);
-    #endif
-
-    if (!JS_DefineFunctions(context, self, Global_functions)) {
-        return JS_FALSE;
-    }
-
-    JS_DefineProperty(context, self, "Craftd", OBJECT_TO_JSVAL(self),
-        JS_PropertyStub, JS_StrictPropertyStub, JSPROP_READONLY);
-
-    cdjs_InitializeDynamic(server, context);
-    cdjs_InitializeClient(server, context);
-
     return JS_TRUE;
 }
 
 JSBool
-Global_include (JSContext* context, uintN argc, jsval* argv)
+Dynamic_constructor (JSContext* context, uintN argc, jsval* argv)
 {
-    for (uintN i = 0; i < argc; i++) {
+    return JS_TRUE;
+}
 
-    }
+JSBool
+Dynamic_delete (JSContext* context, JSObject* owner, jsid id, jsval* value)
+{
+    return JS_TRUE;
+}
 
+JSBool
+Dynamic_get (JSContext* context, JSObject* owner, jsid id, jsval* value)
+{
+    return JS_TRUE;
+}
+
+JSBool
+Dynamic_set (JSContext* context, JSObject* owner, jsid id, JSBool strict, jsval* value)
+{
     return JS_TRUE;
 }

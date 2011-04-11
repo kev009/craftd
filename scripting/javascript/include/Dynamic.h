@@ -23,42 +23,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/Global.h"
-#include "../include/Dynamic.h"
-#include "../include/Client.h"
+#include "common.h"
 
-JSBool
-cdjs_InitializeGlobal (CDServer* server, JSContext* context)
-{
-    JSObject* self = JS_NewCompartmentAndGlobalObject(context, &Global_class, NULL);
+JSBool cdjs_InitializeDynamic (CDServer* server, JSContext* context);
 
-    if (!JS_InitStandardClasses(context, self)) {
-        return JS_FALSE;
-    }
+JSBool Dynamic_constructor (JSContext* context, uintN argc, jsval* argv);
 
-    #ifdef HAVE_CONST_JS_HAS_CTYPES
-    JS_InitCTypesClass(context, self);
-    #endif
+JSBool Dynamic_delete (JSContext* context, JSObject* owner, jsid id, jsval* value);
 
-    if (!JS_DefineFunctions(context, self, Global_functions)) {
-        return JS_FALSE;
-    }
+JSBool Dynamic_get (JSContext* context, JSObject* owner, jsid id, jsval* value);
 
-    JS_DefineProperty(context, self, "Craftd", OBJECT_TO_JSVAL(self),
-        JS_PropertyStub, JS_StrictPropertyStub, JSPROP_READONLY);
+JSBool Dynamic_set (JSContext* context, JSObject* owner, jsid id, JSBool strict, jsval* value);
 
-    cdjs_InitializeDynamic(server, context);
-    cdjs_InitializeClient(server, context);
-
-    return JS_TRUE;
-}
-
-JSBool
-Global_include (JSContext* context, uintN argc, jsval* argv)
-{
-    for (uintN i = 0; i < argc; i++) {
-
-    }
-
-    return JS_TRUE;
-}
+static JSClass Dynamic_class = {
+    "Dynamic", JSCLASS_HAS_PRIVATE,
+    JS_PropertyStub, Dynamic_delete, Dynamic_get, Dynamic_set,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub
+};
