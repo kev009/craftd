@@ -147,11 +147,14 @@ CDPointer CD_ListIteratorValue (CDListIterator iterator);
 CDList* CD_ListPush (CDList* self, CDPointer data);
 
 /**
- * Shift a value from the List.
+ * Push a value if the callback returns 0
  *
- * @return The shifted value
+ * @param data The value to push
+ * @param callback The callback to test data
+ *
+ * @return self if pushed, NULL otherwise
  */
-CDPointer CD_ListShift (CDList* self);
+CDList* CD_ListPushIf (CDList* self, CDPointer data, CDListCompareCallback callback);
 
 /**
  * Insert the data sorted in the list. Please only use with alread sorted
@@ -162,6 +165,13 @@ CDPointer CD_ListShift (CDList* self);
  * @parameter callback a strcmp like callback function
  */
 CDList* CD_ListSortedPush (CDList* self, CDPointer data, CDListCompareCallback callback);
+
+/**
+ * Shift a value from the List.
+ *
+ * @return The shifted value
+ */
+CDPointer CD_ListShift (CDList* self);
 
 /**
  * Sorts the provided list using the algorith specified in the parameters

@@ -80,12 +80,16 @@ CD_CreateServer (const char* path)
     DYNAMIC(self) = CD_CreateDynamic();
     ERROR(self)   = CDNull;
 
-    CD_EventProvides(self, "Server.start!",  CD_CreateEventParameters(NULL));
-    CD_EventProvides(self, "Client.connect", CD_CreateEventParameters("CDClient", NULL));
+    CD_EventProvides(self, "Server.create",     CD_CreateEventParameters(NULL));
+    CD_EventProvides(self, "Server.start!",     CD_CreateEventParameters(NULL));
+    CD_EventProvides(self, "Client.connect",    CD_CreateEventParameters("CDClient", NULL));
     CD_EventProvides(self, "Client.kick",       CD_CreateEventParameters("CDClient", "CDString", NULL));
     CD_EventProvides(self, "Client.disconnect", CD_CreateEventParameters("CDClient", "bool", NULL));
     CD_EventProvides(self, "Client.destroy",    CD_CreateEventParameters("CDClient", NULL));
-    CD_EventProvides(self, "Server.stop!",   CD_CreateEventParameters(NULL));
+    CD_EventProvides(self, "Server.stop!",      CD_CreateEventParameters(NULL));
+    CD_EventProvides(self, "Server.destroy",    CD_CreateEventParameters(NULL));
+
+    CD_EventDispatch(self, "Server.create");
 
     return self;
 }
@@ -94,6 +98,8 @@ void
 CD_DestroyServer (CDServer* self)
 {
     assert(self);
+
+    CD_EventDispatch(self, "Server.destroy");
 
     CD_StopTimeLoop(self->timeloop);
     CD_StopHTTPd(self->httpd);

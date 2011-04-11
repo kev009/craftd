@@ -282,9 +282,9 @@ CD_HashDelete (CDHash* self, const char* name)
 
     if (it != kh_end(self->raw) && kh_exist(self->raw, it)) {
         old = kh_value(self->raw, it);
-    }
 
-    free((void*) kh_key(self->raw, it));
+        free((char*) kh_key(self->raw, it));
+    }
 
     kh_del(cdHash, self->raw, it);
     pthread_rwlock_unlock(&self->lock);

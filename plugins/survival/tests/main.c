@@ -33,6 +33,7 @@
 
 CDServer* _server = NULL;
 
+static
 void
 cdtest_String_fromBuffer (void* data)
 {
@@ -46,13 +47,13 @@ cdtest_String_fromBuffer (void* data)
     }
 }
 
-struct testcase_t cd_utils_String_tests[] = {
+static struct testcase_t cd_utils_String_tests[] = {
     { "fromBuffer", cdtest_String_fromBuffer, },
 
     END_OF_TESTCASES
 };
 
-
+static
 void
 cdtest_String_UTF8_length (void* data)
 {
@@ -66,6 +67,7 @@ cdtest_String_UTF8_length (void* data)
     }
 }
 
+static
 void
 cdtest_String_UTF8_charAt (void* data)
 {
@@ -80,13 +82,14 @@ cdtest_String_UTF8_charAt (void* data)
     }
 }
 
-struct testcase_t cd_utils_String_UTF8_tests[] = {
+static struct testcase_t cd_utils_String_UTF8_tests[] = {
     { "length", cdtest_String_UTF8_length, },
     { "charAt", cdtest_String_UTF8_charAt, },
 
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_String_Minecraft_sanitize (void* data)
 {
@@ -101,6 +104,7 @@ cdtest_String_Minecraft_sanitize (void* data)
     }
 }
 
+static
 void
 cdtest_String_Minecraft_valid (void* data)
 {
@@ -116,13 +120,14 @@ cdtest_String_Minecraft_valid (void* data)
     }
 }
 
-struct testcase_t cd_utils_String_Minecraft_tests[] = {
+static struct testcase_t cd_utils_String_Minecraft_tests[] = {
     { "sanitize", cdtest_String_Minecraft_sanitize, },
     { "valid",    cdtest_String_Minecraft_valid, },
 
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_Hash_put (void* data)
 {
@@ -137,6 +142,7 @@ cdtest_Hash_put (void* data)
     }
 }
 
+static
 void
 cdtest_Hash_foreach (void* data)
 {
@@ -170,13 +176,14 @@ cdtest_Hash_foreach (void* data)
     }
 }
 
-struct testcase_t cd_utils_Hash_tests[] = {
+static struct testcase_t cd_utils_Hash_tests[] = {
     { "put", cdtest_Hash_put, },
     { "foreach", cdtest_Hash_foreach, },
 
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_Map_put (void* data)
 {
@@ -191,6 +198,7 @@ cdtest_Map_put (void* data)
     }
 }
 
+static
 void
 cdtest_Map_foreach (void* data)
 {
@@ -224,13 +232,14 @@ cdtest_Map_foreach (void* data)
     }
 }
 
-struct testcase_t cd_utils_Map_tests[] = {
+static struct testcase_t cd_utils_Map_tests[] = {
     { "put", cdtest_Map_put, },
     { "foreach", cdtest_Map_foreach, },
 
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_List_push (void* data)
 {
@@ -245,6 +254,33 @@ cdtest_List_push (void* data)
     }
 }
 
+static
+int8_t cdtest_ListNot42 (CDList* self, int data)
+{
+    if (data == 42) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static
+void
+cdtest_List_pushIf (void* data)
+{
+    CDList* list = CD_CreateList();
+
+    CD_ListPushIf(list, 42, (CDListCompareCallback) cdtest_ListNot42);
+    CD_ListPushIf(list, 23, (CDListCompareCallback) cdtest_ListNot42);
+
+    tt_int_op(CD_ListLength(list), ==, 1);
+
+    end: {
+        CD_DestroyList(list);
+    }
+}
+
+static
 void
 cdtest_List_foreach (void* data)
 {
@@ -273,6 +309,7 @@ cdtest_List_foreach (void* data)
     }
 }
 
+static
 void
 cdtest_List_clear (void* data)
 {
@@ -307,6 +344,7 @@ cdtest_ListCompare (CDPointer a, CDPointer b)
     }
 }
 
+static
 void
 cdtest_List_sort (void* data)
 {
@@ -329,6 +367,7 @@ cdtest_List_sort (void* data)
     }
 }
 
+static
 void
 cdtest_List_insertSorted (void *data)
 {
@@ -349,17 +388,18 @@ cdtest_List_insertSorted (void *data)
     }
 }
 
-struct testcase_t cd_utils_List_tests[] = {
+static struct testcase_t cd_utils_List_tests[] = {
     { "push", cdtest_List_push, },
+    { "push if", cdtest_List_pushIf, },
     { "foreach", cdtest_List_foreach, },
     { "clear", cdtest_List_clear, },
     { "sort", cdtest_List_sort, },
     { "insert sorted", cdtest_List_insertSorted, },
 
-
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_Set_put (void* data)
 {
@@ -376,6 +416,7 @@ cdtest_Set_put (void* data)
     }
 }
 
+static
 void
 cdtest_Set_delete (void* data)
 {
@@ -394,6 +435,7 @@ cdtest_Set_delete (void* data)
     }
 }
 
+static
 void
 cdtest_Set_length (void* data)
 {
@@ -411,7 +453,7 @@ cdtest_Set_length (void* data)
     }
 }
 
-struct testcase_t cd_utils_Set_tests[] = {
+static struct testcase_t cd_utils_Set_tests[] = {
     { "put",    cdtest_Set_put, },
     { "delete", cdtest_Set_delete, },
     { "length", cdtest_Set_length, },
@@ -419,6 +461,7 @@ struct testcase_t cd_utils_Set_tests[] = {
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_Regexp_match (void* data)
 {
@@ -437,6 +480,7 @@ cdtest_Regexp_match (void* data)
     }
 }
 
+static
 void
 cdtest_Regexp_test (void* data)
 {
@@ -451,13 +495,14 @@ cdtest_Regexp_test (void* data)
     }
 }
 
-struct testcase_t cd_utils_Regexp_tests[] = {
+static struct testcase_t cd_utils_Regexp_tests[] = {
     { "match", cdtest_Regexp_match, },
     { "test",  cdtest_Regexp_test, },
 
     END_OF_TESTCASES
 };
 
+static
 void
 cdtest_events_provided (void* data)
 {
@@ -493,13 +538,13 @@ cdtest_events_provided (void* data)
     }
 }
 
-struct testcase_t cd_events_tests[] = {
-//    { "provided", cdtest_events_provided, },
+static struct testcase_t cd_events_tests[] = {
+    { "provided", cdtest_events_provided, },
 
     END_OF_TESTCASES
 };
 
-struct testgroup_t cd_groups[] = {
+static struct testgroup_t cd_groups[] = {
     { "utils/String/",           cd_utils_String_tests },
     { "utils/String/UTF8/",      cd_utils_String_UTF8_tests },
     { "utils/String/Minecraft/", cd_utils_String_Minecraft_tests },
@@ -509,7 +554,7 @@ struct testgroup_t cd_groups[] = {
     { "utils/Set/",              cd_utils_Set_tests },
     { "utils/Regexp/",           cd_utils_Regexp_tests },
 
-    { "events/", cd_events_tests },
+//    { "events/", cd_events_tests },
 
     END_OF_GROUPS
 };
@@ -518,8 +563,10 @@ bool
 CD_PluginInitialize (CDPlugin* self)
 {
     puts("");
+
     _server = self->server;
     tinytest_main(0, NULL, cd_groups);
+
     puts("");
 
     return true;

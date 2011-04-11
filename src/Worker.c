@@ -180,6 +180,8 @@ CD_RunWorker (CDWorker* self)
                     }
 
                     pthread_rwlock_unlock(&client->lock.status);
+
+                    usleep(1000);
                 }
 
                 CD_EventDispatch(self->server, "Client.disconnect", client, (bool) ERROR(client));
@@ -217,6 +219,7 @@ CD_StopWorker (CDWorker* self)
 
     while (!self->stopped) {
         usleep(1000);
+
         continue;
     }
 

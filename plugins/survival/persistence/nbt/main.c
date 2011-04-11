@@ -40,88 +40,7 @@ static struct {
     int base;
 } _config;
 
-static
-bool
-cdnbt_ValidLevel (nbt_node* root)
-{
-    static char*    names[] = { ".Data.Time", ".Data.SpawnX", ".Data.SpawnY", ".Data.SpawnZ" };
-    static nbt_type types[] = { TAG_LONG,     TAG_INT,        TAG_INT,        TAG_INT };
-
-    nbt_node* node;
-
-    for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
-        if ((node = nbt_find_by_path(root, names[i])) == NULL || node->type != types[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static
-bool
-cdnbt_ValidChunk (nbt_node* root)
-{
-    static char*  names[] = { ".Level.HeightMap", ".Level.Blocks", ".Level.Data", ".Level.BlockLight", ".Level.SkyLight" };
-    static size_t sizes[] = { 256,                32768,           16384,         16384,               16384 };
-
-    nbt_node* node;
-
-    for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
-        if ((node = nbt_find_by_path(root, names[i])) == NULL || node->type != TAG_BYTE_ARRAY || node->payload.tag_byte_array.length != sizes[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static
-CDString*
-cdnbt_ChunkPath (SVWorld* world, int x, int z)
-{
-    // Chunk directory and subdir location
-    char directory1[8];
-    char directory2[8];
-
-    itoa((x & 63), directory1, _config.base);
-    itoa((z & 63), directory2, _config.base);
-
-    // Chunk file name
-    char chunkName1[8];
-    char chunkName2[8];
-
-    itoa(x, chunkName1, _config.base);
-    itoa(z, chunkName2, _config.base);
-
-    return CD_CreateStringFromFormat("%s/%s/%s/%s/c.%s.%s.dat",
-        _config.path, CD_StringContent(world->name),
-        directory1, directory2,
-        chunkName1, chunkName2
-    );
-}
-
-static
-CDError
-cdnbt_GenerateChunk (SVWorld* world, int x, int z, SVChunk* chunk, const char* seed)
-{
-    CDError   status;
-    CDString* chunkPath = cdnbt_ChunkPath(world, x, z);
-    CDString* directory = CD_StringDirname(chunkPath);
-
-    CD_mkdir(CD_StringContent(directory), 0755);
-
-    CD_EventDispatchWithError(status, world->server, "Mapgen.chunk", world, x, z, chunk, seed);
-
-    // TODO: save the generated chunk
-
-    end: {
-        CD_DestroyString(chunkPath);
-        CD_DestroyString(directory);
-    }
-
-    return status;
-}
+#include "helpers.c"
 
 static
 bool
@@ -262,6 +181,82 @@ cdnbt_WorldDestroy (CDServer* server, SVWorld* world)
     return true;
 }
 
+static
+bool
+cdnbt_PersistenceObserve (CDServer* server, const char* type, const char* name)
+{
+    CDHash* observing = (CDHash*) CD_DynamicGet(server, "Persistence.observing");
+
+    if (observing == NULL) {
+        CD_DynamicPut(server, "Persistence.observing", (CDPointer) (observing = CD_CreateHash()));
+    }
+
+    CDList* names = (CDList*) CD_HashGet(observing, type);
+
+    if (names == NULL) {
+        CD_HashPut(observing, type, (CDPointer) (names = CD_CreateList()));
+    }
+
+    CD_ListPushIf(names, (CDPointer) name, (CDListCompareCallback)cdnbt_NameNotObserved);
+
+    return true;
+}
+
+static
+bool
+cdnbt_PersistenceWatch (CDServer* server, CDPointer object, const char* type)
+{
+    CDHash* watching = (CDHash*) CD_DynamicGet(server, "Persistence.watching");
+
+    if (watching == NULL) {
+        CD_DynamicPut(server, "Persistence.watching", (CDPointer) (watching = CD_CreateHash()));
+    }
+
+    CDList* objects = (CDList*) CD_HashGet(watching, type);
+
+    if (objects == NULL) {
+        CD_HashPut(watching, type, (CDPointer) (objects = CD_CreateList()));
+    }
+
+    CD_ListPushIf(objects, object, (CDListCompareCallback) cdnbt_ObjectNotWatched);
+
+    return true;
+}
+
+static
+bool
+cdnbt_ServerDestroy (CDServer* server)
+{
+    CDHash* observing = (CDHash*) CD_DynamicGet(server, "Persistence.observing");
+    CDHash* watching  = (CDHash*) CD_DynamicGet(server, "Persistence.watching");
+
+    if (observing) {
+        CD_HASH_FOREACH(observing, it) {
+            CDList* names = (CDList*) CD_HashIteratorValue(it);
+
+            CD_LIST_FOREACH(names, it) {
+                CD_free((char*) CD_ListIteratorValue(it));
+            }
+
+            CD_DestroyList(names);
+        }
+
+        CD_DestroyHash(observing);
+    }
+
+    if (watching) {
+        CD_HASH_FOREACH(watching, it) {
+            CDList* objects = (CDList*) CD_HashIteratorValue(it);
+
+            CD_DestroyList(objects);
+        }
+
+        CD_DestroyHash(watching);
+    }
+
+    return true;
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
@@ -283,6 +278,14 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "World.chunk=",  cdnbt_WorldSetChunk);
     CD_EventRegister(self->server, "World.save",    cdnbt_WorldSave);
     CD_EventRegister(self->server, "World.destroy", cdnbt_WorldDestroy);
+
+    CD_EventRegister(self->server, "Server.destroy", cdnbt_ServerDestroy);
+
+    CD_EventProvides(self->server, "Persistence.initialized", CD_CreateEventParameters("CDPlugin", NULL));
+    CD_EventProvides(self->server, "Persistence.observe",     CD_CreateEventParameters("char*", "char*", NULL));
+    CD_EventProvides(self->server, "Persistence.watch",       CD_CreateEventParameters("char*", "CDPointer", NULL));
+
+    CD_EventDispatch(self->server, "Persistence.initialized", self);
 
     return true;
 }
