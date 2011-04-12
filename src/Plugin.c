@@ -36,7 +36,9 @@ CD_CreatePlugin (CDServer* server, const char* name)
     self->name        = CD_CreateStringFromCString(name);
     self->description = NULL;
 
-    self->handle = lt_dlopenadvise(name, server->plugins->advise);
+    CDString* libName = CD_CreateStringFromFormat("lib%s", name);
+    self->handle = lt_dlopenadvise(CD_StringContent(libName), server->plugins->advise);
+    CD_DestroyString(libName);
 
     if (!self->handle) {
         CD_DestroyPlugin(self);
