@@ -38,12 +38,9 @@ SV_CreateWorld (CDServer* server, const char* name)
 
     self->server = server;
 
-    self->config = NULL;
-
     C_FOREACH(world, C_PATH(server->config, "server.game.protocol.worlds")) {
-        if (CD_CStringIsEqual(name, C_STRING(C_GET(world, "name")))) {
-            self->config = CD_malloc(sizeof(config_t));
-            config_export(world, self->config);
+         if (CD_CStringIsEqual(name, C_STRING(C_GET(world, "name")))) {
+            config_export(world, &self->config.data);
             break;
         }
     }
@@ -103,11 +100,7 @@ SV_DestroyWorld (SVWorld* self)
 
     pthread_spin_destroy(&self->lock.time);
 
-    if (self->config) {
-        config_unexport(self->config);
-
-        CD_free(self);
-    }
+    config_unexport(&self->config.data);
 
     CD_free(self);
 }

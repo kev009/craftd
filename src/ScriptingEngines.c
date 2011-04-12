@@ -42,7 +42,7 @@ CD_CreateScriptingEngines (struct _CDServer* server)
     lt_dladvise_local(&self->advise);
 
     C_FOREACH(path, C_PATH(self->server->config, "server.scripting.paths")) {
-        lt_dladdsearchdir(C_STRING(path));
+         lt_dladdsearchdir(C_STRING(path));
     }
 
     return self;
@@ -67,7 +67,7 @@ bool
 CD_LoadScriptingEngines (CDScriptingEngines* self)
 {
     C_FOREACH(engine, C_PATH(self->server->config, "server.scripting.engines")) {
-       CD_LoadScriptingEngine(self, C_STRING(C_GET(engine, "name")));
+        CD_LoadScriptingEngine(self, C_STRING(C_GET(engine, "name")));
     }
 
     return true;

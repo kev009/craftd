@@ -28,19 +28,16 @@
 
 #include <craftd/protocols/survival.h>
 
+#ifdef HAVE_JSON
+#include <jansson.h>
+#endif
+
 static struct {
     pthread_mutex_t login;
 } _lock;
 
 static struct {
-    const char* commandChar;
-
-    struct {
-        short sunrise;
-        short day;
-        short sunset;
-        short night;
-    } rate;
+    const char* command;
 } _config;
 
 #include "callbacks.c"
@@ -57,16 +54,16 @@ cdsurvival_TimeIncrease (void* _, void* __, CDServer* server)
         uint16_t current = SV_WorldGetTime(world);
 
         if (current >= 0 && current <= 11999) {
-            SV_WorldSetTime(world, current += _config.rate.day);
+            SV_WorldSetTime(world, current += world->config.cache.rate.day);
         }
         else if (current >= 12000 && current <= 13799) {
-            SV_WorldSetTime(world, current += _config.rate.sunset);
+            SV_WorldSetTime(world, current += world->config.cache.rate.sunset);
         }
         else if (current >= 13800 && current <= 22199) {
-            SV_WorldSetTime(world, current += _config.rate.night);
+            SV_WorldSetTime(world, current += world->config.cache.rate.night);
         }
         else if (current >= 22200 && current <= 23999) {
-            SV_WorldSetTime(world, current += _config.rate.sunrise);
+            SV_WorldSetTime(world, current += world->config.cache.rate.sunrise);
         }
 
         if (current >= 24000) {
@@ -119,17 +116,10 @@ cdsurvival_ServerStart (CDServer* server)
     CDList*  worlds       = CD_CreateList();
     SVWorld* defaultWorld = NULL;
 
-    J_DO {
-        J_FOREACH(world, self->config, "worlds") {
-            J_IF_BOOL(world, "default") {
-                if (J_BOOL_VALUE) {
-                    J_IF_STRING(world, "name") {
-                        defaultWorld = SV_CreateWorld(self->server, J_STRING_VALUE);
-                    }
-
-                    break;
-                }
-            }
+    C_FOREACH(world, C_PATH(server->config, "server.game.protocol.worlds")) {
+         if (C_TO_BOOL(C_GET(world, "default"))) {
+            defaultWorld = SV_CreateWorld(self->server, C_TO_STRING(C_GET(world, "name")));
+            break;
         }
     }
 
@@ -139,15 +129,9 @@ cdsurvival_ServerStart (CDServer* server)
 
     CD_ListPush(worlds, (CDPointer) defaultWorld);
 
-    J_DO {
-        J_FOREACH(world, self->config, "worlds") {
-            J_IF_BOOL(world, "default") {
-                if (!J_BOOL_VALUE) {
-                    J_IF_STRING(world, "name") {
-                        CD_ListPush(worlds, (CDPointer) SV_CreateWorld(self->server, J_STRING_VALUE));
-                    }
-                }
-            }
+    C_FOREACH(world, C_PATH(self->config, "server.game.protocol.worlds")) {
+         if (!C_TO_BOOL(C_GET(world, "default"))) {
+            CD_ListPush(worlds, (CDPointer) SV_CreateWorld(self->server, C_TO_STRING(C_GET(world, "name"))));
         }
     }
 
@@ -172,6 +156,7 @@ cdsurvival_ServerStop (CDServer* server)
     return true;
 }
 
+#ifdef HAVE_JSON
 static
 bool
 cdsurvival_JSON (CDServer* server, json_t* input, json_t* output)
@@ -184,6 +169,7 @@ cdsurvival_JSON (CDServer* server, json_t* input, json_t* output)
 
     return true;
 }
+#endif
 
 static
 bool
@@ -199,23 +185,9 @@ CD_PluginInitialize (CDPlugin* self)
     self->description = CD_CreateStringFromCString("Minecraft Beta 1.4");
 
     DO { // Initiailize config cache
-        _config.commandChar = "/";
+        _config.command = "/";
 
-        _config.rate.sunrise = 20;
-        _config.rate.day     = 20;
-        _config.rate.sunset  = 20;
-        _config.rate.night   = 20;
-
-        J_DO {
-            J_STRING(self->config, "commandChar", _config.commandChar);
-
-            J_IN(rate, self->config, "rate") {
-                J_INT(rate, "sunrise", _config.rate.sunrise);
-                J_INT(rate, "day",     _config.rate.day);
-                J_INT(rate, "sunset",  _config.rate.sunset);
-                J_INT(rate, "night",   _config.rate.night);
-            }
-        }
+        C_SAVE(C_GET(C_ROOT(self->config), "command"), C_STRING, _config.command);
     }
 
     CD_InitializeSurvivalProtocol(self->server);
@@ -226,7 +198,9 @@ CD_PluginInitialize (CDPlugin* self)
     CD_DynamicPut(self, "Event.timeUpdate",   CD_SetInterval(self->server->timeloop, 30, (event_callback_fn) cdsurvival_TimeUpdate, CDNull));
     CD_DynamicPut(self, "Event.keepAlive",    CD_SetInterval(self->server->timeloop, 10, (event_callback_fn) cdsurvival_KeepAlive, CDNull));
 
+    #ifdef HAVE_JSON
     CD_EventRegister(self->server, "RPC.JSON", cdsurvival_JSON);
+    #endif
 
     CD_EventRegister(self->server, "Server.start!", cdsurvival_ServerStart);
     CD_EventRegister(self->server, "Server.stop!", cdsurvival_ServerStop);

@@ -42,7 +42,7 @@ CD_CreatePlugins (struct _CDServer* server)
     lt_dladvise_global(&self->advise);
 
     C_FOREACH(path, C_PATH(self->server->config, "server.plugins.paths")) {
-        lt_dladdsearchdir(C_STRING(path));
+        lt_dladdsearchdir(C_TO_STRING(path));
     }
 
     return self;
@@ -67,7 +67,9 @@ bool
 CD_LoadPlugins (CDPlugins* self)
 {
     C_FOREACH(plugin, C_PATH(self->server->config, "server.plugins.load")) {
-        CD_LoadPlugin(self, C_STRING(C_GET(plugin, "name")));
+        if (C_GET(plugin, "name")) {
+            CD_LoadPlugin(self, C_TO_STRING(C_GET(plugin, "name")));
+        }
     }
 
     return true;

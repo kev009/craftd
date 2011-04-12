@@ -27,17 +27,26 @@ server: {
         # official server or if it can use craftd specific additions
         standard: true;
 
-        # this config is used by the protocol
+        # This configuration is used by the protocol implementation in use
         protocol: {
-            worlds: (
-                { name: "world"; default: true; }
-            );
-        }
+            name: "survival";
 
-        players: {
+            worlds: (
+                { name: "world"; default: true;
+                     rate: {
+                        sunrise: 20;
+                        day:     20;
+                        sunset:  20;
+                        night:   20;
+                    };
+                }
+            );
+        };
+
+        clients: {
             max:          0;
             simultaneous: 0;
-        }
+        };
     };
 
     plugins: {
@@ -45,7 +54,7 @@ server: {
 
         load: (
             # Comment this if you don't want the web interface
-            { name: "httpd";
+            { #name: "http";
                 connection: {
                     bind: {
                         ipv4: "127.0.0.1";
@@ -62,21 +71,14 @@ server: {
                     bind: {
                         ipv4: "127.0.0.1";
                         ipv6: "::1";
-                    }
+                    };
 
                     port: 25567;
-                }
-            }
+                };
+            },
 
             { name: "survival.base";
                 command: "/";
-
-                rate: {
-                    sunrise: 20;
-                    day:     20;
-                    sunset:  20;
-                    night:   20;
-                };
             },
 
             { name: "survival.persistence.nbt";
@@ -96,7 +98,7 @@ server: {
                 };
             },
 
-            { name: "survival.tests" }
+            { name: "survival.tests"; }
         );
     };
 
@@ -113,8 +115,8 @@ server: {
             } */
 
             { name: "javascript";
-                "paths": ["scripting/javascript/lib", "scripting/javascript/scripts", "@libdir@/craftd/scripting/javascript", "@libdir@/craftd/scripting/javascript/lib"];
+                paths: ["scripting/javascript/lib", "scripting/javascript/scripts", "@libdir@/craftd/scripting/javascript", "@libdir@/craftd/scripting/javascript/lib"];
             }
         );
-    }
+    };
 };

@@ -198,11 +198,25 @@ CD_CreateHTTPd (CDServer* server)
 
     CD_EventProvides(server, "RPC.JSON", CD_CreateEventParameters("json_t", "json_t", NULL));
 
-
-    C_DO {
+    DO {
         self->cache.connection.bind.ipv4 = "127.0.0.1";
         self->cache.connection.bind.ipv6 = "::1";
         self->cache.connection.port      = 25566;
+
+        C_IN(httpd, self->data, "httpd") {
+            C_BOOL(httpd,   "enabled", self->cache.httpd.enabled);
+            C_STRING(httpd, "root",    self->cache.httpd.root);
+
+            C_IN(connection, httpd, "connection") {
+                C_INT(connection, "port", self->cache.httpd.connection.port);
+
+                C_IN(bind, connection, "bind") {
+                    C_STRING(bind, "ipv4", self->cache.httpd.connection.bind.ipv4);
+                    C_STRING(bind, "ipv6", self->cache.httpd.connection.bind.ipv6);
+                }
+            }
+        }
+
     }
 
     return self;

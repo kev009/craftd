@@ -79,30 +79,30 @@ CDConfig* CD_ParseConfig (const char* path);
  */
 void CD_DestroyConfig (CDConfig* self);
 
-#define C_DO \
-    for (config_setting_t* __tmp__ = NULL; __tmp__ != NULL; __tmp__ = 1)
-
 #define C_ROOT(config) \
-    config_root_setting(config)
+    config_root_setting((config_t*) config)
 
 #define C_IN(var, config, name) \
     config_setting_t* var = config_setting_get_member(config, name); \
     if (var)
 
-#define C_INT_CAST    config_setting_get_int
-#define C_LONG_CAST   config_setting_get_int64
-#define C_FLOAT_CAST  config_setting_get_float
-#define C_BOOL_CAST   config_setting_get_bool
-#define C_STRING_CAST config_setting_get_string
+#define C_INT    config_setting_get_int
+#define C_LONG   config_setting_get_int64
+#define C_FLOAT  config_setting_get_float
+#define C_BOOL   config_setting_get_bool
+#define C_STRING config_setting_get_string
 
-#define C_INT(x)    (C_INT_CAST(x))
-#define C_LONG(x)   (C_LONG_CAST(x))
-#define C_FLOAT(x)  (C_FLOAT_CAST(x))
-#define C_BOOL(x)   ((bool) C_BOOL_CAST(x))
-#define C_STRING(x) (C_STRING_CAST(x))
+#define C_TO_INT(x)    (x ? C_INT(x) : 0)
+#define C_TO_LONG(x)   (x ? C_LONG(x) : 0)
+#define C_TO_FLOAT(x)  (x ? C_FLOAT(x) : 0)
+#define C_TO_BOOL(x)   (x ? (bool) C_BOOL(x) : false)
+#define C_TO_STRING(x) (x ? C_STRING(x) : "")
 
 #define C_GET(config, name) \
     config_setting_get_member(config, name)
+
+#define C_INDEX(config, index) \
+    config_setting_get_elem(config, index)
 
 #define C_PATH(config, path) (config_lookup((config_t*) config, path))
 #define C_PATH_OR(config, path, x, cast) \
@@ -115,12 +115,13 @@ void CD_DestroyConfig (CDConfig* self);
     }
 
 #define C_FOREACH(name, config)                                                                 \
-    for (config_setting_t* name = NULL, *__i__ = (config_setting_t*) 0,                         \
+    if (config)                                                                                 \
+    for (config_setting_t* name = C_INDEX(config, 0), *__i__ = (config_setting_t*) 0,           \
             *__end__ = (config_setting_t*) (long) config_setting_length(config);                \
                                                                                                 \
          (long) __i__ < (long) __end__;                                                         \
                                                                                                 \
-         __i__ = (config_setting_t*) ((long) __i__) + 1,                                        \
-            name = config_setting_get_elem(config, (long) __i__))
+         __i__ = (config_setting_t*) (((long) __i__) + 1),                                      \
+            name = C_INDEX(config, (long) __i__))
 
 #endif

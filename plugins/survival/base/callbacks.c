@@ -573,7 +573,7 @@ cdsurvival_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
                 break;
             }
 
-            if (CD_StringStartWith(data->request.message, _config.commandChar)) {
+            if (CD_StringStartWith(data->request.message, _config.command)) {
                 CDString* commandString = CD_CreateStringFromOffset(data->request.message, 1, 0);
                 CD_EventDispatch(server, "Player.command", player, commandString);
                 SV_DestroyString(commandString);

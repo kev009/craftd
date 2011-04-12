@@ -32,7 +32,7 @@ config_export (config_setting_t* setting, config_t* config)
         return CONFIG_FALSE;
     }
 
-    memset(config, 0, sizeof(config_t));
+    memset(config, 0, sizeof(*config));
 
     config->root      = setting;
     config->tab_width = 2;
@@ -43,7 +43,7 @@ config_export (config_setting_t* setting, config_t* config)
 int
 config_unexport (config_t* config)
 {
-    memset(config, 0, sizeof(config_t));
+    memset(config, 0, sizeof(*config));
 
     return CONFIG_TRUE;
 }

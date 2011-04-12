@@ -62,66 +62,46 @@ CD_ParseConfig (const char* path)
     self->cache.game.clients.max          = 0;
     self->cache.game.clients.simultaneous = 3;
 
-#if 0
-    C_DO {
-        C_IN(server, C_ROOT(self), "server") {
-            C_SAVE(C_GET(server, "daemonize"), C_BOOL_CAST, self->cache.daemonize);
-            C_INT_SAVE(server,  "workers",   self->cache.workers);
+    C_IN(server, C_ROOT(self), "server") {
+        C_SAVE(C_GET(server, "daemonize"), C_BOOL, self->cache.daemonize);
 
-            C_IN(game, server, "game") {
-                C_IN(clients, game, "clients") {
-                    C_INT(clients, "max",          self->cache.game.clients.max);
-                    C_INT(clients, "simultaneous", self->cache.game.clients.simultaneous);
-                }
+        C_SAVE(C_GET(server, "workers"), C_INT, self->cache.workers);
 
-                C_IN(protocol, game, "protocol") {
-                    C_BOOL(game, "standard", self->cache.game.protocol.standard);
-                    C_STRING(game, "name",   self->cache.game.protocol.name);
-                }
-            }
+        C_IN(connection, server, "connection") {
+            C_SAVE(C_GET(connection, "port"),    C_INT, self->cache.connection.port);
+            C_SAVE(C_GET(connection, "backlog"), C_INT, self->cache.connection.backlog);
 
-            C_IN(files, server, "files") {
-                C_STRING(files, "motd",  self->cache.files.motd);
-            }
+            self->cache.connection.bind.ipv4.sin_port  = htons(self->cache.connection.port);
+            self->cache.connection.bind.ipv6.sin6_port = htons(self->cache.connection.port);
 
-            C_IN(connection, server, "connection") {
-                C_INT(connection, "port",    self->cache.connection.port);
-                C_INT(connection, "backlog", self->cache.connection.backlog);
-
-                self->cache.connection.bind.ipv4.sin_port  = htons(self->cache.connection.port);
-                self->cache.connection.bind.ipv6.sin6_port = htons(self->cache.connection.port);
-
-                C_IN(bind, connection, "bind") {
-                    C_IF_STRING(bind, "ipv4") {
-                        if (evutil_inet_pton(AF_INET, C_STRING_VALUE, &self->cache.connection.bind.ipv4.sin_addr) != 1) {
-                            self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
-                        }
+            C_IN(bind, connection, "bind") {
+                if (C_GET(bind, "ipv4")) {
+                    if (evutil_inet_pton(AF_INET, C_TO_STRING(C_GET(bind, "ipv4")), &self->cache.connection.bind.ipv4.sin_addr) != 1) {
+                        self->cache.connection.bind.ipv4.sin_addr.s_addr = INADDR_ANY;
                     }
+                }
 
-                    C_IF_STRING(bind, "ipv6") {
-                        if (evutil_inet_pton(AF_INET6, C_STRING_VALUE, &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
-                            self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
-                        }
+                if (C_GET(bind, "ipv6")) {
+                    if (evutil_inet_pton(AF_INET6, C_TO_STRING(C_GET(bind, "ipv6")), &self->cache.connection.bind.ipv6.sin6_addr) != 1) {
+                        self->cache.connection.bind.ipv6.sin6_addr = in6addr_any;
                     }
                 }
             }
         }
 
-        C_IN(httpd, self->data, "httpd") {
-            C_BOOL(httpd,   "enabled", self->cache.httpd.enabled);
-            C_STRING(httpd, "root",    self->cache.httpd.root);
-
-            C_IN(connection, httpd, "connection") {
-                C_INT(connection, "port", self->cache.httpd.connection.port);
-
-                C_IN(bind, connection, "bind") {
-                    C_STRING(bind, "ipv4", self->cache.httpd.connection.bind.ipv4);
-                    C_STRING(bind, "ipv6", self->cache.httpd.connection.bind.ipv6);
-                }
+        C_IN(game, server, "game") {
+            C_IN(clients, game, "clients") {
+                C_SAVE(C_GET(clients, "max"),          C_INT, self->cache.game.clients.max);
+                C_SAVE(C_GET(clients, "simultaneous"), C_INT, self->cache.game.clients.simultaneous);
             }
+
+            C_SAVE(C_GET(game, "standard"), C_BOOL, self->cache.game.protocol.standard);
+        }
+
+        C_IN(files, server, "files") {
+            C_SAVE(C_GET(files, "motd"), C_STRING, self->cache.files.motd);
         }
     }
-#endif
 
     return self;
 }
@@ -133,4 +113,3 @@ CD_DestroyConfig (CDConfig* self)
 
     CD_free(self);
 }
-

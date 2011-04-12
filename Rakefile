@@ -221,7 +221,7 @@ namespace :plugins do |plugin|
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{to_ldflags(classic.libraries)} #{ldflags}"
+          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{ldflags(classic.libraries)} #{ldflags}"
         end
 
         desc 'Build classic mapgen'
@@ -330,7 +330,7 @@ namespace :plugins do |plugin|
     }
 
     file "plugins/#{plugin.file('rpc')}" => rpc.sources.ext('o') do
-      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{to_ldflags(rpc.libraries)} #{ldflags}"
+      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{ldflags(rpc.libraries)} #{ldflags}"
     end
 
     desc 'Build RPC daemon'
