@@ -14,8 +14,8 @@ pkginclude_HEADERS = craftd/Arithmetic.h \
 		     craftd/Dynamic.h \
 		     craftd/Error.h \
 		     craftd/Event.h \
+		     craftd/extras.h \
 		     craftd/Hash.h \
-		     craftd/HTTPd.h \
 		     craftd/javaendian.h \
 		     craftd/Job.h \
 		     craftd/List.h \

@@ -16,8 +16,8 @@ craftd_SOURCES =  Buffer.c \
 		  Dynamic.c \
 		  Error.c \
 		  Event.c \
+		  extras.c \
 		  Hash.c \
-		  HTTPd.c \
 		  Job.c \
 		  List.c \
 		  Logger.c \
@@ -47,7 +47,7 @@ craftd_SOURCES += protocols/survival/Buffer.c \
 		 protocols/survival/World.c \
 		 protocols/survival/main.c
 
-craftd_LDFLAGS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) -export-dynamic
-craftd_LDADD = $(PTHREAD_LIBS) $(top_builddir)/third-party/libbstring.la
+craftd_LDFLAGS = -export-dynamic
+craftd_LDADD = $(AM_LIBS) $(top_builddir)/third-party/libbstring.la
 
 include $(top_srcdir)/build/auto/build.mk
