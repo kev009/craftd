@@ -23,8 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <craftd/HTTPd.h>
-#include <craftd/Server.h>
+#include "../include/HTTPd.h"
 
 static
 const char*
@@ -49,7 +48,6 @@ cd_GuessContentType (const char* path)
     	return "application/octet-stream";
     }
 }
-
 
 static
 void
@@ -200,15 +198,24 @@ CD_CreateHTTPd (CDServer* server)
 
     CD_EventProvides(server, "RPC.JSON", CD_CreateEventParameters("json_t", "json_t", NULL));
 
+
+    C_DO {
+        self->cache.connection.bind.ipv4 = "127.0.0.1";
+        self->cache.connection.bind.ipv6 = "::1";
+        self->cache.connection.port      = 25566;
+    }
+
     return self;
 }
+
+
 
 void*
 CD_RunHTTPd (CDHTTPd* self)
 {
     self->event.handle = evhttp_bind_socket_with_handle(self->event.httpd,
-        self->server->config->cache.httpd.connection.bind.ipv4,
-        self->server->config->cache.httpd.connection.port);
+        self->config->cache.connection.bind.ipv4,
+        self->config->cache.connection.port);
 
     SLOG(self->server, LOG_NOTICE, "Started HTTPd at http://%s:%d",
         self->server->config->cache.httpd.connection.bind.ipv4,

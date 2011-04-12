@@ -41,14 +41,8 @@ CD_CreatePlugins (struct _CDServer* server)
     lt_dladvise_ext(&self->advise);
     lt_dladvise_global(&self->advise);
 
-    J_DO {
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(plugin, server, "plugin") {
-                J_FOREACH(path, plugin, "paths") {
-                    lt_dladdsearchdir(J_STRING_CAST(path));
-                }
-            }
-        }
+    C_FOREACH(path, C_PATH(self->server->config, "server.plugins.paths")) {
+        lt_dladdsearchdir(C_STRING(path));
     }
 
     return self;
@@ -72,16 +66,8 @@ CD_DestroyPlugins (CDPlugins* self)
 bool
 CD_LoadPlugins (CDPlugins* self)
 {
-    J_DO {
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(plugin, server, "plugin") {
-                J_FOREACH(plugin, plugin, "plugins") {
-                    J_IF_STRING(plugin, "name") {
-                        CD_LoadPlugin(self, J_STRING_VALUE);
-                    }
-                }
-            }
-        }
+    C_FOREACH(plugin, C_PATH(self->server->config, "server.plugins.load")) {
+        CD_LoadPlugin(self, C_STRING(C_GET(plugin, "name")));
     }
 
     return true;

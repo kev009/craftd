@@ -41,14 +41,8 @@ CD_CreateScriptingEngines (struct _CDServer* server)
     lt_dladvise_ext(&self->advise);
     lt_dladvise_local(&self->advise);
 
-    J_DO {
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(scripting, server, "scripting") {
-                J_FOREACH(path, scripting, "paths") {
-                    lt_dladdsearchdir(J_STRING_CAST(path));
-                }
-            }
-        }
+    C_FOREACH(path, C_PATH(self->server->config, "server.scripting.paths")) {
+        lt_dladdsearchdir(C_STRING(path));
     }
 
     return self;
@@ -72,16 +66,8 @@ CD_DestroyScriptingEngines (CDScriptingEngines* self)
 bool
 CD_LoadScriptingEngines (CDScriptingEngines* self)
 {
-    J_DO {
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(scripting, server, "scripting") {
-                J_FOREACH(engine, scripting, "engines") {
-                    J_IF_STRING(engine, "name") {
-                        CD_LoadScriptingEngine(self, J_STRING_VALUE);
-                    }
-                }
-            }
-        }
+    C_FOREACH(engine, C_PATH(self->server->config, "server.scripting.engines")) {
+       CD_LoadScriptingEngine(self, C_STRING(C_GET(engine, "name")));
     }
 
     return true;

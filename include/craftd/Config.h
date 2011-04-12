@@ -27,14 +27,10 @@
 #define CRAFTD_CONFIG_H
 
 #include <craftd/common.h>
-#include <jansson.h>
-
-typedef json_t*      CDRawConfig;
-typedef json_error_t CDRawConfigError;
+#include <libconfig.h>
 
 typedef struct _CDConfig {
-    CDRawConfig      data;
-    CDRawConfigError error;
+    config_t data;
 
     struct {
         bool daemonize;
@@ -48,21 +44,6 @@ typedef struct _CDConfig {
             uint16_t port;
             int      backlog;
         } connection;
-
-        struct {
-            bool enabled;
-
-            struct {
-                struct {
-                    const char* ipv4;
-                    const char* ipv6;
-                } bind;
-
-                uint16_t port;
-            } connection;
-
-            const char* root;
-        } httpd;
 
         struct {
             const char* motd;
@@ -98,56 +79,48 @@ CDConfig* CD_ParseConfig (const char* path);
  */
 void CD_DestroyConfig (CDConfig* self);
 
-#define J_DO for (const json_t* __tmp__ = NULL; __tmp__ == NULL; __tmp__++)
+#define C_DO \
+    for (config_setting_t* __tmp__ = NULL; __tmp__ != NULL; __tmp__ = 1)
 
-#define J_IN(var, parent, key)                          \
-    const json_t* var = json_object_get(parent, key);   \
-    if (var && !json_is_null(var))
+#define C_ROOT(config) \
+    config_root_setting(config)
 
-#define J_FOREACH(var, parent, key)                                     \
-    for (const json_t* __array__ = json_object_get(parent, key),        \
-         *var = json_array_get(__array__, 0),                           \
-         *__i__ = 0, *__ie__ = (json_t*) json_array_size(__array__);    \
-                                                                        \
-         ((size_t) __i__) < ((size_t) __ie__);                          \
-                                                                        \
-         __i__ = (json_t*) (((size_t) __i__) + 1),                      \
-         var = json_array_get(__array__, (size_t) __i__))
+#define C_IN(var, config, name) \
+    config_setting_t* var = config_setting_get_member(config, name); \
+    if (var)
 
-#define J_BOOL_CAST(var) \
-    json_is_true(var)
+#define C_INT_CAST    config_setting_get_int
+#define C_LONG_CAST   config_setting_get_int64
+#define C_FLOAT_CAST  config_setting_get_float
+#define C_BOOL_CAST   config_setting_get_bool
+#define C_STRING_CAST config_setting_get_string
 
-#define J_STRING_CAST(var) \
-    json_string_value(var)
+#define C_INT(x)    (C_INT_CAST(x))
+#define C_LONG(x)   (C_LONG_CAST(x))
+#define C_FLOAT(x)  (C_FLOAT_CAST(x))
+#define C_BOOL(x)   ((bool) C_BOOL_CAST(x))
+#define C_STRING(x) (C_STRING_CAST(x))
 
-#define J_INT_CAST(var) \
-    json_integer_value(var)
+#define C_GET(config, name) \
+    config_setting_get_member(config, name)
 
-#define J_BOOL_VALUE \
-    J_BOOL_CAST(__tmp__)
+#define C_PATH(config, path) (config_lookup((config_t*) config, path))
+#define C_PATH_OR(config, path, x, cast) \
+    (C_PATH((config_t*) config, path) ?  \
+        cast(C_PATH((config_t*) config, path)) : x)
 
-#define J_STRING_VALUE \
-    J_STRING_CAST(__tmp__)
+#define C_SAVE(conf, cast, into)    \
+    if (conf) {                     \
+        into = cast(conf);          \
+    }
 
-#define J_INT_VALUE \
-    J_INT_CAST(__tmp__)
-
-#define J_IF_BOOL(parent, key) \
-    if ((__tmp__ = json_object_get(parent, key)) && !json_is_null(__tmp__))
-
-#define J_IF_STRING(parent, key) \
-    if ((__tmp__ = json_object_get(parent, key)) && json_is_string(__tmp__))
-
-#define J_IF_INT(parent, key) \
-    if ((__tmp__ = json_object_get(parent, key)) && json_is_integer(__tmp__))
-
-#define J_BOOL(parent, key, into) \
-    J_IF_BOOL(parent, key) { into = J_BOOL_VALUE; }
-
-#define J_STRING(parent, key, into) \
-    J_IF_STRING(parent, key) { into = J_STRING_VALUE; }
-
-#define J_INT(parent, key, into) \
-    J_IF_INT(parent, key) { into = J_INT_VALUE; }
+#define C_FOREACH(name, config)                                                                 \
+    for (config_setting_t* name = NULL, *__i__ = (config_setting_t*) 0,                         \
+            *__end__ = (config_setting_t*) (long) config_setting_length(config);                \
+                                                                                                \
+         (long) __i__ < (long) __end__;                                                         \
+                                                                                                \
+         __i__ = (config_setting_t*) ((long) __i__) + 1,                                        \
+            name = config_setting_get_elem(config, (long) __i__))
 
 #endif

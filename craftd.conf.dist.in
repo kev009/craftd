@@ -1,130 +1,120 @@
-{
-  "00": "craftd config file.  Must be valid JSON.",
+# craftd config file
 
-  "server": {
-    "daemonize": false,
+server: {
+    daemonize: false;
 
-    "connection": {
-        "bind": {
-            "ipv4": "0.0.0.0",
-            "ipv6": "::"
-        },
+    connection: {
+        bind: {
+            ipv4: "0.0.0.0";
+            ipv6: "::";
+        };
 
-        "port": 25565,
-        "backlog": 16,
-        "simultaneous": 3
-    },
+        port:    25565;
+        backlog: 16;
+    };
 
-    "workers": 2,
+    # It's a good idea to keep the number of workers equal to the number of CPU cores,
+    # keep in mind that other threads might be spawned by plugins and that craftd has a minimum
+    # number of threads equal to WORKERS + 2
+    workers: 2;
 
-    "files": {
-        "motd": "@sysconfdir@/craftd/motd.conf.dist"
-    },
+    files: {
+        motd: "@sysconfdir@/craftd/motd.conf.dist";
+    };
 
-    "game": {
-        "protocol": {
-            "name": "survival",
+    game: {
+        # This value is used by the base module to know if it has to act like the
+        # official server or if it can use craftd specific additions
+        standard: true;
 
-            "worlds": [
-                { "name": "world", "default": true }
-            ]
-        },
+        # this config is used by the protocol
+        protocol: {
+            worlds: (
+                { name: "world"; default: true; }
+            );
+        }
 
-        "players": {
-            "max": 0
-        },
+        players: {
+            max:          0;
+            simultaneous: 0;
+        }
+    };
 
-        "standard": true
-    },
+    plugins: {
+        paths: ["plugins", "@libdir@/craftd/plugins"];
 
-    "plugin": {
-        "paths": [
-            "plugins",
-            "@libdir@/craftd/plugins"
-        ],
+        load: (
+            # Comment this if you don't want the web interface
+            { name: "httpd";
+                connection: {
+                    bind: {
+                        ipv4: "127.0.0.1";
+                        ipv6: "::1";
+                    };
 
-        "plugins": [
-            { "name": "survival.base",
-                "commandChar": "/",
-
-                "rate": {
-                    "sunrise": 20,
-                    "day": 20,
-                    "sunset": 20,
-                    "night": 20
-                }
+                    port: 25566;
+                };
             },
 
-            { "name": "survival.persistence.nbt",
-                "path": "@datadir@/craftd/worlds"
-            },
-
-            { "name": "survival.mapgen.classic",
-                "seed": "trolololol"
-            },
-
-            { "name": "survival.commands.admin",
-                "authorizations": [
-                    { "name": "Notch",
-                        "password": "faggotree",
-                        "level": "admin"
+            # Comment this if you don't want the RPC daemon
+            { name: "rpc";
+                connection: {
+                    bind: {
+                        ipv4: "127.0.0.1";
+                        ipv6: "::1";
                     }
-                ],
 
-                "ticket": {
-                    "max": 50
+                    port: 25567;
                 }
+            }
+
+            { name: "survival.base";
+                command: "/";
+
+                rate: {
+                    sunrise: 20;
+                    day:     20;
+                    sunset:  20;
+                    night:   20;
+                };
             },
 
-            { "name": "survival.tests" }
-        ]
-    },
+            { name: "survival.persistence.nbt";
+                path: "@datadir@/craftd/worlds";
+            },
 
-    "scripting": {
-        "paths": [
-            "scripting",
-            "@libdir@/craftd/scripting"
-        ],
+            { name: "survival.commands.admin";
+                authorizations: (
+                    { name: "Notch";
+                        password: "faggotree";
+                        level:    "admin";
+                    }
+                );
 
-        "engines": [
-            [ { "name": "lisp",
-                "paths": [
-                    "scripting/lisp/lib",
-                    "scripting/lisp/scripts",
-                    "@libdir@/craftd/scripting/lisp",
-                    "@libdir@/craftd/scripting/lisp/lib"
-                ],
+                ticket: {
+                    max: 50;
+                };
+            },
 
-                "options": [],
+            { name: "survival.tests" }
+        );
+    };
 
-                "scripts": ["joined"]
-            } ],
+    scripting: {
+        paths: ["scripting", "@libdir@/craftd/scripting"];
 
-            { "name": "javascript",
-                "paths": [
-                    "scripting/javascript/lib",
-                    "scripting/javascript/scripts",
-                    "@libdir@/craftd/scripting/javascript",
-                    "@libdir@/craftd/scripting/javascript/lib"
-                ]
+        engines: (
+            /* { name: "lisp";
+                paths: ["scripting/lisp/lib", "scripting/lisp/scripts", "@libdir@/craftd/scripting/lisp", "@libdir@/craftd/scripting/lisp/lib"];
+
+                options: [];
+
+                scripts: ["joined"]
+            } */
+
+            { name: "javascript";
+                "paths": ["scripting/javascript/lib", "scripting/javascript/scripts", "@libdir@/craftd/scripting/javascript", "@libdir@/craftd/scripting/javascript/lib"];
             }
-        ]
+        );
     }
-  },
-
-  "httpd": {
-    "enabled": true,
-
-    "connection": {
-        "bind": {
-            "ipv4": "127.0.0.1",
-            "ipv6": "::1"
-        },
-
-        "port": 25566
-    },
-
-    "root": "@datadir@/craftd/htdocs"
-  }
-}
-
+};

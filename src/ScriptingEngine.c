@@ -68,18 +68,13 @@ CD_CreateScriptingEngine (CDServer* server, const char* name)
     self->initialize = lt_dlsym(self->handle, "CD_ScriptingEngineInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_ScriptingEngineFinalize");
 
-    J_DO { self->config = NULL;
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(scripting, server, "scripting") {
-                J_FOREACH(engine, scripting, "engines") {
-                    J_IF_STRING(engine, "name") {
-                        if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                            self->config = (CDRawConfig) engine;
-                            break;
-                        }
-                    }
-                }
-            }
+    self->config = NULL;
+
+    C_FOREACH(engine, C_PATH(server->config, "server.scripting.engines")) {
+        if (CD_CStringIsEqual(name, C_STRING(C_GET(engine, "name")))) {
+            self->config = CD_malloc(sizeof(config_t));
+            config_export(engine, self->config);
+            break;
         }
     }
 
@@ -116,6 +111,12 @@ CD_DestroyScriptingEngine (CDScriptingEngine* self)
 
     if (DYNAMIC(self)) {
         CD_DestroyDynamic(DYNAMIC(self));
+    }
+
+    if (self->config) {
+        config_unexport(self->config);
+
+        CD_free(self->config);
     }
 
     CD_free(self);

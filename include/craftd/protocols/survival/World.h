@@ -43,7 +43,7 @@ typedef enum _SVWorldDimension {
 typedef struct _SVWorld {
     CDServer* server;
 
-    CDRawConfig config;
+    config_t* config;
 
     CDString*        name;
     SVWorldDimension dimension;

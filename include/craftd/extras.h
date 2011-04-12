@@ -23,54 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_HTTPD_H
-#define CRAFTD_HTTPD_H
+#include <libconfig.h>
 
-#include <craftd/common.h>
+int config_export (config_setting_t* setting, config_t* config);
 
-#include <event2/http.h>
-
-typedef struct _CDContentType {
-  const char* extension;
-  const char* mime;
-} CDContentType;
-
-static const CDContentType CDContentTypes[] = {
-  { "txt",  "text/plain" },
-  { "c",    "text/plain" },
-  { "h",    "text/plain" },
-  { "js",   "text/javascript" },
-  { "html", "text/html" },
-  { "htm",  "text/html" },
-  { "css",  "text/css" },
-  { "gif",  "image/gif" },
-  { "jpg",  "image/jpeg"},
-  { "jpeg", "image/jpeg" },
-  { "png",  "image/png" },
-  { "pdf",  "application/pdf" },
-  { "ps",   "application/postsript" },
-  { NULL },
-};
-
-struct _CDServer;
-
-typedef struct _CDHTTPd {
-    struct _CDServer* server;
-
-    struct {
-        struct event_base*          base;
-        struct evhttp*              httpd;
-        struct evhttp_bound_socket* handle;
-    } event;
-
-    pthread_t      thread;
-    pthread_attr_t attributes;
-} CDHTTPd;
-
-CDHTTPd* CD_CreateHTTPd (struct _CDServer* server);
-
-void* CD_RunHTTPd (CDHTTPd* self);
-
-bool CD_StopHTTPd (CDHTTPd* self);
-
-#endif
+int config_unexport (config_t* config);

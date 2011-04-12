@@ -68,18 +68,11 @@ CD_CreatePlugin (CDServer* server, const char* name)
     self->initialize = lt_dlsym(self->handle, "CD_PluginInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_PluginFinalize");
 
-    J_DO { self->config = NULL;
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(plugin, server, "plugin") {
-                J_FOREACH(plugin, plugin, "plugins") {
-                    J_IF_STRING(plugin, "name") {
-                        if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                            self->config = (CDRawConfig) plugin;
-                            break;
-                        }
-                    }
-                }
-            }
+    C_FOREACH(plugin, C_PATH(self->server->config, "server.plugins.load")) {
+        if (CD_CStringIsEqual(name, C_STRING(C_GET(plugin, "name")))) {
+            self->config = CD_malloc(sizeof(config_t));
+            config_export(plugin, self->config);
+            break;
         }
     }
 
@@ -116,6 +109,12 @@ CD_DestroyPlugin (CDPlugin* self)
 
     if (DYNAMIC(self)) {
         CD_DestroyDynamic(DYNAMIC(self));
+    }
+
+    if (self->config) {
+        config_unexport(self->config);
+
+        CD_free(self);
     }
 
     CD_free(self);

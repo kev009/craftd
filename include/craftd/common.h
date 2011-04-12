@@ -72,6 +72,7 @@
 
 #include <craftd/utils.h>
 #include <craftd/memory.h>
+#include <craftd/extras.h>
 
 #include <craftd/Error.h>
 #include <craftd/Arithmetic.h>

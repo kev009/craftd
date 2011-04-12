@@ -23,60 +23,58 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_SCRIPTINGENGINE_H
-#define CRAFTD_SCRIPTINGENGINE_H
+#include <craftd/Server.h>
 
-#include <ltdl.h>
+#include <event2/http.h>
 
-#include <craftd/common.h>
-#include <craftd/Config.h>
+typedef struct _CDContentType {
+  const char* extension;
+  const char* mime;
+} CDContentType;
 
-struct _CDScriptingEngine;
-struct _CDServer;
+static const CDContentType CDContentTypes[] = {
+  { "txt",  "text/plain" },
+  { "c",    "text/plain" },
+  { "h",    "text/plain" },
+  { "js",   "text/javascript" },
+  { "html", "text/html" },
+  { "htm",  "text/html" },
+  { "css",  "text/css" },
+  { "gif",  "image/gif" },
+  { "jpg",  "image/jpeg"},
+  { "jpeg", "image/jpeg" },
+  { "png",  "image/png" },
+  { "pdf",  "application/pdf" },
+  { "ps",   "application/postsript" },
+  { NULL },
+};
 
-/**
- * Callback type to initialize the ScriptingEngine
- */
-typedef bool (*CDScriptingEngineInitializer)(struct _CDScriptingEngine*);
+typedef struct _CDHTTPd {
+    CDServer* server;
 
-/**
- * Callback type to finalize the ScriptingEngine
- */
-typedef bool (*CDScriptingEngineFinalizer)(struct _CDScriptingEngine*);
+    struct {
+        struct event_base*          base;
+        struct evhttp*              httpd;
+        struct evhttp_bound_socket* handle;
+    } event;
 
-/**
- * The ScriptingEngine class.
- */
-typedef struct _CDScriptingEngine {
-    struct _CDServer* server;
+    struct {
+        config_t data;
 
-    CDString* name;
-    CDString* description;
+        struct {
+            struct {
+                struct {
+                    const char* ipv4;
+                    const char* ipv6;
+                } bind;
 
-    config_t* config;
+                uint16_t port;
+            } connection;
 
-    lt_dlhandle handle;
+            const char* root;
+        } cache;
+    } config;
 
-    CDScriptingEngineInitializer initialize;
-    CDScriptingEngineFinalizer   finalize;
-
-    CD_DEFINE_DYNAMIC;
-    CD_DEFINE_ERROR;
-} CDScriptingEngine;
-
-/**
- * Create a ScriptingEngine from a given path.
- *
- * @param server The Server the scripting engine will run on
- * @param name The name of the scripting engine
- *
- * @return The instantiated ScriptingEngine object
- */
-CDScriptingEngine* CD_CreateScriptingEngine (struct _CDServer* server, const char* name);
-
-/**
- * Destroy a ScriptingEngine object
- */
-void CD_DestroyScriptingEngine (CDScriptingEngine* self);
-
-#endif
+    pthread_t      thread;
+    pthread_attr_t attributes;
+} CDHTTPd;
