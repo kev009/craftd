@@ -44,11 +44,19 @@ AX_PATH_LIB_PCRE
 
 PKG_CHECK_MODULES([libevent2_pthreads], [libevent_pthreads >= 2.0.9],
 , ,
-AC_MSG_ERROR([System libevent2_pthreads not found.  Install it and specify the PKG_CONFIG_PATH. ]))
+AC_MSG_ERROR([System libevent2_pthreads not found.  Install it and check the
+              PKG_CONFIG_PATH env var. ]))
 
-PKG_CHECK_MODULES([jansson], [jansson >= 2.0],
+PKG_CHECK_MODULES([libconfig], [libconfig >= 1.3],
 , ,
-AC_MSG_ERROR([System jansson not found. Install it and specify the PKG_CONFIG_PATH. ]))
+AC_MSG_ERROR([System libconfig not found.  Install it and check the
+              PKG_CONFIG_PATH env var.]))
+
+# Jansson removed from core.  Add --with-json logic later.
+# PKG_CHECK_MODULES([jansson], [jansson >= 2.0],
+# , ,
+# AC_MSG_ERROR([System jansson not found. Install it and check the PKG_CONFIG_PATH
+#              env var. ]))
 
 
 # Establish default CFLAGS and pthread portability

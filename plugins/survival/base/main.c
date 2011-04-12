@@ -228,7 +228,9 @@ CD_PluginFinalize (CDPlugin* self)
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.timeUpdate"));
     CD_ClearInterval(self->server->timeloop, (int) CD_DynamicDelete(self, "Event.keepAlive"));
 
+    #ifdef HAVE_JSON
     CD_EventUnregister(self->server, "RPC.JSON", cdsurvival_JSON);
+    #endif
 
     CD_EventUnregister(self->server, "Server.start!", cdsurvival_ServerStart);
     CD_EventUnregister(self->server, "Server.stop!", cdsurvival_ServerStop);
