@@ -44,7 +44,8 @@ craftd_SOURCES += protocols/survival/Buffer.c \
 		 protocols/survival/PacketLength.c \
 		 protocols/survival/Player.c \
 		 protocols/survival/Region.c \
-		 protocols/survival/World.c
+		 protocols/survival/World.c \
+		 protocols/survival/main.c
 
 craftd_LDFLAGS = $(libevent2_pthreads_LIBS) $(jansson_LIBS) -export-dynamic
 craftd_LDADD = $(PTHREAD_LIBS) $(top_builddir)/third-party/libbstring.la
