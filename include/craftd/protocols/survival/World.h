@@ -31,19 +31,30 @@
 #include <craftd/protocols/survival/Player.h>
 
 typedef enum _SVWorldError {
-    SVWorldErrUnknown = 1,
-    SVWorldErrUsernameTaken = 2
+    SVWorldErrUnknown,
+    SVWorldErrUsernameTaken
 } SVWorldError;
 
 typedef enum _SVWorldDimension {
-    SVWorldHell   = -1,
+    SVWorldNether = -1,
     SVWorldNormal =  0
 } SVWorldDimension;
 
 typedef struct _SVWorld {
     CDServer* server;
 
-    CDRawConfig config;
+    struct {
+        config_t data;
+
+        struct {
+            struct {
+                short sunrise;
+                short day;
+                short sunset;
+                short night;
+            } rate;
+        } cache;
+    } config;
 
     CDString*        name;
     SVWorldDimension dimension;

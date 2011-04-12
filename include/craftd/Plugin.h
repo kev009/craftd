@@ -53,12 +53,12 @@ typedef struct _CDPlugin {
     CDString* name;
     CDString* description;
 
+    config_t* config;
+
     lt_dlhandle handle;
 
     CDPluginInitializer initialize;
     CDPluginFinalizer   finalize;
-
-    CDRawConfig config;
 
     CD_DEFINE_DYNAMIC;
     CD_DEFINE_ERROR;

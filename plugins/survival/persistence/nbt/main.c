@@ -267,10 +267,8 @@ CD_PluginInitialize (CDPlugin* self)
         _config.path = "/usr/share/craftd/worlds";
         _config.base = 36;
 
-        J_DO {
-            J_STRING(self->config, "path", _config.path);
-            J_INT(self->config, "base", _config.base);
-        }
+        C_SAVE(C_PATH(self->config, "path"), C_STRING, _config.path);
+        C_SAVE(C_PATH(self->config, "base"), C_INT, _config.base);
     }
 
     CD_EventRegister(self->server, "World.create",  cdnbt_WorldCreate);

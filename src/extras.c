@@ -23,60 +23,27 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CRAFTD_SCRIPTINGENGINE_H
-#define CRAFTD_SCRIPTINGENGINE_H
-
-#include <ltdl.h>
-
 #include <craftd/common.h>
-#include <craftd/Config.h>
 
-struct _CDScriptingEngine;
-struct _CDServer;
+int
+config_export (config_setting_t* setting, config_t* config)
+{
+    if (config_setting_is_group(setting) != CONFIG_TRUE) {
+        return CONFIG_FALSE;
+    }
 
-/**
- * Callback type to initialize the ScriptingEngine
- */
-typedef bool (*CDScriptingEngineInitializer)(struct _CDScriptingEngine*);
+    memset(config, 0, sizeof(*config));
 
-/**
- * Callback type to finalize the ScriptingEngine
- */
-typedef bool (*CDScriptingEngineFinalizer)(struct _CDScriptingEngine*);
+    config->root      = setting;
+    config->tab_width = 2;
 
-/**
- * The ScriptingEngine class.
- */
-typedef struct _CDScriptingEngine {
-    struct _CDServer* server;
+    return CONFIG_TRUE;
+}
 
-    CDString* name;
-    CDString* description;
+int
+config_unexport (config_t* config)
+{
+    memset(config, 0, sizeof(*config));
 
-    config_t* config;
-
-    lt_dlhandle handle;
-
-    CDScriptingEngineInitializer initialize;
-    CDScriptingEngineFinalizer   finalize;
-
-    CD_DEFINE_DYNAMIC;
-    CD_DEFINE_ERROR;
-} CDScriptingEngine;
-
-/**
- * Create a ScriptingEngine from a given path.
- *
- * @param server The Server the scripting engine will run on
- * @param name The name of the scripting engine
- *
- * @return The instantiated ScriptingEngine object
- */
-CDScriptingEngine* CD_CreateScriptingEngine (struct _CDServer* server, const char* name);
-
-/**
- * Destroy a ScriptingEngine object
- */
-void CD_DestroyScriptingEngine (CDScriptingEngine* self);
-
-#endif
+    return CONFIG_TRUE;
+}

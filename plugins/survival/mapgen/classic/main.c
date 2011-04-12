@@ -83,9 +83,7 @@ CD_PluginInitialize (CDPlugin* self)
     DO { // Initiailize config cache
         _config.seed = "^_^";
 
-        J_DO {
-            J_STRING(self->config, "seed", _config.seed);
-        }
+        C_SAVE(C_PATH(self->config, "seed"), C_STRING, _config.seed);
     }
 
 

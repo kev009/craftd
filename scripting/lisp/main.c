@@ -65,13 +65,11 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     argv[0] = "craftd";
 
-    J_DO {
-        J_FOREACH(arg, self->config, "options") {
-            argv           = CD_realloc(argv, argc * sizeof(char*));
-            argv[argc - 1] = J_STRING_CAST(arg);
+    C_FOREACH(option, C_PATH(self->config, "options")) {
+        argv           = CD_realloc(argv, argc * sizeof(char*));
+        argv[argc - 1] = C_TO_STRING(option);
 
-            argc++;
-        }
+        argc++;
     }
 
     ecl_set_option(ECL_OPT_TRAP_INTERRUPT_SIGNAL, FALSE);
@@ -84,38 +82,36 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     cdcl_eval("(require 'asdf)");
 
-    J_DO {
-        J_FOREACH(j_path, self->config, "paths") {
-            CDString* path = CD_CreateStringFromCString(J_STRING_CAST(j_path));
+    C_FOREACH(c_path, C_PATH(self->config, "paths")) {
+        CDString* path = CD_CreateStringFromCString(C_TO_STRING(c_path));
 
-            if (CD_StringContent(path)[0] == '/') {
-                if (!CD_IsDirectory(CD_StringContent(path))) {
-                    CD_DestroyString(path);
-                    continue;
-                }
+        if (CD_StringContent(path)[0] == '/') {
+            if (!CD_IsDirectory(CD_StringContent(path))) {
+                CD_DestroyString(path);
+                continue;
             }
-            else {
-                char tmp[FILENAME_MAX];
-                
-                if (getcwd(tmp, FILENAME_MAX)) {
-                    path = CD_PrependCString(path, "/");
-                    path = CD_PrependCString(path, tmp);
-                }
-
-                if (!CD_IsDirectory(CD_StringContent(path))) {
-                    CD_DestroyString(path);
-                    continue;
-                }
-            }
-
-            if (!CD_StringEndWith(path, "/")) {
-                path = CD_AppendCString(path, "/");
-            }
-
-            cdcl_eval("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
-
-            CD_DestroyString(path);
         }
+        else {
+            char tmp[FILENAME_MAX];
+            
+            if (getcwd(tmp, FILENAME_MAX)) {
+                path = CD_PrependCString(path, "/");
+                path = CD_PrependCString(path, tmp);
+            }
+
+            if (!CD_IsDirectory(CD_StringContent(path))) {
+                CD_DestroyString(path);
+                continue;
+            }
+        }
+
+        if (!CD_StringEndWith(path, "/")) {
+            path = CD_AppendCString(path, "/");
+        }
+
+        cdcl_eval("(pushnew #P\"%s\" asdf:*central-registry* :test #'equal)", CD_StringContent(path));
+
+        CD_DestroyString(path);
     }
 
     cdcl_safe_eval("(asdf:load-system :craftd)");
@@ -128,10 +124,8 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 
     cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %ld :void))", (CDPointer) self->server);
 
-    J_DO {
-        J_FOREACH(script, self->config, "scripts") {
-            cdcl_safe_eval("(asdf:load-system \"%s\")", J_STRING_CAST(script));
-        }
+    C_FOREACH(script, C_PATH(self->config, "scripts")) {
+        cdcl_safe_eval("(asdf:load-system \"%s\")", C_TO_STRING(script));
     }
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);

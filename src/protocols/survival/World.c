@@ -38,20 +38,10 @@ SV_CreateWorld (CDServer* server, const char* name)
 
     self->server = server;
 
-    J_DO { self->config = NULL;
-        J_IN(data, server->config->data, "server") {
-            J_IN(game, data, "game") {
-                J_IN(protocol, game, "protocol") {
-                    J_FOREACH(world, protocol, "worlds") {
-                        J_IF_STRING(world, "name") {
-                            if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                                self->config = (CDRawConfig) world;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+    C_FOREACH(world, C_PATH(server->config, "server.game.protocol.worlds")) {
+         if (CD_CStringIsEqual(name, C_STRING(C_GET(world, "name")))) {
+            config_export(world, &self->config.data);
+            break;
         }
     }
 
@@ -109,6 +99,8 @@ SV_DestroyWorld (SVWorld* self)
     CD_DestroyDynamic(DYNAMIC(self));
 
     pthread_spin_destroy(&self->lock.time);
+
+    config_unexport(&self->config.data);
 
     CD_free(self);
 }

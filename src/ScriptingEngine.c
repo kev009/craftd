@@ -29,31 +29,14 @@
 CDScriptingEngine*
 CD_CreateScriptingEngine (CDServer* server, const char* name)
 {
-    CDScriptingEngine* self = CD_malloc(sizeof(CDScriptingEngine));
+    CDScriptingEngine* self = CD_alloc(sizeof(CDScriptingEngine));
 
     self->server = server;
 
     self->name        = CD_CreateStringFromCString(name);
     self->description = NULL;
 
-    self->initialize = NULL;
-    self->finalize   = NULL;
-    self->handle     = lt_dlopenadvise(name, server->scriptingEngines->advise);
-
-    DYNAMIC(self) = CD_CreateDynamic();
-    ERROR(self)   = CDNull;
-
-    if (!self->handle) {
-        CDString* tmp = CD_CreateStringFromFormat("libcd%s", name);
-        self->handle = lt_dlopenext(CD_StringContent(tmp));
-        CD_DestroyString(tmp);
-    }
-
-    if (!self->handle) {
-        CDString* tmp = CD_CreateStringFromFormat("lib%s", name);
-        self->handle = lt_dlopenext(CD_StringContent(tmp));
-        CD_DestroyString(tmp);
-    }
+    self->handle = lt_dlopenadvise(name, server->scriptingEngines->advise);
 
     if (!self->handle) {
         CD_DestroyScriptingEngine(self);
@@ -68,18 +51,14 @@ CD_CreateScriptingEngine (CDServer* server, const char* name)
     self->initialize = lt_dlsym(self->handle, "CD_ScriptingEngineInitialize");
     self->finalize   = lt_dlsym(self->handle, "CD_ScriptingEngineFinalize");
 
-    J_DO { self->config = NULL;
-        J_IN(server, self->server->config->data, "server") {
-            J_IN(scripting, server, "scripting") {
-                J_FOREACH(engine, scripting, "engines") {
-                    J_IF_STRING(engine, "name") {
-                        if (CD_CStringIsEqual(J_STRING_VALUE, name)) {
-                            self->config = (CDRawConfig) engine;
-                            break;
-                        }
-                    }
-                }
-            }
+    DYNAMIC(self) = CD_CreateDynamic();
+    ERROR(self)   = CDNull;
+
+    C_FOREACH(engine, C_PATH(server->config, "server.scripting.engines")) {
+        if (CD_CStringIsEqual(name, C_TO_STRING(C_GET(engine, "name")))) {
+            self->config = CD_malloc(sizeof(config_t));
+            config_export(engine, self->config);
+            break;
         }
     }
 
@@ -116,6 +95,12 @@ CD_DestroyScriptingEngine (CDScriptingEngine* self)
 
     if (DYNAMIC(self)) {
         CD_DestroyDynamic(DYNAMIC(self));
+    }
+
+    if (self->config) {
+        config_unexport(self->config);
+
+        CD_free(self->config);
     }
 
     CD_free(self);

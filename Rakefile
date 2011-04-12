@@ -37,7 +37,7 @@ task :install => ['craftd:install']
 namespace :craftd do |craftd|
   craftd.headers   = FileList['include/**/*.h']
   craftd.sources   = FileList['src/**/*.c', 'third-party/bstring/{bstrlib,bstraux}.c']
-  craftd.libraries = %w(pthread z event event_pthreads pcre ltdl)
+  craftd.libraries = %w(pthread z event event_pthreads pcre ltdl config)
 
   CLEAN.include craftd.sources.ext('o')
   CLOBBER.include 'craftd', 'include/craftd/config.h', 'craftd.conf.dist'
@@ -91,16 +91,19 @@ namespace :craftd do |craftd|
        "typedef void* POINTER;\n" + c
     end
 
+    have_library 'config' or fail 'libconfig not found'
+    have_header 'libconfig.h' or fail 'libconfig-dev not found'
+
     # check for libjansson2 for RPC.JSON
     if have_header 'jansson.h' and have_library 'jansson' and have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c| c.sub('ifndef', 'if !') end
-      craftd.libraries << 'jansson'
+      craftd.libraries << global_libs_add('jansson')
 
       $defs << '-DHAVE_JSON'
     end
 
     # check for libxml2 for RPC.XML
     if have_library 'xml2'
-      craftd.libraries << 'xml2'
+      craftd.libraries << global_libs_add('xml2')
 
       $defs << '-DHAVE_XML'
     end
@@ -109,7 +112,7 @@ namespace :craftd do |craftd|
   end
 
   file 'craftd' => craftd.sources.ext('o') do
-    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd #{craftd.libraries.map { |l| "-l#{l}" }.join(' ')} #{LDFLAGS}"
+    sh "#{CC} #{CFLAGS} #{craftd.sources.ext('o')} -o craftd #{ldflags(craftd.libraries)}"
   end
 
   file 'craftd.conf.dist' => 'craftd.conf.dist.in' do
@@ -162,7 +165,7 @@ namespace :plugins do |plugin|
       }
 
       file "plugins/#{plugin.file('base')}" => base.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{base.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('base')} -o plugins/#{plugin.file('base')} #{LDFLAGS}"
+        sh "#{CC} #{CFLAGS} #{base.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('base')} -o plugins/#{plugin.file('base')} #{ldflags}"
       end
 
       desc 'Build SMP base plugin'
@@ -191,7 +194,7 @@ namespace :plugins do |plugin|
         }
 
         file "plugins/#{plugin.file('persistence.nbt')}" => nbt.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{nbt.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('persistence.nbt')} #{ldflags}"
         end
 
         desc 'Build nbt plugin'
@@ -203,10 +206,10 @@ namespace :plugins do |plugin|
       task :build => ['classic:build', 'trivial:build']
 
       namespace :classic do |classic|
-        classic.cflags  = '-Iplugins/survival/mapgen'
-        classic.ldflags = '-lm'
+        classic.cflags = '-Iplugins/survival/mapgen'
 
-        classic.sources = FileList['plugins/survival/mapgen/classic/main.c', 'plugins/survival/mapgen/noise/simplexnoise1234.c']
+        classic.sources   = FileList['plugins/survival/mapgen/classic/main.c', 'plugins/survival/mapgen/noise/simplexnoise1234.c']
+        classic.libraries = %w(m)
 
         CLEAN.include classic.sources.ext('o')
         CLOBBER.include "plugins/#{plugin.file('mapgen.classic')}"
@@ -218,7 +221,7 @@ namespace :plugins do |plugin|
         }
 
         file "plugins/#{plugin.file('mapgen.classic')}" => classic.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{classic.ldflags} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{classic.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.classic')} #{ldflags(classic.libraries)} #{ldflags}"
         end
 
         desc 'Build classic mapgen'
@@ -238,7 +241,7 @@ namespace :plugins do |plugin|
         }
 
         file "plugins/#{plugin.file('mapgen.trivial')}" => trivial.sources.ext('o') do
-          sh "#{CC} #{CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{LDFLAGS}"
+          sh "#{CC} #{CFLAGS} #{trivial.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('persistence.nbt')} -o plugins/#{plugin.file('mapgen.trivial')} #{ldflags}"
         end
 
         desc 'Build trivial mapgen'
@@ -285,7 +288,7 @@ namespace :plugins do |plugin|
       }
 
       file "plugins/#{plugin.file('tests')}" => tests.sources.ext('o') do
-        sh "#{CC} #{CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{LDFLAGS}"
+        sh "#{CC} #{CFLAGS} #{tests.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('tests')} -o plugins/#{plugin.file('tests')} #{ldflags}"
       end
 
       desc 'Build tests plugin'
@@ -293,9 +296,29 @@ namespace :plugins do |plugin|
     end
   end
 
+  namespace :http do |http|
+    http.sources   = FileList['plugins/http/main.c', 'plugins/http/src/**.c']
+
+    CLEAN.include http.sources.ext('o')
+    CLOBBER.include "plugins/#{plugin.file('http')}"
+
+    http.sources.each {|f|
+      file f.ext('o') => c_file(f) do
+        sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
+      end
+    }
+
+    file "plugins/#{plugin.file('http')}" => http.sources.ext('o') do
+      sh "#{CC} #{CFLAGS} #{http.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('http')} -o plugins/#{plugin.file('http')} #{ldflags} #{ldflags}"
+    end
+
+    desc 'Build RPC daemon'
+    task :build => "plugins/#{plugin.file('http')}"
+  end
+
   namespace :rpc do |rpc|
     rpc.sources   = FileList['plugins/rpc/main.c']
-    rpc.libraries = []
+    rpc.libraries = %w()
 
     CLEAN.include rpc.sources.ext('o')
     CLOBBER.include "plugins/#{plugin.file('rpc')}"
@@ -307,32 +330,11 @@ namespace :plugins do |plugin|
     }
 
     file "plugins/#{plugin.file('rpc')}" => rpc.sources.ext('o') do
-      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{rpc.libraries.map { |l| "-l#{l}" }.join(' ')} #{LDFLAGS}"
-    end
-
-    desc 'check for RPC daemon requirements'
-    task :requirements => 'plugins/rpc/config.h'
-
-    file 'plugins/rpc/config.h' do
-      # check for libjansson2 for RPC.JSON
-      if have_header 'jansson.h' and have_library 'jansson' and have_macro '(JANSSON_MAJOR_VERSION == 2)', 'jansson.h' do |c| c.sub('ifndef', 'if !') end
-        rpc.libraries << 'jansson'
-
-        $defs << '-DHAVE_JSON'
-      end
-
-      # check for libxml2 for RPC.XML
-      if have_library 'xml2'
-        rpc.libraries << 'xml2'
-
-        $defs << '-DHAVE_XML'
-      end
-
-      create_config 'plugins/rpc/config.h'
+      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{ldflags(rpc.libraries)} #{ldflags}"
     end
 
     desc 'Build RPC daemon'
-    task :build => [:requirements, "plugins/#{plugin.file('rpc')}"]
+    task :build => "plugins/#{plugin.file('rpc')}"
   end
 end
 

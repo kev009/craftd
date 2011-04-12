@@ -65,13 +65,6 @@ CD_CreateServer (const char* path)
     self->plugins          = CD_CreatePlugins(self);
     self->scriptingEngines = CD_CreateScriptingEngines(self);
 
-    if (self->config->cache.httpd.enabled) {
-        self->httpd = CD_CreateHTTPd(self);
-    }
-    else {
-        self->httpd = NULL;
-    }
-
     self->clients       = CD_CreateList();
     self->disconnecting = CD_CreateList();
 
@@ -102,7 +95,6 @@ CD_DestroyServer (CDServer* self)
     CD_EventDispatch(self, "Server.destroy");
 
     CD_StopTimeLoop(self->timeloop);
-    CD_StopHTTPd(self->httpd);
 
     CD_LIST_FOREACH(self->clients, it) {
         CD_ServerKick(self, (CDClient*) CD_ListIteratorValue(it), CD_CreateStringFromCString("shutting down"));
@@ -389,11 +381,6 @@ CD_RunServer (CDServer* self)
 
     // Start the TimeLoop for timed events
     pthread_create(&self->timeloop->thread, &self->timeloop->attributes, (void *(*)(void *)) CD_RunTimeLoop, self->timeloop);
-
-    // Start HTTPd if enabled
-    if (self->httpd) {
-        pthread_create(&self->httpd->thread, &self->httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, self->httpd);
-    }
 
     self->event.listener = event_new(self->event.base, self->socket, EV_READ | EV_PERSIST, (event_callback_fn) cd_Accept, self);
 
