@@ -753,6 +753,8 @@ cdsurvival_PlayerLogout (CDServer* server, SVPlayer* player)
         CD_DestroySet(chunks);
     }
 
+    SV_WorldRemovePlayer(player->world, player);
+
     return true;
 }
 
@@ -760,6 +762,9 @@ static
 bool
 cdsurvival_ClientDisconnect (CDServer* server, CDClient* client, bool status)
 {
+    assert(server);
+    assert(client);
+
     SVPlayer* player = (SVPlayer*) CD_DynamicGet(client, "Client.player");
 
     if (player->world) {

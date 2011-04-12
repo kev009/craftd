@@ -183,6 +183,17 @@ SV_WorldAddPlayer (SVWorld* self, SVPlayer* player)
 }
 
 void
+SV_WorldRemovePlayer (SVWorld* self, SVPlayer* player)
+{
+    assert(self);
+    assert(player);
+    assert(player->world == self);
+
+    CD_HashDelete(player->world->players, CD_StringContent(player->username));
+    CD_MapDelete(player->world->entities, player->entity.id);
+}
+
+void
 SV_WorldBroadcastBuffer (SVWorld* self, CDBuffer* buffer)
 {
     assert(self);
