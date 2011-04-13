@@ -320,7 +320,7 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
             SV_BufferRemoveFormat(input, "ibi",
                 &packet->request.position.x,
                 &packet->request.position.y,
-                &packet->request.position.z,
+                &packet->request.position.z
             );
 
             packet->request.face = SV_BufferRemoveByte(input);

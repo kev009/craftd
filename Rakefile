@@ -29,7 +29,7 @@ end
 # Stuff building
 task :default => ['craftd:build', 'plugins:build']
 
-task :all => ['craftd:build', 'plugins:build', 'plugins:rpc:build', 'scripting:build']
+task :all => ['craftd:build', 'plugins:build', 'scripting:build']
 
 # Stuff installation
 task :install => ['craftd:install']
@@ -150,7 +150,7 @@ namespace :plugins do |plugin|
       end
     end
 
-    task :build => ['base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
+    task :build => ['http:build', 'base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
 
     namespace :base do |base|
       base.sources = FileList['plugins/survival/base/main.c']
@@ -297,7 +297,7 @@ namespace :plugins do |plugin|
   end
 
   namespace :http do |http|
-    http.sources   = FileList['plugins/http/main.c', 'plugins/http/src/**.c']
+    http.sources = FileList['plugins/http/main.c', 'plugins/http/src/**.c']
 
     CLEAN.include http.sources.ext('o')
     CLOBBER.include "plugins/#{plugin.file('http')}"
@@ -314,27 +314,6 @@ namespace :plugins do |plugin|
 
     desc 'Build RPC daemon'
     task :build => "plugins/#{plugin.file('http')}"
-  end
-
-  namespace :rpc do |rpc|
-    rpc.sources   = FileList['plugins/rpc/main.c']
-    rpc.libraries = %w()
-
-    CLEAN.include rpc.sources.ext('o')
-    CLOBBER.include "plugins/#{plugin.file('rpc')}"
-
-    rpc.sources.each {|f|
-      file f.ext('o') => c_file(f) do
-        sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
-      end
-    }
-
-    file "plugins/#{plugin.file('rpc')}" => rpc.sources.ext('o') do
-      sh "#{CC} #{CFLAGS} #{rpc.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('rpc')} -o plugins/#{plugin.file('rpc')} #{ldflags(rpc.libraries)} #{ldflags}"
-    end
-
-    desc 'Build RPC daemon'
-    task :build => "plugins/#{plugin.file('rpc')}"
   end
 end
 

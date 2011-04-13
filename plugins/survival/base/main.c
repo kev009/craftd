@@ -187,7 +187,7 @@ CD_PluginInitialize (CDPlugin* self)
     DO { // Initiailize config cache
         _config.command = "/";
 
-        C_SAVE(C_GET(C_ROOT(self->config), "command"), C_STRING, _config.command);
+        C_SAVE(C_PATH(self->config, "command"), C_STRING, _config.command);
     }
 
     CD_InitializeSurvivalProtocol(self->server);
