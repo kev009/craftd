@@ -315,13 +315,15 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVPlayerDigging: {
             SVPacketPlayerDigging* packet = (SVPacketPlayerDigging*) CD_malloc(sizeof(SVPacketPlayerDigging));
 
-            SV_BufferRemoveFormat(input, "bibib",
-                &packet->request.status,
+            packet->request.status = SV_BufferRemoveByte(input);
+
+            SV_BufferRemoveFormat(input, "ibi",
                 &packet->request.position.x,
                 &packet->request.position.y,
-                &packet->request.position.z,
-                &packet->request.face
+                &packet->request.position.z
             );
+
+            packet->request.face = SV_BufferRemoveByte(input);
 
             return (CDPointer) packet;
         }
@@ -370,10 +372,8 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVEntityAction: {
             SVPacketEntityAction* packet = (SVPacketEntityAction*) CD_malloc(sizeof(SVPacketEntityAction));
 
-            SV_BufferRemoveFormat(input, "ib",
-                &packet->request.entity.id,
-                &packet->request.action
-            );
+            packet->request.entity.id = SV_BufferRemoveInteger(input);
+            packet->request.action    = SV_BufferRemoveByte(input);
 
             return (CDPointer) packet;
         }

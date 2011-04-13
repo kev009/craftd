@@ -25,6 +25,10 @@
 
 #include "../include/HTTPd.h"
 
+#ifdef HAVE_JSON
+#   include <jansson.h>
+#endif
+
 static
 const char*
 cd_GuessContentType (const char* path)
@@ -49,9 +53,10 @@ cd_GuessContentType (const char* path)
     }
 }
 
+#ifdef HAVE_JSON
 static
 void
-cd_JSONRequest (struct evhttp_request* request, CDServer* server)
+cd_JSONRequest (struct evhttp_request* request, CDHTTPd* self)
 {
     struct evbuffer* buffer = evhttp_request_get_input_buffer(request);
     char*            text   = CD_alloc(evbuffer_get_length(buffer) + 1);
@@ -69,12 +74,12 @@ cd_JSONRequest (struct evhttp_request* request, CDServer* server)
     }
 
     if (input == NULL) {
-        SERR(server, "RPC.JSON: error on line %d: %s", error.line, error.text);
+        SERR(self->server, "RPC.JSON: error on line %d: %s", error.line, error.text);
         
         goto error;
     }
 
-    CD_EventDispatch(server, "RPC.JSON", input, output);
+    CD_EventDispatch(self->server, "RPC.JSON", input, output);
 
     done: {
         char*            outString = json_dumps(output, JSON_INDENT(2));
@@ -109,10 +114,11 @@ cd_JSONRequest (struct evhttp_request* request, CDServer* server)
         return;
     }     
 }
+#endif
 
 static
 void
-cd_StaticRequest (struct evhttp_request* request, CDServer* server)
+cd_StaticRequest (struct evhttp_request* request, CDHTTPd* self)
 {
     int         error   = HTTP_OK;
     const char* message = "OK";
@@ -135,7 +141,7 @@ cd_StaticRequest (struct evhttp_request* request, CDServer* server)
     }
 
     DO {
-        CDString* path = CD_CreateStringFromFormat("%s/%s", server->config->cache.httpd.root,
+        CDString* path = CD_CreateStringFromFormat("%s/%s", self->config.root,
             evhttp_uri_get_path(decoded) ? evhttp_uri_get_path(decoded) : "index.html");
 
         if (CD_IsDirectory(CD_StringContent(path))) {
@@ -177,7 +183,7 @@ cd_StaticRequest (struct evhttp_request* request, CDServer* server)
 }
 
 CDHTTPd*
-CD_CreateHTTPd (CDServer* server)
+CD_CreateHTTPd (CDPlugin* plugin)
 {
     CDHTTPd* self = CD_malloc(sizeof(CDHTTPd));
 
@@ -189,31 +195,31 @@ CD_CreateHTTPd (CDServer* server)
         CD_abort("pthread attribute failed to set in detach state");
     }
 
-    self->server      = server;
+    self->server      = plugin->server;
     self->event.base  = event_base_new();
     self->event.httpd = evhttp_new(self->event.base);
     
-    evhttp_set_cb(self->event.httpd, "/rpc/json", (void (*)(struct evhttp_request*, void*)) cd_JSONRequest, server);
-    evhttp_set_gencb(self->event.httpd, (void (*)(struct evhttp_request*, void*)) cd_StaticRequest, server);
+    #ifdef HAVE_JSON
+    CD_EventProvides(self->server, "RPC.JSON", CD_CreateEventParameters("json_t", "json_t", NULL));
+    evhttp_set_cb(self->event.httpd, "/rpc/json", (void (*)(struct evhttp_request*, void*)) cd_JSONRequest, self);
+    #endif
 
-    CD_EventProvides(server, "RPC.JSON", CD_CreateEventParameters("json_t", "json_t", NULL));
+    evhttp_set_gencb(self->event.httpd, (void (*)(struct evhttp_request*, void*)) cd_StaticRequest, self);
 
     DO {
-        self->cache.connection.bind.ipv4 = "127.0.0.1";
-        self->cache.connection.bind.ipv6 = "::1";
-        self->cache.connection.port      = 25566;
+        self->config.connection.bind.ipv4 = "127.0.0.1";
+        self->config.connection.bind.ipv6 = "::1";
+        self->config.connection.port      = 25566;
+        self->config.root                 = "/usr/share/craftd/htdocs";
 
-        C_IN(httpd, self->data, "httpd") {
-            C_BOOL(httpd,   "enabled", self->cache.httpd.enabled);
-            C_STRING(httpd, "root",    self->cache.httpd.root);
+        C_SAVE(C_PATH(plugin->config, "root"), C_STRING, self->config.root);
 
-            C_IN(connection, httpd, "connection") {
-                C_INT(connection, "port", self->cache.httpd.connection.port);
+        C_IN(connection, C_ROOT(plugin->config), "connection") {
+            C_SAVE(C_GET(connection, "port"), C_INT, self->config.connection.port);
 
-                C_IN(bind, connection, "bind") {
-                    C_STRING(bind, "ipv4", self->cache.httpd.connection.bind.ipv4);
-                    C_STRING(bind, "ipv6", self->cache.httpd.connection.bind.ipv6);
-                }
+            C_IN(bind, connection, "bind") {
+                C_SAVE(C_GET(bind, "ipv4"), C_STRING, self->config.connection.bind.ipv4);
+                C_SAVE(C_GET(bind, "ipv6"), C_STRING, self->config.connection.bind.ipv6);
             }
         }
 
@@ -222,18 +228,36 @@ CD_CreateHTTPd (CDServer* server)
     return self;
 }
 
+void
+CD_DestroyHTTPd (CDHTTPd* self)
+{
+    assert(self);
 
+    CD_StopHTTPd(self);
+
+    if (self->event.base) {
+        event_base_free(self->event.base);
+        self->event.base = NULL;
+    }
+
+    if (self->event.httpd) {
+        evhttp_free(self->event.httpd);
+        self->event.httpd = NULL;
+    }
+
+    CD_free(self);
+}
 
 void*
 CD_RunHTTPd (CDHTTPd* self)
 {
     self->event.handle = evhttp_bind_socket_with_handle(self->event.httpd,
-        self->config->cache.connection.bind.ipv4,
-        self->config->cache.connection.port);
+        self->config.connection.bind.ipv4,
+        self->config.connection.port);
 
     SLOG(self->server, LOG_NOTICE, "Started HTTPd at http://%s:%d",
-        self->server->config->cache.httpd.connection.bind.ipv4,
-        self->server->config->cache.httpd.connection.port);
+        self->config.connection.bind.ipv4,
+        self->config.connection.port);
 
     CD_EventDispatch(self->server, "HTTPd.start!", self);
 

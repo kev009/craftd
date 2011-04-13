@@ -53,8 +53,8 @@ server: {
         paths: ["plugins", "@libdir@/craftd/plugins"];
 
         load: (
-            # Comment this if you don't want the web interface
-            { #name: "http";
+            # Comment this if you don't want the web interface and RPC capabilities
+            { name: "http";
                 connection: {
                     bind: {
                         ipv4: "127.0.0.1";
@@ -62,18 +62,6 @@ server: {
                     };
 
                     port: 25566;
-                };
-            },
-
-            # Comment this if you don't want the RPC daemon
-            { name: "rpc";
-                connection: {
-                    bind: {
-                        ipv4: "127.0.0.1";
-                        ipv6: "::1";
-                    };
-
-                    port: 25567;
                 };
             },
 
@@ -86,6 +74,8 @@ server: {
             { name: "survival.persistence.nbt";
                 path: "@datadir@/craftd/worlds";
             },
+
+            { name: "survival.mapgen.classic"; },
 
             { name: "survival.commands.admin";
                 authorizations: (

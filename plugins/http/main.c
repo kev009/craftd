@@ -28,15 +28,39 @@
 
 #include "include/HTTPd.h"
 
+static
+bool
+cdhttp_ServerStart (CDServer* server)
+{
+    CDHTTPd* httpd = (CDHTTPd*) CD_DynamicGet(server, "HTTPd.instance");
+
+    pthread_create(&httpd->thread, &httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, httpd);
+
+    return true;
+}
+
+static
+bool
+cdhttp_ServerStop (CDServer* server)
+{
+    CDHTTPd* httpd = (CDHTTPd*) CD_DynamicGet(server, "HTTPd.instance");
+
+    CD_StopHTTPd(httpd);
+
+    return true;
+}
+
 extern
 bool
 CD_PluginInitialize (CDPlugin* self)
 {
-    self->description = CD_CreateStringFromCString("Web Interface");
+    self->description = CD_CreateStringFromCString("Web Interface and RPC");
 
-    CDHTTPd* httpd = CD_CreateHTTPd(self->server);
+    CD_DynamicPut(self->server, "HTTPd.instance", (CDPointer) CD_CreateHTTPd(self));
 
-    pthread_create(&httpd->thread, &httpd->attributes, (void *(*)(void *)) CD_RunHTTPd, httpd);
+    CD_EventRegister(self->server, "Server.start!", cdhttp_ServerStart);
+    CD_EventRegister(self->server, "Server.stop!", cdhttp_ServerStop);
+
 
     return true;
 }
@@ -45,6 +69,10 @@ extern
 bool
 CD_PluginFinalize (CDPlugin* self)
 {
+    CD_DestroyHTTPd((CDHTTPd*) CD_DynamicDelete(self->server, "HTTPd.instance"));
+
+    CD_EventUnregister(self->server, "Server.start!", cdhttp_ServerStart);
+    CD_EventUnregister(self->server, "Server.stop!", cdhttp_ServerStop);
 
     return true;
 }

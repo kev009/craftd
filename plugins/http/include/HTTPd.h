@@ -23,6 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef CRAFTD_HTTP_HTTPD_H
+#define CRAFTD_HTTP_HTTPD_H
+
 #include <craftd/Server.h>
 
 #include <event2/http.h>
@@ -59,22 +62,28 @@ typedef struct _CDHTTPd {
     } event;
 
     struct {
-        config_t data;
-
         struct {
             struct {
-                struct {
-                    const char* ipv4;
-                    const char* ipv6;
-                } bind;
+                const char* ipv4;
+                const char* ipv6;
+            } bind;
 
-                uint16_t port;
-            } connection;
+            uint16_t port;
+        } connection;
 
-            const char* root;
-        } cache;
+        const char* root;
     } config;
 
     pthread_t      thread;
     pthread_attr_t attributes;
 } CDHTTPd;
+
+CDHTTPd* CD_CreateHTTPd (CDPlugin* plugin);
+
+void CD_DestroyHTTPd (CDHTTPd* self);
+
+void* CD_RunHTTPd (CDHTTPd* self);
+
+bool CD_StopHTTPd (CDHTTPd* self);
+
+#endif
