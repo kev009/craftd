@@ -39,6 +39,18 @@ CD_CreatePlugin (CDServer* server, const char* name)
     self->handle = lt_dlopenadvise(name, server->plugins->advise);
 
     if (!self->handle) {
+        CDString* tmp = CD_CreateStringFromFormat("libcd%s", name);
+        self->handle = lt_dlopenext(CD_StringContent(tmp));
+        CD_DestroyString(tmp);
+    }
+
+    if (!self->handle) {
+        CDString* tmp = CD_CreateStringFromFormat("lib%s", name);
+        self->handle = lt_dlopenext(CD_StringContent(tmp));
+        CD_DestroyString(tmp);
+    }
+
+    if (!self->handle) {
         CD_DestroyPlugin(self);
 
         SWARN(server, "Couldn't load plugin %s", name);
