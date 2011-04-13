@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I build/auto/m4
 
-SUBDIRS = include third-party src plugins htdocs
+SUBDIRS = include third-party src plugins
 
 EXTRA_DIST = craftd.conf.dist.in motd.conf.dist
 
