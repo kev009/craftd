@@ -80,6 +80,8 @@ server: {
             { name: "survival.base";
                 command: "/";
             },
+            
+            { name : "survival.mapgen.classic"; },
 
             { name: "survival.persistence.nbt";
                 path: "@datadir@/craftd/worlds";
