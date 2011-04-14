@@ -33,8 +33,8 @@ libsurvival_mapgen_trivial_la_CPPFLAGS = $(AM_CPPFLAGS) -Isurvival/mapgen
 libsurvival_mapgen_trivial_la_LIBADD = survival/mapgen/noise/libnoise_simplex.la -lm
 libsurvival_mapgen_trivial_la_LDFLAGS = -version-info 0:0:0
 
-libhttpd_la_SOURCES = http/main.c http/src/HTTPd.c http/include/HTTPd.h
-libhttpd_la_CPPFLAGS = $(AM_CPPFLAGS) -Ihttp
+libhttpd_la_SOURCES = httpd/main.c httpd/src/HTTPd.c httpd/include/HTTPd.h
+libhttpd_la_CPPFLAGS = $(AM_CPPFLAGS) -Ihttpd
 libhttpd_la_LDFLAGS = -version-info 0:0:0
 
 # Global build envs
