@@ -54,7 +54,7 @@ server: {
 
         load: (
             # Comment this if you don't want the web interface and RPC capabilities
-            { name: "http";
+            { name: "httpd";
                 connection: {
                     bind: {
                         ipv4: "127.0.0.1";

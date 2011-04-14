@@ -1,6 +1,6 @@
 SUBDIRS = survival/mapgen/noise
 
-pkglib_LTLIBRARIES = libsurvival.tests.la libsurvival.base.la libsurvival.persistence.nbt.la libsurvival.mapgen.classic.la libsurvival.mapgen.trivial.la
+pkglib_LTLIBRARIES = libsurvival.tests.la libsurvival.base.la libsurvival.persistence.nbt.la libsurvival.mapgen.classic.la libsurvival.mapgen.trivial.la libhttpd.la
 # BROKEN: libsvcmdadmin.la
 
 libsurvival_tests_la_SOURCES = survival/tests/main.c survival/tests/tinytest/tinytest.c survival/tests/tinytest/tinytest.h survival/tests/tinytest/tinytest_macros.h
@@ -33,6 +33,9 @@ libsurvival_mapgen_trivial_la_CPPFLAGS = $(AM_CPPFLAGS) -Isurvival/mapgen
 libsurvival_mapgen_trivial_la_LIBADD = survival/mapgen/noise/libnoise_simplex.la -lm
 libsurvival_mapgen_trivial_la_LDFLAGS = -version-info 0:0:0
 
+libhttpd_la_SOURCES = http/main.c http/src/HTTPd.c http/include/HTTPd.h
+libhttpd_la_CPPFLAGS = $(AM_CPPFLAGS) -Ihttp
+libhttpd_la_LDFLAGS = -version-info 0:0:0
 
 # Global build envs
 include $(top_srcdir)/build/auto/build.mk
