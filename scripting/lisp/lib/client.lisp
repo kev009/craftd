@@ -11,4 +11,4 @@
     (jobs    :char))
 
 (defun client-ip (client)
-  (convert-from-cstring (get-wrapped-slot client 'ip)))
+  (uffi:convert-from-foreign-string (get-wrapped-slot client 'ip)))

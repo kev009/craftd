@@ -150,7 +150,7 @@ namespace :plugins do |plugin|
       end
     end
 
-    task :build => ['http:build', 'base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
+    task :build => ['httpd:build', 'base:build', 'persistence:build', 'mapgen:build', 'commands:build', 'tests:build']
 
     namespace :base do |base|
       base.sources = FileList['plugins/survival/base/main.c']
@@ -296,24 +296,24 @@ namespace :plugins do |plugin|
     end
   end
 
-  namespace :http do |http|
-    http.sources = FileList['plugins/http/main.c', 'plugins/http/src/**.c']
+  namespace :httpd do |httpd|
+    httpd.sources = FileList['plugins/httpd/main.c', 'plugins/httpd/src/**.c']
 
-    CLEAN.include http.sources.ext('o')
-    CLOBBER.include "plugins/#{plugin.file('http')}"
+    CLEAN.include httpd.sources.ext('o')
+    CLOBBER.include "plugins/#{plugin.file('httpd')}"
 
-    http.sources.each {|f|
+    httpd.sources.each {|f|
       file f.ext('o') => c_file(f) do
         sh "#{CC} #{CFLAGS} -Iinclude -o #{f.ext('o')} -c #{f}"
       end
     }
 
-    file "plugins/#{plugin.file('http')}" => http.sources.ext('o') do
-      sh "#{CC} #{CFLAGS} #{http.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('http')} -o plugins/#{plugin.file('http')} #{ldflags} #{ldflags}"
+    file "plugins/#{plugin.file('httpd')}" => httpd.sources.ext('o') do
+      sh "#{CC} #{CFLAGS} #{httpd.sources.ext('o')} -shared -Wl,-soname,#{plugin.file('httpd')} -o plugins/#{plugin.file('httpd')} #{ldflags} #{ldflags}"
     end
 
     desc 'Build RPC daemon'
-    task :build => "plugins/#{plugin.file('http')}"
+    task :build => "plugins/#{plugin.file('httpd')}"
   end
 end
 

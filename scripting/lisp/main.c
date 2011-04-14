@@ -44,10 +44,15 @@ cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
         return true;
     }
 
+    CDMap* threads = (CDMap*) CD_DynamicGet(server, "LISP.threads");
 
-    ecl_import_current_thread(Cnil, Cnil);
+    if (!CD_MapHasKey(threads, pthread_self())) {
+        CD_MapPut(threads, pthread_self(), true);
+
+        ecl_import_current_thread(Cnil, Cnil);
+    }
+
     cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
-    ecl_release_current_thread();
 
     CD_DestroyString(parameters);
 
@@ -59,6 +64,8 @@ bool
 CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 {
     self->description = CD_CreateStringFromCString("Common LISP scripting");
+
+    CD_DynamicPut(self->server, "LISP.threads", (CDPointer) CD_CreateMap());
 
     int          argc = 1;
     const char** argv = CD_malloc(sizeof(char*));
@@ -114,7 +121,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         CD_DestroyString(path);
     }
 
-    cdcl_safe_eval("(asdf:load-system :craftd)");
+    cdcl_eval("(asdf:load-system :craftd)");
 
     if (errno == EILSEQ) {
         SERR(self->server, "Failed to load the core LISP");
@@ -125,7 +132,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
     cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %ld :void))", (CDPointer) self->server);
 
     C_FOREACH(script, C_PATH(self->config, "scripts")) {
-        cdcl_safe_eval("(asdf:load-system \"%s\")", C_TO_STRING(script));
+        cdcl_eval("(asdf:load-system \"%s\")", C_TO_STRING(script));
     }
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);

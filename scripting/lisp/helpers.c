@@ -61,7 +61,7 @@ cdcl_eval (const char* format, ...)
     }
     else {
         CL_CATCH_ALL_BEGIN(ecl_process_env()) {
-            result = cl_safe_eval(form, Cnil, Cnil);
+            result = cl_eval(form);
         } CL_CATCH_ALL_IF_CAUGHT {
             errno = EILSEQ;
         } CL_CATCH_ALL_END;
@@ -130,7 +130,7 @@ cdcl_MakeParameters (CDList* parameters, va_list args)
 
         if (CD_CStringIsEqual(type, "CDClient")) {
             code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
-                "(craftd:wrap (uffi:make-pointer %ld :void) 'client) ", (CDPointer) va_arg(args, void*)));
+                "(craftd:wrap (uffi:make-pointer %ld 'craftd::client) 'craftd::client) ", (CDPointer) va_arg(args, void*)));
         }
         else {
             CD_DestroyString(code);

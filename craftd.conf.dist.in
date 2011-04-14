@@ -98,13 +98,13 @@ server: {
         paths: ["scripting", "@libdir@/craftd/scripting"];
 
         engines: (
-            /* { name: "lisp";
+            { name: "lisp";
                 paths: ["scripting/lisp/lib", "scripting/lisp/scripts", "@libdir@/craftd/scripting/lisp", "@libdir@/craftd/scripting/lisp/lib"];
 
                 options: [];
 
-                scripts: ["joined"]
-            } */
+                scripts: ["joined"];
+            },
 
             { name: "javascript";
                 paths: ["scripting/javascript/lib", "scripting/javascript/scripts", "@libdir@/craftd/scripting/javascript", "@libdir@/craftd/scripting/javascript/lib"];

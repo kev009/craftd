@@ -40,6 +40,11 @@ Dynamic_constructor (JSContext* context, uintN argc, jsval* argv)
 JSBool
 Dynamic_delete (JSContext* context, JSObject* owner, jsid id, jsval* value)
 {
+    jsval   name;
+    CDHash* self = (CDHash*) JS_GetPrivate(context, owner);
+
+    JS_IdToValue(context, id, &name);
+
     return JS_TRUE;
 }
 

@@ -11,4 +11,4 @@
   (first object))
 
 (defun get-wrapped-slot (object attribute)
-  (get-slot-value (first object) (second object) attribute))
+  (uffi:get-slot-value (first object) (second object) attribute))
