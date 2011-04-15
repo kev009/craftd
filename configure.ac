@@ -27,7 +27,6 @@ AC_CONFIG_FILES([
                  Makefile
                  src/Makefile 
                  include/Makefile
-                 htdocs/Makefile
                  third-party/Makefile
                  plugins/Makefile
                  plugins/survival/mapgen/noise/Makefile
