@@ -44,15 +44,15 @@ cdcl_EventDispatcher (CDServer* server, const char* event, va_list args)
         return true;
     }
 
-    CDMap* threads = (CDMap*) CD_DynamicGet(server, "LISP.threads");
+    CDList* threads = (CDList*) CD_DynamicGet(server, "LISP.threads");
 
-    if (!CD_MapHasKey(threads, pthread_self())) {
-        CD_MapPut(threads, pthread_self(), true);
+    if (!CD_ListContains(threads, pthread_self())) {
+        CD_ListPush(threads, pthread_self());
 
         ecl_import_current_thread(Cnil, Cnil);
     }
 
-    cdcl_eval("(craftd:fire :%s %s)", event, CD_StringContent(parameters));
+    cdcl_eval("(craftd:fire :%s%s)", event, CD_StringContent(parameters));
 
     CD_DestroyString(parameters);
 
@@ -65,7 +65,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
 {
     self->description = CD_CreateStringFromCString("Common LISP scripting");
 
-    CD_DynamicPut(self->server, "LISP.threads", (CDPointer) CD_CreateMap());
+    CD_DynamicPut(self->server, "LISP.threads", (CDPointer) CD_CreateList());
 
     int          argc = 1;
     const char** argv = CD_malloc(sizeof(char*));
@@ -100,7 +100,7 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         }
         else {
             char tmp[FILENAME_MAX];
-            
+
             if (getcwd(tmp, FILENAME_MAX)) {
                 path = CD_PrependCString(path, "/");
                 path = CD_PrependCString(path, tmp);
@@ -129,13 +129,17 @@ CD_ScriptingEngineInitialize (CDScriptingEngine* self)
         return false;
     }
 
-    cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %ld :void))", (CDPointer) self->server);
+    cdcl_eval("(defparameter craftd::*server* (uffi:make-pointer %ld 'craftd::server))", (CDPointer) self->server);
 
     C_FOREACH(script, C_PATH(self->config, "scripts")) {
         cdcl_eval("(asdf:load-system \"%s\")", C_TO_STRING(script));
     }
 
     CD_EventRegister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
+
+    if (C_TO_BOOL(C_PATH(self->config, "shell"))) {
+        cdcl_eval("ashella");
+    }
 
     return true;
 }
@@ -145,6 +149,8 @@ bool
 CD_ScriptingEngineFinalize (CDScriptingEngine* self)
 {
     CD_EventUnregister(self->server, "Event.dispatch:before", cdcl_EventDispatcher);
+
+    CD_DestroyList((CDList*) CD_DynamicDelete(self->server, "LISP.threads"));
 
     cl_shutdown();
 

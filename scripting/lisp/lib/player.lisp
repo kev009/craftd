@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(player-ip))
+(export '(player-ip player-username))
 
 (uffi:def-struct player
     (entity entity)
@@ -17,5 +17,7 @@
     (error   error-type))
 
 (defun player-ip (player)
-  (let ((player (wrap player 'player)))
-      (client-ip (get-wrapped-slot player 'client))))
+  (client-ip (wrap (get-wrapped-value player 'client) 'client)))
+
+(defun player-username (player)
+  (string-content (get-wrapped-value player 'username)))

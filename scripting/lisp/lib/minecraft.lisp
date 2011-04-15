@@ -32,3 +32,5 @@
     (id       entity-id)
     (type     entity-type)
     (position precise-position))
+
+(uffi:def-foreign-type error-type :int)
