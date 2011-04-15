@@ -1,8 +1,8 @@
 (defsystem :joined
   :version "0.1")
 
-(craftd:register :Server.start! #'(lambda ()
-  (format t "Server ~a started ;)~%" (craftd:server-name))))
-
 (craftd:register :Client.connect #'(lambda (client)
-  (format t "Client ~a connected :>~%" (craftd:client-ip client))))
+  (format t "~a connected~%" (craftd:client-ip client))))
+
+(craftd:register :Player.login #'(lambda (player status)
+  (format t "~a joined the game~%" (craftd:player-username player))))

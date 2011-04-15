@@ -1,6 +1,6 @@
 (in-package craftd)
 
-(export '(wrap get-wrapped-slot))
+(export '(wrap get-wrapped-value get-wrapped-pointer))
 
 (defun wrap (object struct)
   (if (equal (type-of object) 'cons)
@@ -10,5 +10,8 @@
 (defun get-wrapped-object (object)
   (first object))
 
-(defun get-wrapped-slot (object attribute)
+(defun get-wrapped-value (object attribute)
   (uffi:get-slot-value (first object) (second object) attribute))
+
+(defun get-wrapped-pointer (object attribute)
+  (uffi:get-slot-pointer (first object) (second object) attribute))

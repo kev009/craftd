@@ -23,6 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <craftd/protocols/survival.h>
+
 static inline
 cl_object
 cdcl_str (const char* string)
@@ -55,13 +57,27 @@ cdcl_eval (const char* format, ...)
     CDString* code   = CD_CreateStringFromFormatList(format, ap);
     cl_object form   = c_string_to_object((char*) CD_StringContent(code));
     cl_object result = Cnil;
+    cl_object error  = cl_gensym(0);
+
+    #ifndef NDEBUG
+    printf("LISP: %s\n", CD_StringContent(code));
+    #endif
 
     if (form == OBJNULL) {
         errno = EILSEQ;
     }
     else {
         CL_CATCH_ALL_BEGIN(ecl_process_env()) {
+            #ifdef NDEBUG
+            result = cl_safe_eval(form, Cnil, error);
+            #else
             result = cl_eval(form);
+            #endif
+
+            if (result == error) {
+                errno  = EILSEQ;
+                result = Cnil;
+            }
         } CL_CATCH_ALL_IF_CAUGHT {
             errno = EILSEQ;
         } CL_CATCH_ALL_END;
@@ -128,9 +144,19 @@ cdcl_MakeParameters (CDList* parameters, va_list args)
     CD_LIST_FOREACH(parameters, it) {
         const char* type = (const char*) CD_ListIteratorValue(it);
 
-        if (CD_CStringIsEqual(type, "CDClient")) {
+        if (CD_CStringIsEqual(type, "bool")) {
             code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
-                "(craftd:wrap (uffi:make-pointer %ld 'craftd::client) 'craftd::client) ", (CDPointer) va_arg(args, void*)));
+            " (not (= %d 0))", va_arg(args, int)));
+        }
+        else if (CD_CStringIsEqual(type, "CDClient")) {
+            code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
+                " (craftd:wrap (uffi:make-pointer %ld 'craftd::client) 'craftd::client)",
+                (CDPointer) va_arg(args, void*)));
+        }
+        else if (CD_CStringIsEqual(type, "SVPlayer")) {
+            code = CD_AppendStringAndClean(code, CD_CreateStringFromFormat(
+                " (craftd:wrap (uffi:make-pointer %ld 'craftd::player) 'craftd::player)",
+                (CDPointer) va_arg(args, void*)));
         }
         else {
             CD_DestroyString(code);

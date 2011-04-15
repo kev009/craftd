@@ -103,6 +103,8 @@ server: {
 
                 options: [];
 
+                shell: false;
+
                 scripts: ["joined"];
             },
 

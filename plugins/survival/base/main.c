@@ -217,6 +217,8 @@ CD_PluginInitialize (CDPlugin* self)
     CD_EventRegister(self->server, "Client.kick", cdsurvival_ClientKick);
     CD_EventRegister(self->server, "Client.disconnect", (CDEventCallbackFunction) cdsurvival_ClientDisconnect);
 
+    CD_EventProvides(self->server, "Player.login", CD_CreateEventParameters("SVPlayer", "bool", NULL));
+
     return true;
 }
 
