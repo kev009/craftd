@@ -50,10 +50,6 @@ SV_PacketParsable (CDBuffers* buffers)
     unsigned char* data = evbuffer_pullup(buffers->input->raw, -1);
 
     switch (type) {
-        case SVKeepAlive: {
-            goto done;
-        }
-
         case SVLogin: {
             variable += ntohs(*((SVShort*) (data + (offset += SVIntegerSize)))) * 2;
 
@@ -72,34 +68,6 @@ SV_PacketParsable (CDBuffers* buffers)
             goto check;
         }
 
-        case SVUseEntity: {
-            goto done;
-        }
-
-        case SVRespawn: {
-            goto done;
-        }
-
-        case SVOnGround: {
-            goto done;
-        }
-
-        case SVPlayerPosition: {
-            goto done;
-        }
-
-        case SVPlayerLook: {
-            goto done;
-        }
-
-        case SVPlayerMoveLook: {
-            goto done;
-        }
-
-        case SVPlayerDigging: {
-            goto done;
-        }
-
         case SVPlayerBlockPlacement: {
             offset += SVIntegerSize + SVByteSize + SVIntegerSize + SVByteSize;
 
@@ -108,18 +76,6 @@ SV_PacketParsable (CDBuffers* buffers)
             }
 
             goto check;
-        }
-
-        case SVHoldChange: {
-            goto done;
-        }
-
-        case SVAnimation: {
-            goto done;
-        }
-
-        case SVEntityAction: {
-            goto done;
         }
 
         case SVEntityMetadata: {
@@ -144,10 +100,6 @@ SV_PacketParsable (CDBuffers* buffers)
             }
         }
 
-        case SVCloseWindow: {
-            goto done;
-        }
-
         case SVWindowClick: {
             offset += SVByteSize + SVShortSize + SVByteSize + SVShortSize;
 
@@ -156,10 +108,6 @@ SV_PacketParsable (CDBuffers* buffers)
             }
 
             goto check;
-        }
-
-        case SVTransaction: {
-            goto done;
         }
 
         case SVUpdateSign: {
@@ -194,7 +142,9 @@ SV_PacketParsable (CDBuffers* buffers)
             goto check;
         }
 
-        default: return true;
+        default: {
+            goto done;
+        }
     }
 
     check: {

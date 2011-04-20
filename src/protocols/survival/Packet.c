@@ -444,6 +444,17 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
             return (CDPointer) packet;
         }
 
+        case SVIncrementStatistic: {
+            SVPacketIncrementStatistic* packet = (SVPacketIncrementStatistic*) CD_malloc(sizeof(SVPacketIncrementStatistic));
+
+            SV_BufferRemoveFormat(input, "ib",
+                &packet->request.id,
+                &packet->request.amount
+            );
+
+            return (CDPointer) packet;
+        }
+
         case SVDisconnect: {
             SVPacketDisconnect* packet = (SVPacketDisconnect*) CD_malloc(sizeof(SVPacketDisconnect));
 

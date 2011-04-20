@@ -86,6 +86,7 @@ typedef enum _SVPacketType {
     SVUpdateProgressBar    = 0x69,
     SVTransaction          = 0x6A,
     SVUpdateSign           = 0x82,
+    SVIncrementStatistic   = 0xC8,
     SVDisconnect           = 0xFF
 } SVPacketType;
 
@@ -670,6 +671,13 @@ typedef union _SVPacketUpdateSign {
         SVString fourth;
     } response;
 } SVPacketUpdateSign;
+
+typedef union _SVPacketIncrementStatistic {
+    struct {
+        SVInteger id;
+        SVByte    amount;
+    } request;
+} SVPacketIncrementStatistic;
 
 typedef union _SVPacketDisconnect {
     struct {
