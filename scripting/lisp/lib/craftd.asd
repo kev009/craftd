@@ -1,7 +1,7 @@
 (defpackage #:craftd
   (:use #:cl #:asdf))
 
-(in-package :craftd)
+(in-package craftd)
 
 (unless (find :unicode *features*)
   (error "Please build ECL with unicode support (configure --enable-unicode)"))
