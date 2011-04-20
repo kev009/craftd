@@ -28,6 +28,21 @@
 #include <craftd/common.h>
 
 static inline
+void
+cd_MakeStringInternal (CDString* self)
+{
+    if (!self->external) {
+        return;
+    }
+
+    bstring data = bstrcpy(self->raw);
+
+    CD_free(self->raw);
+    self->raw      = data;
+    self->external = false;
+}
+
+static inline
 size_t
 cd_UTF8_nextCharLength (char data)
 {
@@ -153,7 +168,7 @@ CD_CreateStringFromCStringCopy (const char* string)
 }
 
 CDString*
-CD_CreateStringFromBuffer (const char* buffer, size_t length)
+CD_CreateStringFromBuffer (const char* buffer, size_t size)
 {
     CDString* self = CD_malloc(sizeof(CDString));
 
@@ -163,8 +178,8 @@ CD_CreateStringFromBuffer (const char* buffer, size_t length)
     assert(self->raw);
 
     self->raw->data = (unsigned char*) buffer;
-    self->raw->mlen = length;
-    self->raw->slen = length;
+    self->raw->mlen = size;
+    self->raw->slen = size;
 
     cd_UpdateLength(self);
 
@@ -288,11 +303,7 @@ CD_CharAtSet (CDString* self, size_t index, CDString* set)
 {
     assert(self);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     size_t offset = CD_UTF8_offset((const char*) self->raw->data, index);
 
@@ -312,11 +323,7 @@ CD_InsertString (CDString* self, CDString* insert, size_t position)
     assert(self);
     assert(insert);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     if (binsert(self->raw, CD_UTF8_offset(CD_StringContent(self), position), insert->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
@@ -334,11 +341,7 @@ CD_AppendString (CDString* self, CDString* append)
     assert(self);
     assert(append);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
@@ -356,11 +359,7 @@ CD_AppendStringAndClean (CDString* self, CDString* append)
     assert(self);
     assert(append);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     if (binsert(self->raw, self->raw->slen, append->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
@@ -381,11 +380,7 @@ CD_AppendCString (CDString* self, const char* append)
     assert(self);
     assert(append);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     CDString* tmp = CD_CreateStringFromCString(append);
 
@@ -402,11 +397,7 @@ CD_PrependString (CDString* self, CDString* append)
     assert(self);
     assert(append);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     if (binsert(self->raw, 0, append->raw, '\0') == BSTR_OK) {
         cd_UpdateLength(self);
@@ -424,11 +415,7 @@ CD_PrependCString (CDString* self, const char* append)
     assert(self);
     assert(append);
 
-    if (self->external) {
-        CDString* tmp = self;
-        self          = CD_CloneString(tmp);
-        CD_DestroyString(tmp);
-    }
+    cd_MakeStringInternal(self);
 
     CDString* tmp = CD_CreateStringFromCString(append);
 

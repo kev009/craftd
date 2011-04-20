@@ -28,7 +28,7 @@
 
 #include <craftd/protocols/survival/common.h>
 
-#define CRAFTD_PROTOCOL_VERSION (10)
+#define CRAFTD_PROTOCOL_VERSION (11)
 
 typedef enum _SVPacketChain {
     SVRequest,
@@ -104,7 +104,6 @@ typedef union _SVPacketLogin {
         SVInteger version;
 
         SVString username;
-        SVString password;
 
         SVLong mapSeed;
         SVByte dimension;
@@ -114,7 +113,6 @@ typedef union _SVPacketLogin {
         SVInteger id;
 
         SVString serverName;
-        SVString motd;
 
         SVLong mapSeed;
         SVByte dimension;

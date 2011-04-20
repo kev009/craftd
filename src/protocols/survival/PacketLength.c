@@ -55,25 +55,19 @@ SV_PacketParsable (CDBuffers* buffers)
         }
 
         case SVLogin: {
-            variable += ntohs(*((SVShort*) (data + (offset += SVIntegerSize))));
-
-            if (CHECK) {
-                goto error;
-            }
-
-            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVIntegerSize)))) * 2;
 
             goto check;
         }
 
         case SVHandshake: {
-            variable += ntohs(*((SVShort*) (data + offset)));
+            variable += ntohs(*((SVShort*) (data + offset))) * 2;
 
             goto check;
         }
 
         case SVChat: {
-            variable += ntohs(*((SVShort*) (data + offset)));
+            variable += ntohs(*((SVShort*) (data + offset))) * 2;
 
             goto check;
         }
@@ -171,31 +165,31 @@ SV_PacketParsable (CDBuffers* buffers)
         case SVUpdateSign: {
             offset += SVIntegerSize + SVShortSize + SVIntegerSize;
 
-            variable += ntohs(*((SVShort*) (data + offset)));
+            variable += ntohs(*((SVShort*) (data + offset))) * 2;
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable)))) * 2;
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable)))) * 2;
 
             if (CHECK) {
                 goto error;
             }
 
-            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable))));
+            variable += ntohs(*((SVShort*) (data + (offset += SVShortSize + variable)))) * 2;
 
             goto check;
         }
 
         case SVDisconnect: {
-            variable += ntohs(*((SVShort*) (data + offset)));
+            variable += ntohs(*((SVShort*) (data + offset))) * 2;
 
             goto check;
         }

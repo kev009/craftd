@@ -44,6 +44,7 @@
  *
  *     B: SVBoolean
  *     S: SVString
+ *     U: SVString (UCS-2)
  *     M: SVMetadata
  *
  * @param format The format string
@@ -66,6 +67,8 @@ void SV_BufferAddBoolean (CDBuffer* self, SVBoolean data);
 
 void SV_BufferAddString (CDBuffer* self, SVString data);
 
+void SV_BufferAddString16 (CDBuffer* self, SVString data);
+
 void SV_BufferAddMetadata (CDBuffer* self, SVMetadata* data);
 
 
@@ -85,6 +88,7 @@ void SV_BufferAddMetadata (CDBuffer* self, SVMetadata* data);
  *
  *     B: SVBoolean
  *     S: SVString
+ *     U: SVString (UCS-2)
  *     M: SVMetadata
  *
  * @param format The format string
@@ -106,6 +110,8 @@ SVDouble SV_BufferRemoveDouble (CDBuffer* self);
 SVBoolean SV_BufferRemoveBoolean (CDBuffer* self);
 
 SVString SV_BufferRemoveString (CDBuffer* self);
+
+SVString SV_BufferRemoveString16 (CDBuffer* self);
 
 SVMetadata* SV_BufferRemoveMetadata (CDBuffer* self);
 

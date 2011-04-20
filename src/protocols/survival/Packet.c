@@ -76,7 +76,6 @@ SV_DestroyPacketData (SVPacket* self)
                     SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
                     SV_DestroyString(packet->request.username);
-                    SV_DestroyString(packet->request.password);
                 } break;
 
                 case SVHandshake: {
@@ -122,7 +121,6 @@ SV_DestroyPacketData (SVPacket* self)
                     SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
                     SV_DestroyString(packet->response.serverName);
-                    SV_DestroyString(packet->response.motd);
                 } break;
 
                 case SVHandshake: {
@@ -219,10 +217,9 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVLogin: {
             SVPacketLogin* packet = (SVPacketLogin*) CD_malloc(sizeof(SVPacketLogin));
 
-            SV_BufferRemoveFormat(input, "iSSlb",
+            SV_BufferRemoveFormat(input, "iUlb",
                 &packet->request.version,
                 &packet->request.username,
-                &packet->request.password,
                 &packet->request.mapSeed,
                 &packet->request.dimension
             );
@@ -233,7 +230,7 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVHandshake: {
             SVPacketHandshake* packet = (SVPacketHandshake*) CD_malloc(sizeof(SVPacketHandshake));
 
-            packet->request.username = SV_BufferRemoveString(input);
+            packet->request.username = SV_BufferRemoveString16(input);
 
             return (CDPointer) packet;
         }
@@ -241,7 +238,7 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVChat: {
             SVPacketChat* packet = (SVPacketChat*) CD_malloc(sizeof(SVPacketChat));
 
-            packet->request.message = SV_BufferRemoveString(input);
+            packet->request.message = SV_BufferRemoveString16(input);
 
             return (CDPointer) packet;
         }
@@ -433,7 +430,7 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVUpdateSign: {
             SVPacketUpdateSign* packet = (SVPacketUpdateSign*) CD_malloc(sizeof(SVPacketUpdateSign));
 
-            SV_BufferRemoveFormat(input, "iisiSSSS",
+            SV_BufferRemoveFormat(input, "iisiUUUU",
                 &packet->request.position.x,
                 &packet->request.position.y,
                 &packet->request.position.z,
@@ -450,7 +447,7 @@ SV_GetPacketDataFromBuffer (SVPacket* self, CDBuffer* input)
         case SVDisconnect: {
             SVPacketDisconnect* packet = (SVPacketDisconnect*) CD_malloc(sizeof(SVPacketDisconnect));
 
-            packet->request.reason = SV_BufferRemoveString(input);
+            packet->request.reason = SV_BufferRemoveString16(input);
 
             return (CDPointer) packet;
         }
@@ -482,10 +479,9 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVLogin: {
                     SVPacketLogin* packet = (SVPacketLogin*) self->data;
 
-                    SV_BufferAddFormat(data, "iSSlb",
+                    SV_BufferAddFormat(data, "iUlb",
                         packet->response.id,
                         packet->response.serverName,
-                        packet->response.motd,
                         packet->response.mapSeed,
                         packet->response.dimension
                     );
@@ -494,13 +490,13 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVHandshake: {
                     SVPacketHandshake* packet = (SVPacketHandshake*) self->data;
 
-                    SV_BufferAddString(data, packet->response.hash);
+                    SV_BufferAddString16(data, packet->response.hash);
                 } break;
 
                 case SVChat: {
                     SVPacketChat* packet = (SVPacketChat*) self->data;
 
-                    SV_BufferAddString(data, packet->response.message);
+                    SV_BufferAddString16(data, packet->response.message);
                 } break;
 
                 case SVTimeUpdate: {
@@ -574,7 +570,7 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVNamedEntitySpawn: {
                     SVPacketNamedEntitySpawn* packet = (SVPacketNamedEntitySpawn*) self->data;
 
-                    SV_BufferAddFormat(data, "iSiiibbs",
+                    SV_BufferAddFormat(data, "iUiiibbs",
                         packet->response.entity.id,
                         packet->response.name,
                         packet->response.position.x,
@@ -642,7 +638,7 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVPainting: {
                     SVPacketPainting* packet = (SVPacketPainting*) self->data;
 
-                    SV_BufferAddFormat(data, "iSiiii",
+                    SV_BufferAddFormat(data, "iUiiii",
                         packet->response.entity.id,
                         packet->response.title,
                         packet->response.position.x,
@@ -911,7 +907,7 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVUpdateSign: {
                     SVPacketUpdateSign* packet = (SVPacketUpdateSign*) self->data;
 
-                    SV_BufferAddFormat(data, "isiSSSS",
+                    SV_BufferAddFormat(data, "isiUUUU",
                         packet->response.position.x,
                         packet->response.position.y,
                         packet->response.position.z,
@@ -926,7 +922,7 @@ SV_PacketToBuffer (SVPacket* self)
                 case SVDisconnect: {
                     SVPacketDisconnect* packet = (SVPacketDisconnect*) self->data;
 
-                    SV_BufferAddString(data, packet->response.reason);
+                    SV_BufferAddString16(data, packet->response.reason);
                 } break;
 
                 default: break;

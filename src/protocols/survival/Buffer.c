@@ -44,6 +44,7 @@ SV_BufferAddFormat (CDBuffer* self, const char* format, ...)
 
             case 'B': SV_BufferAddBoolean(self, va_arg(ap, int));          break;
             case 'S': SV_BufferAddString(self,  va_arg(ap, CDString*));    break;
+            case 'U': SV_BufferAddString16(self,  va_arg(ap, CDString*));  break;
             case 'M': SV_BufferAddMetadata(self, va_arg(ap, SVMetadata*)); break;
         }
 
@@ -119,6 +120,56 @@ SV_BufferAddString (CDBuffer* self, CDString* data)
 }
 
 void
+SV_BufferAddString16 (CDBuffer* self, CDString* data)
+{
+    CDString* sanitized = SV_StringSanitize(data);
+
+    SVShort size = htons(CD_StringLength(sanitized));
+
+    evbuffer_add(self->raw, &size, SVShortSize);
+
+    int16_t* ucs2 = CD_alloc(CD_StringLength(sanitized) * sizeof(int16_t));
+
+    for (size_t i = 0; i < CD_StringLength(sanitized); i++) {
+        CDString*   ch    = CD_CharAt(sanitized, i);
+        const char* input = CD_StringContent(ch);
+        short       uch   = 0;
+
+        if (input[0] < 0x80) {
+            uch = input[0];
+        }
+        else if ((input[0] & 0xE0) == 0xE0) {
+            if (input[1] == 0 || input[2] == 0) {
+                uch = 0xfffd;
+            }
+            else {
+                uch = ((input[0] & 0x0F) << 12) | ((input[1] & 0x3F) << 6) | (input[2] & 0x3F);
+            }
+        }
+        else if ((input[0] & 0xC0) == 0xC0) {
+            if (input[1] == 0) {
+                uch = 0xfffd;
+            }
+            else {
+                uch = ((input[0] & 0x1F) << 6) | (input[1] & 0x3F);
+            }
+        }
+        else {
+            uch = 0xfffd;
+        }
+
+        CD_DestroyString(ch);
+
+        ucs2[i] = htons(uch);
+    }
+
+    evbuffer_add(self->raw, ucs2, CD_StringLength(sanitized) * sizeof(int16_t));
+
+    CD_free(ucs2);
+    CD_DestroyString(sanitized);
+}
+
+void
 SV_BufferAddMetadata (CDBuffer* self, SVMetadata* data)
 {
     // Format strings of the different metadata types
@@ -161,6 +212,7 @@ SV_BufferRemoveFormat (CDBuffer* self, const char* format, ...)
 
             case 'B': *((SVBoolean*) pointer)   = SV_BufferRemoveBoolean(self);  break;
             case 'S': *((SVString*) pointer)    = SV_BufferRemoveString(self);   break;
+            case 'U': *((SVString*) pointer)    = SV_BufferRemoveString16(self); break;
             case 'M': *((SVMetadata**) pointer) = SV_BufferRemoveMetadata(self); break;
         }
 
@@ -257,6 +309,56 @@ SV_BufferRemoveString (CDBuffer* self)
     data[length] = '\0';
 
     result           = CD_CreateStringFromBuffer(data, length + 1);
+    result->external = false;
+
+    return result;
+}
+
+SVString
+SV_BufferRemoveString16 (CDBuffer* self)
+{
+    int16_t*  data   = NULL;
+    char*     string = NULL;
+    SVShort   length = 0;
+    SVShort   size   = 0;
+    CDString* result;
+
+    evbuffer_remove(self->raw, &length, SVShortSize);
+
+    length = ntohs(length);
+    data   = CD_alloc(length * sizeof(int16_t));
+
+    evbuffer_remove(self->raw, data, length * sizeof(int16_t));
+
+    for (size_t i = 0; i < length; i++) {
+        int16_t ch = ntohs(data[i]);
+
+        if (ch == 0xfffd) {
+            string = CD_realloc(string, (size += 1));
+
+            string[size - 1] = '?';
+        }
+        else if (ch < 0x80) {
+            string = CD_realloc(string, (size += 1));
+
+            string[size - 1] = ch;
+        }
+        else if (ch >= 0x80  && ch < 0x800) {
+            string = CD_realloc(string, (size += 2));
+
+            string[size - 2] = (ch >> 6) | 0xC0;
+            string[size - 1] = (ch & 0x3F) | 0x80;
+        }
+        else if (ch >= 0x800 && ch < 0xFFFF) {
+            string = CD_realloc(string, (size += 3));
+
+            string[size - 3] = (ch >> 12) | 0xE0;
+            string[size - 2] = ((ch >> 6) & 0x3F) | 0x80;
+            string[size - 1] = (ch & 0x3F) | 0x80;
+        }
+    }
+
+    result           = CD_CreateStringFromBuffer(string, size);
     result->external = false;
 
     return result;

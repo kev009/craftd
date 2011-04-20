@@ -476,7 +476,6 @@ cdsurvival_ClientProcess (CDServer* server, CDClient* client, SVPacket* packet)
                     .response = {
                         .id         = player->entity.id,
                         .serverName = CD_CreateStringFromCString(""),
-                        .motd       = CD_CreateStringFromCString(""),
                         .mapSeed    = 0,
                         .dimension  = 0
                     }
