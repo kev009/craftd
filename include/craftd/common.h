@@ -56,7 +56,15 @@
 
 #include <craftd/config.h>
 
-#if (SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4) || (SIZEOF_FP == 4 && SIZEOF_INTPTR_T == 4)
+#ifdef SIZEOF_FP
+#   define SIZEOF_FUNCTION_POINTER SIZEOF_FP
+#endif
+
+#ifdef SIZEOF_INTPTR_T
+#   define SIZEOF_POINTER SIZEOF_INTPTR_T
+#endif
+
+#if SIZEOF_FUNCTION_POINTER == 4 && SIZEOF_POINTER == 4
     typedef int32_t CDPointer;
 #else
     typedef int64_t CDPointer;
