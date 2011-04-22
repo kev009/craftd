@@ -3,7 +3,7 @@ AC_PREREQ([2.64])
 
 AC_INIT([craftd], [0.2-pre], [kevin.bowling@kev009.com])
 
-AC_CONFIG_AUX_DIR([build/auto/aux])
+AC_CONFIG_AUX_DIR([build/auto/configaux])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects dist-bzip2])
 AC_CONFIG_MACRO_DIR([build/auto/m4])
 

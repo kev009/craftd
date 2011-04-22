@@ -38,7 +38,7 @@ Makefile.in
 # Check build-aux/.gitignore for the commented stuff
 /autom4te.cache
 /aclocal.m4
-/build/auto/aux/
+/build/auto/configaux/
 /configure
 /config.guess
 /config.log
