@@ -109,10 +109,9 @@ AC_CHECK_MEMBERS([struct sigaction.sa_handler], [], [],
 [#include <signal.h>
 ])
 
+AC_CHECK_TYPES([pthread_spinlock_t], [], [], [[#include <pthread.h>]])
+
 # Check if we need to reorder float and double types
 AX_C_FLOAT_WORDS_BIGENDIAN
-
-# Checks for library functions.
-AC_CHECK_FUNCS([socket])
 
 AC_OUTPUT
